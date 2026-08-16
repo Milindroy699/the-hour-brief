@@ -203,6 +203,68 @@
     color: var(--ink-faint);
   }
 
+  /* ---- Subscribe box ---- */
+  .subscribe-box {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin: 20px 0 0;
+    box-shadow: var(--shadow);
+  }
+  .subscribe-box .sub-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--tag-mkt);
+    display: block;
+    margin-bottom: 6px;
+  }
+  .subscribe-box p {
+    margin: 0 0 12px;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .subscribe-form {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .subscribe-form input[type="email"] {
+    flex: 1 1 220px;
+    min-width: 0;
+    padding: 9px 12px;
+    border-radius: 7px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 0.92rem;
+    font-family: inherit;
+  }
+  .subscribe-form input[type="email"]:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 1px;
+  }
+  .subscribe-form button {
+    padding: 9px 18px;
+    border-radius: 7px;
+    border: none;
+    background: var(--brand);
+    color: var(--bg);
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .subscribe-form button:hover { opacity: 0.9; }
+  .subscribe-note {
+    margin-top: 8px;
+    font-size: 0.76rem;
+    color: var(--ink-faint);
+  }
+
   .nav {
     display: flex;
     gap: 6px;
@@ -405,6 +467,16 @@
   <div class="about">
     <p><strong>The Hour Brief</strong> is a daily read built for one sitting: what moved in AI and technology, what's shaping product and business across India and the rest of the world, and what the Indian stock market did and why. Every item links back to its original source — read the take here, click through for the full story.</p>
     <p class="free-line">Free to read, no account or sign-up needed. A few items point to stories from paid publications — those are marked and link out; everything else on this page is open.</p>
+  </div>
+
+  <div class="subscribe-box">
+    <span class="sub-label">Get it by email</span>
+    <p>One email a day, every morning. Unsubscribe anytime — no spam, just the day's edition.</p>
+    <form action="https://buttondown.email/api/emails/embed-subscribe/milind" method="post" target="popupwindow" onsubmit="window.open('https://buttondown.email/milind', 'popupwindow')" class="subscribe-form">
+      <input type="email" name="email" id="bd-email" placeholder="you@example.com" required>
+      <button type="submit">Subscribe</button>
+    </form>
+    <p class="subscribe-note">Powered by Buttondown. Prefer no inbox clutter? <a href="../feed.xml">Use RSS instead</a>.</p>
   </div>
 
   <nav class="nav" aria-label="Sections">
