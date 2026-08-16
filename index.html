@@ -350,6 +350,27 @@
   .item .src { display: inline-block; margin-top: 8px; font-size: 0.76rem; color: var(--ink-faint); letter-spacing: 0.02em; }
   .item .src a { color: inherit; text-decoration-color: var(--line); }
 
+  /* ---- Takeaway ---- */
+  .item .takeaway {
+    margin: 10px 0 0;
+    padding: 8px 12px;
+    border-left: 3px solid var(--brand);
+    background: var(--paper-2);
+    border-radius: 0 6px 6px 0;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: var(--ink);
+    max-width: 64ch;
+  }
+  .item .takeaway-label {
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    color: var(--brand);
+    margin-right: 6px;
+  }
+
   /* ---- Comments ---- */
   .comments-section {
     margin: 48px 0 0;
@@ -586,6 +607,7 @@
       <div>
         <h3>Nvidia guarantees a quarter of its own chips' resale value in a $500B financing push</h3>
         <p>Nvidia has lined up Apollo, Blackstone, BlackRock, Brookfield, Goldman Sachs and KKR to funnel more than $500 billion in third-party capital into AI data centers — and is personally backstopping up to 25% of the residual value of its GPUs in individual deals. If an operator can't repay debt and a GPU fire-sale falls short, Nvidia eats up to a quarter of the gap, an unusual attempt to manufacture a secondary market for aging chips.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Nvidia is no longer just a chip vendor — it's now insuring the AI buildout's own risk, which ties its fortunes to demand actually materializing, not just chip sales.</p>
         <span class="src"><a href="https://techcrunch.com/2026/08/13/nvidias-new-500b-plan-is-risky-but-brilliant-especially-for-aging-gpus/" target="_blank" rel="noopener">TechCrunch →</a></span>
       
         <div class="vote-row" data-vote-key="ai-1">
@@ -600,6 +622,7 @@
       <div>
         <h3>IBM goes all-in on OpenAI for enterprise AI delivery</h3>
         <p>IBM announced a strategic partnership on 13 August embedding GPT-5.6, Codex and ChatGPT Work into IBM Consulting Advantage, standing up a dedicated "OpenAI Practice" staffed with thousands of OpenAI-certified consultants across financial services, government, telecom and retail. The deal also folds in cybersecurity collaboration via OpenAI's Daybreak Cyber Partner Program.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Enterprise AI adoption is shifting from "build it yourself" to "buy it through a systems integrator" — IBM is betting its consulting arm can out-execute pure AI labs on enterprise trust and delivery.</p>
         <span class="src"><a href="https://newsroom.ibm.com/2026-08-13-ibm-partners-with-openai-to-accelerate-secure-ai-deployment-for-enterprises-across-core-operations" target="_blank" rel="noopener">IBM Newsroom →</a></span>
       
         <div class="vote-row" data-vote-key="ai-2">
@@ -614,6 +637,7 @@
       <div>
         <h3>DeepSeek hikes API prices by up to 1,100% as demand outstrips capacity</h3>
         <p>Effective 16 August, DeepSeek is raising V4-Flash and V4-Pro API prices sharply: V4-Flash peak-hour input tokens jump from $0.14 to $0.44 per million, while V4-Pro peak pricing rises from $0.435 to $1.32 per million. The new peak/off-peak tiered pricing is designed to push developer workloads into less congested hours — a rare price hike in a market otherwise defined by cuts.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> The "AI is basically free" era for frontier models may be ending — even the cheapest major lab is raising prices once demand outstrips capacity.</p>
         <span class="src"><a href="https://www.infoworld.com/article/4209439/deepseek-raises-some-v4-prices-by-more-than-10x-as-ai-demand-strains-capacity.html" target="_blank" rel="noopener">InfoWorld →</a></span>
       
         <div class="vote-row" data-vote-key="ai-3">
@@ -628,6 +652,7 @@
       <div>
         <h3>OpenAI ships "Ultrafast" mode, runs GPT-5.6 Sol at 14x normal speed</h3>
         <p>OpenAI's new inference mode delivers up to 750 output tokens per second — roughly 14 times the standard rate for its flagship model. The launch is aimed squarely at latency-sensitive agentic and coding workloads, another sign the model race is shifting from raw capability toward speed and cost as the competitive lever.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Speed is becoming a selling point on its own — for agentic workflows chaining many model calls, 14x faster inference can matter more than a modest jump in intelligence.</p>
         <span class="src"><a href="https://techcrunch.com/2026/08/13/openai-introduces-ultrafast-a-new-mode-that-makes-gpt-5-6-sol-work-at-14x-the-speed/" target="_blank" rel="noopener">TechCrunch →</a></span>
       
         <div class="vote-row" data-vote-key="ai-4">
@@ -642,6 +667,7 @@
       <div>
         <h3>Apple trains its own AI model for China, with Alibaba's help</h3>
         <p>Apple has built a China-specific large language model with assistance from Alibaba, reportedly the first foreign company approved by Beijing to offer a proprietary AI model domestically. The model runs alongside Apple's existing partner systems as it prepares to launch Apple Intelligence in China following Cyberspace Administration registration completed last month.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Global AI is fragmenting along geopolitical lines — expect more companies to maintain parallel, regionally-compliant model stacks instead of one global product.</p>
         <span class="src"><a href="https://www.macrumors.com/2026/08/14/apple-trained-own-ai-model-for-china/" target="_blank" rel="noopener">MacRumors →</a></span>
       
         <div class="vote-row" data-vote-key="ai-5">
@@ -656,6 +682,7 @@
       <div>
         <h3>Microsoft starts merging consumer and business Copilot into one "super app"</h3>
         <p>Microsoft has begun combining consumer Copilot and Microsoft 365 Copilot into a single app that lets users switch between personal and work accounts without data crossing over — mobile and web first, Windows and Mac following in September. In the process it's retiring underused consumer features, including Group Chats, AI podcast generation, Copilot Labs and Deep Research, by 18 August.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Microsoft is betting that one blended identity across work and personal AI use — not separate apps — is what makes an assistant sticky enough to become a daily habit.</p>
         <span class="src"><a href="https://www.geekwire.com/2026/microsoft-starts-merging-its-copilot-consumer-and-business-apps-in-advance-of-super-app-rollout/" target="_blank" rel="noopener">GeekWire →</a></span>
       
         <div class="vote-row" data-vote-key="ai-6">
@@ -670,6 +697,7 @@
       <div>
         <h3>Anthropic's Q2 revenue surges past $11.5B ahead of a fall IPO</h3>
         <p>Anthropic told investors its preliminary Q2 revenue topped $11.5 billion — more than 14 times the $787 million logged a year earlier and up from $4.73 billion in Q1 — with positive adjusted operating income. Investors are reportedly targeting an October IPO at a valuation north of $2 trillion, which would make it the largest listing in history.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A 14x year-over-year jump suggests enterprise AI spend is still accelerating, not plateauing — worth watching how it holds once the hype cycle cools.</p>
         <span class="src"><a href="https://www.cnbc.com/2026/08/15/anthropic-revenue-jumps-to-over-11point5-billion-in-q2-report.html" target="_blank" rel="noopener">CNBC →</a></span>
       
         <div class="vote-row" data-vote-key="ai-7">
@@ -684,6 +712,7 @@
       <div>
         <h3>Google's Gemini app crosses 1 billion monthly users</h3>
         <p>Google says the Gemini app passed 1 billion monthly active users this month — its fastest-growing product ever, climbing from 400 million in May 2025 to 900 million by May 2026, then adding another 100 million-plus in under a month, driven by integration across Android, Chrome, Search and Workspace. ChatGPT reportedly reached 1 billion users first, in June, but growth there is said to be slowing as Gemini closes the gap.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Distribution — being pre-installed on billions of phones — is turning out to be as decisive an edge as model quality itself.</p>
         <span class="src"><a href="https://techcrunch.com/2026/08/11/googles-gemini-app-surges-to-one-billion-users/" target="_blank" rel="noopener">TechCrunch →</a></span>
       
         <div class="vote-row" data-vote-key="ai-8">
@@ -715,6 +744,7 @@
       <div>
         <h3>L&amp;T bags a $1.57B order to build India's largest AI data centre</h3>
         <p>Larsen &amp; Toubro's AI infrastructure arm, LTN Compute, secured an order worth ₹10,000–15,000 crore ($1.05–1.57B) from US cloud platform Together AI on 13 August — L&amp;T's first major move into the "AI factory" business. The facility, at L&amp;T's Vyoma.AI campus in Chennai, will run 10,000 Nvidia B300 GPUs, India's largest single-cluster AI deployment so far.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Indian conglomerates are moving from buying AI services to building AI infrastructure — a bet that compute, not just software, is the next big industrial category.</p>
         <span class="src"><a href="https://www.business-standard.com/companies/news/larsen-and-toubro-secures-ai-data-centre-order-worth-up-to-1-57-billion-126081300855_1.html" target="_blank" rel="noopener">Business Standard →</a></span>
       
         <div class="vote-row" data-vote-key="biz-1">
@@ -729,6 +759,7 @@
       <div>
         <h3>Zetwerk files updated IPO papers for ₹2,600 crore</h3>
         <p>Manufacturing platform Zetwerk refiled its DRHP with SEBI on 14 August, confirming a ₹2,600 crore fresh issue plus an offer-for-sale from promoters and investors including Peak XV, Accel and Lightspeed. FY26 revenue jumped 40.4% to ₹15,913 crore and its order book doubled to ₹12,370 crore — but 69% of the fresh raise goes straight to debt repayment, not growth capital.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A fast-growing order book doesn't always mean growth capital — worth checking how much of any IPO's proceeds are paying down debt versus funding expansion, as here.</p>
         <span class="src"><a href="https://www.business-standard.com/markets/ipo/india-s-zetwerk-files-updated-ipo-draft-papers-to-raise-272-million-126081400017_1.html" target="_blank" rel="noopener">Business Standard →</a></span>
       
         <div class="vote-row" data-vote-key="biz-2">
@@ -743,6 +774,7 @@
       <div>
         <h3>Table Space files DRHP for an ₹800 crore managed-workspace IPO</h3>
         <p>Bengaluru-based Table Space, which leases 9.33 million sq ft to GCCs and Fortune 500 tenants across 33 clusters, filed for an IPO comprising a ₹800 crore fresh issue plus an OFS of up to 65.48 million shares on 11 August — the latest coworking/managed-office operator to test public markets, betting India's GCC office boom still has runway.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> India's flexible-workspace IPO wave is a bet that the GCC office boom has years left to run, not just a post-pandemic bounce.</p>
         <span class="src"><a href="https://www.business-standard.com/markets/ipo/table-space-files-drhp-for-ipo-with-rs-800-crore-fresh-issue-126081100967_1.html" target="_blank" rel="noopener">Business Standard →</a></span>
       
         <div class="vote-row" data-vote-key="biz-3">
@@ -757,6 +789,7 @@
       <div>
         <h3>Maharashtra FDA suspends food licences at Blinkit, Zepto and Instamart dark stores</h3>
         <p>Following an 7 August inspection at a Blinkit Malad West store that found cockroaches on produce, expired stock and food stored on the floor, Maharashtra's FDA launched a state-wide sweep of 86 quick-commerce facilities and suspended licences at 14 outlets across Blinkit, Zepto and Swiggy Instamart on 13 August — the sharpest regulatory jolt yet to the quick-commerce "dark store" model.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Quick commerce's speed advantage carries real last-mile food-safety risk — a wider crackdown here could reshape unit economics across the sector, not just one city.</p>
         <span class="src"><a href="https://www.india.com/news/india/big-setback-for-blinkit-zepto-instamart-as-maharashtra-fda-suspends-licences-their-multiple-food-business-outlets-8501849/" target="_blank" rel="noopener">India.com →</a></span>
       
         <div class="vote-row" data-vote-key="biz-4">
@@ -771,6 +804,7 @@
       <div>
         <h3>Yulu raises $93M to scale its EV fleet to 200,000</h3>
         <p>Series C round: $63M equity led by GEF Capital, $30M debt. Yulu currently runs ~50,000 vehicles, logging 1.6 million zero-emission miles a week and powering 750,000+ deliveries a day — the raise funds a roughly 4x fleet expansion plus a new Yulu Express service, quietly building an EV-leasing economy underneath quick commerce.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Quick-commerce delivery infrastructure is becoming its own investable category, separate from the platforms it serves.</p>
         <span class="src"><a href="https://techcrunch.com/2026/08/11/indias-yulu-raises-93m-as-quick-commerce-boom-fuels-e-bike-demand/" target="_blank" rel="noopener">TechCrunch →</a></span>
       
         <div class="vote-row" data-vote-key="biz-5">
@@ -785,6 +819,7 @@
       <div>
         <h3>LEAP India lists at a 4% premium, then slips below issue price</h3>
         <p>The ₹2,480 crore LEAP India IPO — 8.38x subscribed — debuted on 14 August at ₹165.90 on NSE, 4.34% above its ₹159 issue price, valuing the pallet-and-container pooling company at ₹7,312 crore. Shares fell below issue price within hours on profit-booking, a sign of how thin the margin for a "successful" IPO pop has gotten in this market.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A strong subscription number and a weak first-day close aren't contradictory — IPO demand and post-listing conviction are two different things.</p>
         <span class="src"><a href="https://www.business-standard.com/markets/news/leap-india-share-price-lists-at-4-premium-over-ipo-price-misses-expectations-126081400587_1.html" target="_blank" rel="noopener">Business Standard →</a></span>
       
         <div class="vote-row" data-vote-key="biz-6">
@@ -799,6 +834,7 @@
       <div>
         <h3>Centricity's $29M round leads a $140M week for Indian startup funding</h3>
         <p>Indian startups raised roughly $139.5M this week, nearly two-thirds of it from Yulu's raise above; wealthtech platform Centricity closed the week's second-largest round at $29M. Cleantech led sector funding for a second straight week; year-to-date, Indian startups have now raised $11.4B across 1,210 equity rounds in 2026.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> One outsized round can flatter an otherwise soft funding week — worth looking past the headline total to see how concentrated it really is.</p>
         <span class="src"><a href="https://inc42.com/buzz/from-yulu-to-discovered-materials-indian-startups-raised-140-mn-this-week/" target="_blank" rel="noopener">Inc42 →</a></span>
       
         <div class="vote-row" data-vote-key="biz-7">
@@ -813,6 +849,7 @@
       <div>
         <h3>Marty Cagan &amp; Bob Baxley: "A Fresh Definition of The Product Role"</h3>
         <p>Published 15 August on SVPG, Cagan and Baxley respond to the wave of "AI is killing the PM role" takes making the rounds this month, arguing most definitions of product management fail because they chase job titles instead of the operating model that actually determines a PM's responsibilities.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> The "AI is killing the PM role" debate says as much about how loosely "product manager" has always been defined as it does about AI.</p>
         <span class="src"><a href="https://www.svpg.com/a-fresh-definition-of-the-product-role/" target="_blank" rel="noopener">Silicon Valley Product Group →</a></span>
       
         <div class="vote-row" data-vote-key="biz-8">
@@ -862,6 +899,7 @@
       <div>
         <h3>Indian and US markets are shut for the weekend — figures above are Friday's close</h3>
         <p>Sensex and Nifty closed the week lower — down 0.6% and 0.83% respectively — as escalating tension in West Asia, which put Strait of Hormuz oil flows in question, and continued FPI selling offset resilient domestic institutional buying. Brent crude touched roughly $88.52/barrel on Friday, up 1.67% on the day, adding to India's import-cost worries.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A market can fall in a week where nothing acutely bad happened at home — geopolitical risk and foreign outflows travel faster than domestic fundamentals change.</p>
         <span class="src"><a href="https://www.kotakneo.com/news/market-news/closing-bell-14-august-2026-sensex-nifty-end-lower/" target="_blank" rel="noopener">Kotak Neo →</a></span>
       
         <div class="vote-row" data-vote-key="mkt-1">
@@ -876,6 +914,7 @@
       <div>
         <h3>Fed September rate-hike odds tumble after a shock July jobs miss</h3>
         <p>Nonfarm payrolls fell by roughly 23,000 in July versus a Wall Street estimate near +85,000, sharply cutting the odds markets had assigned to a Fed rate hike — not cut — at the September meeting; a benign July CPI print days later reinforced the shift. The unusual backdrop of the Fed weighing whether to tighten, rather than ease, is shaping global risk appetite right now.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A single weak jobs report just flipped the market's expectation from hike to no-hike — a reminder of how thin the data-dependency really is right now.</p>
         <span class="src"><a href="https://www.cnbc.com/2026/08/07/odds-the-fed-hikes-in-september-tumble-following-big-july-jobs-miss.html" target="_blank" rel="noopener">CNBC →</a></span>
       
         <div class="vote-row" data-vote-key="mkt-2">
@@ -890,6 +929,7 @@
       <div>
         <h3>AI stocks power Wall Street to fresh record highs ahead of Nvidia's earnings</h3>
         <p>The S&amp;P 500 touched an intraday all-time high near 7,814.88 in mid-August, powered by AI-linked names. Nvidia closed at a record $227.16 before pushing past $231 — a roughly $5.5 trillion market cap — as investors position ahead of its 26 August earnings, where the company has guided to about $91 billion in quarterly revenue.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> With so much of the index's gains concentrated in AI names, a handful of companies' earnings now effectively set direction for the whole market.</p>
         <span class="src"><a href="https://www.alphaspread.com/market-news/stock-movements/nvidia-rises-to-record-highs-as-ai-demand-and-bullish-forecasts-keep-fueling-the-rally" target="_blank" rel="noopener">AlphaSpread →</a></span>
       
         <div class="vote-row" data-vote-key="mkt-3">
@@ -904,6 +944,7 @@
       <div>
         <h3>Gold breaks above $4,400/oz on geopolitical hedging and central-bank buying</h3>
         <p>Gold rose to roughly $4,375–4,400/oz in mid-August, driven by renewed Middle East tension, continued central-bank accumulation — China notably active — and broader macro uncertainty around the Fed's next move. It's a useful cross-check on how nervous global money actually is beneath the AI-driven equity records.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Gold breaking out even as equities hit records suggests "risk-on" and "hedge against uncertainty" are being priced at the same time — the rally isn't fully trusted.</p>
         <span class="src"><a href="https://intellectia.ai/blog/gold-price-rally-august-2026" target="_blank" rel="noopener">Intellectia →</a></span>
       
         <div class="vote-row" data-vote-key="mkt-4">
