@@ -333,6 +333,98 @@
   .item .src { display: inline-block; margin-top: 8px; font-size: 0.76rem; color: var(--ink-faint); letter-spacing: 0.02em; }
   .item .src a { color: inherit; text-decoration-color: var(--line); }
 
+  /* ---- Comments ---- */
+  .comments-section {
+    margin: 48px 0 0;
+    padding-top: 28px;
+    border-top: 1px solid var(--line);
+  }
+  .comments-section h2 {
+    font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    font-size: 1.3rem;
+    margin: 0 0 6px;
+  }
+  .comments-section .comments-sub {
+    font-size: 0.86rem;
+    color: var(--ink-faint);
+    margin: 0 0 18px;
+  }
+  .comment-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 24px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+  }
+  .comment-form input, .comment-form textarea {
+    padding: 9px 12px;
+    border-radius: 7px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 0.92rem;
+    font-family: inherit;
+    resize: vertical;
+  }
+  .comment-form textarea { min-height: 70px; }
+  .comment-form input:focus-visible, .comment-form textarea:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 1px;
+  }
+  .comment-form button {
+    align-self: flex-start;
+    padding: 9px 18px;
+    border-radius: 7px;
+    border: none;
+    background: var(--brand);
+    color: var(--bg);
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .comment-form button:hover { opacity: 0.9; }
+  .comment-form button:disabled { opacity: 0.6; cursor: default; }
+  .comment-status { font-size: 0.82rem; color: var(--ink-faint); min-height: 1.2em; }
+  .comments-list { display: flex; flex-direction: column; gap: 0; }
+  .comment-item { padding: 12px 0; border-top: 1px solid var(--line); }
+  .comment-item:first-child { border-top: none; padding-top: 0; }
+  .comment-alias { font-weight: 700; font-size: 0.88rem; color: var(--ink); }
+  .comment-time { font-size: 0.74rem; color: var(--ink-faint); margin-left: 8px; }
+  .comment-text { margin: 4px 0 0; font-size: 0.92rem; color: var(--ink-soft); line-height: 1.55; white-space: pre-wrap; }
+  .comments-empty { font-size: 0.88rem; color: var(--ink-faint); font-style: italic; }
+
+  /* ---- Vote row ---- */
+  .vote-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .vote-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--ink-faint);
+    font-size: 0.78rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  }
+  .vote-btn:hover { border-color: var(--ink-soft); color: var(--ink-soft); }
+  .vote-btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+  .vote-btn.voted-like { border-color: var(--up); color: var(--up); background: color-mix(in srgb, var(--up) 12%, var(--paper)); }
+  .vote-btn.voted-dislike { border-color: var(--down); color: var(--down); background: color-mix(in srgb, var(--down) 12%, var(--paper)); }
+  .vote-btn:disabled { cursor: default; opacity: 0.85; }
+  .vote-count { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+
   /* ---- Locked / subscriber reader's note ---- */
   .locked {
     border: 1px dashed color-mix(in srgb, var(--brand) 55%, var(--line));
@@ -449,7 +541,7 @@
   </div>
 </div>
 
-<div class="page">
+<div class="page" data-edition-date="2026-08-16">
 
   <div class="about">
     <p><strong>The Hour Brief</strong> is a daily read built for one sitting: what moved in AI and technology, what's shaping product and business across India and the rest of the world, and what the Indian stock market did and why. Every item links back to its original source — read the take here, click through for the full story.</p>
@@ -481,75 +573,115 @@
       <h2>Nvidia's $500B bet meets an AI price war</h2>
     </div>
 
-    <div class="item">
+    <div class="item" data-story-id="ai-1">
       <span class="dot"></span>
       <div>
         <h3>Nvidia guarantees a quarter of its own chips' resale value in a $500B financing push</h3>
         <p>Nvidia has lined up Apollo, Blackstone, BlackRock, Brookfield, Goldman Sachs and KKR to funnel more than $500 billion in third-party capital into AI data centers — and is personally backstopping up to 25% of the residual value of its GPUs in individual deals. If an operator can't repay debt and a GPU fire-sale falls short, Nvidia eats up to a quarter of the gap, an unusual attempt to manufacture a secondary market for aging chips.</p>
         <span class="src"><a href="https://techcrunch.com/2026/08/13/nvidias-new-500b-plan-is-risky-but-brilliant-especially-for-aging-gpus/" target="_blank" rel="noopener">TechCrunch →</a></span>
+      
+        <div class="vote-row" data-vote-key="ai-1">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">👍 <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">👎 <span class="vote-count">0</span></button>
+        </div>
       </div>
     </div>
 
-    <div class="item">
+    <div class="item" data-story-id="ai-2">
       <span class="dot"></span>
       <div>
         <h3>IBM goes all-in on OpenAI for enterprise AI delivery</h3>
         <p>IBM announced a strategic partnership on 13 August embedding GPT-5.6, Codex and ChatGPT Work into IBM Consulting Advantage, standing up a dedicated "OpenAI Practice" staffed with thousands of OpenAI-certified consultants across financial services, government, telecom and retail. The deal also folds in cybersecurity collaboration via OpenAI's Daybreak Cyber Partner Program.</p>
         <span class="src"><a href="https://newsroom.ibm.com/2026-08-13-ibm-partners-with-openai-to-accelerate-secure-ai-deployment-for-enterprises-across-core-operations" target="_blank" rel="noopener">IBM Newsroom →</a></span>
+      
+        <div class="vote-row" data-vote-key="ai-2">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">👍 <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">👎 <span class="vote-count">0</span></button>
+        </div>
       </div>
     </div>
 
-    <div class="item">
+    <div class="item" data-story-id="ai-3">
       <span class="dot"></span>
       <div>
         <h3>DeepSeek hikes API prices by up to 1,100% as demand outstrips capacity</h3>
         <p>Effective 16 August, DeepSeek is raising V4-Flash and V4-Pro API prices sharply: V4-Flash peak-hour input tokens jump from $0.14 to $0.44 per million, while V4-Pro peak pricing rises from $0.435 to $1.32 per million. The new peak/off-peak tiered pricing is designed to push developer workloads into less congested hours — a rare price hike in a market otherwise defined by cuts.</p>
         <span class="src"><a href="https://www.infoworld.com/article/4209439/deepseek-raises-some-v4-prices-by-more-than-10x-as-ai-demand-strains-capacity.html" target="_blank" rel="noopener">InfoWorld →</a></span>
+      
+        <div class="vote-row" data-vote-key="ai-3">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">👍 <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">👎 <span class="vote-count">0</span></button>
+        </div>
       </div>
     </div>
 
-    <div class="item">
+    <div class="item" data-story-id="ai-4">
       <span class="dot"></span>
       <div>
         <h3>OpenAI ships "Ultrafast" mode, runs GPT-5.6 Sol at 14x normal speed</h3>
         <p>OpenAI's new inference mode delivers up to 750 output tokens per second — roughly 14 times the standard rate for its flagship model. The launch is aimed squarely at latency-sensitive agentic and coding workloads, another sign the model race is shifting from raw capability toward speed and cost as the competitive lever.</p>
         <span class="src"><a href="https://techcrunch.com/2026/08/13/openai-introduces-ultrafast-a-new-mode-that-makes-gpt-5-6-sol-work-at-14x-the-speed/" target="_blank" rel="noopener">TechCrunch →</a></span>
+      
+        <div class="vote-row" data-vote-key="ai-4">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">👍 <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">👎 <span class="vote-count">0</span></button>
+        </div>
       </div>
     </div>
 
-    <div class="item">
+    <div class="item" data-story-id="ai-5">
       <span class="dot"></span>
       <div>
         <h3>Apple trains its own AI model for China, with Alibaba's help</h3>
         <p>Apple has built a China-specific large language model with assistance from Alibaba, reportedly the first foreign company approved by Beijing to offer a proprietary AI model domestically. The model runs alongside Apple's existing partner systems as it prepares to launch Apple Intelligence in China following Cyberspace Administration registration completed last month.</p>
         <span class="src"><a href="https://www.macrumors.com/2026/08/14/apple-trained-own-ai-model-for-china/" target="_blank" rel="noopener">MacRumors →</a></span>
+      
+        <div class="vote-row" data-vote-key="ai-5">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">👍 <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">👎 <span class="vote-count">0</span></button>
+        </div>
       </div>
     </div>
 
-    <div class="item">
+    <div class="item" data-story-id="ai-6">
       <span class="dot"></span>
       <div>
         <h3>Microsoft starts merging consumer and business Copilot into one "super app"</h3>
         <p>Microsoft has begun combining consumer Copilot and Microsoft 365 Copilot into a single app that lets users switch between personal and work accounts without data crossing over — mobile and web first, Windows and Mac following in September. In the process it's retiring underused consumer features, including Group Chats, AI podcast generation, Copilot Labs and Deep Research, by 18 August.</p>
         <span class="src"><a href="https://www.geekwire.com/2026/microsoft-starts-merging-its-copilot-consumer-and-business-apps-in-advance-of-super-app-rollout/" target="_blank" rel="noopener">GeekWire →</a></span>
+      
+        <div class="vote-row" data-vote-key="ai-6">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">👍 <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">👎 <span class="vote-count">0</span></button>
+        </div>
       </div>
     </div>
 
-    <div class="item">
+    <div class="item" data-story-id="ai-7">
       <span class="dot"></span>
       <div>
         <h3>Anthropic's Q2 revenue surges past $11.5B ahead of a fall IPO</h3>
         <p>Anthropic told investors its preliminary Q2 revenue topped $11.5 billion — more than 14 times the $787 million logged a year earlier and up from $4.73 billion in Q1 — with positive adjusted operating income. Investors are reportedly targeting an October IPO at a valuation north of $2 trillion, which would make it the largest listing in history.</p>
         <span class="src"><a href="https://www.cnbc.com/2026/08/15/anthropic-revenue-jumps-to-over-11point5-billion-in-q2-report.html" target="_blank" rel="noopener">CNBC →</a></span>
+      
+        <div class="vote-row" data-vote-key="ai-7">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">👍 <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">👎 <span class="vote-count">0</span></button>
+        </div>
       </div>
     </div>
 
-    <div class="item">
+    <div class="item" data-story-id="ai-8">
       <span class="dot"></span>
       <div>
         <h3>Google's Gemini app crosses 1 billion monthly users</h3>
         <p>Google says the Gemini app passed 1 billion monthly active users this month — its fastest-growing product ever, climbing from 400 million in May 2025 to 900 million by May 2026, then adding another 100 million-plus in under a month, driven by integration across Android, Chrome, Search and Workspace. ChatGPT reportedly reached 1 billion users first, in June, but growth there is said to be slowing as Gemini closes the gap.</p>
         <span class="src"><a href="https://techcrunch.com/2026/08/11/googles-gemini-app-surges-to-one-billion-users/" target="_blank" rel="noopener">TechCrunch →</a></span>
+      
+        <div class="vote-row" data-vote-key="ai-8">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">👍 <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">👎 <span class="vote-count">0</span></button>
+        </div>
       </div>
     </div>
 
@@ -570,75 +702,115 @@
       <h2>Everyone's doubling down — on data centers and DRHPs</h2>
     </div>
 
-    <div class="item">
+    <div class="item" data-story-id="biz-1">
       <span class="dot"></span>
       <div>
         <h3>L&amp;T bags a $1.57B order to build India's largest AI data centre</h3>
         <p>Larsen &amp; Toubro's AI infrastructure arm, LTN Compute, secured an order worth ₹10,000–15,000 crore ($1.05–1.57B) from US cloud platform Together AI on 13 August — L&amp;T's first major move into the "AI factory" business. The facility, at L&amp;T's Vyoma.AI campus in Chennai, will run 10,000 Nvidia B300 GPUs, India's largest single-cluster AI deployment so far.</p>
         <span class="src"><a href="https://www.business-standard.com/companies/news/larsen-and-toubro-secures-ai-data-centre-order-worth-up-to-1-57-billion-126081300855_1.html" target="_blank" rel="noopener">Business Standard →</a></span>
+      
+        <div class="vote-row" data-vote-key="biz-1">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">👍 <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">👎 <span class="vote-count">0</span></button>
+        </div>
       </div>
     </div>
 
-    <div class="item">
+    <div class="item" data-story-id="biz-2">
       <span class="dot"></span>
       <div>
         <h3>Zetwerk files updated IPO papers for ₹2,600 crore</h3>
         <p>Manufacturing platform Zetwerk refiled its DRHP with SEBI on 14 August, confirming a ₹2,600 crore fresh issue plus an offer-for-sale from promoters and investors including Peak XV, Accel and Lightspeed. FY26 revenue jumped 40.4% to ₹15,913 crore and its order book doubled to ₹12,370 crore — but 69% of the fresh raise goes straight to debt repayment, not growth capital.</p>
         <span class="src"><a href="https://www.business-standard.com/markets/ipo/india-s-zetwerk-files-updated-ipo-draft-papers-to-raise-272-million-126081400017_1.html" target="_blank" rel="noopener">Business Standard →</a></span>
+      
+        <div class="vote-row" data-vote-key="biz-2">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">👍 <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">👎 <span class="vote-count">0</span></button>
+        </div>
       </div>
     </div>
 
-    <div class="item">
+    <div class="item" data-story-id="biz-3">
       <span class="dot"></span>
       <div>
         <h3>Table Space files DRHP for an ₹800 crore managed-workspace IPO</h3>
         <p>Bengaluru-based Table Space, which leases 9.33 million sq ft to GCCs and Fortune 500 tenants across 33 clusters, filed for an IPO comprising a ₹800 crore fresh issue plus an OFS of up to 65.48 million shares on 11 August — the latest coworking/managed-office operator to test public markets, betting India's GCC office boom still has runway.</p>
         <span class="src"><a href="https://www.business-standard.com/markets/ipo/table-space-files-drhp-for-ipo-with-rs-800-crore-fresh-issue-126081100967_1.html" target="_blank" rel="noopener">Business Standard →</a></span>
+      
+        <div class="vote-row" data-vote-key="biz-3">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">👍 <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">👎 <span class="vote-count">0</span></button>
+        </div>
       </div>
     </div>
 
-    <div class="item">
+    <div class="item" data-story-id="biz-4">
       <span class="dot"></span>
       <div>
         <h3>Maharashtra FDA suspends food licences at Blinkit, Zepto and Instamart dark stores</h3>
         <p>Following an 7 August inspection at a Blinkit Malad West store that found cockroaches on produce, expired stock and food stored on the floor, Maharashtra's FDA launched a state-wide sweep of 86 quick-commerce facilities and suspended licences at 14 outlets across Blinkit, Zepto and Swiggy Instamart on 13 August — the sharpest regulatory jolt yet to the quick-commerce "dark store" model.</p>
         <span class="src"><a href="https://www.india.com/news/india/big-setback-for-blinkit-zepto-instamart-as-maharashtra-fda-suspends-licences-their-multiple-food-business-outlets-8501849/" target="_blank" rel="noopener">India.com →</a></span>
+      
+        <div class="vote-row" data-vote-key="biz-4">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">👍 <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">👎 <span class="vote-count">0</span></button>
+        </div>
       </div>
     </div>
 
-    <div class="item">
+    <div class="item" data-story-id="biz-5">
       <span class="dot"></span>
       <div>
         <h3>Yulu raises $93M to scale its EV fleet to 200,000</h3>
         <p>Series C round: $63M equity led by GEF Capital, $30M debt. Yulu currently runs ~50,000 vehicles, logging 1.6 million zero-emission miles a week and powering 750,000+ deliveries a day — the raise funds a roughly 4x fleet expansion plus a new Yulu Express service, quietly building an EV-leasing economy underneath quick commerce.</p>
         <span class="src"><a href="https://techcrunch.com/2026/08/11/indias-yulu-raises-93m-as-quick-commerce-boom-fuels-e-bike-demand/" target="_blank" rel="noopener">TechCrunch →</a></span>
+      
+        <div class="vote-row" data-vote-key="biz-5">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">👍 <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">👎 <span class="vote-count">0</span></button>
+        </div>
       </div>
     </div>
 
-    <div class="item">
+    <div class="item" data-story-id="biz-6">
       <span class="dot"></span>
       <div>
         <h3>LEAP India lists at a 4% premium, then slips below issue price</h3>
         <p>The ₹2,480 crore LEAP India IPO — 8.38x subscribed — debuted on 14 August at ₹165.90 on NSE, 4.34% above its ₹159 issue price, valuing the pallet-and-container pooling company at ₹7,312 crore. Shares fell below issue price within hours on profit-booking, a sign of how thin the margin for a "successful" IPO pop has gotten in this market.</p>
         <span class="src"><a href="https://www.business-standard.com/markets/news/leap-india-share-price-lists-at-4-premium-over-ipo-price-misses-expectations-126081400587_1.html" target="_blank" rel="noopener">Business Standard →</a></span>
+      
+        <div class="vote-row" data-vote-key="biz-6">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">👍 <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">👎 <span class="vote-count">0</span></button>
+        </div>
       </div>
     </div>
 
-    <div class="item">
+    <div class="item" data-story-id="biz-7">
       <span class="dot"></span>
       <div>
         <h3>Centricity's $29M round leads a $140M week for Indian startup funding</h3>
         <p>Indian startups raised roughly $139.5M this week, nearly two-thirds of it from Yulu's raise above; wealthtech platform Centricity closed the week's second-largest round at $29M. Cleantech led sector funding for a second straight week; year-to-date, Indian startups have now raised $11.4B across 1,210 equity rounds in 2026.</p>
         <span class="src"><a href="https://inc42.com/buzz/from-yulu-to-discovered-materials-indian-startups-raised-140-mn-this-week/" target="_blank" rel="noopener">Inc42 →</a></span>
+      
+        <div class="vote-row" data-vote-key="biz-7">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">👍 <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">👎 <span class="vote-count">0</span></button>
+        </div>
       </div>
     </div>
 
-    <div class="item">
+    <div class="item" data-story-id="biz-8">
       <span class="dot"></span>
       <div>
         <h3>Marty Cagan &amp; Bob Baxley: "A Fresh Definition of The Product Role"</h3>
         <p>Published 15 August on SVPG, Cagan and Baxley respond to the wave of "AI is killing the PM role" takes making the rounds this month, arguing most definitions of product management fail because they chase job titles instead of the operating model that actually determines a PM's responsibilities.</p>
         <span class="src"><a href="https://www.svpg.com/a-fresh-definition-of-the-product-role/" target="_blank" rel="noopener">Silicon Valley Product Group →</a></span>
+      
+        <div class="vote-row" data-vote-key="biz-8">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">👍 <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">👎 <span class="vote-count">0</span></button>
+        </div>
       </div>
     </div>
   </section>
@@ -677,45 +849,81 @@
       </div>
     </div>
 
-    <div class="item">
+    <div class="item" data-story-id="mkt-1">
       <span class="dot"></span>
       <div>
         <h3>Indian and US markets are shut for the weekend — figures above are Friday's close</h3>
         <p>Sensex and Nifty closed the week lower — down 0.6% and 0.83% respectively — as escalating tension in West Asia, which put Strait of Hormuz oil flows in question, and continued FPI selling offset resilient domestic institutional buying. Brent crude touched roughly $88.52/barrel on Friday, up 1.67% on the day, adding to India's import-cost worries.</p>
         <span class="src"><a href="https://www.kotakneo.com/news/market-news/closing-bell-14-august-2026-sensex-nifty-end-lower/" target="_blank" rel="noopener">Kotak Neo →</a></span>
+      
+        <div class="vote-row" data-vote-key="mkt-1">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">👍 <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">👎 <span class="vote-count">0</span></button>
+        </div>
       </div>
     </div>
 
-    <div class="item">
+    <div class="item" data-story-id="mkt-2">
       <span class="dot"></span>
       <div>
         <h3>Fed September rate-hike odds tumble after a shock July jobs miss</h3>
         <p>Nonfarm payrolls fell by roughly 23,000 in July versus a Wall Street estimate near +85,000, sharply cutting the odds markets had assigned to a Fed rate hike — not cut — at the September meeting; a benign July CPI print days later reinforced the shift. The unusual backdrop of the Fed weighing whether to tighten, rather than ease, is shaping global risk appetite right now.</p>
         <span class="src"><a href="https://www.cnbc.com/2026/08/07/odds-the-fed-hikes-in-september-tumble-following-big-july-jobs-miss.html" target="_blank" rel="noopener">CNBC →</a></span>
+      
+        <div class="vote-row" data-vote-key="mkt-2">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">👍 <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">👎 <span class="vote-count">0</span></button>
+        </div>
       </div>
     </div>
 
-    <div class="item">
+    <div class="item" data-story-id="mkt-3">
       <span class="dot"></span>
       <div>
         <h3>AI stocks power Wall Street to fresh record highs ahead of Nvidia's earnings</h3>
         <p>The S&amp;P 500 touched an intraday all-time high near 7,814.88 in mid-August, powered by AI-linked names. Nvidia closed at a record $227.16 before pushing past $231 — a roughly $5.5 trillion market cap — as investors position ahead of its 26 August earnings, where the company has guided to about $91 billion in quarterly revenue.</p>
         <span class="src"><a href="https://www.alphaspread.com/market-news/stock-movements/nvidia-rises-to-record-highs-as-ai-demand-and-bullish-forecasts-keep-fueling-the-rally" target="_blank" rel="noopener">AlphaSpread →</a></span>
+      
+        <div class="vote-row" data-vote-key="mkt-3">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">👍 <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">👎 <span class="vote-count">0</span></button>
+        </div>
       </div>
     </div>
 
-    <div class="item">
+    <div class="item" data-story-id="mkt-4">
       <span class="dot"></span>
       <div>
         <h3>Gold breaks above $4,400/oz on geopolitical hedging and central-bank buying</h3>
         <p>Gold rose to roughly $4,375–4,400/oz in mid-August, driven by renewed Middle East tension, continued central-bank accumulation — China notably active — and broader macro uncertainty around the Fed's next move. It's a useful cross-check on how nervous global money actually is beneath the AI-driven equity records.</p>
         <span class="src"><a href="https://intellectia.ai/blog/gold-price-rally-august-2026" target="_blank" rel="noopener">Intellectia →</a></span>
+      
+        <div class="vote-row" data-vote-key="mkt-4">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">👍 <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">👎 <span class="vote-count">0</span></button>
+        </div>
       </div>
     </div>
 
     <div class="callout">
       <strong>Varsity principle for today:</strong> risk management is the discipline that decides whether you're still in the game after a long run of winning trades — a market pulling back on geopolitical headlines is exactly when position-sizing and stop discipline, not conviction, determine the outcome.
       <br><span class="src"><a href="https://zerodha.com/varsity/chapter/always-manage-risk/" target="_blank" rel="noopener">Zerodha Varsity →</a></span>
+    </div>
+  </section>
+
+  <section class="comments-section" id="comments" data-edition-date="2026-08-16">
+    <h2>Discuss today's edition</h2>
+    <p class="comments-sub">Leave a name (or make one up) and join the conversation. Comments are public and lightly moderated.</p>
+
+    <form class="comment-form" id="comment-form">
+      <input type="text" id="comment-alias" placeholder="Name or alias" maxlength="40" required>
+      <textarea id="comment-text" placeholder="What stood out to you today?" maxlength="500" required></textarea>
+      <button type="submit">Post comment</button>
+      <div class="comment-status" id="comment-status"></div>
+    </form>
+
+    <div class="comments-list" id="comments-list">
+      <p class="comments-empty">Loading comments…</p>
     </div>
   </section>
 
@@ -730,5 +938,142 @@
   </footer>
 
 </div>
+<script>
+(function () {
+  var page = document.querySelector('.page');
+  var editionDate = page ? page.getAttribute('data-edition-date') : '';
+
+  function voteKey(storyId) { return editionDate + ':' + storyId; }
+  function votedFlagKey(storyId) { return 'hb-voted-' + voteKey(storyId); }
+
+  // ---- Votes ----
+  var voteRows = Array.prototype.slice.call(document.querySelectorAll('.vote-row[data-vote-key]'));
+  if (voteRows.length) {
+    var ids = voteRows.map(function (r) { return voteKey(r.getAttribute('data-vote-key')); });
+    fetch('/api/vote?ids=' + encodeURIComponent(ids.join(',')))
+      .then(function (r) { return r.ok ? r.json() : {}; })
+      .then(function (counts) {
+        voteRows.forEach(function (row) {
+          var storyId = row.getAttribute('data-vote-key');
+          var c = counts[voteKey(storyId)] || { like: 0, dislike: 0 };
+          setCounts(row, c.like, c.dislike);
+          applyVotedState(row, storyId);
+        });
+      })
+      .catch(function () {});
+
+    voteRows.forEach(function (row) {
+      var storyId = row.getAttribute('data-vote-key');
+      applyVotedState(row, storyId);
+      row.querySelectorAll('.vote-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          if (localStorage.getItem(votedFlagKey(storyId))) return;
+          var type = btn.getAttribute('data-vote');
+          btn.disabled = true;
+          fetch('/api/vote', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: voteKey(storyId), type: type })
+          })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+              setCounts(row, data.like, data.dislike);
+              localStorage.setItem(votedFlagKey(storyId), type);
+              applyVotedState(row, storyId);
+            })
+            .catch(function () { btn.disabled = false; });
+        });
+      });
+    });
+  }
+
+  function setCounts(row, like, dislike) {
+    var likeEl = row.querySelector('.vote-like .vote-count');
+    var dislikeEl = row.querySelector('.vote-dislike .vote-count');
+    if (likeEl) likeEl.textContent = like != null ? like : 0;
+    if (dislikeEl) dislikeEl.textContent = dislike != null ? dislike : 0;
+  }
+
+  function applyVotedState(row, storyId) {
+    var voted = localStorage.getItem(votedFlagKey(storyId));
+    row.querySelectorAll('.vote-btn').forEach(function (btn) {
+      var type = btn.getAttribute('data-vote');
+      btn.classList.toggle('voted-' + type, voted === type);
+      btn.disabled = !!voted;
+    });
+  }
+
+  // ---- Comments ----
+  var list = document.getElementById('comments-list');
+  var form = document.getElementById('comment-form');
+  var status = document.getElementById('comment-status');
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function renderComments(comments) {
+    if (!list) return;
+    if (!comments || !comments.length) {
+      list.innerHTML = '<p class="comments-empty">No comments yet — be the first.</p>';
+      return;
+    }
+    list.innerHTML = comments.map(function (c) {
+      var when = '';
+      try { when = new Date(c.ts).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch (e) {}
+      return '<div class="comment-item"><span class="comment-alias">' + escapeHtml(c.alias) +
+        '</span><span class="comment-time">' + when + '</span>' +
+        '<p class="comment-text">' + escapeHtml(c.text) + '</p></div>';
+    }).join('');
+  }
+
+  if (list && editionDate) {
+    fetch('/api/comments?date=' + encodeURIComponent(editionDate))
+      .then(function (r) { return r.ok ? r.json() : { comments: [] }; })
+      .then(function (data) { renderComments(data.comments); })
+      .catch(function () { list.innerHTML = '<p class="comments-empty">Couldn\'t load comments right now.</p>'; });
+  }
+
+  if (form) {
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var alias = document.getElementById('comment-alias').value.trim();
+      var text = document.getElementById('comment-text').value.trim();
+      if (!text) return;
+      var btn = form.querySelector('button');
+      btn.disabled = true;
+      status.textContent = 'Posting…';
+      fetch('/api/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: editionDate, alias: alias, text: text })
+      })
+        .then(function (r) {
+          if (r.status === 429) { status.textContent = "You're commenting a bit fast — try again in a bit."; throw new Error('rate limited'); }
+          if (!r.ok) { status.textContent = 'Something went wrong — try again.'; throw new Error('failed'); }
+          return r.json();
+        })
+        .then(function (data) {
+          status.textContent = '';
+          document.getElementById('comment-text').value = '';
+          var empty = list.querySelector('.comments-empty');
+          if (empty) list.innerHTML = '';
+          var when = '';
+          try { when = new Date(data.comment.ts).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch (e) {}
+          var el = document.createElement('div');
+          el.className = 'comment-item';
+          el.innerHTML = '<span class="comment-alias">' + escapeHtml(data.comment.alias) +
+            '</span><span class="comment-time">' + when + '</span>' +
+            '<p class="comment-text">' + escapeHtml(data.comment.text) + '</p>';
+          list.insertBefore(el, list.firstChild);
+        })
+        .catch(function () {})
+        .finally(function () { btn.disabled = false; });
+    });
+  }
+})();
+</script>
 </body>
 </html>
