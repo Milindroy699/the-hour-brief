@@ -2,14 +2,14 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
   <title>The Hour Brief</title>
   <subtitle>A free daily one-hour digest of AI &amp; tech, product &amp; business (India + global), and the Indian stock market.</subtitle>
-  <link href="https://milindroy699.github.io/the-hour-brief/feed.xml" rel="self"/>
-  <link href="https://milindroy699.github.io/the-hour-brief/"/>
-  <id>https://milindroy699.github.io/the-hour-brief/</id>
+  <link href="https://the-hour-brief.vercel.app/feed.xml" rel="self"/>
+  <link href="https://the-hour-brief.vercel.app/"/>
+  <id>https://the-hour-brief.vercel.app/</id>
   <updated>2026-08-16T12:00:00Z</updated>
   <entry>
     <title>Edition 001 — 16 August 2026</title>
-    <link href="https://milindroy699.github.io/the-hour-brief/archive/2026-08-16.html"/>
-    <id>https://milindroy699.github.io/the-hour-brief/archive/2026-08-16.html</id>
+    <link href="https://the-hour-brief.vercel.app/archive/2026-08-16.html"/>
+    <id>https://the-hour-brief.vercel.app/archive/2026-08-16.html</id>
     <updated>2026-08-16T12:00:00Z</updated>
     <summary type="text">AI &amp; Tech: Nvidia's $500B bet meets an AI price war. Product &amp; Business: Everyone's doubling down — on data centers and DRHPs. Stock Market: AI rally lifts Wall Street, Middle East risk weighs on Dalal Street.</summary>
   </entry>
