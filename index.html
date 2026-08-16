@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Hour Brief</title>
+<meta name="description" content="A free daily one-hour digest of AI/tech, product & business (India + global), and the Indian stock market — every item links to its original source.">
+<meta property="og:title" content="The Hour Brief">
+<meta property="og:description" content="A free daily one-hour digest of AI/tech, product & business (India + global), and the Indian stock market — every item links to its original source.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%8F%B1%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #f2f3ee;
+    --paper: #ffffff;
+    --paper-2: #e7e9e1;
+    --ink: #17191c;
+    --ink-soft: #52585a;
+    --ink-faint: #838a8a;
+    --line: #d7dad2;
+    --brand: #5b3e96;
+    --brand-soft: #efe9f7;
+    --tag-ai: #206b5a;
+    --tag-ai-soft: #e0ede9;
+    --tag-biz: #a3721f;
+    --tag-biz-soft: #f3e9d5;
+    --tag-mkt: #2c5490;
+    --tag-mkt-soft: #e2e9f2;
+    --up: #2f7a52;
+    --down: #b23b3b;
+    --shadow: 0 1px 2px rgba(23,25,28,0.06), 0 10px 28px rgba(23,25,28,0.06);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #131417;
+      --paper: #1b1d21;
+      --paper-2: #24262b;
+      --ink: #edeeec;
+      --ink-soft: #a9adaf;
+      --ink-faint: #757a7c;
+      --line: #2c2f34;
+      --brand: #a487d9;
+      --brand-soft: #241f34;
+      --tag-ai: #4fb59e;
+      --tag-ai-soft: #16241f;
+      --tag-biz: #d9a94e;
+      --tag-biz-soft: #2b2417;
+      --tag-mkt: #7ea2d6;
+      --tag-mkt-soft: #1b2532;
+      --up: #4fb579;
+      --down: #d9645f;
+      --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.4);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #131417;
+    --paper: #1b1d21;
+    --paper-2: #24262b;
+    --ink: #edeeec;
+    --ink-soft: #a9adaf;
+    --ink-faint: #757a7c;
+    --line: #2c2f34;
+    --brand: #a487d9;
+    --brand-soft: #241f34;
+    --tag-ai: #4fb59e;
+    --tag-ai-soft: #16241f;
+    --tag-biz: #d9a94e;
+    --tag-biz-soft: #2b2417;
+    --tag-mkt: #7ea2d6;
+    --tag-mkt-soft: #1b2532;
+    --up: #4fb579;
+    --down: #d9645f;
+    --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; }
+
+  html { background: var(--bg); }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, "Inter", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+
+  /* ---- Masthead band ---- */
+  .masthead-band {
+    background: var(--ink);
+    color: var(--bg);
+    padding: 30px 24px 26px;
+  }
+  .masthead-inner {
+    max-width: 820px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .wordmark {
+    font-family: -apple-system, "Inter", ui-sans-serif, system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 2.1rem;
+    letter-spacing: -0.01em;
+    margin: 0;
+    text-transform: uppercase;
+  }
+  .wordmark span { color: var(--brand); }
+  .tagline {
+    margin: 6px 0 0;
+    font-size: 0.95rem;
+    color: color-mix(in srgb, var(--bg) 70%, transparent);
+    max-width: 42ch;
+  }
+  .edition {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--bg) 65%, transparent);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .page {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 0 24px 96px;
+  }
+
+  /* ---- About strip ---- */
+  .about {
+    padding: 22px 0 24px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 8px;
+  }
+  .about p {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    max-width: 66ch;
+  }
+  .about strong { color: var(--ink); }
+  .about .free-line {
+    margin-top: 10px;
+    font-size: 0.86rem;
+    color: var(--ink-faint);
+  }
+
+  .nav {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin: 22px 0 40px;
+  }
+  .nav a {
+    text-decoration: none;
+    font-size: 0.78rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 7px 13px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    background: var(--paper);
+  }
+  .nav a:hover, .nav a:focus-visible { color: var(--ink); border-color: var(--ink-soft); }
+  .nav a:focus-visible { outline: 2px solid var(--ink-soft); outline-offset: 2px; }
+
+  /* ---- Section ---- */
+  section.lane { margin-bottom: 48px; scroll-margin-top: 20px; }
+
+  .lane-head { margin-bottom: 20px; }
+  .lane-tag {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+  }
+  .ai .lane-tag { background: var(--tag-ai-soft); color: var(--tag-ai); }
+  .biz .lane-tag { background: var(--tag-biz-soft); color: var(--tag-biz); }
+  .mkt .lane-tag { background: var(--tag-mkt-soft); color: var(--tag-mkt); }
+
+  .lane-head h2 {
+    font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    font-size: 1.65rem;
+    font-weight: 700;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .ai .lane-head h2 { border-left: 4px solid var(--tag-ai); padding-left: 13px; }
+  .biz .lane-head h2 { border-left: 4px solid var(--tag-biz); padding-left: 13px; }
+  .mkt .lane-head h2 { border-left: 4px solid var(--tag-mkt); padding-left: 13px; }
+
+  /* ---- Items ---- */
+  .item {
+    display: grid;
+    grid-template-columns: 20px 1fr;
+    gap: 12px;
+    padding: 15px 0;
+    border-top: 1px solid var(--line);
+  }
+  .item:first-of-type { border-top: none; padding-top: 0; }
+  .item .dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 7px; justify-self: center; }
+  .ai .item .dot { background: var(--tag-ai); }
+  .biz .item .dot { background: var(--tag-biz); }
+  .mkt .item .dot { background: var(--tag-mkt); }
+
+  .item h3 { font-size: 1.03rem; font-weight: 650; margin: 0 0 4px; line-height: 1.35; }
+  .item p { margin: 0; font-size: 0.94rem; line-height: 1.6; color: var(--ink-soft); max-width: 66ch; }
+  .item .src { display: inline-block; margin-top: 8px; font-size: 0.76rem; color: var(--ink-faint); letter-spacing: 0.02em; }
+  .item .src a { color: inherit; text-decoration-color: var(--line); }
+
+  /* ---- Locked / subscriber reader's note ---- */
+  .locked {
+    border: 1px dashed color-mix(in srgb, var(--brand) 55%, var(--line));
+    background: var(--brand-soft);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-top: 4px;
+  }
+  .locked .locked-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--brand);
+    margin-bottom: 10px;
+  }
+  .locked ul { margin: 0; padding-left: 18px; }
+  .locked li { font-size: 0.92rem; line-height: 1.6; color: var(--ink-soft); margin-bottom: 6px; }
+  .locked li:last-child { margin-bottom: 0; }
+  .locked a { color: var(--ink); font-weight: 600; }
+  .locked .paid-tag {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--brand);
+    background: var(--paper);
+    border: 1px solid color-mix(in srgb, var(--brand) 40%, var(--line));
+    border-radius: 4px;
+    padding: 1px 6px;
+    vertical-align: middle;
+  }
+  .locked .note { margin-top: 10px; font-size: 0.82rem; color: var(--ink-faint); }
+
+  /* ---- Ticker ---- */
+  .ticker {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 22px;
+    box-shadow: var(--shadow);
+  }
+  .ticker .cell { background: var(--paper); padding: 12px 14px; }
+  .ticker .idx { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); margin-bottom: 4px; }
+  .ticker .val { font-size: 1.15rem; font-weight: 700; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  .ticker .chg { font-size: 0.8rem; margin-left: 6px; }
+  .chg.up { color: var(--up); }
+  .chg.down { color: var(--down); }
+
+  .movers { display: flex; gap: 24px; flex-wrap: wrap; margin: 4px 0 26px; }
+  .movers .label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); margin-bottom: 6px; display: block; }
+  .movers .row { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; padding: 2px 0; font-size: 0.86rem; display: block; }
+
+  .callout {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 16px 18px;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    box-shadow: var(--shadow);
+  }
+  .callout strong { color: var(--ink); }
+
+  footer.colophon {
+    margin-top: 56px;
+    padding-top: 22px;
+    border-top: 1px solid var(--line);
+    font-size: 0.8rem;
+    color: var(--ink-faint);
+    line-height: 1.75;
+  }
+  footer.colophon a { color: var(--ink-soft); }
+  footer.colophon .disclaimer {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+  }
+
+  @media (max-width: 480px) {
+    .wordmark { font-size: 1.6rem; }
+    .masthead-inner { align-items: flex-start; }
+    .edition { text-align: left; }
+  }
+</style>
+</head>
+<body>
+
+<div class="masthead-band">
+  <div class="masthead-inner">
+    <div>
+      <h1 class="wordmark">The Hour <span>Brief</span></h1>
+      <p class="tagline">Sixty minutes. Three lanes. Everything that actually mattered today.</p>
+    </div>
+    <div class="edition">Edition 001<br>Sun, 16 Aug 2026</div>
+  </div>
+</div>
+
+<div class="page">
+
+  <div class="about">
+    <p><strong>The Hour Brief</strong> is a daily read built for one sitting: what moved in AI and technology, what's shaping product and business across India and the rest of the world, and what the Indian stock market did and why. Every item links back to its original source — read the take here, click through for the full story.</p>
+    <p class="free-line">Free to read, no account or sign-up needed. A few items point to stories from paid publications — those are marked and link out; everything else on this page is open.</p>
+  </div>
+
+  <nav class="nav" aria-label="Sections">
+    <a href="#ai">AI &amp; Tech</a>
+    <a href="#biz">Product &amp; Business</a>
+    <a href="#mkt">Stock Market</a>
+  </nav>
+
+  <!-- AI & TECH -->
+  <section class="lane ai" id="ai">
+    <div class="lane-head">
+      <span class="lane-tag">AI &amp; Tech</span>
+      <h2>The free tier just got a lot smarter</h2>
+    </div>
+
+    <div class="item">
+      <span class="dot"></span>
+      <div>
+        <h3>GPT‑5.6 Luna becomes ChatGPT's free default, after an 80% price cut</h3>
+        <p>OpenAI just raised the floor of what "free" AI can do, squeezing every competitor whose paid tier was winning on capability alone. The same week, Google confirmed Gemini crossed 1 billion monthly active users — distribution, not benchmarks, is deciding this round.</p>
+        <span class="src"><a href="https://aitoolsrecap.com/Blog/AINewsAugust2026.aspx" target="_blank" rel="noopener">AIToolsRecap →</a></span>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="dot"></span>
+      <div>
+        <h3>Anthropic hires its first Chief Global Affairs Officer</h3>
+        <p>Tino Cuéllar's appointment landed the same day officials met Anthropic, OpenAI, Google and Meta on an unpublished AI regulation framework. Regulatory positioning is now a named executive function at frontier labs, not a comms afterthought.</p>
+        <span class="src"><a href="https://aitoolsrecap.com/Blog/AINewsAugust2026.aspx" target="_blank" rel="noopener">AIToolsRecap →</a></span>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="dot"></span>
+      <div>
+        <h3>Gemini 3.7 Flash reframes the AI race around cost-per-task</h3>
+        <p>Google's new coding-focused model cuts prices roughly in half, pairs it with a 1M-token context window, at an introductory $0.75 per million input tokens through year-end. Model competition is shifting from benchmark scores to production economics.</p>
+        <span class="src"><a href="https://techstartups.com/2026/08/14/top-tech-news-today-august-14-2026-apple-anthropic-deepseek-google-ibm-pony-ai-openai-spacex-uber-more/" target="_blank" rel="noopener">Tech Startups →</a></span>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="dot"></span>
+      <div>
+        <h3>Apple quietly built a China-only model with Alibaba</h3>
+        <p>A geopolitics-first architecture decision: rather than one global model, Apple now maintains a China-specific stack. Expect more vendors to fork models along regulatory lines rather than treat AI as one global product.</p>
+        <span class="src"><a href="https://techstartups.com/2026/08/14/top-tech-news-today-august-14-2026-apple-anthropic-deepseek-google-ibm-pony-ai-openai-spacex-uber-more/" target="_blank" rel="noopener">Tech Startups →</a></span>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="dot"></span>
+      <div>
+        <h3>Meta releases Glimmer, a 30B open-weight model built for self-hosting</h3>
+        <p>Tuned for local agentic tool-use and coding, 131K context, 100+ languages — aimed at developers who want to run it themselves rather than call an API.</p>
+        <span class="src"><a href="https://techstartups.com/2026/08/14/top-tech-news-today-august-14-2026-apple-anthropic-deepseek-google-ibm-pony-ai-openai-spacex-uber-more/" target="_blank" rel="noopener">Tech Startups →</a></span>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="dot"></span>
+      <div>
+        <h3>Big Tech's AI infrastructure commitments near $1.5 trillion</h3>
+        <p>These are contractual purchase commitments for compute, chips and power — materially larger than reported capex, and the real number to watch when judging how exposed the hyperscalers are to a spending slowdown.</p>
+        <span class="src"><a href="https://techstartups.com/2026/08/14/top-tech-news-today-august-14-2026-apple-anthropic-deepseek-google-ibm-pony-ai-openai-spacex-uber-more/" target="_blank" rel="noopener">Tech Startups →</a></span>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="dot"></span>
+      <div>
+        <h3>An AI notetaker left 181,874 meetings wide open</h3>
+        <p>A missing Firestore tenant-isolation rule in tl;dv exposed meetings across 84,312 users and 35,003 domains — some live enough to join uninvited. A reminder that AI feature velocity and access-control hygiene don't automatically move together.</p>
+        <span class="src"><a href="https://bobdahacker.com/blog/tldv-hack" target="_blank" rel="noopener">bobdahacker (original disclosure) →</a></span>
+      </div>
+    </div>
+
+    <div class="locked">
+      <div class="locked-head">🔗 Also worth a read, elsewhere</div>
+      <ul>
+        <li><a href="https://the-ken.com/podcasts/zero-shot/china-trains-more-ai-researchers-and-workers-than-anyone-it-needs-5-million-more/" target="_blank" rel="noopener">China trains more AI researchers than anyone on Earth — and still needs 5 million more</a> <span class="paid-tag">The Ken · paid</span></li>
+      </ul>
+      <p class="note">This one link leads to a paid publication — everything else on this page is free. We link out rather than reproduce subscriber-only reporting.</p>
+    </div>
+  </section>
+
+  <!-- PRODUCT & BUSINESS -->
+  <section class="lane biz" id="biz">
+    <div class="lane-head">
+      <span class="lane-tag">Product &amp; Business</span>
+      <h2>Capital discipline, in Silicon Valley and in Delhi</h2>
+    </div>
+
+    <div class="item">
+      <span class="dot"></span>
+      <div>
+        <h3>Stratechery: "The CapEx Train Keeps Rolling"</h3>
+        <p>Ben Thompson's core worry isn't compute or power — it's capital. "If AI is as valuable as it seems, then it should pay for itself, but that hasn't happened yet." Nvidia is building vendor-financing mechanisms so customers can spread infrastructure costs over time, quietly spreading leverage through the ecosystem; Google is tapping equity markets directly. The open question: does AI revenue show up before this debt comes due?</p>
+        <span class="src"><a href="https://stratechery.com/2026/the-capex-train-keeps-rolling/" target="_blank" rel="noopener">Stratechery →</a></span>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="dot"></span>
+      <div>
+        <h3>Elena Verna goes back to individual contributor — on purpose</h3>
+        <p>After leading growth at Dropbox, Miro, Amplitude and SurveyMonkey, Verna moved to an IC role at Lovable after the org flattened, and personally shipped its enterprise pricing page to production. As AI shrinks the team size needed to ship, senior operators going hands-on is becoming a real career pattern, not a demotion.</p>
+        <span class="src"><a href="https://substack.com/@aakashgupta/note/c-259064797" target="_blank" rel="noopener">Aakash Gupta →</a></span>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="dot"></span>
+      <div>
+        <h3>Lenny's Newsletter has tilted hard toward AI</h3>
+        <p>Roughly half of recent issues are now AI-adjacent — agents, evals, AI-assisted analysis — with the rest split between PM craft and career advice. Recent thread worth sitting with: "Product manager is an unfair role, so work unfairly" — using AI leverage to punch above your resourcing rather than waiting for headcount.</p>
+        <span class="src"><a href="https://www.lennysnewsletter.com/" target="_blank" rel="noopener">Lenny's Newsletter →</a></span>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="dot"></span>
+      <div>
+        <h3>PM Modi commits to AI-skilling 1 crore youth within a year</h3>
+        <p>In his 80th Independence Day address, Modi pledged AI-skills training for 10 million young Indians over the next year, plus free coaching for competitive exams — a sharp expansion from existing efforts, where only 25,466 of 53,449 PMKVY 4.0 enrollees had been certified as of June 30.</p>
+        <span class="src"><a href="https://www.businesstoday.in/india/story/well-provide-ai-skill-training-to-1-crore-youth-pm-modis-big-announcement-on-independence-day-2026-549367-2026-08-15" target="_blank" rel="noopener">Business Today →</a></span>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="dot"></span>
+      <div>
+        <h3>Yulu raises $93M to scale its EV fleet to 200,000</h3>
+        <p>Series C round: $63M equity led by GEF Capital, $30M debt. Yulu currently runs ~50,000 vehicles, logging 1.6 million zero-emission miles a week and powering 750,000+ deliveries a day — the raise funds a roughly 4x fleet expansion plus a new Yulu Express service.</p>
+        <span class="src"><a href="https://techcrunch.com/2026/08/11/indias-yulu-raises-93m-as-quick-commerce-boom-fuels-e-bike-demand/" target="_blank" rel="noopener">TechCrunch →</a></span>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="dot"></span>
+      <div>
+        <h3>Saint-Gobain bets $1 billion that Indian buildings need to get smarter, not just bigger</h3>
+        <p>Insulation, glazing and construction chemistry — not more cement and air-conditioning — are the real lever on new-building energy use, per Saint-Gobain's India leadership, who see the company's India business tripling over the next decade. The five-year, ~$1B investment funds new factories, R&amp;D and sustainable-construction acquisitions.</p>
+        <span class="src"><a href="https://www.thecore.in/economy/interviewssaint-gobain-sreedhar-india-sustainable-construction-investment-869092" target="_blank" rel="noopener">The Core →</a></span>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="dot"></span>
+      <div>
+        <h3>Why foreign capital keeps avoiding India</h3>
+        <p>Economist Ajay Shah traces India's post-2011 investment slowdown to a build-up of "arbitrary state power" — unpredictable regulation, weak contract enforcement, friction between political and business elites — that raises the return any foreign investor needs before India is worth the risk. His diagnosis: this needs institutional reform, not a single policy fix.</p>
+        <span class="src"><a href="https://www.xkdr.org/author/ajay-shah" target="_blank" rel="noopener">XKDR Forum →</a></span>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="dot"></span>
+      <div>
+        <h3>SBI Research: India's Q1 FY27 GDP growth tracking at 8%</h3>
+        <p>Above the RBI's own 7% forecast — 86% of 50 tracked indicators accelerated, versus 69% a year earlier. Passenger vehicle sales +24%, EV registrations +55%, bank credit growth +18.6%, government capex up sharply as a share of budget estimates.</p>
+        <span class="src"><a href="https://www.businesstoday.in/latest/economy/story/sbi-research-sees-q1-fy27-gdp-growth-at-8-beats-rbis-7-forecast-86-indicators-accelerate-548545-2026-08-11" target="_blank" rel="noopener">Business Today →</a></span>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="dot"></span>
+      <div>
+        <h3>Lenskart's first quarter as a listed company: strong</h3>
+        <p>PAT up 269% YoY to ₹222 crore, revenue up 43% to ₹2,714 crore, EBITDA up 61%, margins up 443bps to 8.4%. Added 132 net new stores (83 in tier-2+ cities), entered 50 new Indian cities, international revenue up 38%.</p>
+        <span class="src"><a href="https://www.businesstoday.in/markets/stocks/story/lenskart-q1-results-profit-zooms-269-to-rs-222-crore-revenue-up-43-548831-2026-08-12" target="_blank" rel="noopener">Business Today →</a></span>
+      </div>
+    </div>
+
+    <div class="locked">
+      <div class="locked-head">🔗 Also worth a read, elsewhere</div>
+      <ul>
+        <li><a href="https://the-ken.com/story/a-household-name-a-pe-giant-a-star-ceo-what-more-does-eureka-forbes-need/" target="_blank" rel="noopener">A household name, a PE giant, a star CEO. What more does Eureka Forbes need?</a> <span class="paid-tag">The Ken · paid</span></li>
+        <li><a href="https://the-ken.com/story/tvs-and-bajaj-outsell-ather-a-new-scooter-could-flip-the-equation/" target="_blank" rel="noopener">TVS and Bajaj outsell Ather. A new scooter could flip the equation</a> <span class="paid-tag">The Ken · paid</span></li>
+        <li><a href="https://the-ken.com/the-collection/n-chandrasekaran-at-tata-sons-its-cyrus-mistry-all-over-again/" target="_blank" rel="noopener">N Chandrasekaran: at Tata Sons, it's Cyrus Mistry all over again</a> <span class="paid-tag">The Ken · paid</span></li>
+      </ul>
+      <p class="note">These three links lead to a paid publication — everything else on this page is free. We link out rather than reproduce subscriber-only reporting.</p>
+    </div>
+  </section>
+
+  <!-- STOCK MARKET -->
+  <section class="lane mkt" id="mkt">
+    <div class="lane-head">
+      <span class="lane-tag">Stock Market</span>
+      <h2>Tokyo's currency fight is everyone's problem now</h2>
+    </div>
+
+    <div class="ticker">
+      <div class="cell">
+        <div class="idx">Sensex (Fri close)</div>
+        <div class="val mono">78,009<span class="chg down">−71 · −0.09%</span></div>
+      </div>
+      <div class="cell">
+        <div class="idx">S&amp;P 500 (week)</div>
+        <div class="val mono">7,785.76<span class="chg up">+0.4% wk</span></div>
+      </div>
+      <div class="cell">
+        <div class="idx">Nasdaq Composite (week)</div>
+        <div class="val mono">26,729.16<span class="chg up">+0.1% wk</span></div>
+      </div>
+    </div>
+
+    <div class="movers">
+      <div class="col">
+        <span class="label">India — gainers (Fri)</span>
+        <span class="row mono">Bharti Airtel <span style="color:var(--up)">+2.5%</span></span>
+        <span class="row mono">Adani Ports <span style="color:var(--up)">+1.8%</span></span>
+      </div>
+      <div class="col">
+        <span class="label">India — laggards (Fri)</span>
+        <span class="row mono">Asian Paints <span style="color:var(--down)">−1.7%</span></span>
+        <span class="row mono">IndiGo <span style="color:var(--down)">−1.4%</span></span>
+        <span class="row mono">NTPC <span style="color:var(--down)">−1.2%</span></span>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="dot"></span>
+      <div>
+        <h3>The US and Japan just staged their first joint yen intervention since 1998</h3>
+        <p>The 10-year US Treasury now yields roughly 4.69% against 2.85% for Japanese government bonds — a gap wide enough that investors keep borrowing cheap yen to buy US debt regardless of intervention. Washington joined Tokyo's yen-buying because a forced Japanese sale of Treasuries to defend the currency would push US yields — and global borrowing costs — even higher. The Bank of Japan's next policy meeting, in September, is the one that actually matters.</p>
+        <span class="src"><a href="https://www.cnbc.com/2026/08/12/japan-yen-us-dollar-intervention-.html" target="_blank" rel="noopener">CNBC →</a></span>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="dot"></span>
+      <div>
+        <h3>Nvidia's SpaceX stake is worth roughly $21 billion</h3>
+        <p>122.8 million Class A shares, traced back to Nvidia's $10B slice of xAI's $20B round in January (xAI was folded into SpaceX in February). It's now Nvidia's second-biggest disclosed holding after Intel — though SpaceX's own share price has since slipped, trimming the stake's value to closer to $17B.</p>
+        <span class="src"><a href="https://www.cnbc.com/2026/08/14/nvidia-discloses-21-billion-stake-in-spacex-at-end-of-second-quarter.html" target="_blank" rel="noopener">CNBC →</a></span>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="dot"></span>
+      <div>
+        <h3>US markets: third straight weekly gain, but Friday wobbled</h3>
+        <p>The S&amp;P 500 touched fresh all-time highs mid-week before easing back on Friday after a weak preliminary University of Michigan consumer-sentiment reading (51 vs. ~55 expected) and the steepest drop in July retail sales in over a year. Read-through for India: global risk appetite is intact, not unconditional.</p>
+        <span class="src"><a href="https://finance.yahoo.com/markets/live/stock-market-today-friday-august-14-dow-sp-500-nasdaq-102635519.html" target="_blank" rel="noopener">Yahoo Finance →</a></span>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="dot"></span>
+      <div>
+        <h3>Watch: Sunshine Pictures' ₹282 crore IPO opens 18 August</h3>
+        <p>Price band ₹342–360, closes 20 August, lists 25 August. A small-cap primary-market data point for gauging current retail appetite ahead of bigger listings later this quarter.</p>
+        <span class="src"><a href="https://www.freepressjournal.in/business/vipul-shah-promoted-sunshine-pictures-to-launch-282-crore-ipo-on-august-18-price-band-set-at-342-360" target="_blank" rel="noopener">Free Press Journal →</a></span>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>Varsity principle for today:</strong> equity is the long-run inflation hedge, and risk and return move together by construction — the discipline is sizing each position to the risk you're actually taking, not to how confident today's headlines make you feel.
+      <br><span class="src"><a href="https://zerodha.com/varsity/" target="_blank" rel="noopener">Zerodha Varsity →</a></span>
+    </div>
+  </section>
+
+  <footer class="colophon">
+    The Hour Brief is compiled daily from public reporting, newsletters and market data, with every summary linked back to its original source. AI &amp; Tech and Product &amp; Business draw on general technology and business press; Stock Market data covers NSE/BSE and US indices via public market reports.
+    <div class="disclaimer">
+      Nothing here is investment advice. Market figures are for information and discussion only — verify with a live data source before acting, and consult a licensed advisor for anything you're putting money behind.
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>
