@@ -318,9 +318,22 @@
     .masthead-inner { align-items: flex-start; }
     .edition { text-align: left; }
   }
+
+  .archive-banner {
+    background: var(--brand-soft);
+    color: var(--ink);
+    border-bottom: 1px solid var(--line);
+    padding: 10px 24px;
+    font-size: 0.85rem;
+    text-align: center;
+  }
+  .archive-banner a { color: var(--brand); font-weight: 600; text-decoration: none; }
+  .archive-banner a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
+
+<div class="archive-banner">📅 You're viewing the archived <strong>16 Aug 2026</strong> edition — <a href="../">see today's edition</a> · <a href="./">browse all editions</a></div>
 
 <div class="masthead-band">
   <div class="masthead-inner">
@@ -343,7 +356,6 @@
     <a href="#ai">AI &amp; Tech</a>
     <a href="#biz">Product &amp; Business</a>
     <a href="#mkt">Stock Market</a>
-    <a href="archive/">Past Editions</a>
   </nav>
 
   <!-- AI & TECH -->
