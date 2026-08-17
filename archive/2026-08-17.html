@@ -1018,6 +1018,24 @@
   var page = document.querySelector('.page');
   var editionDate = page ? page.getAttribute('data-edition-date') : '';
 
+  // ---- Archive banner accuracy check ----
+  // Only present on archive/<date>.html pages. If this date turns out to still
+  // be the latest edition (not yet superseded), the "archived" framing is
+  // misleading — swap it for a neutral permalink note instead.
+  var archiveBanner = document.querySelector('.archive-banner');
+  if (archiveBanner && editionDate) {
+    fetch('../editions.json')
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data || !data.editions || !data.editions.length) return;
+        var latest = data.editions[data.editions.length - 1];
+        if (latest && latest.date === editionDate) {
+          archiveBanner.innerHTML = '📌 This is also today’s latest edition — permanently linked here. <a href="./">Browse all editions</a>';
+        }
+      })
+      .catch(function () {});
+  }
+
   // ---- Scrollspy tabs ----
   var navLinks = Array.prototype.slice.call(document.querySelectorAll('.nav a[href^="#"]'));
   var spySections = ['ai', 'biz', 'mkt']
