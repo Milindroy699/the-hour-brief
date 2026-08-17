@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Hour Brief</title>
+<meta name="description" content="A free daily one-hour digest of AI/tech, product & business (India + global), and the Indian stock market — every item links to its original source.">
+<meta property="og:title" content="The Hour Brief">
+<meta property="og:description" content="A free daily one-hour digest of AI/tech, product & business (India + global), and the Indian stock market — every item links to its original source.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<link rel="alternate" type="application/atom+xml" title="The Hour Brief" href="../feed.xml">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%8F%B1%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #f2f3ee;
+    --paper: #ffffff;
+    --paper-2: #e7e9e1;
+    --ink: #17191c;
+    --ink-soft: #52585a;
+    --ink-faint: #838a8a;
+    --line: #d7dad2;
+    --brand: #5b3e96;
+    --brand-soft: #efe9f7;
+    --tag-ai: #206b5a;
+    --tag-ai-soft: #e0ede9;
+    --tag-biz: #a3721f;
+    --tag-biz-soft: #f3e9d5;
+    --tag-mkt: #2c5490;
+    --tag-mkt-soft: #e2e9f2;
+    --up: #2f7a52;
+    --down: #b23b3b;
+    --shadow: 0 1px 2px rgba(23,25,28,0.06), 0 10px 28px rgba(23,25,28,0.06);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #131417;
+      --paper: #1b1d21;
+      --paper-2: #24262b;
+      --ink: #edeeec;
+      --ink-soft: #a9adaf;
+      --ink-faint: #757a7c;
+      --line: #2c2f34;
+      --brand: #a487d9;
+      --brand-soft: #241f34;
+      --tag-ai: #4fb59e;
+      --tag-ai-soft: #16241f;
+      --tag-biz: #d9a94e;
+      --tag-biz-soft: #2b2417;
+      --tag-mkt: #7ea2d6;
+      --tag-mkt-soft: #1b2532;
+      --up: #4fb579;
+      --down: #d9645f;
+      --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.4);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #131417;
+    --paper: #1b1d21;
+    --paper-2: #24262b;
+    --ink: #edeeec;
+    --ink-soft: #a9adaf;
+    --ink-faint: #757a7c;
+    --line: #2c2f34;
+    --brand: #a487d9;
+    --brand-soft: #241f34;
+    --tag-ai: #4fb59e;
+    --tag-ai-soft: #16241f;
+    --tag-biz: #d9a94e;
+    --tag-biz-soft: #2b2417;
+    --tag-mkt: #7ea2d6;
+    --tag-mkt-soft: #1b2532;
+    --up: #4fb579;
+    --down: #d9645f;
+    --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; }
+
+  html { background: var(--bg); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html { scroll-behavior: smooth; }
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, "Inter", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+
+  /* ---- Masthead band ---- */
+  .masthead-band {
+    background: var(--ink);
+    color: var(--bg);
+    padding: 30px 24px 26px;
+  }
+  .masthead-inner {
+    max-width: 1080px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .wordmark {
+    font-family: -apple-system, "Inter", ui-sans-serif, system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 2.1rem;
+    letter-spacing: -0.01em;
+    margin: 0;
+    text-transform: uppercase;
+  }
+  .wordmark span { color: var(--brand); }
+  .tagline {
+    margin: 6px 0 0;
+    font-size: 0.95rem;
+    color: color-mix(in srgb, var(--bg) 70%, transparent);
+    max-width: 42ch;
+  }
+  .edition {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--bg) 65%, transparent);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .page {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 24px 96px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 260px;
+    gap: 36px;
+    align-items: start;
+  }
+  .main-col { min-width: 0; }
+  .side-col { position: sticky; top: 72px; }
+  @media (max-width: 900px) {
+    .page { grid-template-columns: 1fr; max-width: 720px; }
+    .side-col { position: static; }
+  }
+
+  /* ---- Pause band ---- */
+  .pause-band {
+    background: var(--brand-soft);
+    border-bottom: 1px solid var(--line);
+  }
+  .pause-inner {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 22px 24px;
+  }
+  .pause-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--brand);
+    margin-bottom: 8px;
+  }
+  .pause-text {
+    margin: 0;
+    font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    font-style: italic;
+    font-size: 1.08rem;
+    line-height: 1.55;
+    color: var(--ink);
+    max-width: 62ch;
+    text-wrap: balance;
+  }
+  .pause-word {
+    font-style: normal;
+    font-weight: 700;
+  }
+  .pause-attr {
+    display: block;
+    margin-top: 10px;
+    font-size: 0.82rem;
+    font-style: normal;
+    color: var(--ink-faint);
+  }
+  .pause-attr a { color: var(--ink-soft); }
+
+  /* ---- About strip ---- */
+  .about {
+    padding: 22px 0 24px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 8px;
+  }
+  .about p {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    max-width: 66ch;
+  }
+  .about strong { color: var(--ink); }
+  .about .free-line {
+    margin-top: 10px;
+    font-size: 0.86rem;
+    color: var(--ink-faint);
+  }
+
+  /* ---- Subscribe box ---- */
+  .subscribe-box {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin: 20px 0 0;
+    box-shadow: var(--shadow);
+  }
+  .subscribe-box .sub-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--tag-mkt);
+    display: block;
+    margin-bottom: 6px;
+  }
+  .subscribe-box p {
+    margin: 0 0 12px;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .subscribe-form {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .subscribe-form input[type="email"] {
+    flex: 1 1 220px;
+    min-width: 0;
+    padding: 9px 12px;
+    border-radius: 7px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 0.92rem;
+    font-family: inherit;
+  }
+  .subscribe-form input[type="email"]:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 1px;
+  }
+  .subscribe-form button {
+    padding: 9px 18px;
+    border-radius: 7px;
+    border: none;
+    background: var(--brand);
+    color: var(--bg);
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .subscribe-form button:hover { opacity: 0.9; }
+  .subscribe-note {
+    margin-top: 8px;
+    font-size: 0.76rem;
+    color: var(--ink-faint);
+  }
+
+  .nav {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin: 0 0 40px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--bg);
+    padding: 14px 0;
+  }
+  .nav a {
+    text-decoration: none;
+    font-size: 0.78rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 7px 13px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    background: var(--paper);
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+  .nav a:hover, .nav a:focus-visible { color: var(--ink); border-color: var(--ink-soft); }
+  .nav a.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .nav a:focus-visible { outline: 2px solid var(--ink-soft); outline-offset: 2px; }
+
+  /* ---- Section ---- */
+  section.lane { margin-bottom: 48px; scroll-margin-top: 20px; }
+
+  .lane-head { margin-bottom: 20px; }
+  .lane-tag {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+  }
+  .ai .lane-tag { background: var(--tag-ai-soft); color: var(--tag-ai); }
+  .biz .lane-tag { background: var(--tag-biz-soft); color: var(--tag-biz); }
+  .mkt .lane-tag { background: var(--tag-mkt-soft); color: var(--tag-mkt); }
+
+  .lane-head h2 {
+    font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    font-size: 1.65rem;
+    font-weight: 700;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .ai .lane-head h2 { border-left: 4px solid var(--tag-ai); padding-left: 13px; }
+  .biz .lane-head h2 { border-left: 4px solid var(--tag-biz); padding-left: 13px; }
+  .mkt .lane-head h2 { border-left: 4px solid var(--tag-mkt); padding-left: 13px; }
+
+  /* ---- Items ---- */
+  .item {
+    display: grid;
+    grid-template-columns: 20px 1fr;
+    gap: 12px;
+    padding: 15px 0;
+    border-top: 1px solid var(--line);
+  }
+  .item:first-of-type { border-top: none; padding-top: 0; }
+  .item .dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 7px; justify-self: center; }
+  .ai .item .dot { background: var(--tag-ai); }
+  .biz .item .dot { background: var(--tag-biz); }
+  .mkt .item .dot { background: var(--tag-mkt); }
+
+  .item h3 { font-size: 1.03rem; font-weight: 650; margin: 0 0 4px; line-height: 1.35; }
+  .item p { margin: 0; font-size: 0.94rem; line-height: 1.6; color: var(--ink-soft); max-width: 66ch; }
+  .item .src { display: inline-block; margin-top: 8px; font-size: 0.76rem; color: var(--ink-faint); letter-spacing: 0.02em; }
+  .item .src a { color: inherit; text-decoration-color: var(--line); }
+
+  /* ---- Takeaway ---- */
+  .item .takeaway {
+    margin: 10px 0 0;
+    padding: 8px 12px;
+    border-left: 3px solid var(--brand);
+    background: var(--paper-2);
+    border-radius: 0 6px 6px 0;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: var(--ink);
+    max-width: 64ch;
+  }
+  .item .takeaway-label {
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    color: var(--brand);
+    margin-right: 6px;
+  }
+
+  /* ---- Comments ---- */
+  .comments-section {
+    margin: 48px 0 0;
+    padding-top: 28px;
+    border-top: 1px solid var(--line);
+  }
+  .comments-section h2 {
+    font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    font-size: 1.3rem;
+    margin: 0 0 6px;
+  }
+  .comments-section .comments-sub {
+    font-size: 0.86rem;
+    color: var(--ink-faint);
+    margin: 0 0 18px;
+  }
+  .comment-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 24px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+  }
+  .comment-form input, .comment-form textarea {
+    padding: 9px 12px;
+    border-radius: 7px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 0.92rem;
+    font-family: inherit;
+    resize: vertical;
+  }
+  .comment-form textarea { min-height: 70px; }
+  .comment-form input:focus-visible, .comment-form textarea:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 1px;
+  }
+  .comment-form button {
+    align-self: flex-start;
+    padding: 9px 18px;
+    border-radius: 7px;
+    border: none;
+    background: var(--brand);
+    color: var(--bg);
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .comment-form button:hover { opacity: 0.9; }
+  .comment-form button:disabled { opacity: 0.6; cursor: default; }
+  .comment-status { font-size: 0.82rem; color: var(--ink-faint); min-height: 1.2em; }
+  .comments-list { display: flex; flex-direction: column; gap: 0; }
+  .comment-item { padding: 12px 0; border-top: 1px solid var(--line); }
+  .comment-item:first-child { border-top: none; padding-top: 0; }
+  .comment-alias { font-weight: 700; font-size: 0.88rem; color: var(--ink); }
+  .comment-time { font-size: 0.74rem; color: var(--ink-faint); margin-left: 8px; }
+  .comment-text { margin: 4px 0 0; font-size: 0.92rem; color: var(--ink-soft); line-height: 1.55; white-space: pre-wrap; }
+  .comments-empty { font-size: 0.88rem; color: var(--ink-faint); font-style: italic; }
+
+  /* ---- Vote row ---- */
+  .vote-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .vote-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--ink-faint);
+    font-size: 0.78rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  }
+  .vote-btn:hover { border-color: var(--ink-soft); color: var(--ink-soft); }
+  .vote-btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+  .vote-btn.voted-like { border-color: var(--up); color: var(--up); background: color-mix(in srgb, var(--up) 12%, var(--paper)); }
+  .vote-btn.voted-dislike { border-color: var(--down); color: var(--down); background: color-mix(in srgb, var(--down) 12%, var(--paper)); }
+  .vote-btn:disabled { cursor: default; opacity: 0.85; }
+  .vote-count { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+
+  /* ---- Locked / subscriber reader's note ---- */
+  .locked {
+    border: 1px dashed color-mix(in srgb, var(--brand) 55%, var(--line));
+    background: var(--brand-soft);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-top: 4px;
+  }
+  .locked .locked-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--brand);
+    margin-bottom: 10px;
+  }
+  .locked ul { margin: 0; padding-left: 18px; }
+  .locked li { font-size: 0.92rem; line-height: 1.6; color: var(--ink-soft); margin-bottom: 6px; }
+  .locked li:last-child { margin-bottom: 0; }
+  .locked a { color: var(--ink); font-weight: 600; }
+  .locked .paid-tag {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--brand);
+    background: var(--paper);
+    border: 1px solid color-mix(in srgb, var(--brand) 40%, var(--line));
+    border-radius: 4px;
+    padding: 1px 6px;
+    vertical-align: middle;
+  }
+  .locked .note { margin-top: 10px; font-size: 0.82rem; color: var(--ink-faint); }
+
+  /* ---- Ticker ---- */
+  .ticker {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 22px;
+    box-shadow: var(--shadow);
+  }
+  .ticker .cell { background: var(--paper); padding: 12px 14px; }
+  .ticker .idx { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); margin-bottom: 4px; }
+  .ticker .val { font-size: 1.15rem; font-weight: 700; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  .ticker .chg { font-size: 0.8rem; margin-left: 6px; }
+  .chg.up { color: var(--up); }
+  .chg.down { color: var(--down); }
+
+  .movers { display: flex; gap: 24px; flex-wrap: wrap; margin: 4px 0 26px; }
+  .movers .label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); margin-bottom: 6px; display: block; }
+  .movers .row { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; padding: 2px 0; font-size: 0.86rem; display: block; }
+
+  .callout {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 16px 18px;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    box-shadow: var(--shadow);
+  }
+  .callout strong { color: var(--ink); }
+
+  footer.colophon {
+    margin-top: 56px;
+    padding-top: 22px;
+    border-top: 1px solid var(--line);
+    font-size: 0.8rem;
+    color: var(--ink-faint);
+    line-height: 1.75;
+  }
+  footer.colophon a { color: var(--ink-soft); }
+  footer.colophon .disclaimer {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+  }
+
+  @media (max-width: 480px) {
+    .wordmark { font-size: 1.6rem; }
+    .masthead-inner { align-items: flex-start; }
+    .edition { text-align: left; }
+  }
+
+  .archive-banner {
+    background: var(--brand-soft);
+    color: var(--ink);
+    border-bottom: 1px solid var(--line);
+    padding: 10px 24px;
+    font-size: 0.85rem;
+    text-align: center;
+  }
+  .archive-banner a { color: var(--brand); font-weight: 600; text-decoration: none; }
+  .archive-banner a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="archive-banner">📅 You're viewing the archived <strong>17 Aug 2026</strong> edition — <a href="../">see today's edition</a> · <a href="./">browse all editions</a></div>
+
+<div class="masthead-band">
+  <div class="masthead-inner">
+    <div>
+      <h1 class="wordmark">The Hour <span>Brief</span></h1>
+      <p class="tagline">Sixty minutes. Three lanes. Everything that actually mattered today.</p>
+    </div>
+    <div class="edition">Edition 002<br>Mon, 17 Aug 2026</div>
+  </div>
+</div>
+
+<div class="pause-band">
+  <div class="pause-inner">
+    <span class="pause-label">Before the news</span>
+    <p class="pause-text">There's a Japanese word, <span class="pause-word">komorebi</span>, for the sunlight that filters through leaves onto the ground below — dappled, always moving, never quite the same shape twice. It names something ordinary that most languages don't bother naming, which is its own small argument for paying attention.</p>
+  </div>
+</div>
+
+<div class="page" data-edition-date="2026-08-17">
+
+  <div class="main-col">
+
+  <div class="about">
+    <p><strong>The Hour Brief</strong> is a daily read built for one sitting: what moved in AI and technology, what's shaping product and business across India and the rest of the world, and what the Indian stock market did and why. Every item links back to its original source — read the take here, click through for the full story.</p>
+    <p class="free-line">Free to read, no account or sign-up needed. A few items point to stories from paid publications — those are marked and link out; everything else on this page is open.</p>
+  </div>
+
+  <nav class="nav" aria-label="Sections">
+    <a href="#ai">AI &amp; Tech</a>
+    <a href="#biz">Product &amp; Business</a>
+    <a href="#mkt">Stock Market</a>
+    <a href="./">Past Editions</a>
+  </nav>
+
+  <!-- AI & TECH -->
+  <section class="lane ai" id="ai">
+    <div class="lane-head">
+      <span class="lane-tag">AI &amp; Tech</span>
+      <h2>New models arrive as AI's talent and security cracks show</h2>
+    </div>
+
+    <div class="item" data-story-id="ai-1">
+      <span class="dot"></span>
+      <div>
+        <h3>xAI ships Grok 4.6, undercutting rivals by 60% on price</h3>
+        <p>xAI released Grok 4.6 on 12 August, matching GPT-5.6 Sol on the Artificial Analysis Intelligence Index while expanding context to 500K tokens. It launched simultaneously on Cursor, Grok Build and the API at roughly 60% below Claude Opus 5 and GPT-5.6 Sol list pricing &mdash; $2/$6 per million input/output tokens, doubling past 200K tokens &mdash; with a 2x usage promo for its first week.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Frontier-model pricing is becoming as competitive a battleground as benchmark scores &mdash; xAI is betting developers will switch labs for cost before they switch for capability.</p>
+        <span class="src"><a href="https://venturebeat.com/technology/spacexai-debuts-grok-4-6-overtaking-kimi-k3s-performance-and-matching-gpt-5-6-sol-for-worlds-third-best-on-artificial-analysis" target="_blank" rel="noopener">VentureBeat &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-1">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="item" data-story-id="ai-2">
+      <span class="dot"></span>
+      <div>
+        <h3>Alibaba open-sources its largest model yet, a 2.4-trillion-parameter Qwen3.8-Max</h3>
+        <p>Alibaba unveiled Qwen3.8-Max on 3 August &mdash; a 2.4 trillion-parameter Mixture-of-Experts model activating 95 billion parameters per query, with a 1-million-token context window and text/image/video input. It's the first Max-class Qwen model Alibaba has open-sourced, with weights for it and a smaller Qwen3.8-27B variant now on Hugging Face and ModelScope, and Alibaba claims benchmark parity with leading systems from OpenAI and Anthropic.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Every time a lab open-sources a frontier-class model, it gets harder for closed labs to charge a premium for capability alone.</p>
+        <span class="src"><a href="https://www.marktechpost.com/2026/08/03/alibaba-qwen-releases-qwen3-8-max/" target="_blank" rel="noopener">MarkTechPost &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-2">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="item" data-story-id="ai-3">
+      <span class="dot"></span>
+      <div>
+        <h3>Jeff Dean and three Google AI veterans leave to start a rival research lab</h3>
+        <p>Google confirmed on 5 August that Jeff Dean, Sanjay Ghemawat, Oriol Vinyals and Google Brain co-founder Quoc Le are departing to co-found Discovery Loop, a startup aimed at automating scientific and machine-learning research &mdash; with Google staying on as a founding investor and cloud partner. The news landed alongside Demis Hassabis stepping back from day-to-day leadership of DeepMind to become Alphabet's chief scientist, and Alphabet shares fell 4&ndash;5% on the announcements.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Losing four of its most senior AI researchers to a spin-out in a single day is a reminder that even Google's compute and talent moat has limits.</p>
+        <span class="src"><a href="https://www.geekwire.com/2026/the-startup-idea-that-convinced-a-uw-computer-science-legend-to-leave-google-after-27-years/" target="_blank" rel="noopener">GeekWire &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-3">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="item" data-story-id="ai-4">
+      <span class="dot"></span>
+      <div>
+        <h3>Zuckerberg publishes a 6,500-word AI manifesto alongside Meta's open-weight Muse Glimmer</h3>
+        <p>Mark Zuckerberg published &ldquo;The Future is for Everyone&rdquo; on 10 August, arguing for AI-driven individual empowerment and reaffirming Meta's commitment to open models. Alongside the essay, Meta released Muse Glimmer &mdash; a new family of open-weight models built to run on laptops &mdash; which Meta is positioning as a direct challenge to OpenAI's and Anthropic's closed-model approach.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Meta is betting its long-term edge is philosophical &mdash; open, on-device AI everyone can run &mdash; rather than chasing benchmark leadership against closed frontier labs.</p>
+        <span class="src"><a href="https://www.cnbc.com/2026/08/10/meta-muse-glimmer-open-weight-ai.html" target="_blank" rel="noopener">CNBC &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-4">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="item" data-story-id="ai-5">
+      <span class="dot"></span>
+      <div>
+        <h3>OpenAI launches GPT-5.6-Cyber, its first model to hit a &ldquo;high&rdquo; cyber-risk rating</h3>
+        <p>OpenAI launched GPT-5.6-Cyber on 10 August and restructured its Daybreak program into &ldquo;Daybreak Blue&rdquo; and &ldquo;Daybreak Red&rdquo; access tiers for vetted security researchers and defenders. OpenAI says the model completes roughly 95% of advanced exploit-chain and privilege-escalation tasks, versus 1.5% for standard GPT-5.6 Sol, and researchers used it to uncover two previously unknown vulnerabilities in Chrome's V8 engine; hardware security keys become mandatory for every Daybreak account from 1 September.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A model this good at finding exploits is a double-edged tool &mdash; the same capability that surfaces real Chrome bugs could just as easily be misused if access controls ever slip.</p>
+        <span class="src"><a href="https://venturebeat.com/technology/openai-launches-gpt-5-6-cyber-with-reduced-refusals-95-completion-on-advanced-cybersecurity-tasks" target="_blank" rel="noopener">VentureBeat &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-5">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="item" data-story-id="ai-6">
+      <span class="dot"></span>
+      <div>
+        <h3>AI notetaker tl;dv left 181,874 meetings &mdash; including government calls &mdash; exposed</h3>
+        <p>Researcher BobDaHacker disclosed that tl;dv's Firestore database lacked tenant isolation, letting any authenticated user query metadata for 181,874 meetings across 84,312 users and 35,003 email domains, including government meetings from 23 countries. Exposed live conference IDs let the researcher join active calls by impersonating the AI notetaker bot, succeeding in roughly 80% of tests; the flaw was first reported on 28 January and remained unfixed as of Dark Reading's 4 August report.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> AI notetakers now sit inside sensitive meetings by default &mdash; this is a good prompt to actually check what access you've granted one before your next call.</p>
+        <span class="src"><a href="https://www.darkreading.com/application-security/ai-notetaker-spy-government-corporate-video-calls" target="_blank" rel="noopener">Dark Reading &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-6">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="item" data-story-id="ai-7">
+      <span class="dot"></span>
+      <div>
+        <h3>Anthropic investors reportedly target a record $2 trillion IPO valuation for October</h3>
+        <p>Investors briefed on Anthropic's plans said on 13 August that the Claude maker is targeting an October IPO at a valuation of $2 trillion or more &mdash; which would make it the largest public offering in history, surpassing SpaceX's June 2026 debut. Backers cited annualized revenue projected to reach $100&ndash;120 billion by year-end, more than tenfold the $47 billion figure reported in May, with Morgan Stanley, Goldman Sachs and JPMorgan named as lead underwriters.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A $2 trillion target assumes enterprise AI spend keeps compounding at nearly 10x a year &mdash; a bet public investors haven't had to underwrite at this scale before.</p>
+        <span class="src"><a href="https://www.forbes.com/sites/jonmarkman/2026/08/13/anthropic-eyes-2-trillion-in-october-ipo-a-record-breaking-debut/" target="_blank" rel="noopener">Forbes &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-7">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="locked">
+      <div class="locked-head">&#128279; Also worth a read, elsewhere</div>
+      <ul>
+        <li><a href="https://www.theinformation.com/briefings" target="_blank" rel="noopener">OpenAI Employees Sold About $16 Billion of Equity</a> <span class="paid-tag">The Information &middot; paid</span></li>
+      </ul>
+      <p class="note">This link leads to a paid publication &mdash; everything else on this page is free. We link out rather than reproduce subscriber-only reporting.</p>
+    </div>
+  </section>
+
+  <!-- PRODUCT & BUSINESS -->
+  <section class="lane biz" id="biz">
+    <div class="lane-head">
+      <span class="lane-tag">Product &amp; Business</span>
+      <h2>IPO season peaks as Molbio and Shiprocket hit the tape</h2>
+    </div>
+
+    <div class="item" data-story-id="biz-1">
+      <span class="dot"></span>
+      <div>
+        <h3>Svatantra Microfin files DRHP for a &#8377;3,000 crore IPO</h3>
+        <p>Svatantra Microfin, India's second-largest NBFC-microfinance institution by AUM, filed its draft red herring prospectus with SEBI on 14 August for a &#8377;3,000 crore IPO &mdash; a &#8377;1,500 crore fresh issue plus a &#8377;1,500 crore offer-for-sale from investors Multiples Private Equity and Violicina Limited. Its microfinance AUM grew to &#8377;21,093 crore as of March 2026, up from &#8377;14,438 crore two years earlier; fresh-issue proceeds will bolster Tier-I capital for further lending.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A second large microfinance NBFC filing for an IPO in as many months suggests investor appetite for financial-inclusion lending is recovering, even as sector-stress headlines from 2024&ndash;25 still linger.</p>
+        <span class="src"><a href="https://www.business-standard.com/markets/ipo/svatantra-microfin-files-papers-with-sebi-for-3-000-crore-public-offer-126081401741_1.html" target="_blank" rel="noopener">Business Standard &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-1">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="item" data-story-id="biz-2">
+      <span class="dot"></span>
+      <div>
+        <h3>Shiprocket's &#8377;1,617 crore IPO sails through at 102x subscription</h3>
+        <p>E-commerce enablement platform Shiprocket closed its &#8377;1,617.48 crore IPO (price band &#8377;92&ndash;97) on 14 August with overall subscription of 102.28 times &mdash; QIBs bid 125.2x, NIIs 92.58x and retail 48.38x. Allotment is being finalised on 17 August, with listing tentatively set for 19 August; the company posted FY26 revenue of &#8377;2,024 crore, up from &#8377;1,632 crore in FY25, across 214,769 active merchants.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A 102x-subscribed IPO for an e-commerce logistics enabler is a strong read on how much investors are betting on India's D2C and quick-commerce ecosystem continuing to scale.</p>
+        <span class="src"><a href="https://www.share.market/buzz/ipo-corner/shiprocket-ipo-allotment-status/" target="_blank" rel="noopener">Share.Market (PhonePe Wealth) &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-2">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="item" data-story-id="biz-3">
+      <span class="dot"></span>
+      <div>
+        <h3>Molbio Diagnostics debuts on Dalal Street today after 70x subscription</h3>
+        <p>Point-of-care molecular diagnostics maker Molbio Diagnostics &mdash; known for its portable Truenat PCR platform &mdash; lists on NSE and BSE today, 17 August, following a &#8377;940 crore IPO (final price &#8377;807, band &#8377;768&ndash;807) that closed 12 August subscribed 70.27 times overall (186.39x QIB, 49.80x NII, 12.97x retail). The issue comprised a &#8377;200 crore fresh issue and &#8377;739.7 crore offer-for-sale.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A diagnostics-hardware maker listing at 70x subscription, rather than another consumer app, is a reminder that India's IPO boom isn't purely a software story.</p>
+        <span class="src"><a href="https://upstox.com/news/market-news/ipo/molbio-diagnostics-ipo-allotment-how-to-check-status-online-on-nse-bse-k-fin-technologies-listing-date-time-here/article-198568/" target="_blank" rel="noopener">Upstox &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-3">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="item" data-story-id="biz-4">
+      <span class="dot"></span>
+      <div>
+        <h3>AstroTalk becomes India's 8th unicorn of 2026 via a profit-funded ESOP buyback</h3>
+        <p>Noida-based astrology and spiritual-tech platform AstroTalk crossed a $1 billion valuation on 12 August through an ESOP buyback covering more than 100 employees &mdash; funded entirely from internal profits, not a fresh funding round. The valuation is up 3.3x from $300 million in June 2024, on total lifetime funding of just $34 million; FY25 revenue reached &#8377;1,176 crore, up from &#8377;651 crore, with &#8377;285 crore in pre-tax profit.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A unicorn valuation funded entirely by profits rather than new investor capital is rare enough in Indian startup land to be worth flagging on its own.</p>
+        <span class="src"><a href="https://entrackr.com/news/astrotalk-turns-unicorn-at-1-bn-valuation-via-esop-buyback-12253413" target="_blank" rel="noopener">Entrackr &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-4">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="item" data-story-id="biz-5">
+      <span class="dot"></span>
+      <div>
+        <h3>Electric two-wheeler maker River Mobility raises $120M Series C</h3>
+        <p>Bengaluru-based electric two-wheeler maker River Mobility raised $120 million in a Series C led by Elev8 Venture Partners and Claypond Capital &mdash; its first major backing from Indian institutional investors, alongside existing global backers Yamaha Motor, Toyota Ventures and Mitsui &amp; Co. The round funds a new manufacturing plant and retail expansion from 75 to over 350 stores by March 2028.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Global auto majors backing a homegrown EV two-wheeler maker signals India's EV supply chain is maturing enough to attract strategic, not just financial, capital.</p>
+        <span class="src"><a href="https://entrackr.com/news/river-mobility-raises-120-mn-in-series-c-led-by-elev8-claypond-capital-12232629" target="_blank" rel="noopener">Entrackr &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-5">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="item" data-story-id="biz-6">
+      <span class="dot"></span>
+      <div>
+        <h3>Ola Electric's battery unit wins an extended PLI timeline, &#8377;7,240 crore at stake</h3>
+        <p>The Ministry of Heavy Industries granted Ola Electric's battery subsidiary, Ola Cell Technologies, a revised five-year ACC PLI window running through 2031, pushing out original milestones by two years. The company is now eligible for cumulative incentives of up to &#8377;7,240 crore against its 20 GWh allocation; it currently has 2.5 GWh of installed cell capacity and expects to hit its first 6 GWh milestone by the September quarter.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A two-year timeline extension buys Ola Electric's battery unit breathing room, but it also raises the question of whether the original PLI milestones were realistic in the first place.</p>
+        <span class="src"><a href="https://inc42.com/buzz/ola-electric-eyes-up-to-%E2%82%B97240-cr-battery-cell-pli-incentives-after-timeline-revision/" target="_blank" rel="noopener">Inc42 &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-6">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="item" data-story-id="biz-7">
+      <span class="dot"></span>
+      <div>
+        <h3>SoftBank-backed OfBusiness revives an $800M India IPO plan</h3>
+        <p>B2B commerce and SME-financing platform OfBusiness is reviving IPO plans targeting roughly $800 million, including a fresh issue of around $200&ndash;260 million, at a mooted $5&ndash;6 billion valuation; Axis Capital, Morgan Stanley, JPMorgan and Citigroup have been engaged, with a DRHP filing targeted for mid-November. For FY26, OfBusiness reported net profit up 21% year-on-year to &#8377;724 crore on largely flat revenue of &#8377;20,645 crore.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Profit growth on flat revenue is an unusual growth story to take public &mdash; it will test how much investors reward margin discipline over top-line growth in this IPO cycle.</p>
+        <span class="src"><a href="https://inc42.com/buzz/ofbusiness-set-to-file-drhp-for-800-mn-ipo-by-mid-november/" target="_blank" rel="noopener">Inc42 &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-7">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="item" data-story-id="biz-8">
+      <span class="dot"></span>
+      <div>
+        <h3>Stratechery: capital, not chips or power, may be the AI buildout's real constraint</h3>
+        <p>In Stratechery's free Friday roundup (14 August), Ben Thompson examines whether capital could become the binding constraint on the AI buildout, pointing to Nvidia's new financing mechanism designed to help customers tap long-duration capital and Google leaning on equity financing as a bridge to sustainable AI revenue. The edition also flags the EU's mandate that AI providers label AI-generated outputs.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> If capital becomes the real bottleneck on AI infrastructure, financing structures like Nvidia's residual-value guarantees stop looking like marketing and start looking like necessity.</p>
+        <span class="src"><a href="https://stratechery.com/2026/the-capex-train-keeps-rolling/" target="_blank" rel="noopener">Stratechery (Ben Thompson) &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-8">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="item" data-story-id="biz-9">
+      <span class="dot"></span>
+      <div>
+        <h3>Lenny's Newsletter: the three founder archetypes that shape your story</h3>
+        <p>Ghostwriter and narrative strategist Kristen Lowe published a guest essay on Lenny's Newsletter (11 August) arguing founders fall into three archetypes &mdash; &ldquo;Problem,&rdquo; &ldquo;Insight&rdquo; and &ldquo;Vision&rdquo; &mdash; each evoking a different audience reaction: identification, trust or followship. She maps each to a distinct communications strategy, with Insight founders better served by long-form essays and podcasts, and Vision founders by video formats like keynotes.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> How a founder tells their own story may matter as much to fundraising and hiring as the metrics do &mdash; narrative strategy is becoming its own product-leadership skill.</p>
+        <span class="src"><a href="https://www.lennysnewsletter.com/p/how-to-make-people-care-about-your" target="_blank" rel="noopener">Lenny's Newsletter &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-9">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STOCK MARKET -->
+  <section class="lane mkt" id="mkt">
+    <div class="lane-head">
+      <span class="lane-tag">Stock Market</span>
+      <h2>FPIs turn buyers as oil and Nvidia's earnings loom over markets</h2>
+    </div>
+
+    <div class="ticker">
+      <div class="cell">
+        <div class="idx">Sensex &mdash; last session, Fri 14 Aug</div>
+        <div class="val mono">78,009.25<span class="chg down">&minus;70.71 &middot; &minus;0.09%</span></div>
+      </div>
+      <div class="cell">
+        <div class="idx">S&amp;P 500 &mdash; last session, Fri 14 Aug</div>
+        <div class="val mono">7,785.76<span class="chg down">&minus;13.23 &middot; &minus;0.17%</span></div>
+      </div>
+      <div class="cell">
+        <div class="idx">Nasdaq Composite &mdash; last session, Fri 14 Aug</div>
+        <div class="val mono">26,729.16<span class="chg down">&minus;73.86 &middot; &minus;0.28%</span></div>
+      </div>
+    </div>
+
+    <div class="movers">
+      <div class="col">
+        <span class="label">India &mdash; gainers (Fri, last session)</span>
+        <span class="row mono">Apollo Hospitals Enterprise <span style="color:var(--up)">+3.85%</span></span>
+        <span class="row mono">Bharti Airtel <span style="color:var(--up)">+2.73%</span></span>
+      </div>
+      <div class="col">
+        <span class="label">India &mdash; laggards (Fri, last session)</span>
+        <span class="row mono">Tata Motors PV <span style="color:var(--down)">&minus;4.32%</span></span>
+        <span class="row mono">Jio Financial Services <span style="color:var(--down)">&minus;2.56%</span></span>
+      </div>
+    </div>
+
+    <div class="item" data-story-id="mkt-1">
+      <span class="dot"></span>
+      <div>
+        <h3>FPIs turn net buyers, pumping &#8377;16,621 crore into Indian equities in early August</h3>
+        <p>Foreign portfolio investors injected &#8377;16,621 crore into Indian equities in the first fortnight of August &mdash; building on July's &#8377;20,200 crore inflow after four straight months of heavy selling &mdash; though FPIs remain net sellers for 2026 overall, having pulled out roughly &#8377;2.4 trillion year-to-date, already exceeding all of 2025's &#8377;1.66 trillion outflow. Indian and US markets are shut through the weekend into Monday morning IST, so the figures above are still Friday's close.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A fortnight of buying doesn't erase eight months of selling &mdash; worth watching whether this is the start of a real reversal or just a pause.</p>
+        <span class="src"><a href="https://www.business-standard.com/markets/news/fpis-pour-16-621-crore-into-indian-equities-in-first-half-of-august-126081600116_1.html" target="_blank" rel="noopener">Business Standard &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="mkt-1">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="item" data-story-id="mkt-2">
+      <span class="dot"></span>
+      <div>
+        <h3>S&amp;P 500 slips off a fresh record high but logs a third straight weekly gain</h3>
+        <p>US stocks pulled back on Friday, 14 August, with the S&amp;P 500 closing down 0.17% at 7,785.76 and the Nasdaq Composite down 0.28% at 26,729.16 &mdash; a day after the S&amp;P touched a fresh intraday record. The Dow Jones Industrial Average also slipped roughly 107 points (0.2%) to 53,732.41 as softer consumer-sentiment data weighed on the session, even as the S&amp;P 500 still closed out its third consecutive weekly gain.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A single soft data point can dent a record-setting week without breaking its underlying trend &mdash; this pullback looks like profit-taking, not a reversal.</p>
+        <span class="src"><a href="https://finance.yahoo.com/markets/live/stock-market-today-friday-august-14-dow-sp-500-nasdaq-102635519.html" target="_blank" rel="noopener">Yahoo Finance &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="mkt-2">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="item" data-story-id="mkt-3">
+      <span class="dot"></span>
+      <div>
+        <h3>Brent crude climbs past $88 a barrel as Middle East supply risk builds</h3>
+        <p>Brent crude rose to roughly $88.52/barrel on 14 August, up 1.67% on the day, after Iran and Oman failed to agree on reopening the Strait of Hormuz and Iran-backed Houthi militants targeted Saudi Arabia's Jazan refinery in the Red Sea. Analysts flagged that global oil supply could fall by roughly 4.3 million barrels per day this year if hostilities continue, pushing the market deeper into deficit.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Rising crude is a tax on Indian import costs and inflation alike &mdash; worth watching alongside equities, not as a separate story.</p>
+        <span class="src"><a href="https://www.forbes.com/advisor/investing/oil-prices-today/" target="_blank" rel="noopener">Forbes Advisor &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="mkt-3">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="item" data-story-id="mkt-4">
+      <span class="dot"></span>
+      <div>
+        <h3>Nvidia's 26 August earnings shape up as a bellwether for the whole AI trade</h3>
+        <p>Nvidia shares were trading near $219 in mid-August, up about 17.7% year-to-date but lagging the S&amp;P 500's roughly 7% gain over the same stretch. Wall Street expects Q2 FY27 revenue of $93&ndash;95 billion &mdash; about 96% year-over-year growth &mdash; driven by AI accelerator demand and the ramp of Blackwell-based products, with GAAP EPS estimated at $2.06, nearly double the year-ago figure.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> With so much of the market's AI narrative riding on one company, Nvidia's 26 August print could move far more than just Nvidia's own stock.</p>
+        <span class="src"><a href="https://www.fool.com/investing/2026/08/11/prediction-nvidia-stock-is-going-soar-after-aug-26/" target="_blank" rel="noopener">The Motley Fool &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="mkt-4">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>Varsity principle for today:</strong> position sizing &mdash; deciding how much capital to risk on any single trade &mdash; matters as much as picking the right stock. A common guideline is the &ldquo;5% rule&rdquo;: don't risk more than 5% of your total trading capital on any one trade, and many professional traders cap it tighter still, at 1&ndash;3%.
+      <br><span class="src"><a href="https://zerodha.com/varsity/chapter/position-sizing/" target="_blank" rel="noopener">Zerodha Varsity &rarr;</a></span>
+    </div>
+  </section>
+
+  <section class="comments-section" id="comments" data-edition-date="2026-08-17">
+    <h2>Discuss today's edition</h2>
+    <p class="comments-sub">Leave a name (or make one up) and join the conversation. Comments are public and lightly moderated.</p>
+
+    <form class="comment-form" id="comment-form">
+      <input type="text" id="comment-alias" placeholder="Name or alias" maxlength="40" required>
+      <textarea id="comment-text" placeholder="What stood out to you today?" maxlength="500" required></textarea>
+      <button type="submit">Post comment</button>
+      <div class="comment-status" id="comment-status"></div>
+    </form>
+
+    <div class="comments-list" id="comments-list">
+      <p class="comments-empty">Loading comments…</p>
+    </div>
+  </section>
+
+  <footer class="colophon">
+    The Hour Brief is compiled daily from public reporting, newsletters and market data, with every summary linked back to its original source. AI &amp; Tech and Product &amp; Business draw on general technology and business press; Stock Market data covers NSE/BSE and US indices via public market reports.
+    <div class="disclaimer">
+      New edition every morning. <a href="../feed.xml">Subscribe via RSS</a> to get each edition in your reader of choice (Feedly, NetNewsWire, Reeder, Inoreader, etc.) — no email or account needed.
+    </div>
+    <div class="disclaimer">
+      Nothing here is investment advice. Market figures are for information and discussion only — verify with a live data source before acting, and consult a licensed advisor for anything you're putting money behind.
+    </div>
+  </footer>
+
+  </div>
+
+  <aside class="side-col">
+    <div class="subscribe-box">
+      <span class="sub-label">Get it by email</span>
+      <p>One email a day, every morning. Unsubscribe anytime — no spam, just the day's edition.</p>
+      <form action="https://buttondown.email/api/emails/embed-subscribe/milind" method="post" target="popupwindow" onsubmit="window.open('https://buttondown.email/milind', 'popupwindow')" class="subscribe-form">
+        <input type="email" name="email" id="bd-email" placeholder="you@example.com" required>
+        <button type="submit">Subscribe</button>
+      </form>
+      <p class="subscribe-note">Powered by Buttondown. Prefer no inbox clutter? <a href="../feed.xml">Use RSS instead</a>.</p>
+    </div>
+  </aside>
+
+</div>
+<script>
+(function () {
+  var page = document.querySelector('.page');
+  var editionDate = page ? page.getAttribute('data-edition-date') : '';
+
+  // ---- Scrollspy tabs ----
+  var navLinks = Array.prototype.slice.call(document.querySelectorAll('.nav a[href^="#"]'));
+  var spySections = ['ai', 'biz', 'mkt']
+    .map(function (id) { return document.getElementById(id); })
+    .filter(Boolean);
+  if (navLinks.length && spySections.length && 'IntersectionObserver' in window) {
+    var spy = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          navLinks.forEach(function (link) {
+            link.classList.toggle('active', link.getAttribute('href') === '#' + entry.target.id);
+          });
+        }
+      });
+    }, { rootMargin: '-88px 0px -70% 0px', threshold: 0 });
+    spySections.forEach(function (s) { spy.observe(s); });
+  }
+
+  function voteKey(storyId) { return editionDate + ':' + storyId; }
+  function votedFlagKey(storyId) { return 'hb-voted-' + voteKey(storyId); }
+
+  // ---- Votes ----
+  var voteRows = Array.prototype.slice.call(document.querySelectorAll('.vote-row[data-vote-key]'));
+  if (voteRows.length) {
+    var ids = voteRows.map(function (r) { return voteKey(r.getAttribute('data-vote-key')); });
+    fetch('/api/vote?ids=' + encodeURIComponent(ids.join(',')))
+      .then(function (r) { return r.ok ? r.json() : {}; })
+      .then(function (counts) {
+        voteRows.forEach(function (row) {
+          var storyId = row.getAttribute('data-vote-key');
+          var c = counts[voteKey(storyId)] || { like: 0, dislike: 0 };
+          setCounts(row, c.like, c.dislike);
+          applyVotedState(row, storyId);
+        });
+      })
+      .catch(function () {});
+
+    voteRows.forEach(function (row) {
+      var storyId = row.getAttribute('data-vote-key');
+      applyVotedState(row, storyId);
+      row.querySelectorAll('.vote-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          if (localStorage.getItem(votedFlagKey(storyId))) return;
+          var type = btn.getAttribute('data-vote');
+          btn.disabled = true;
+          fetch('/api/vote', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: voteKey(storyId), type: type })
+          })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+              setCounts(row, data.like, data.dislike);
+              localStorage.setItem(votedFlagKey(storyId), type);
+              applyVotedState(row, storyId);
+            })
+            .catch(function () { btn.disabled = false; });
+        });
+      });
+    });
+  }
+
+  function setCounts(row, like, dislike) {
+    var likeEl = row.querySelector('.vote-like .vote-count');
+    var dislikeEl = row.querySelector('.vote-dislike .vote-count');
+    if (likeEl) likeEl.textContent = like != null ? like : 0;
+    if (dislikeEl) dislikeEl.textContent = dislike != null ? dislike : 0;
+  }
+
+  function applyVotedState(row, storyId) {
+    var voted = localStorage.getItem(votedFlagKey(storyId));
+    row.querySelectorAll('.vote-btn').forEach(function (btn) {
+      var type = btn.getAttribute('data-vote');
+      btn.classList.toggle('voted-' + type, voted === type);
+      btn.disabled = !!voted;
+    });
+  }
+
+  // ---- Comments ----
+  var list = document.getElementById('comments-list');
+  var form = document.getElementById('comment-form');
+  var status = document.getElementById('comment-status');
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function renderComments(comments) {
+    if (!list) return;
+    if (!comments || !comments.length) {
+      list.innerHTML = '<p class="comments-empty">No comments yet — be the first.</p>';
+      return;
+    }
+    list.innerHTML = comments.map(function (c) {
+      var when = '';
+      try { when = new Date(c.ts).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch (e) {}
+      return '<div class="comment-item"><span class="comment-alias">' + escapeHtml(c.alias) +
+        '</span><span class="comment-time">' + when + '</span>' +
+        '<p class="comment-text">' + escapeHtml(c.text) + '</p></div>';
+    }).join('');
+  }
+
+  if (list && editionDate) {
+    fetch('/api/comments?date=' + encodeURIComponent(editionDate))
+      .then(function (r) { return r.ok ? r.json() : { comments: [] }; })
+      .then(function (data) { renderComments(data.comments); })
+      .catch(function () { list.innerHTML = '<p class="comments-empty">Couldn\'t load comments right now.</p>'; });
+  }
+
+  if (form) {
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var alias = document.getElementById('comment-alias').value.trim();
+      var text = document.getElementById('comment-text').value.trim();
+      if (!text) return;
+      var btn = form.querySelector('button');
+      btn.disabled = true;
+      status.textContent = 'Posting…';
+      fetch('/api/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: editionDate, alias: alias, text: text })
+      })
+        .then(function (r) {
+          if (r.status === 429) { status.textContent = "You're commenting a bit fast — try again in a bit."; throw new Error('rate limited'); }
+          if (!r.ok) { status.textContent = 'Something went wrong — try again.'; throw new Error('failed'); }
+          return r.json();
+        })
+        .then(function (data) {
+          status.textContent = '';
+          document.getElementById('comment-text').value = '';
+          var empty = list.querySelector('.comments-empty');
+          if (empty) list.innerHTML = '';
+          var when = '';
+          try { when = new Date(data.comment.ts).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch (e) {}
+          var el = document.createElement('div');
+          el.className = 'comment-item';
+          el.innerHTML = '<span class="comment-alias">' + escapeHtml(data.comment.alias) +
+            '</span><span class="comment-time">' + when + '</span>' +
+            '<p class="comment-text">' + escapeHtml(data.comment.text) + '</p>';
+          list.insertBefore(el, list.firstChild);
+        })
+        .catch(function () {})
+        .finally(function () { btn.disabled = false; });
+    });
+  }
+})();
+</script>
+</body>
+</html>
