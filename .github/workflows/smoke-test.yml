@@ -1,0 +1,74 @@
+name: Smoke test
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+  schedule:
+    # Runs ~20 min after the daily publish routine (2:30 UTC), independent of it
+    - cron: '0 3 * * *'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for deploy to propagate
+        if: github.event_name == 'push'
+        run: sleep 45
+
+      - name: Run checks
+        run: |
+          set -e
+          BASE="https://the-hour-brief.vercel.app"
+          fail=0
+
+          check_status() {
+            url="$1"; expect="$2"
+            code=$(curl -s -o /dev/null -w "%{http_code}" "$url")
+            if [ "$code" != "$expect" ]; then
+              echo "::error::$url returned $code (expected $expect)"
+              fail=1
+            else
+              echo "OK  $url -> $code"
+            fi
+          }
+
+          check_status "$BASE/" 200
+          check_status "$BASE/archive/" 200
+          check_status "$BASE/feed.xml" 200
+
+          echo "--- checking every archived edition referenced in editions.json ---"
+          python3 - "$BASE" <<'PYEOF'
+          import json, sys, urllib.request
+
+          base = sys.argv[1]
+          req = urllib.request.urlopen(f"{base}/editions.json")
+          data = json.load(req)
+
+          bad = []
+          for ed in data.get("editions", []):
+              path = ed["path"]
+              url = f"{base}/{path}"
+              try:
+                  r = urllib.request.urlopen(url)
+                  code = r.status
+              except Exception as e:
+                  code = getattr(e, "code", "ERR")
+              status = "OK " if code == 200 else "FAIL"
+              print(f"{status} {url} -> {code}")
+              if code != 200:
+                  bad.append(url)
+
+          if bad:
+              print(f"::error::{len(bad)} archived edition(s) broken: {bad}")
+              sys.exit(1)
+          PYEOF
+
+          echo "--- checking API routes respond with valid JSON ---"
+          vote_resp=$(curl -s "$BASE/api/vote?ids=smoketest:ci-check")
+          echo "$vote_resp" | python3 -c "import json,sys; json.load(sys.stdin)" || { echo "::error::/api/vote did not return valid JSON"; fail=1; }
+
+          comments_resp=$(curl -s "$BASE/api/comments?date=2026-08-16")
+          echo "$comments_resp" | python3 -c "import json,sys; json.load(sys.stdin)" || { echo "::error::/api/comments did not return valid JSON"; fail=1; }
+
+          exit $fail

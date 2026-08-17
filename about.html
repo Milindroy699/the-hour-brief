@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How This Is Made — The Hour Brief</title>
+<meta name="description" content="How The Hour Brief is researched, written and published — sourcing policy, verification limits, and what the vote/comment counts do and don't mean.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%8F%B1%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #f2f3ee; --paper: #ffffff; --paper-2: #e7e9e1;
+    --ink: #17191c; --ink-soft: #52585a; --ink-faint: #838a8a; --line: #d7dad2;
+    --brand: #5b3e96; --brand-soft: #efe9f7;
+    --shadow: 0 1px 2px rgba(23,25,28,0.06), 0 10px 28px rgba(23,25,28,0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #131417; --paper: #1b1d21; --paper-2: #24262b;
+      --ink: #edeeec; --ink-soft: #a9adaf; --ink-faint: #757a7c; --line: #2c2f34;
+      --brand: #a487d9; --brand-soft: #241f34;
+      --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #131417; --paper: #1b1d21; --paper-2: #24262b;
+    --ink: #edeeec; --ink-soft: #a9adaf; --ink-faint: #757a7c; --line: #2c2f34;
+    --brand: #a487d9; --brand-soft: #241f34;
+    --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.4);
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--bg); }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, "Inter", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .masthead-band { background: var(--ink); color: var(--bg); padding: 30px 24px 26px; }
+  .masthead-inner { max-width: 720px; margin: 0 auto; display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; }
+  .wordmark { font-weight: 800; font-size: 2.1rem; letter-spacing: -0.01em; margin: 0; text-transform: uppercase; }
+  .wordmark span { color: var(--brand); }
+  .back-link { font-size: 0.78rem; letter-spacing: 0.03em; text-transform: uppercase; color: color-mix(in srgb, var(--bg) 70%, transparent); text-decoration: none; white-space: nowrap; }
+  .back-link:hover { color: var(--bg); }
+
+  .page { max-width: 720px; margin: 0 auto; padding: 40px 24px 96px; }
+  h1 { font-family: Georgia, "Iowan Old Style", "Times New Roman", serif; font-size: 1.8rem; margin: 0 0 8px; }
+  .lede { color: var(--ink-soft); font-size: 1.02rem; line-height: 1.6; margin: 0 0 36px; }
+
+  section { margin-bottom: 32px; }
+  h2 { font-family: Georgia, "Iowan Old Style", "Times New Roman", serif; font-size: 1.2rem; margin: 0 0 10px; }
+  p { line-height: 1.65; color: var(--ink-soft); margin: 0 0 12px; font-size: 0.96rem; }
+  strong { color: var(--ink); }
+  ul { margin: 0 0 12px; padding-left: 20px; color: var(--ink-soft); line-height: 1.65; font-size: 0.96rem; }
+  li { margin-bottom: 6px; }
+
+  .callout {
+    background: var(--paper); border: 1px solid var(--line); border-radius: 10px;
+    padding: 16px 18px; box-shadow: var(--shadow); font-size: 0.92rem; color: var(--ink-soft); line-height: 1.6;
+  }
+  .callout strong { color: var(--ink); }
+
+  footer.colophon { margin-top: 48px; padding-top: 22px; border-top: 1px solid var(--line); font-size: 0.8rem; color: var(--ink-faint); }
+  footer.colophon a { color: var(--ink-soft); }
+</style>
+</head>
+<body>
+
+<div class="masthead-band">
+  <div class="masthead-inner">
+    <h1 class="wordmark">The Hour <span>Brief</span></h1>
+    <a class="back-link" href="./">← Back to today's edition</a>
+  </div>
+</div>
+
+<div class="page">
+  <h1>How this is made</h1>
+  <p class="lede">Short version: an automated process researches and writes every edition, one person (Milind) built and directs it, and no human reads or edits each day's content before it publishes. Here's exactly what that means in practice.</p>
+
+  <section>
+    <h2>Who writes it</h2>
+    <p>Every edition is researched and written by an AI agent running on a daily schedule. It searches the public web for that day's AI/tech, business, and market news, drafts the three sections, and publishes automatically. There is no newsroom and no editorial staff — the "team" is one person who designed the process, adjusts it when something's wrong, and does not review each day's output before it goes live.</p>
+  </section>
+
+  <section>
+    <h2>Sourcing policy</h2>
+    <ul>
+      <li>Every item links to a real, public source the agent actually found via search — not a guessed or fabricated URL.</li>
+      <li>Paywalled sources (The Ken, Stratechery's paid tier, Bloomberg, etc.) are never summarized or reproduced — only the headline plus a link out, clearly marked "paid."</li>
+      <li>Sources skew English-language and lean toward US and Indian outlets. That's a real bias, not a neutral sample — treat the "global" framing as approximate.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>What "verified" actually means here</h2>
+    <p>Each link is checked for one thing: that the URL resolves to a real page the agent found through search. It is <strong>not</strong> independently fact-checked against the claim in the sentence next to it — the same process that writes the summary is the one that judges whether the summary is accurate. That's a real limitation, not a formality. If something looks wrong, it might be.</p>
+    <div class="callout">
+      <strong>In plain terms:</strong> this is closer to "a fast, well-sourced first pass" than "verified journalism." Read it the way you'd read a good aggregator, not the way you'd read a wire service.
+    </div>
+  </section>
+
+  <section>
+    <h2>Votes and comments — what the numbers do and don't mean</h2>
+    <p>Like/dislike counts and comments are open to anyone, with no login. The only anti-abuse measures are a per-IP daily vote limit per story and a per-IP hourly comment limit — both easy to defeat deliberately, and neither verifies identity. Treat vote counts as a loose pulse check, not a survey result, and comments as unmoderated public text until someone (Milind) notices otherwise.</p>
+  </section>
+
+  <section>
+    <h2>The takeaway lines</h2>
+    <p>Each story's "Takeaway" is the AI's synthesis of the implication — the "so what" — not a quote from the source. It's written by the same process as the summary above it, with the same self-grading limitation described above.</p>
+  </section>
+
+  <footer class="colophon">
+    Questions or something look wrong? The vote and comment tools on each edition are the fastest way to flag it. <a href="./">Back to today's edition</a>
+  </footer>
+</div>
+</body>
+</html>
