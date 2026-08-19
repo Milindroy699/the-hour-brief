@@ -1,7 +1,8 @@
-// Creates a draft email in Buttondown. The Buttondown API key lives only
+// Creates a draft campaign in MailerLite. The MailerLite API key lives only
 // here, as a server-side Vercel env var — it is never present in the daily
 // automation's prompt/config, only this endpoint's shared secret is.
-const BUTTONDOWN_API_KEY = process.env.BUTTONDOWN_API_KEY;
+const MAILERLITE_API_KEY = process.env.MAILERLITE_API_KEY;
+const MAILERLITE_FROM_EMAIL = process.env.MAILERLITE_FROM_EMAIL;
 const ROUTINE_SECRET = process.env.ROUTINE_SECRET;
 
 module.exports = async (req, res) => {
@@ -10,7 +11,7 @@ module.exports = async (req, res) => {
     return;
   }
 
-  if (!BUTTONDOWN_API_KEY || !ROUTINE_SECRET) {
+  if (!MAILERLITE_API_KEY || !MAILERLITE_FROM_EMAIL || !ROUTINE_SECRET) {
     res.status(500).json({ error: 'not configured' });
     return;
   }
@@ -29,20 +30,32 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const bdRes = await fetch('https://api.buttondown.email/v1/emails', {
+  const mlRes = await fetch('https://connect.mailerlite.com/api/campaigns', {
     method: 'POST',
     headers: {
-      Authorization: `Token ${BUTTONDOWN_API_KEY}`,
+      Authorization: `Bearer ${MAILERLITE_API_KEY}`,
       'Content-Type': 'application/json',
+      Accept: 'application/json',
     },
-    body: JSON.stringify({ subject, body: html, status: 'draft' }),
+    body: JSON.stringify({
+      name: subject,
+      type: 'regular',
+      emails: [
+        {
+          subject,
+          from_name: 'The Hour Brief',
+          from: MAILERLITE_FROM_EMAIL,
+          content: html,
+        },
+      ],
+    }),
   });
 
-  const data = await bdRes.json().catch(() => ({}));
-  if (!bdRes.ok) {
-    res.status(bdRes.status).json({ error: 'buttondown request failed', detail: data });
+  const data = await mlRes.json().catch(() => ({}));
+  if (!mlRes.ok) {
+    res.status(mlRes.status).json({ error: 'mailerlite request failed', detail: data });
     return;
   }
 
-  res.status(200).json({ ok: true, id: data.id || null });
+  res.status(200).json({ ok: true, id: (data.data && data.data.id) || null });
 };

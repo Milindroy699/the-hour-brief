@@ -274,6 +274,13 @@
     font-size: 0.76rem;
     color: var(--ink-faint);
   }
+  .subscribe-status {
+    margin-top: 8px;
+    font-size: 0.8rem;
+    min-height: 1.1em;
+  }
+  .subscribe-status.ok { color: var(--up); }
+  .subscribe-status.err { color: var(--down); }
 
   .nav {
     display: flex;
@@ -1005,11 +1012,12 @@
     <div class="subscribe-box">
       <span class="sub-label">Get it by email</span>
       <p>One email a day, every morning. Unsubscribe anytime — no spam, just the day's edition.</p>
-      <form action="https://buttondown.email/api/emails/embed-subscribe/milind" method="post" target="popupwindow" onsubmit="window.open('https://buttondown.email/milind', 'popupwindow')" class="subscribe-form">
-        <input type="email" name="email" id="bd-email" placeholder="you@example.com" required>
+      <form id="subscribe-form" class="subscribe-form">
+        <input type="email" name="email" id="sub-email" placeholder="you@example.com" required>
         <button type="submit">Subscribe</button>
       </form>
-      <p class="subscribe-note">Powered by Buttondown. Prefer no inbox clutter? <a href="../feed.xml" target="_blank" rel="noopener">Use RSS instead</a>.</p>
+      <div class="subscribe-status" id="subscribe-status"></div>
+      <p class="subscribe-note">Prefer no inbox clutter? <a href="../feed.xml" target="_blank" rel="noopener">Use RSS instead</a>.</p>
     </div>
   </aside>
 
@@ -1112,6 +1120,38 @@
       var type = btn.getAttribute('data-vote');
       btn.classList.toggle('voted-' + type, voted === type);
       btn.disabled = !!voted;
+    });
+  }
+
+  // ---- Email subscribe ----
+  var subForm = document.getElementById('subscribe-form');
+  var subStatus = document.getElementById('subscribe-status');
+  if (subForm) {
+    subForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var emailInput = document.getElementById('sub-email');
+      var email = emailInput.value.trim();
+      if (!email) return;
+      var btn = subForm.querySelector('button');
+      btn.disabled = true;
+      subStatus.className = 'subscribe-status';
+      subStatus.textContent = 'Subscribing…';
+      fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email })
+      })
+        .then(function (r) { return r.ok ? r.json() : Promise.reject(r); })
+        .then(function () {
+          subStatus.className = 'subscribe-status ok';
+          subStatus.textContent = "You're in — first edition lands next morning.";
+          emailInput.value = '';
+        })
+        .catch(function () {
+          subStatus.className = 'subscribe-status err';
+          subStatus.textContent = 'Something went wrong — try again.';
+        })
+        .finally(function () { btn.disabled = false; });
     });
   }
 
