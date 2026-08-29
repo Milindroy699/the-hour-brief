@@ -126,21 +126,64 @@ Change in `capacitor.config.json` + `npm run sync`:
 
 Version numbers live in the native projects:
 - iOS: `MARKETING_VERSION` / `CURRENT_PROJECT_VERSION` in Xcode target settings
-- Android: `versionName` / `versionCode` in `android/app/build.gradle`
+- Android: `versionName` / `versionCode` in `android/app/build.gradle` — bump
+  `versionCode` (integer) for every Play upload.
 
 Icons/splash regenerate from `resources/icon.png` + `resources/splash.png` via
 `npm run assets` (the current art is a placeholder stopwatch — swap the PNGs).
 
 ---
 
-## Push notifications ("new edition is live") — OFF by default
+## Android signing & release build
 
-Push is **disabled** in `capacitor-bridge.js` until the backend can actually
-send. On Android, calling `PushNotifications.register()` without
-`google-services.json` throws a *native* crash that can't be caught from JS, so
-the whole flow is gated behind a meta tag.
+The upload key lives in `android/thb-upload-key.jks` with credentials in
+`android/keystore.properties` — **both are git-ignored. Back them up** (password
+manager + an offline copy). Losing them means you can't ship updates unless
+Play App Signing is enabled and you request an upload-key reset.
 
-**To turn it on, after the setup below, add to every page's `<head>`:**
+`keystore.properties` format:
+
+```properties
+storeFile=thb-upload-key.jks
+storePassword=…
+keyAlias=thb-upload
+keyPassword=…
+```
+
+`app/build.gradle` reads it and signs `release` builds automatically (falls back
+to the debug key if the file is absent, so CI / fresh clones still build).
+
+```bash
+cd android
+./gradlew bundleRelease     # -> app/build/outputs/bundle/release/app-release.aab   (Play Console)
+./gradlew assembleRelease   # -> app/build/outputs/apk/release/app-release.apk      (sideload test)
+```
+
+To recreate the key from scratch:
+
+```bash
+keytool -genkeypair -v -keystore android/thb-upload-key.jks -alias thb-upload \
+  -keyalg RSA -keysize 2048 -validity 10000
+```
+
+---
+
+## Push notifications ("new edition is live") — NOT in the app
+
+`@capacitor/push-notifications` is **not installed** in the v1 release — it pulls
+in the whole Firebase Messaging stack and a `POST_NOTIFICATIONS` permission for a
+feature with no backend sender. The `capacitor-bridge.js` push block no-ops when
+the plugin is absent.
+
+**To add push later:**
+
+```bash
+npm i @capacitor/push-notifications && npx cap sync
+```
+
+then re-add `"PushNotifications"` to `capacitor.config.json` plugins, and on iOS
+re-add the `remote-notification` background mode. Then, after the setup below,
+add to every page's `<head>`:
 
 ```html
 <meta name="thb-push" content="on">
@@ -176,13 +219,28 @@ Android (Play Store) has no equivalent restriction.
 
 ---
 
-## Store submission checklist
+## Play Store submission checklist
 
-- [ ] Bump version / build number
-- [ ] `npm run sync`
-- [ ] iOS: Xcode → Product → Archive → distribute to App Store Connect
-- [ ] Android: `./gradlew bundleRelease` → upload the `.aab` to Play Console
-- [ ] Screenshots (6.7" iPhone, 6.5" iPhone, 12.9" iPad; phone + tablet Android)
-- [ ] Privacy policy URL (the app collects a push token when push is on; disclose it)
-- [ ] App Store privacy questionnaire: "Identifiers → Device ID" if push is on
-- [ ] Play Data Safety form: same
+- [ ] Bump `versionCode` in `android/app/build.gradle`
+- [ ] `npm run sync` (only if config/plugins changed)
+- [ ] `cd android && ./gradlew bundleRelease` → `app-release.aab`
+- [ ] Play Console → create app "The Hour Brief", package `app.thehourbrief`
+- [ ] Enable **Play App Signing** (recommended — Google holds the app-signing
+      key, you only manage the upload key above)
+- [ ] Upload the `.aab` to the **Internal testing** track first
+- [ ] **Data safety**: no data collected/shared. App has no analytics beyond the
+      site's Vercel Web Analytics (anonymous, no device IDs) and no push token.
+- [ ] **Content rating** questionnaire (news/information content)
+- [ ] **Privacy policy URL** — required. Point at a page on the site
+      (e.g. add `/privacy.html`).
+- [ ] **App content**: target audience (not for children), no ads, news category
+- [ ] Store listing: short + full description, feature graphic (1024×500),
+      phone screenshots (min 2), 512×512 icon
+- [ ] Promote Internal testing → Production when ready
+
+## App Store (later)
+
+WebView-over-a-site apps risk Apple Guideline 4.2. Mitigations in place: native
+share, haptics, offline handling, pull-to-refresh, in-app navigation. Adding
+push before submitting helps. Fallback if rejected: render `editions.json` in
+`www/` and cache editions locally instead of loading the remote URL.

@@ -26,6 +26,11 @@ android/app/google-services.json
 android/app/src/main/assets/capacitor.config.json
 ios/App/App/capacitor.config.json
 
+# Signing — NEVER commit. Back these up separately (see keystore.properties).
+android/keystore.properties
+*.jks
+*.keystore
+
 # macOS
 .DS_Store
 

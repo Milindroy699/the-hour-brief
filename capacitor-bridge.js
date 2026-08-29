@@ -270,15 +270,16 @@
     if (!navigator.onLine) reflect(false);
   })();
 
-  // ---- Push notifications — OFF until the backend can send them ----
+  // ---- Push notifications — not in the app yet ----
   //
-  // On Android, PushNotifications.register() throws a *native* crash
-  // ("Default FirebaseApp is not initialized") when google-services.json is
-  // absent — it cannot be caught from JS. So this stays dormant until push is
-  // fully set up: add google-services.json (Android) + the APNs key and
-  // entitlement (iOS) + the sender job, then add
-  //   <meta name="thb-push" content="on">
-  // to the site's <head>. See /mobile/README.md "Push notifications".
+  // @capacitor/push-notifications is not installed in the v1 release (it drags
+  // in the whole Firebase stack + a POST_NOTIFICATIONS permission for a feature
+  // that has no backend sender). To add push later:
+  //   1. npm i @capacitor/push-notifications && npx cap sync
+  //   2. google-services.json (Android) + APNs key & entitlement (iOS)
+  //   3. the sender job (see /mobile/README.md "Push notifications")
+  //   4. add <meta name="thb-push" content="on"> to the site <head>
+  // This block already no-ops when the plugin is absent.
   var pushMeta = document.querySelector('meta[name="thb-push"]');
   var pushEnabled = pushMeta && pushMeta.getAttribute('content') === 'on';
 
