@@ -1,0 +1,35 @@
+{
+  "name": "the-hour-brief-mobile",
+  "version": "1.0.0",
+  "description": "iOS + Android shells for The Hour Brief (Capacitor)",
+  "private": true,
+  "type": "commonjs",
+  "license": "ISC",
+  "scripts": {
+    "add:ios": "cap add ios",
+    "add:android": "cap add android",
+    "sync": "cap sync",
+    "assets": "capacitor-assets generate --assetPath resources",
+    "open:ios": "cap open ios",
+    "open:android": "cap open android",
+    "run:ios": "cap run ios",
+    "run:android": "cap run android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/app": "^8.1.1",
+    "@capacitor/browser": "^8.0.4",
+    "@capacitor/cli": "^8.5.0",
+    "@capacitor/core": "^8.5.0",
+    "@capacitor/haptics": "^8.0.2",
+    "@capacitor/ios": "^8.5.0",
+    "@capacitor/network": "^8.0.1",
+    "@capacitor/push-notifications": "^8.1.2",
+    "@capacitor/share": "^8.0.1",
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.3"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5"
+  }
+}

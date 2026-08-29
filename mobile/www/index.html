@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>The Hour Brief</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #5b3e96; color: #f2f3ee;
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif; }
+  .wrap { position: fixed; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center; padding: 24px; }
+  h1 { font-size: 20px; font-weight: 600; margin: 20px 0 6px; }
+  p { color: #d8cfe9; font-size: 14px; margin: 0 0 24px; max-width: 20rem; line-height: 1.5; }
+  button { background: #f2f3ee; color: #17191c; border: 0; border-radius: 10px;
+    padding: 12px 22px; font-size: 15px; font-weight: 600; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: #f2f3ee;
+    animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: .3; transform: scale(.8);} 50% { opacity: 1; transform: scale(1);} }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="dot" id="dot"></div>
+    <h1 id="title">Loading today's brief…</h1>
+    <p id="msg">Every item links to its original source.</p>
+    <button id="retry" hidden onclick="go()">Try again</button>
+  </div>
+<script>
+  var SITE = "https://the-hour-brief.vercel.app/";
+  function go() {
+    document.getElementById('retry').hidden = true;
+    document.getElementById('title').textContent = "Loading today's brief…";
+    location.href = SITE;
+  }
+  function offline() {
+    document.getElementById('dot').style.animation = 'none';
+    document.getElementById('title').textContent = "You're offline";
+    document.getElementById('msg').textContent = "The Hour Brief needs a connection to load the latest edition.";
+    document.getElementById('retry').hidden = false;
+  }
+  if (navigator.onLine) { go(); } else { offline(); }
+  window.addEventListener('online', go);
+</script>
+</body>
+</html>
