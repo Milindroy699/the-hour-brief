@@ -36,6 +36,9 @@ jobs:
           check_status "$BASE/" 200
           check_status "$BASE/archive/" 200
           check_status "$BASE/feed.xml" 200
+          check_status "$BASE/capacitor-bridge.js" 200
+          check_status "$BASE/mobile.css" 200
+          check_status "$BASE/mobile.js" 200
 
           echo "--- checking every archived edition referenced in editions.json ---"
           python3 - "$BASE" <<'PYEOF'

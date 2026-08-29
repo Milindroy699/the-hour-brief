@@ -1,0 +1,33 @@
+node_modules/
+icons/
+
+# Capacitor
+.env
+
+# iOS
+ios/App/Pods/
+ios/App/build/
+ios/App/output/
+ios/App/App/public/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/captures/
+android/local.properties
+android/.idea/
+*.iml
+android/app/src/main/assets/public/
+android/app/google-services.json
+android/app/src/main/assets/capacitor.config.json
+ios/App/App/capacitor.config.json
+
+# macOS
+.DS_Store
+
+# built artifacts
+dist/
