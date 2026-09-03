@@ -5,7 +5,14 @@
   <link href="https://the-hour-brief.vercel.app/feed.xml" rel="self"/>
   <link href="https://the-hour-brief.vercel.app/"/>
   <id>https://the-hour-brief.vercel.app/</id>
-  <updated>2026-09-02T02:55:00Z</updated>
+  <updated>2026-09-03T02:55:00Z</updated>
+  <entry>
+    <title>Edition 019 — 3 September 2026</title>
+    <link href="https://the-hour-brief.vercel.app/archive/2026-09-03.html"/>
+    <id>https://the-hour-brief.vercel.app/archive/2026-09-03.html</id>
+    <updated>2026-09-03T02:55:00Z</updated>
+    <summary type="text">AI &amp; Tech: OpenAI's Astra becomes the first model to cross a "Critical" cybersecurity threshold after autonomously finding zero-day exploits, as Meta's Muse Spark 1.3 claims to beat GPT-5.6 Sol at coding and Google ships Gemini 3.8 Flash alongside a locked-down Cyber variant, while enterprise "AI operating system" startup Wonderful doubles its valuation to $5 billion in six months and physical-AI perception startup Lyte triples to $1.6 billion. Product &amp; Business: India's InsuranceDekho and RenewBuy merge into the country's largest AI-led insurance platform ahead of a DRHP by month's end, as Zepto pauses its IPO for a ₹1,000 crore pre-IPO round and the NSE eyes a roughly ₹5.2 lakh crore listing on the BSE, while JioHotstar takes its streaming platform global and Byju Raveendran offers up Aakash shares to settle a $235 million Qatar Holding claim. Stock Market: Sensex and Nifty extend their slide to a third straight session as fresh US strikes on Iran send Brent crude near $95 and the 10-year Treasury yield to its highest since November 2023, even as Coal India rallies on Mahanadi Coalfields IPO buzz and Adani Ports gains on record August cargo volumes.</summary>
+  </entry>
   <entry>
     <title>Edition 018 — 2 September 2026</title>
     <link href="https://the-hour-brief.vercel.app/archive/2026-09-02.html"/>
