@@ -5,7 +5,14 @@
   <link href="https://the-hour-brief.vercel.app/feed.xml" rel="self"/>
   <link href="https://the-hour-brief.vercel.app/"/>
   <id>https://the-hour-brief.vercel.app/</id>
-  <updated>2026-09-10T02:55:00Z</updated>
+  <updated>2026-09-11T02:55:00Z</updated>
+  <entry>
+    <title>Edition 027 — 11 September 2026</title>
+    <link href="https://the-hour-brief.vercel.app/archive/2026-09-11.html"/>
+    <id>https://the-hour-brief.vercel.app/archive/2026-09-11.html</id>
+    <updated>2026-09-11T02:55:00Z</updated>
+    <summary type="text">AI &amp; Tech: OpenAI throws open its Agents API to every developer as Microsoft plans to triple its data-center fleet to 38 gigawatts by 2032, while Anthropic's own threat report reveals it disrupted a Russian state-linked espionage campaign and blocked bioweapons-research attempts even as it hands the EU's cybersecurity agency access to its Mythos model, a maximum-severity flaw surfaces in Google's Agent Development Kit, and chip startup Positron raises $875 million to challenge Nvidia on AI inference. Product &amp; Business: India's IPO frenzy grinds on as Pranav Constructions closes 121 times oversubscribed and Rentomojo's debut draws strong Day 1 demand, while 10-minute food delivery startup Swish raises $24 million and Bengaluru's Mesa School lines up a ₹100 crore Series A, even as Nifty IT stocks buckle under a pile-up of visa fees and AI-disruption fears and SoftBank courts bond investors to keep funding its own AI bets. Stock Market: Sensex and Nifty snap a three-day losing streak as financials and PSU utilities lead a late recovery even as Brent crude pushes toward $105 on the widening US-Iran conflict, Wall Street's S&amp;P 500 and Nasdaq fall for a fourth straight session, gold holds near record highs, and Bitcoin drifts below $78,000 ahead of this week's inflation print.</summary>
+  </entry>
   <entry>
     <title>Edition 026 — 10 September 2026</title>
     <link href="https://the-hour-brief.vercel.app/archive/2026-09-10.html"/>
