@@ -5,7 +5,14 @@
   <link href="https://the-hour-brief.vercel.app/feed.xml" rel="self"/>
   <link href="https://the-hour-brief.vercel.app/"/>
   <id>https://the-hour-brief.vercel.app/</id>
-  <updated>2026-09-15T02:55:00Z</updated>
+  <updated>2026-09-16T02:55:00Z</updated>
+  <entry>
+    <title>Edition 031 — 16 September 2026</title>
+    <link href="https://the-hour-brief.vercel.app/archive/2026-09-16.html"/>
+    <id>https://the-hour-brief.vercel.app/archive/2026-09-16.html</id>
+    <updated>2026-09-16T02:55:00Z</updated>
+    <summary type="text">AI &amp; Tech: Donald Trump phones Nvidia's Jensen Huang mid-conference to call AI safety fears "a hoax," as China's foreign ministry brands Dario Amodei's chip-export essay "fear-mongering" and Sam Altman rules out an OpenAI IPO in 2026 over safety concerns, while OpenAI's policy chief confirms weeks of quiet safety-standards talks with Anthropic and Google, Bernie Sanders and Steve Bannon share a stage to demand AI curbs, and Cloudflare starts blocking AI crawlers by default. Product &amp; Business: NSE's ₹22,562 crore IPO opens to anchor investors today as SS Retail and Jindal Supreme join Hero Motors in a crowded IPO week and Moneyview halves its own planned issue size, while Amazon Now crosses $1 billion in annualised India sales, PhonePe, Paytm and CRED shut down rent-payment features after an RBI compliance deadline, Novastar Partners makes its first-ever LP bet on pre-seed fund AJVC, and Epigamia reshuffles leadership around a ₹1,000-crore growth target. Stock Market: Sensex and Nifty slide to a five-month low as Brent crude tops $107 on fresh Houthi strikes on Saudi Arabia and global bond yields keep climbing ahead of today's Fed decision, even as the RBI moves to widen foreign capital access to defend the rupee and domestic funds cushion a bigger FII sell-off, with HCL Technologies and Infosys the lone bright spots in an IT-led rally that couldn't hold.</summary>
+  </entry>
   <entry>
     <title>Edition 030 — 15 September 2026</title>
     <link href="https://the-hour-brief.vercel.app/archive/2026-09-15.html"/>
@@ -208,12 +215,5 @@
     <id>https://the-hour-brief.vercel.app/archive/2026-08-17.html</id>
     <updated>2026-08-17T02:39:18Z</updated>
     <summary type="text">AI &amp; Tech: New models arrive as AI's talent and security cracks show. Product &amp; Business: IPO season peaks as Molbio and Shiprocket hit the tape. Stock Market: FPIs turn buyers as oil and Nvidia's earnings loom over markets.</summary>
-  </entry>
-  <entry>
-    <title>Edition 001 — 16 August 2026</title>
-    <link href="https://the-hour-brief.vercel.app/archive/2026-08-16.html"/>
-    <id>https://the-hour-brief.vercel.app/archive/2026-08-16.html</id>
-    <updated>2026-08-16T12:00:00Z</updated>
-    <summary type="text">AI &amp; Tech: Nvidia's $500B bet meets an AI price war. Product &amp; Business: Everyone's doubling down — on data centers and DRHPs. Stock Market: AI rally lifts Wall Street, Middle East risk weighs on Dalal Street.</summary>
   </entry>
 </feed>
