@@ -5,7 +5,14 @@
   <link href="https://the-hour-brief.vercel.app/feed.xml" rel="self"/>
   <link href="https://the-hour-brief.vercel.app/"/>
   <id>https://the-hour-brief.vercel.app/</id>
-  <updated>2026-09-16T02:55:00Z</updated>
+  <updated>2026-09-17T02:55:00Z</updated>
+  <entry>
+    <title>Edition 032 — 17 September 2026</title>
+    <link href="https://the-hour-brief.vercel.app/archive/2026-09-17.html"/>
+    <id>https://the-hour-brief.vercel.app/archive/2026-09-17.html</id>
+    <updated>2026-09-17T02:55:00Z</updated>
+    <summary type="text">AI &amp; Tech: Huawei defies US export curbs to unveil Ascend 960 AI chips it claims will beat Nvidia's NVL144, as Microsoft AI chief Mustafa Suleyman brands Anthropic's "conscious" Claude training an "epistemic hall of mirrors," while OpenAI courts investors at a $1.2 trillion-plus valuation and pilots sponsored AI agents inside ChatGPT, a critical WSO2 flaw sees active in-the-wild exploitation, and Nvidia, Google and Anthropic join 18 others in an alliance to make AI data centers grid-friendly. Product &amp; Business: NSE's ₹22,568.94 crore IPO opens to the public today after "unexpectedly large" anchor demand as Hero Motors' issue is subscribed 1.38 times and Fibe wins SEBI's nod for a ₹750 crore IPO, while Flam raises $40 million with Shah Rukh Khan among its backers, Bengaluru's VerifAIX and fashion-discovery app Slayd add fresh seed funding, Salesforce unveils "AIforce" at Dreamforce betting AI agents replace apps, and a deep dive into Together AI's product team shows what an AI-native workflow actually looks like. Stock Market: The Fed hikes rates to 3.75%-4% for the first time since 2023 as Kevin Warsh warns inflation is "too high," sending the 10-year Treasury yield above 5% and Wall Street lower, even as Sensex and Nifty extend Wednesday's gains on easing crude and steady domestic buying, with NSE's own blockbuster IPO opening to the public today and FIIs continuing to sell into DII strength.</summary>
+  </entry>
   <entry>
     <title>Edition 031 — 16 September 2026</title>
     <link href="https://the-hour-brief.vercel.app/archive/2026-09-16.html"/>
@@ -208,12 +215,5 @@
     <id>https://the-hour-brief.vercel.app/archive/2026-08-18.html</id>
     <updated>2026-08-18T02:51:00Z</updated>
     <summary type="text">AI &amp; Tech: Stripe, Nvidia and Anthropic all place multi-billion-dollar bets on AI's next layer. Product &amp; Business: India's startups swap growth-at-all-costs for profits, paid-down debt and market share. Stock Market: Oil, bond yields and a weaker rupee weigh on Dalal Street as AI chip demand bucks the trend.</summary>
-  </entry>
-  <entry>
-    <title>Edition 002 — 17 August 2026</title>
-    <link href="https://the-hour-brief.vercel.app/archive/2026-08-17.html"/>
-    <id>https://the-hour-brief.vercel.app/archive/2026-08-17.html</id>
-    <updated>2026-08-17T02:39:18Z</updated>
-    <summary type="text">AI &amp; Tech: New models arrive as AI's talent and security cracks show. Product &amp; Business: IPO season peaks as Molbio and Shiprocket hit the tape. Stock Market: FPIs turn buyers as oil and Nvidia's earnings loom over markets.</summary>
   </entry>
 </feed>
