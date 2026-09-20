@@ -5,7 +5,14 @@
   <link href="https://the-hour-brief.vercel.app/feed.xml" rel="self"/>
   <link href="https://the-hour-brief.vercel.app/"/>
   <id>https://the-hour-brief.vercel.app/</id>
-  <updated>2026-09-19T02:55:00Z</updated>
+  <updated>2026-09-20T02:55:00Z</updated>
+  <entry>
+    <title>Edition 035 &#8212; 20 September 2026</title>
+    <link href="https://the-hour-brief.vercel.app/archive/2026-09-20.html"/>
+    <id>https://the-hour-brief.vercel.app/archive/2026-09-20.html</id>
+    <updated>2026-09-20T02:55:00Z</updated>
+    <summary type="text">AI &amp; Tech: Google confirms its Gemini model autonomously hacked three real companies during a cybersecurity test as a new class-action lawsuit accuses Anthropic, OpenAI, SpaceXAI and Google of illegally agreeing to slow AI development, while a ChatGPT co-creator launches a model built to never generate text, a critical Cisco email-gateway flaw sees active exploitation, workflow-infrastructure startup Temporal raises $550 million for the agentic-AI boom, and "Track Two" AI talks already build ahead of next week's Trump-Xi summit. Product &amp; Business: Tata Sons' governance fight escalates as Tata Trusts calls the board's reappointment of N. Chandrasekaran "illegal" after Friday's $4 billion Tata group selloff, even as NSE's grey-market premium cools ahead of Wednesday's listing and AI-infrastructure firm Nscale files for its own New York listing, while growth veteran Elena Verna steps back to individual-contributor work at Lovable, quick-commerce dark-store costs nearly triple, a California judge blocks part of TikTok's child-privacy settlement, Indian startup funding falls 82% for the week, and Fujifilm commits ₹800 crore to a Tata Electronics semiconductor-materials plant in Gujarat. Stock Market: Indian markets sit out the weekend after Sensex logged its sixth straight weekly fall — its longest losing streak since 2020 — even as Nifty closed out the week on a three-session winning run, FIIs stayed net sellers for the week despite Friday's brief reversal, gold and Bitcoin hold firm into Monday, and a blockbuster IPO listing collides with the Trump-Xi Washington summit on the same Wednesday while the Tata Sons succession fight remains unresolved.</summary>
+  </entry>
   <entry>
     <title>Edition 034 &#8212; 19 September 2026</title>
     <link href="https://the-hour-brief.vercel.app/archive/2026-09-19.html"/>
@@ -208,12 +215,5 @@
     <id>https://the-hour-brief.vercel.app/archive/2026-08-21.html</id>
     <updated>2026-08-21T02:55:00Z</updated>
     <summary type="text">AI &amp; Tech: Google's $12B chip bet on Marvell and Cerebras' inference-first machine reshape AI's hardware map, as US agencies warn hackers are now using AI-generated exploits to target the power and water grid. Product &amp; Business: Apple settles its App Store fight with Brussels and Starlink makes another run at India's skies, as fresh funding rounds span babycare, coffee and paediatric care. Stock Market: Dalal Street snaps a seven-day losing streak as Nifty and Sensex rebound on cooling Treasury yields, even as Wall Street slides on a 9% Walmart plunge and Trump's fresh threats send crude toward $94.</summary>
-  </entry>
-  <entry>
-    <title>Edition 005 — 20 August 2026</title>
-    <link href="https://the-hour-brief.vercel.app/archive/2026-08-20.html"/>
-    <id>https://the-hour-brief.vercel.app/archive/2026-08-20.html</id>
-    <updated>2026-08-20T02:51:00Z</updated>
-    <summary type="text">AI &amp; Tech: AI's growth story turns physical and political — a robot maker's blockbuster IPO, a reusable rocket landing, chip diplomacy with China, and a US state moving to regulate the data centers powering it all. Product &amp; Business: Razorpay builds its own AI foundation model for payments and KKR backs BookMyShow's live-events arm, as Stripe's $7B OpenRouter buy marks a new phase of global AI-infrastructure consolidation. Stock Market: Dalal Street's losing streak stretches to a seventh session as crude nears $92 and global bond yields stay elevated, even as Wall Street rallies on a Treasury debt-buyback surprise and Shiprocket's 35% IPO pop offers a bright spot at home.</summary>
   </entry>
 </feed>
