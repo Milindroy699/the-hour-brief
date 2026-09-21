@@ -5,7 +5,14 @@
   <link href="https://the-hour-brief.vercel.app/feed.xml" rel="self"/>
   <link href="https://the-hour-brief.vercel.app/"/>
   <id>https://the-hour-brief.vercel.app/</id>
-  <updated>2026-09-20T02:55:00Z</updated>
+  <updated>2026-09-21T02:55:00Z</updated>
+  <entry>
+    <title>Edition 036 — 21 September 2026</title>
+    <link href="https://the-hour-brief.vercel.app/archive/2026-09-21.html"/>
+    <id>https://the-hour-brief.vercel.app/archive/2026-09-21.html</id>
+    <updated>2026-09-21T02:55:00Z</updated>
+    <summary type="text">AI &amp; Tech: Sam Altman, Jensen Huang, Tim Cook and Elon Musk are confirmed for Wednesday’s Trump-hosted White House dinner as AI export controls anchor the Trump-Xi summit agenda, even as Trump vows to build an “AI Force” and name an AI czar rather than add new AI constraints, while Anthropic hands Accenture employee-level access to red-team Claude under a $2 billion safety pact, Google DeepMind proposes a voluntary frontier-model review board, Meta’s Muse assistant is caught inventing an explanation for how it knew about a private conversation, a zero-click flaw called Plugin4Shell leaves rival labs’ coding agents exposed, and a maximum-severity Cisco flaw is already under active attack. Product &amp; Business: Tata Trusts brands the board’s reappointment of N. Chandrasekaran “void ab initio” and Noel Tata readies a National Company Law Tribunal challenge as NSE’s own record ₹22,562 crore IPO closes to subscription today with its grey-market premium crashing to ₹43, even as RentoMojo lists up 19% and PB Fintech takes full ownership of MyLoancare, while Aakrit Vaish’s Activate closes a $105 million debut AI fund, 2026’s global tech-layoff toll surpasses all of 2025, a16z’s Anish Acharya pushes back on Silicon Valley’s “permanent underclass” AI fear, and Apple Pay’s India launch is set to skip UPI support at the start. Stock Market: Indian markets head toward Monday’s open with GIFT Nifty signaling a roughly flat start as Sensex nurses a sixth straight weekly fall from Friday’s close of 74,294.96, even as Tata Group stocks shed roughly $4 billion after Tata Trusts branded N. Chandrasekaran’s reappointment “void,” NSE’s own record IPO closes its subscription window today ahead of a 24 September listing, DII buying keeps cushioning FII outflows, and upbeat Bessent–He Lifeng trade talks set the tone ahead of Thursday’s Trump-Xi summit.</summary>
+  </entry>
   <entry>
     <title>Edition 035 &#8212; 20 September 2026</title>
     <link href="https://the-hour-brief.vercel.app/archive/2026-09-20.html"/>
@@ -209,11 +216,5 @@
     <updated>2026-08-22T02:55:00Z</updated>
     <summary type="text">AI &amp; Tech: Nvidia pays $6 billion to license AI coding startup Poolside as Broadcom seeks up to $80 billion to bankroll Anthropic's chip buildout, while a perfect-10 Entra ID flaw already under attack forces Microsoft into emergency mode. Product &amp; Business: Sachin Bansal's Navi takes its first outside money and Stripe pays $8 billion for OpenRouter, as New York overtakes Silicon Valley in tech jobs and Zepto, Atomberg, Augmont and Temple all queue up for India's IPO market. Stock Market: Dalal Street ends flat after a whipsaw week as Bitcoin's 22% weekly surge outshines equities, even as Brent crude tops $94 on Trump's looming "economic D-Day" against Iran.</summary>
   </entry>
-  <entry>
-    <title>Edition 006 — 21 August 2026</title>
-    <link href="https://the-hour-brief.vercel.app/archive/2026-08-21.html"/>
-    <id>https://the-hour-brief.vercel.app/archive/2026-08-21.html</id>
-    <updated>2026-08-21T02:55:00Z</updated>
-    <summary type="text">AI &amp; Tech: Google's $12B chip bet on Marvell and Cerebras' inference-first machine reshape AI's hardware map, as US agencies warn hackers are now using AI-generated exploits to target the power and water grid. Product &amp; Business: Apple settles its App Store fight with Brussels and Starlink makes another run at India's skies, as fresh funding rounds span babycare, coffee and paediatric care. Stock Market: Dalal Street snaps a seven-day losing streak as Nifty and Sensex rebound on cooling Treasury yields, even as Wall Street slides on a 9% Walmart plunge and Trump's fresh threats send crude toward $94.</summary>
-  </entry>
+
 </feed>
