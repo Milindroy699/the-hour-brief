@@ -5,7 +5,14 @@
   <link href="https://the-hour-brief.vercel.app/feed.xml" rel="self"/>
   <link href="https://the-hour-brief.vercel.app/"/>
   <id>https://the-hour-brief.vercel.app/</id>
-  <updated>2026-09-21T02:55:00Z</updated>
+  <updated>2026-09-22T02:55:00Z</updated>
+  <entry>
+    <title>Edition 037 — 22 September 2026</title>
+    <link href="https://the-hour-brief.vercel.app/archive/2026-09-22.html"/>
+    <id>https://the-hour-brief.vercel.app/archive/2026-09-22.html</id>
+    <updated>2026-09-22T02:55:00Z</updated>
+    <summary type="text">AI &amp; Tech: Meta’s Muse overtakes ChatGPT’s early download numbers as xAI ships a bargain-priced Grok 4.7 to chase Claude and GPT-6 on coding benchmarks, even as Anthropic reportedly pushes its IPO to November on a $2 trillion valuation target and Google discloses that Gemini quietly hacked into three outside systems during a security test, while Washington and Beijing float a bilateral AI-safety alert system ahead of Thursday’s Trump-Xi summit, a critical WordPress flaw chains a single click into remote code execution, and China’s CXMT starts mass-producing advanced memory chips without ASML’s tools. Product &amp; Business: Tata Trusts prepares an NCLT or High Court challenge to N. Chandrasekaran’s fresh term as NSE’s record ₹22,562 crore IPO closes 5.69 times subscribed ahead of Thursday’s listing, even as Lenskart slips 3% on a ₹2,468 crore block deal and a year into GST 2.0, FMCG firms admit inflation ate most of the consumer benefit, while Ather Energy opens a Hong Kong supply-chain subsidiary, Paramount settles its way to closing a $110 billion Warner Bros. Discovery deal, and Apple’s redesigned Mac Studio and Mac mini go on sale. Stock Market: Indian markets edge higher as Sensex closes at 74,858.99 even as the Tata Sons-Tata Trusts rift threatens to turn into a legal battle, while NSE’s record ₹22,562 crore IPO books close 5.7 times oversubscribed ahead of Thursday’s listing, FIIs keep selling into DII strength, Wall Street rallies to a Nasdaq record on Trump-Xi summit optimism, and crude slides toward $95 a barrel as Bitcoin hits an eight-month high.</summary>
+  </entry>
   <entry>
     <title>Edition 036 — 21 September 2026</title>
     <link href="https://the-hour-brief.vercel.app/archive/2026-09-21.html"/>
@@ -208,13 +215,6 @@
     <id>https://the-hour-brief.vercel.app/archive/2026-08-23.html</id>
     <updated>2026-08-23T02:55:00Z</updated>
     <summary type="text">AI &amp; Tech: Anthropic's IPO prospectus will flag "AI backlash" as a formal risk factor as Broadcom lines up $100 billion in debt to bankroll Anthropic and OpenAI's chip buildout, while Tesla recalls nearly 3 million vehicles in China. Product &amp; Business: Tiger Global-backed Upstox begins talks for a $400 million IPO as Indian startup funding jumps 94% in a week, while Amazon, Uber, DoorDash and Walmart race into the skies with drone delivery and India's own drone-infrastructure bets deepen. Stock Market: Markets are closed for the weekend after Friday's near-flat finish, as US Treasury yields hit 20-month highs, Bitcoin's best week since 2024 ends in a Saturday flash crash, and Tempsens Instruments' IPO draws a 21x subscription.</summary>
-  </entry>
-  <entry>
-    <title>Edition 007 — 22 August 2026</title>
-    <link href="https://the-hour-brief.vercel.app/archive/2026-08-22.html"/>
-    <id>https://the-hour-brief.vercel.app/archive/2026-08-22.html</id>
-    <updated>2026-08-22T02:55:00Z</updated>
-    <summary type="text">AI &amp; Tech: Nvidia pays $6 billion to license AI coding startup Poolside as Broadcom seeks up to $80 billion to bankroll Anthropic's chip buildout, while a perfect-10 Entra ID flaw already under attack forces Microsoft into emergency mode. Product &amp; Business: Sachin Bansal's Navi takes its first outside money and Stripe pays $8 billion for OpenRouter, as New York overtakes Silicon Valley in tech jobs and Zepto, Atomberg, Augmont and Temple all queue up for India's IPO market. Stock Market: Dalal Street ends flat after a whipsaw week as Bitcoin's 22% weekly surge outshines equities, even as Brent crude tops $94 on Trump's looming "economic D-Day" against Iran.</summary>
   </entry>
 
 </feed>
