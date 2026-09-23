@@ -57,7 +57,7 @@ async function buildDigest() {
     quizQuestions: n,
     editionUrl,
     quizUrl,
-    image: `${CANON}/api/og?${new URLSearchParams({ type: 'edition', n: info.n, d: info.d, ai: (info.lanes.ai || '').slice(0, 118), biz: (info.lanes.biz || '').slice(0, 118), mkt: (info.lanes.mkt || '').slice(0, 118) }).toString()}`,
+    image: `${CANON}/api/og?${new URLSearchParams({ type: 'edition', n: info.n, d: info.d, ai: info.lanes.ai || '', biz: info.lanes.biz || '', mkt: info.lanes.mkt || '' }).toString()}`,
     telegram,
     whatsapp: plainLines((s) => `*${s}*`),
     plain: plainLines((s) => s),
