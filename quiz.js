@@ -359,7 +359,113 @@
       save(all);
       saved = res;
     }
-    showResult(practice ? res : saved, !practice);
+    showResult(practice ? res : saved, !practice, !practice);
+  }
+
+  // ---------- badges + review prompt (kept on this device) ----------
+  var BADGES = [
+    { id: 'first', icon: '\uD83C\uDFAF', name: 'First quiz', desc: 'Finish your first daily quiz', goal: 1, val: function (s) { return s.played; } },
+    { id: 'perfect', icon: '\uD83D\uDCAF', name: 'Perfect score', desc: 'Get every question right', goal: 1, val: function (s) { return s.perfects; } },
+    { id: 'streak3', icon: '\uD83D\uDD25', name: 'On a roll', desc: 'Play 3 days in a row', goal: 3, val: function (s) { return s.best; } },
+    { id: 'streak7', icon: '\u26A1', name: 'Week warrior', desc: 'Play 7 days in a row', goal: 7, val: function (s) { return s.best; } },
+    { id: 'streak30', icon: '\uD83C\uDFC6', name: 'Month master', desc: 'Play 30 days in a row', goal: 30, val: function (s) { return s.best; } },
+    { id: 'played10', icon: '\uD83D\uDCDA', name: 'Regular', desc: 'Finish 10 quizzes', goal: 10, val: function (s) { return s.played; } },
+    { id: 'perfect5', icon: '\uD83E\uDDE0', name: 'Sharp mind', desc: 'Get 5 perfect scores', goal: 5, val: function (s) { return s.perfects; } },
+    { id: 'champ', icon: '\uD83D\uDC51', name: 'League champion', desc: 'Top a friends league for a day', goal: 1, val: function (s) { return s.champ; } }
+  ];
+
+  function computeStats(dates) {
+    var o = load(), results = o.r, keys = Object.keys(results).sort();
+    var perfects = keys.filter(function (k) { return results[k].s === results[k].t; }).length;
+    var best = 0, run = 0;
+    if (dates.length) {
+      dates.forEach(function (d) { if (results[d]) { run++; if (run > best) best = run; } else run = 0; });
+    } else {
+      keys.forEach(function (k, i) { run = i > 0 && prevDay(k) === keys[i - 1] ? run + 1 : 1; if (run > best) best = run; });
+    }
+    return { played: keys.length, perfects: perfects, best: Math.max(best, o.bs || 0), champ: o.champ || 0 };
+  }
+
+  function awardBadges(dates) {
+    var o = load(), st = computeStats(dates), fresh = [];
+    o.b = o.b || {};
+    o.bs = Math.max(o.bs || 0, st.best);
+    BADGES.forEach(function (b) {
+      if (!o.b[b.id] && b.val(st) >= b.goal) { o.b[b.id] = DATE; fresh.push(b); }
+    });
+    save(o);
+    return { fresh: fresh, stats: st };
+  }
+
+  function earnedCount() { var b = load().b || {}; return Object.keys(b).length; }
+
+  function maybeAskReview(stats, score, streak) {
+    var Cap = window.Capacitor, P = (Cap && Cap.Plugins) || {};
+    var native = Cap && typeof Cap.isNativePlatform === 'function' && Cap.isNativePlatform();
+    if (!native || !P.InAppReview || score < Math.ceil(N * 0.8)) return;
+    if (!(streak >= 3 || stats.perfects >= 3)) return;
+    var st = { t: 0, n: 0 };
+    try { st = JSON.parse(localStorage.getItem('hb-review-v1') || '') || st; } catch (e) { /* first time */ }
+    if (st.n >= 3 || Date.now() - st.t < 90 * 86400000) return;
+    try { localStorage.setItem('hb-review-v1', JSON.stringify({ t: Date.now(), n: st.n + 1 })); } catch (e) { /* ignore */ }
+    setTimeout(function () {
+      try { var p = P.InAppReview.requestReview(); if (p && p.catch) p.catch(function () { /* the store decides whether to show it */ }); } catch (e) { /* ignore */ }
+    }, 2000);
+  }
+
+  var sheetEl = null, sheetPrev = null;
+  function sheetKey(e) { if (e.key === 'Escape') closeSheet(); }
+  function closeSheet() {
+    if (!sheetEl) return;
+    sheetEl.remove();
+    sheetEl = null;
+    document.removeEventListener('keydown', sheetKey);
+    if (sheetPrev && sheetPrev.focus) sheetPrev.focus();
+  }
+  function openSheet(title, build, returnTo) {
+    closeSheet();
+    sheetPrev = returnTo || document.activeElement;
+    var bg = el('div', 'qz-sheet-bg');
+    var box = el('div', 'qz-sheet');
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-modal', 'true');
+    box.setAttribute('aria-label', title);
+    box.appendChild(el('h2', '', title));
+    build(box);
+    var close = el('button', 'quiz-btn qz-close', 'Close');
+    close.type = 'button';
+    close.addEventListener('click', closeSheet);
+    box.appendChild(close);
+    bg.appendChild(box);
+    bg.addEventListener('click', function (e) { if (e.target === bg) closeSheet(); });
+    document.addEventListener('keydown', sheetKey);
+    document.body.appendChild(bg);
+    sheetEl = bg;
+    close.focus({ preventScroll: true });
+  }
+
+  function openBadges(returnTo) {
+    getEditions().then(function (dates) {
+      var st = computeStats(dates), got = load().b || {};
+      openSheet('Your badges', function (box) {
+        box.appendChild(el('p', 'qz-stats', st.played + ' played \u00B7 best streak ' + st.best + ' \u00B7 ' + st.perfects + ' perfect'));
+        var ul = el('ul', 'qz-badges');
+        BADGES.forEach(function (b) {
+          var earned = !!got[b.id];
+          var li = el('li', earned ? 'qz-earned' : 'qz-locked');
+          var icon = el('span', 'qz-badge-icon', b.icon);
+          icon.setAttribute('aria-hidden', 'true');
+          var text = el('div');
+          text.appendChild(el('b', '', b.name));
+          text.appendChild(el('span', 'qz-badge-desc', b.desc));
+          text.appendChild(el('span', 'qz-badge-state', earned ? 'Earned ' + prettyDate(got[b.id]) : Math.min(b.val(st), b.goal) + ' / ' + b.goal));
+          li.appendChild(icon);
+          li.appendChild(text);
+          ul.appendChild(li);
+        });
+        box.appendChild(ul);
+      }, returnTo);
+    });
   }
 
   function message(res) {
@@ -371,7 +477,7 @@
     return 'Tough one. Check the review below.';
   }
 
-  function showResult(res, official) {
+  function showResult(res, official, fresh) {
     root.textContent = '';
     var card = el('div', 'quiz-card quiz-result');
     picks = res.a ? res.a.slice() : [];
@@ -399,6 +505,10 @@
     var streakEl = el('p', 'quiz-streak');
     streakEl.hidden = true;
     card.appendChild(streakEl);
+    var freshBox = el('div', 'quiz-fresh');
+    freshBox.hidden = true;
+    freshBox.setAttribute('role', 'status');
+    card.appendChild(freshBox);
     var compare = el('div', 'quiz-compare');
     card.appendChild(compare);
 
@@ -412,6 +522,10 @@
     reviewBtn.type = 'button';
     reviewBtn.setAttribute('aria-expanded', 'false');
     actions.appendChild(reviewBtn);
+    var badgesBtn = el('button', 'quiz-btn', 'Badges');
+    badgesBtn.type = 'button';
+    badgesBtn.addEventListener('click', function () { openBadges(badgesBtn); });
+    actions.appendChild(badgesBtn);
     var again = el('button', 'quiz-btn', 'Retake for practice');
     again.type = 'button';
     again.addEventListener('click', function () { practice = true; picks = []; showQuestion(0, true); });
@@ -442,6 +556,21 @@
       streakN = streakEndingAt(dates, results, DATE);
       if (streakN >= 2) { streakEl.textContent = ''; streakEl.appendChild(document.createTextNode('🔥 ')); streakEl.appendChild(el('b', '', streakN + '-day streak')); streakEl.hidden = false; }
       else if (streakN === 1 && dates[dates.length - 1] === DATE) { streakEl.textContent = 'Come back tomorrow to start a streak.'; streakEl.hidden = false; }
+      var awarded = official ? awardBadges(dates) : { fresh: [], stats: computeStats(dates) };
+      if (awarded.fresh.length) {
+        freshBox.textContent = '';
+        freshBox.appendChild(el('p', 'quiz-fresh-title', awarded.fresh.length > 1 ? 'New badges unlocked' : 'New badge unlocked'));
+        awarded.fresh.forEach(function (b) {
+          var row = el('p', 'quiz-fresh-row');
+          row.appendChild(el('span', '', b.icon + ' '));
+          row.appendChild(el('b', '', b.name));
+          row.appendChild(document.createTextNode(' \u2014 ' + b.desc));
+          freshBox.appendChild(row);
+        });
+        freshBox.hidden = false;
+      }
+      badgesBtn.textContent = 'Badges (' + earnedCount() + ')';
+      if (fresh) maybeAskReview(awarded.stats, mine.s, streakN);
       updateChip(dates);
     });
     tally(mine, official, compare);

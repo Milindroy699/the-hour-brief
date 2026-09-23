@@ -362,9 +362,9 @@
     document.removeEventListener('keydown', sheetKey);
     if (sheetPrev && sheetPrev.focus) sheetPrev.focus();
   }
-  function openSheet(title, build) {
+  function openSheet(title, build, returnTo) {
     closeSheet();
-    sheetPrev = document.activeElement;
+    sheetPrev = returnTo || document.activeElement;
     var bg = mk('div', 'rd-sheet-bg');
     var box = mk('div', 'rd-sheet');
     box.setAttribute('role', 'dialog');
@@ -383,7 +383,7 @@
     document.addEventListener('keydown', sheetKey);
     document.body.appendChild(bg);
     sheetEl = bg;
-    close.focus();
+    close.focus({ preventScroll: true });
   }
 
   // ---- Text size (root font-size scale; kept on this device) ----
@@ -401,7 +401,7 @@
     try { localStorage.setItem('hb-textsize', String(i)); } catch (e) { /* ignore */ }
     applyTextSize();
   }
-  function openTextSize() {
+  function openTextSize(returnTo) {
     openSheet('Text size', function (body) {
       var label = mk('p', 'rd-size-label');
       label.setAttribute('aria-live', 'polite');
@@ -430,7 +430,7 @@
       body.appendChild(row);
       body.appendChild(mk('p', 'rd-size-sample', 'Every item links back to its original source — read the take here, click through for the full story.'));
       upd();
-    });
+    }, returnTo);
   }
 
   // ---- Save for later (bookmarks; a list on this device only) ----
@@ -467,7 +467,7 @@
     storeSaved(list);
     refreshSaved();
   }
-  function openSaved() {
+  function openSaved(returnTo) {
     openSheet('Saved stories', function (body) {
       var empty = 'Nothing saved yet. Tap the bookmark on a story to keep it here.';
       var list = loadSaved();
@@ -494,7 +494,7 @@
         ul.appendChild(li);
       });
       body.appendChild(ul);
-    });
+    }, returnTo);
   }
 
   // ---- Tools row under the nav (text size, saved); also hosts the quiz chip ----
@@ -507,11 +507,11 @@
       var aa = mk('button', 'reader-btn reader-size', 'Aa');
       aa.type = 'button';
       aa.setAttribute('aria-label', 'Text size');
-      aa.addEventListener('click', openTextSize);
+      aa.addEventListener('click', function () { openTextSize(aa); });
       var sv = mk('button', 'reader-btn reader-saved');
       sv.type = 'button';
       sv.innerHTML = STAR_SVG + '<span class="rd-count"></span>';
-      sv.addEventListener('click', openSaved);
+      sv.addEventListener('click', function () { openSaved(sv); });
       host.appendChild(aa);
       host.appendChild(sv);
       nav.insertAdjacentElement('afterend', host);

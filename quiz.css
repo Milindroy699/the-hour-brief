@@ -186,3 +186,37 @@
   .quiz-btn { flex: 1 1 auto; }
   .quiz-chip { margin-top: -12px; }
 }
+
+/* ---- Badges ---- */
+.quiz-fresh { margin: 12px 0 0; padding: 10px 12px; border: 1px solid var(--brand); border-radius: 10px; background: var(--brand-soft); }
+.quiz-fresh-title { margin: 0 0 4px; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand); }
+.quiz-fresh-row { margin: 2px 0 0; font-size: 0.92rem; line-height: 1.4; color: var(--ink); }
+
+.qz-sheet-bg { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: flex-end; justify-content: center; background: rgba(0, 0, 0, 0.45); }
+.qz-sheet {
+  width: 100%;
+  max-width: 520px;
+  max-height: 82vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 20px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+  border-radius: 16px 16px 0 0;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.25);
+  font: 15px/1.5 -apple-system, system-ui, sans-serif;
+}
+@media (min-width: 641px) { .qz-sheet-bg { align-items: center; } .qz-sheet { border-radius: 16px; max-height: 76vh; } }
+.qz-sheet h2 { margin: 0 0 6px; font-size: 1.15rem; }
+.qz-sheet p { margin: 0 0 12px; color: var(--ink-soft); }
+.qz-close { width: 100%; margin-top: 8px; }
+.qz-badges { margin: 0 0 8px; padding: 0; list-style: none; }
+.qz-badges li { display: flex; gap: 14px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.qz-badges li:first-child { border-top: 0; }
+.qz-badge-icon { flex: 0 0 44px; height: 44px; border-radius: 50%; background: var(--brand-soft); font-size: 1.4rem; line-height: 44px; text-align: center; }
+.qz-badges li.qz-locked { opacity: 0.55; }
+.qz-badges li.qz-locked .qz-badge-icon { filter: grayscale(1); }
+.qz-badges b { display: block; }
+.qz-badge-desc, .qz-badge-state { display: block; font-size: 0.85rem; color: var(--ink-soft); }
+.qz-badge-state { color: var(--ink-faint); }
+.qz-badges li.qz-earned .qz-badge-state { color: var(--up); font-weight: 600; }
