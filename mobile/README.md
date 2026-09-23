@@ -20,7 +20,7 @@ mobile/
 ```
 
 The web-side glue lives in the site repo root, not here:
-- [`../capacitor-bridge.js`](../capacitor-bridge.js) — native enhancements, a no-op in a normal browser (in-app nav, share sheet, haptics, pull-to-refresh, "new edition" banner, offline notice, status bar, gated push)
+- [`../capacitor-bridge.js`](../capacitor-bridge.js) — native enhancements, a no-op in a normal browser (in-app nav, share sheet, haptics, pull-to-refresh, "new edition" banner, offline notice, status bar, gated push; hides the comments section in-app for store UGC rules)
 - [`../mobile.css`](../mobile.css) — phone-only (`<link media="(max-width: 640px)">`) layout: compact masthead, single-row lane nav, collapsible-story styling, 44px touch targets, 16px inputs
 - [`../mobile.js`](../mobile.js) — phone-only reading enhancements: collapsible story bodies (headline + Takeaway, tap to expand), the About "More" toggle
 - [`../api/register-push.js`](../api/register-push.js) — stores device push tokens in Redis
@@ -228,19 +228,31 @@ Android (Play Store) has no equivalent restriction.
 - [ ] Enable **Play App Signing** (recommended — Google holds the app-signing
       key, you only manage the upload key above)
 - [ ] Upload the `.aab` to the **Internal testing** track first
-- [ ] **Data safety**: no data collected/shared. App has no analytics beyond the
-      site's Vercel Web Analytics (anonymous, no device IDs) and no push token.
+- [ ] **Data safety**: see `play-store/listing.md` — optional email, aggregate
+      analytics/votes, hashed IP for vote dedupe; nothing shared. Comments are
+      hidden inside the app (store UGC rules), so no user content is collected.
 - [ ] **Content rating** questionnaire (news/information content)
-- [ ] **Privacy policy URL** — required. Point at a page on the site
-      (e.g. add `/privacy.html`).
+- [x] **Privacy policy URL**: https://the-hour-brief.vercel.app/privacy.html
 - [ ] **App content**: target audience (not for children), no ads, news category
-- [ ] Store listing: short + full description, feature graphic (1024×500),
-      phone screenshots (min 2), 512×512 icon
+- [ ] Store listing: copy + release notes in `play-store/listing.md`; graphics and
+      screenshots in `dist/play-store/` (git-ignored)
 - [ ] Promote Internal testing → Production when ready
 
-## App Store (later)
+## App Store
+
+Listing copy, questionnaire answers and review notes: `app-store/listing.md`.
+Screenshots: `dist/app-store/` (git-ignored). The iOS project carries a privacy
+manifest (`ios/App/App/PrivacyInfo.xcprivacy`) and pins Capacitor via
+`Package.resolved`. Archive and upload need an Apple Developer team: set it in
+Xcode → Signing & Capabilities, then Product → Archive.
 
 WebView-over-a-site apps risk Apple Guideline 4.2. Mitigations in place: native
 share, haptics, offline handling, pull-to-refresh, in-app navigation. Adding
-push before submitting helps. Fallback if rejected: render `editions.json` in
-`www/` and cache editions locally instead of loading the remote URL.
+push or a daily local reminder before submitting helps. Fallback if rejected:
+render `editions.json` in `www/` and cache editions locally instead of loading
+the remote URL.
+
+Regenerating screenshots: build the App scheme for the simulator against a local
+copy of the site (`server.url` = `http://127.0.0.1:PORT`; Apple's ATS exempts IP
+addresses), then `xcrun simctl io <udid> screenshot`. Restore
+`capacitor.config.json` and re-run `npm run sync` afterwards.

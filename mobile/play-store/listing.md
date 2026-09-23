@@ -1,0 +1,89 @@
+# Google Play — release package (v1.0.0)
+
+Assets (git-ignored, upload from here): `mobile/dist/play-store/`
+`icon-512.png` · `feature-graphic-1024x500.png` · `screenshots/01…05` (1080×2100)
+
+## Release
+
+| | |
+|---|---|
+| Package | `app.thehourbrief` |
+| Version name | **1.0.0** |
+| Version code | **2** (Play rejected code 1 as already used; bump by 1 for every later upload) |
+| Bundle | `mobile/dist/the-hour-brief-1.0.0-vc2.aab` — signed with the upload key (SHA-256 `CE:1E:B6:18:…:F1:E5:35`) |
+| Release name (Console) | `2 (1.0.0)` |
+| Track order | Internal testing → Closed testing (12+ testers, 14 days) → Production |
+
+### Release notes ("What's new", max 500 chars — paste with the tags)
+
+```
+<en-US>
+Welcome to The Hour Brief for Android.
+
+• A fresh edition every morning: AI & tech, product & business, and the Indian and global markets
+• Built for one sitting: every story has a short summary you can expand and a one-line takeaway
+• Share any edition, pull down to refresh, and see a banner when a newer edition is out
+• Follows your phone's light or dark theme
+</en-US>
+```
+
+Internal / closed testing note: `Testing build 1.0.0 — please check that it installs, opens today's edition, links open in your browser, and Share works.`
+
+## Store listing
+
+- **App name:** The Hour Brief
+- **Short description (74/80):** A daily brief on AI, business and markets — built for one hour of reading.
+- **Category:** News & Magazines · **Free** · **No ads**
+- **Contact:** milindroy101292@gmail.com · https://the-hour-brief.vercel.app
+- **Privacy policy:** https://the-hour-brief.vercel.app/privacy.html
+
+**Full description**
+
+```
+The Hour Brief is a daily read built for one sitting — about an hour, once a morning.
+
+Every edition covers three lanes:
+• AI & Tech — what moved in AI and technology
+• Product & Business — what's shaping products and companies, in India and globally
+• Stock Market — how Indian and US markets closed, the day's movers, and one investing principle worth remembering
+
+Made to be read, not scrolled:
+• Every story has a short summary you can expand and a one-line takeaway
+• Every summary links back to its original source
+• Clean layout, no ads, and it follows your phone's light or dark theme
+• Share any edition with one tap, pull down to refresh, and see a banner when a newer edition is out
+• Browse the archive of past editions
+
+How it's made: editions are researched with AI from public reporting, newsletters and market data, and every item links to its source. It is not independently fact-checked, so check the source before relying on anything. Nothing here is investment advice.
+
+Free, and no account needed. Prefer your inbox? Subscribe by email from the app.
+```
+
+## App content answers
+
+- **App access:** all functionality available without login.
+- **Ads:** No. **Advertising ID:** No.
+- **Target audience:** 18 and over (avoids the Families policy).
+- **News app declaration:** yes, it's a news/information app. It is AI-researched and says so on the About page.
+- **Financial features:** none (market figures are informational, no trading or accounts).
+- **Content rating (IARC):** category *Reference, News or Educational*. Answer honestly for tech, business and market news: no violence, sexual content, profanity, drugs or gambling; no user-to-user interaction (comments are hidden in the app); no location sharing; no purchases.
+
+## Data safety
+
+Nothing is shared or sold. Vercel, MailerLite and Upstash process data on your behalf (service providers, not "sharing"). Data is encrypted in transit (HTTPS). Users can request deletion by email (see privacy policy).
+
+| Data type | Collected | Why | Optional |
+|---|---|---|---|
+| Email address (Personal info) | Yes | App functionality (newsletter delivery via MailerLite) | Yes — only if they subscribe |
+| App interactions (App activity) | Yes | Analytics; app functionality (👍/👎 vote totals) | No |
+| Device or other IDs | Yes | Fraud prevention — one-way IP hash kept ~24 h to stop repeat voting | No |
+
+Judgement calls to confirm before submitting:
+- Vercel Web Analytics also reports country, device and browser in aggregate. To be conservative, also declare **Approximate location** and **App info and performance**, and consider adding "country, device type and browser" to the analytics sentence in `privacy.html` (it currently says only page views and referrers). Declaring slightly more than you collect is safe; declaring less is what gets apps rejected.
+- **Comments are hidden inside the app** (`capacitor-bridge.js`), so no user-generated content is collected or shown via the app. Play's UGC policy would otherwise require in-app reporting and blocking.
+
+## Before you submit
+
+1. **Deploy the site first.** The comments-hiding and reading-layout changes live in `capacitor-bridge.js`, `mobile.css` and `mobile.js`, which the app loads from the live site. Play's reviewers will see the comments section until those are deployed.
+2. Upload `the-hour-brief-1.0.0-vc2.aab`. Play rejects reused version codes, so bump `versionCode` in `android/app/build.gradle` before every future build (`./gradlew bundleRelease`).
+3. Keep `mobile/android/thb-upload-key.jks` + `keystore.properties` backed up (copies are in `~`).
