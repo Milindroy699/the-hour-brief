@@ -246,3 +246,92 @@
 .rd-saved a { color: var(--ink); font-weight: 600; text-decoration: none; line-height: 1.35; }
 .rd-saved small { display: block; margin-top: 2px; color: var(--ink-faint); }
 .rd-remove { flex: 0 0 auto; min-height: 40px; }
+
+/* ---- Listen mode (listen.js): call-to-action card, mini player, current-story highlight ---- */
+.listen-cta {
+  margin: -6px 0 22px;
+  padding: 12px 14px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--paper);
+}
+.listen-cta[hidden] { display: none; }
+.listen-cta-t { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-weight: 700; font-size: 0.95rem; color: var(--ink); }
+.listen-cta-t svg { color: var(--brand); flex: none; }
+.listen-cta-b { display: flex; gap: 8px; }
+.listen-cta-btn {
+  flex: 1 1 0;
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.hb-cta-name { font-weight: 700; font-size: 0.95rem; }
+.hb-cta-min { font-size: 0.78rem; color: var(--ink-faint); }
+.listen-cta-btn[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); color: #fff; }
+.listen-cta-btn[aria-pressed="true"] .hb-cta-min { color: rgba(255, 255, 255, 0.85); }
+.listen-cta-btn:focus-visible, .hb-pl-b:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+.hb-player {
+  position: fixed;
+  left: 10px;
+  right: 10px;
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  z-index: 9992;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 10px 12px 10px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.22);
+}
+.hb-player[hidden] { display: none; }
+.hb-pl-now { display: flex; flex-direction: column; gap: 1px; min-width: 0; margin-bottom: 6px; }
+.hb-pl-lane { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--brand); }
+.hb-pl-title { font-size: 0.92rem; font-weight: 600; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.hb-pl-ctl { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.hb-pl-b {
+  min-width: 46px;
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  border-radius: 23px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.hb-pl-b:disabled { opacity: 0.35; cursor: default; }
+.hb-pl-play { min-width: 54px; min-height: 54px; border-radius: 27px; background: var(--brand); color: #fff; }
+.hb-pl-rate { border: 1px solid var(--line); min-width: 58px; }
+.hb-pl-close { color: var(--ink-faint); }
+/* Make room so the player never covers the last lines, and lift the floating buttons above it. */
+body.hb-listening { padding-bottom: 150px; }
+body.hb-listening #mob-top { bottom: calc(148px + env(safe-area-inset-bottom, 0px)); }
+body.hb-listening #mob-toast { bottom: calc(160px + env(safe-area-inset-bottom, 0px)); }
+.item.hb-listening, .lane-head.hb-listening {
+  margin-inline: -10px;
+  padding-inline: 12px 10px;
+  box-shadow: inset 3px 0 0 var(--brand);
+  background: color-mix(in srgb, var(--brand) 7%, transparent);
+  border-radius: 8px;
+}
+@media (prefers-reduced-motion: reduce) { .item.hb-listening, .lane-head.hb-listening { transition: none; } }

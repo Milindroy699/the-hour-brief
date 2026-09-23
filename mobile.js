@@ -15,6 +15,7 @@
  *    pages get a reading-progress bar and a back-to-top button.
  *  - The evergreen About paragraph gets a matching "More" toggle.
  *  - Save-for-later bookmarks and a text-size control (both stored on this device only).
+ *  - "Listen to today's brief" (listen.js, loaded on demand where the device can speak).
  *
  * "Reader mode" = phone widths, or the native apps at any width (tablets). The desktop
  * website is left untouched.
@@ -553,7 +554,20 @@
     measureClamps();
   }
 
-  function start() { apply(); openFromHash(); }
+  // ---- Listen mode: the player lives in listen.js, fetched only where speech is available ----
+  var listenLoaded = false;
+  function loadListen() {
+    var P = window.Capacitor && window.Capacitor.Plugins;
+    var canSpeak = ('speechSynthesis' in window) || !!(NATIVE && P && P.TextToSpeech);   // the Android WebView has no Web Speech API
+    if (listenLoaded || !reader() || !canSpeak) return;
+    listenLoaded = true;
+    var s = document.createElement('script');
+    s.src = '/listen.js';
+    s.defer = true;
+    document.head.appendChild(s);
+  }
+
+  function start() { apply(); openFromHash(); loadListen(); }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', start);
   } else {
@@ -561,5 +575,5 @@
   }
   window.addEventListener('load', queueMeasure);
   window.addEventListener('resize', queueMeasure);
-  mq.addEventListener('change', apply);
+  mq.addEventListener('change', function () { apply(); loadListen(); });
 })();

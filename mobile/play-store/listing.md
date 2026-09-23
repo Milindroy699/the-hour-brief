@@ -17,8 +17,8 @@ Assets (git-ignored, upload from here): `mobile/dist/play-store/`
 ### Which bundle to upload
 
 - **`the-hour-brief-1.0.0-vc2.aab`** is what is in the closed-test review now.
-- **`the-hour-brief-1.1.0-vc3.aab`** adds the daily reminder (local notification) and image sharing (Filesystem plugin, cache folder only). Extra permissions vs 1.0.0: `POST_NOTIFICATIONS`, `RECEIVE_BOOT_COMPLETED`, `WAKE_LOCK`. No exact-alarm permission and no storage permissions. Upload it to the same closed-test track as a new release once the current review clears (or replace the pending release, accepting a fresh review). Data safety is unchanged: the reminder is scheduled on the device and sends nothing.
-- Notes for 1.1.0: `<en-US>` Take the new 5-question daily quiz and share your score as an image. Save stories for later and pick a text size that suits you. Set a daily reminder: tap the bell and pick a time. Read each section's highlights at a glance, and share a single story with a link back to it. </en-US>
+- **`the-hour-brief-1.1.0-vc3.aab`** adds the daily reminder (local notification), image sharing (Filesystem plugin, cache folder only), a native rating prompt (in-app review) and Listen mode (text-to-speech plugin, on-device). Extra permissions vs 1.0.0: `POST_NOTIFICATIONS`, `RECEIVE_BOOT_COMPLETED`, `WAKE_LOCK`. No exact-alarm permission and no storage permissions. Upload it to the same closed-test track as a new release once the current review clears (or replace the pending release, accepting a fresh review). Data safety only changes for friends leagues (see the table below): the reminder and Listen run on the device and send nothing.
+- Notes for 1.1.0: `<en-US>` Take the new 5-question daily quiz and share your score as an image. Listen to today's brief with on-device text-to-speech. Challenge friends in private quiz leagues and earn streak badges. Save stories for later and pick a text size that suits you. Set a daily reminder: tap the bell and pick a time. Read each section's highlights at a glance, and share a single story with a link back to it. </en-US>
 
 ### Release notes ("What's new", max 500 chars — paste with the tags)
 
@@ -57,6 +57,7 @@ Made to be read, not scrolled:
 • Every story has a short summary you can expand and a one-line takeaway
 • A five-question daily quiz on the edition, with streaks, badges and a shareable score (no account needed)
 • Friends leagues: start a private league, invite friends with a link and compare quiz scores every day (no sign-up, no typed names)
+• Listen to today's brief: a quick or full read-aloud, using your device's own voice
 • Every summary links back to its original source
 • Clean layout, no ads, and it follows your phone's light or dark theme
 • Share any edition with one tap, pull down to refresh, and see a banner when a newer edition is out

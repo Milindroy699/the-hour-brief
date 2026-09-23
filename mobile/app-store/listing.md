@@ -44,6 +44,7 @@ Made to be read, not scrolled:
 • Every story has a short summary you can expand and a one-line takeaway
 • A five-question daily quiz on the edition, with streaks, badges and a shareable score (no account needed)
 • Friends leagues: start a private league, invite friends with a link and compare quiz scores every day (no sign-up, no typed names)
+• Listen to today's brief: a quick or full read-aloud, using your device's own voice
 • Every summary links to its original source
 • Clean layout with no ads, in light or dark mode
 • Share any edition with one tap, pull down to refresh, and see a banner when a newer edition is out
@@ -82,7 +83,7 @@ The Hour Brief is a free daily news digest. No login or demo account is needed; 
 
 Content: each edition is researched with AI from public reporting and market data. Every item is a short original summary with a one-line takeaway and a link to the original source (opens in an in-app browser). This is disclosed in the app's About text and on https://the-hour-brief.vercel.app/about.html. Market figures are informational only; there is no trading or financial service.
 
-The app is more than a website wrapper. Native features: a daily reminder (a local notification the reader schedules at a time they choose), a daily quiz with on-device streaks and badges, private friends leagues (invite by link; players get generated names, so there is no user-generated text), a native rating prompt after a streak, system share sheet for any edition or single story, haptic feedback, pull-to-refresh, in-app browser for sources, offline notice, a banner when a newer edition is published, and a native launch experience. Editions load from our server so readers get each new edition without waiting for an app update.
+The app is more than a website wrapper. Native features: a daily reminder (a local notification the reader schedules at a time they choose), a daily quiz with on-device streaks and badges, private friends leagues (invite by link; players get generated names, so there is no user-generated text), a native rating prompt after a streak, a "Listen to today's brief" read-aloud with a mini player (on-device text-to-speech), system share sheet for any edition or single story, haptic feedback, pull-to-refresh, in-app browser for sources, offline notice, a banner when a newer edition is published, and a native launch experience. Editions load from our server so readers get each new edition without waiting for an app update.
 
 User comments and account features from the website are intentionally hidden in the app; there is no user-generated content.
 
