@@ -14,6 +14,12 @@ Assets (git-ignored, upload from here): `mobile/dist/play-store/`
 | Release name (Console) | `2 (1.0.0)` |
 | Track order | Internal testing → Closed testing (12+ testers, 14 days) → Production |
 
+### Which bundle to upload
+
+- **`the-hour-brief-1.0.0-vc2.aab`** is what is in the closed-test review now.
+- **`the-hour-brief-1.1.0-vc3.aab`** adds the daily reminder (local notification). Extra permissions vs 1.0.0: `POST_NOTIFICATIONS`, `RECEIVE_BOOT_COMPLETED`, `WAKE_LOCK`. No exact-alarm permission. Upload it to the same closed-test track as a new release once the current review clears (or replace the pending release, accepting a fresh review). Data safety is unchanged: the reminder is scheduled on the device and sends nothing.
+- Notes for 1.1.0: `<en-US>` Take the new 5-question daily quiz and share your score. Set a daily reminder: tap the bell and pick a time. Read each section's highlights at a glance. Share a single story with a link back to it. </en-US>
+
 ### Release notes ("What's new", max 500 chars — paste with the tags)
 
 ```
@@ -49,6 +55,7 @@ Every edition covers three lanes:
 
 Made to be read, not scrolled:
 • Every story has a short summary you can expand and a one-line takeaway
+• A five-question daily quiz on the edition, with streaks and a shareable score (no account needed)
 • Every summary links back to its original source
 • Clean layout, no ads, and it follows your phone's light or dark theme
 • Share any edition with one tap, pull down to refresh, and see a banner when a newer edition is out

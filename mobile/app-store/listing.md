@@ -9,7 +9,7 @@ App icon: 1024×1024, no alpha, already in `ios/App/App/Assets.xcassets`.
 | | |
 |---|---|
 | Bundle ID | `app.thehourbrief` |
-| Version / build | **1.0** / **1** (bump the build number for every upload) |
+| Version / build | **1.0** / **1** (bump the build number for every upload; the daily reminder plugin is already in the project) |
 | Minimum iOS | 15.0 · iPhone + iPad |
 | Encryption | `ITSAppUsesNonExemptEncryption = false` (standard HTTPS only) |
 | Privacy manifest | `ios/App/App/PrivacyInfo.xcprivacy` — no tracking, no collected data, no required-reason APIs |
@@ -42,6 +42,7 @@ Every edition covers three lanes:
 
 Made to be read, not scrolled:
 • Every story has a short summary you can expand and a one-line takeaway
+• A five-question daily quiz on the edition, with streaks and a shareable score (no account needed)
 • Every summary links to its original source
 • Clean layout with no ads, in light or dark mode
 • Share any edition with one tap, pull down to refresh, and see a banner when a newer edition is out
@@ -78,7 +79,7 @@ The Hour Brief is a free daily news digest. No login or demo account is needed; 
 
 Content: each edition is researched with AI from public reporting and market data. Every item is a short original summary with a one-line takeaway and a link to the original source (opens in an in-app browser). This is disclosed in the app's About text and on https://the-hour-brief.vercel.app/about.html. Market figures are informational only; there is no trading or financial service.
 
-The app is more than a website wrapper. Native features: system share sheet for any edition, haptic feedback, pull-to-refresh, in-app browser for sources, offline notice, a banner when a newer edition is published, and a native launch experience. Editions load from our server so readers get each new edition without waiting for an app update.
+The app is more than a website wrapper. Native features: a daily reminder (a local notification the reader schedules at a time they choose), a daily quiz with on-device streaks, system share sheet for any edition or single story, haptic feedback, pull-to-refresh, in-app browser for sources, offline notice, a banner when a newer edition is published, and a native launch experience. Editions load from our server so readers get each new edition without waiting for an app update.
 
 User comments and account features from the website are intentionally hidden in the app; there is no user-generated content.
 
