@@ -1,0 +1,9 @@
+{
+  "name": "the-hour-brief",
+  "private": true,
+  "description": "Static site plus Vercel functions. Only the link-preview image function needs a dependency.",
+  "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "satori": "^0.33.5"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "functions": {
+    "api/og.mjs": {
+      "includeFiles": "{fonts/**,node_modules/harfbuzzjs/**}"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/e/:date",
+      "destination": "/api/share?t=e&date=:date"
+    },
+    {
+      "source": "/s/:date/:id",
+      "destination": "/api/share?t=s&date=:date&id=:id"
+    },
+    {
+      "source": "/q/:date/:score",
+      "destination": "/api/share?t=q&date=:date&score=:score"
+    },
+    {
+      "source": "/l/:code",
+      "destination": "/api/share?t=l&code=:code"
+    }
+  ]
+}

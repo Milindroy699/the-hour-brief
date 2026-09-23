@@ -241,7 +241,9 @@
   }
   function storyUrl(it) {
     var d = editionDate();
-    return location.origin + (d ? '/archive/' + d + '.html' : location.pathname) + '?utm_source=share&utm_medium=story#' + it.id;
+    // Landing page with story-specific link-preview tags; it redirects people straight to the story.
+    return d ? location.origin + '/s/' + d + '/' + it.id + '?utm_source=share&utm_medium=story'
+             : location.origin + location.pathname + '#' + it.id;
   }
   function toast(msg) {
     var t = document.getElementById('mob-toast');

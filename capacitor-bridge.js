@@ -123,7 +123,10 @@
       'background:color-mix(in srgb, currentColor 14%, transparent);' +
       'border:1px solid color-mix(in srgb, currentColor 32%, transparent);';
     btn.addEventListener('click', function () {
-      var payload = { title: document.title, text: document.title, url: location.href,
+      var ed = document.querySelector('[data-edition-date]');
+      var d = ed && ed.getAttribute('data-edition-date');
+      // The edition landing page carries a preview card built from the day's takeaways.
+      var payload = { title: document.title, text: document.title, url: d ? location.origin + '/e/' + d : location.href,
         dialogTitle: 'Share The Hour Brief' };
       if (P.Share) { P.Share.share(payload).catch(function () {}); }
       else if (navigator.share) { navigator.share(payload).catch(function () {}); }

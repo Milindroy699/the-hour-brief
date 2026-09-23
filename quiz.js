@@ -120,8 +120,10 @@
     if (!res.a) return '';
     return questions.map(function (q, i) { return res.a[i] === q.answer ? '🟩' : '🟥'; }).join('');
   }
-  function shareUrl(score) {
-    return location.origin + '/archive/' + DATE + '.html?utm_source=share&utm_medium=quiz&beat=' + score + '#quiz';
+  // Landing page with a "can you beat N/T?" preview card; it redirects to this edition's quiz.
+  function shareUrl(res) {
+    var bits = res.a ? questions.map(function (q, i) { return res.a[i] === q.answer ? '1' : '0'; }).join('') : '';
+    return location.origin + '/q/' + DATE + '/' + res.s + '?sq=' + bits + (res.t !== 5 ? '&total=' + res.t : '') + '&utm_source=share&utm_medium=quiz';
   }
   function shareText(res, streak) {
     var lines = ['The Hour Brief quiz · ' + prettyDate(DATE), squares(res) + '  ' + res.s + '/' + res.t];
@@ -212,7 +214,7 @@
     return c;
   }
   function shareScore(res, streak) {
-    var text = shareText(res, streak), url = shareUrl(res.s);
+    var text = shareText(res, streak), url = shareUrl(res);
     var Cap = window.Capacitor, P = (Cap && Cap.Plugins) || {};
     var native = Cap && typeof Cap.isNativePlatform === 'function' && Cap.isNativePlatform();
     var canvas = null;

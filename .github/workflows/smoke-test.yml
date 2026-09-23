@@ -83,6 +83,10 @@ jobs:
           quiz_resp=$(curl -s "$BASE/api/quiz-stats?date=2000-01-01&total=5")
           echo "$quiz_resp" | python3 -c "import json,sys; d=json.load(sys.stdin); assert len(d['dist'])==6" || { echo "::error::/api/quiz-stats did not return a valid tally"; fail=1; }
 
+          ctype=$(curl -s -o /dev/null -w "%{content_type}" "$BASE/api/og?type=quiz&d=2026-09-23&score=4&total=5&sq=10111")
+          [ "$ctype" = "image/png" ] || { echo "::error::/api/og did not return a PNG (got $ctype)"; fail=1; }
+          curl -s "$BASE/e/latest" | grep -q 'property="og:image"' || { echo "::error::/e/latest landing page has no og:image"; fail=1; }
+
           echo "--- checking the latest edition carries valid quiz data ---"
           python3 - "$BASE" <<'PYEOF2' || fail=1
           import json, re, sys, urllib.request
