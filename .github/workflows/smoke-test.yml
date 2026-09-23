@@ -83,6 +83,9 @@ jobs:
           quiz_resp=$(curl -s "$BASE/api/quiz-stats?date=2000-01-01&total=5")
           echo "$quiz_resp" | python3 -c "import json,sys; d=json.load(sys.stdin); assert len(d['dist'])==6" || { echo "::error::/api/quiz-stats did not return a valid tally"; fail=1; }
 
+          lg_code=$(curl -s -o /tmp/lg.json -w "%{http_code}" "$BASE/api/league?code=AAAAAA&meta=1")
+          python3 -c "import json; d=json.load(open('/tmp/lg.json')); assert 'error' in d" && [ "$lg_code" = "404" ] || { echo "::error::/api/league did not return a JSON 404 for an unknown code (got $lg_code)"; fail=1; }
+
           curl -s "$BASE/api/digest" | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['whatsapp'] and d['telegram']" || { echo "::error::/api/digest did not return today's post"; fail=1; }
           check_status "$BASE/share-kit.html" 200
 

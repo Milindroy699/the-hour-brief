@@ -55,7 +55,8 @@ Every edition covers three lanes:
 
 Made to be read, not scrolled:
 • Every story has a short summary you can expand and a one-line takeaway
-• A five-question daily quiz on the edition, with streaks and a shareable score (no account needed)
+• A five-question daily quiz on the edition, with streaks, badges and a shareable score (no account needed)
+• Friends leagues: start a private league, invite friends with a link and compare quiz scores every day (no sign-up, no typed names)
 • Every summary links back to its original source
 • Clean layout, no ads, and it follows your phone's light or dark theme
 • Share any edition with one tap, pull down to refresh, and see a banner when a newer edition is out
@@ -77,13 +78,15 @@ Free, and no account needed. Prefer your inbox? Subscribe by email from the app.
 
 ## Data safety
 
-Nothing is shared or sold. Vercel, MailerLite and Upstash process data on your behalf (service providers, not "sharing"). Data is encrypted in transit (HTTPS). Users can request deletion by email (see privacy policy).
+Nothing is sold. League members can see each other's generated name and score (that is the feature); declare it as not "shared" with third parties. Vercel, MailerLite and Upstash process data on your behalf (service providers, not "sharing"). Data is encrypted in transit (HTTPS). Users can request deletion by email (see privacy policy).
 
 | Data type | Collected | Why | Optional |
 |---|---|---|---|
 | Email address (Personal info) | Yes | App functionality (newsletter delivery via MailerLite) | Yes — only if they subscribe |
 | App interactions (App activity) | Yes | Analytics; app functionality (👍/👎 vote totals) | No |
 | Device or other IDs | Yes | Fraud prevention — one-way IP hash kept ~24 h to stop repeat voting | No |
+| User IDs (Personal info) | Yes | App functionality — the random device ID used only if the reader joins a friends league; linked to a generated name and daily quiz score, kept ~120 days | Yes — only if they use leagues |
+| Other in-app content (App activity) → quiz scores | Yes | App functionality — daily score shown to league members | Yes — only if they use leagues |
 
 Judgement calls to confirm before submitting:
 - Vercel Web Analytics also reports country, device and browser in aggregate. To be conservative, also declare **Approximate location** and **App info and performance**, and consider adding "country, device type and browser" to the analytics sentence in `privacy.html` (it currently says only page views and referrers). Declaring slightly more than you collect is safe; declaring less is what gets apps rejected.

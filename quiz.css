@@ -220,3 +220,32 @@
 .qz-badge-desc, .qz-badge-state { display: block; font-size: 0.85rem; color: var(--ink-soft); }
 .qz-badge-state { color: var(--ink-faint); }
 .qz-badges li.qz-earned .qz-badge-state { color: var(--up); font-weight: 600; }
+
+/* ---- Friends leagues ---- */
+.qz-leagues { max-width: 640px; margin-top: 22px; }
+.qz-join { max-width: 640px; }
+.qz-join-t { margin: 0 0 8px; font-weight: 600; }
+.qz-lg-title { margin: 0 0 6px; font-size: 1.15rem; }
+.qz-lg-intro, .qz-lg-note, .qz-lg-priv { margin: 0 0 10px; font-size: 0.92rem; line-height: 1.5; color: var(--ink-soft); }
+.qz-lg-priv { margin-top: 14px; font-size: 0.78rem; color: var(--ink-faint); }
+.qz-lg-priv a { color: inherit; }
+.qz-lg-msg { margin: 10px 0 0; font-size: 0.9rem; color: var(--ink); font-weight: 600; }
+.qz-league { margin: 0 0 14px; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); }
+.qz-lg-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+.qz-lg-head b { font-size: 1.05rem; }
+.qz-code { font-size: 0.78rem; letter-spacing: 0.06em; color: var(--ink-faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.qz-tabs { display: flex; gap: 8px; margin: 6px 0 4px; }
+.qz-tab { min-height: 36px; padding: 0 14px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--ink-soft); font: inherit; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
+.qz-tab.on { background: var(--brand); border-color: var(--brand); color: var(--bg); }
+.qz-tab:focus-visible, .qz-input:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.qz-board { margin: 6px 0 0; padding: 0; list-style: none; }
+.qz-board li { display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; align-items: center; padding: 9px 0; border-top: 1px solid var(--line); font-size: 0.95rem; }
+.qz-board li:first-child { border-top: 0; }
+.qz-board li.qz-empty { display: block; color: var(--ink-faint); font-size: 0.88rem; }
+.qz-board li.me { font-weight: 700; }
+.qz-board li.me .qz-who { color: var(--brand); }
+.qz-rank { width: 26px; height: 26px; border-radius: 50%; background: var(--paper-2); font-size: 0.8rem; font-weight: 700; line-height: 26px; text-align: center; }
+.qz-pts { font-variant-numeric: tabular-nums; color: var(--ink-soft); font-weight: 600; }
+.qz-joinrow { display: flex; gap: 10px; margin-top: 12px; }
+.qz-input { flex: 1; min-width: 0; min-height: 46px; padding: 0 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); font: inherit; font-size: 16px; letter-spacing: 0.1em; text-transform: uppercase; }
+.qz-input::placeholder { letter-spacing: 0; text-transform: none; }

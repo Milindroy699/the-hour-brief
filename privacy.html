@@ -108,6 +108,11 @@
   </section>
 
   <section>
+    <h2>If you join a friends league</h2>
+    <p>Friends leagues are optional. Nobody types a name: when you start or join a league, the site creates a <strong>random device ID</strong> on your device and the server gives you a <strong>generated name</strong> (for example, &ldquo;Curious Otter 27&rdquo;). We store, for each league, its generated name, the members&rsquo; random IDs with their generated names, and each member&rsquo;s <strong>daily quiz score</strong>. Other members of the league can see your generated name and scores; they cannot see your device ID, and it is never linked to an email address or any real-world identity. Anyone with a league&rsquo;s invite link or code can join it, so share it only with people you want to play with. League data is deleted about 120 days after the league was last active. You can leave a league at any time from the app or site, which removes you from its member list; you can also email us to have your league data deleted. Nothing is stored about leagues if you never start or join one.</p>
+  </section>
+
+  <section>
     <h2>The mobile apps</h2>
     <p>The iOS and Android apps load this same website inside a native browser view. They collect <strong>no additional data</strong> beyond what the website does, described above.</p>
     <ul>
@@ -120,7 +125,7 @@
 
   <section>
     <h2>Cookies and local storage</h2>
-    <p>The site sets no advertising or tracking cookies. It uses your browser's <code>localStorage</code> only to remember, on your own device, which items you've already voted on, whether you've dismissed the "new edition" prompt, your daily quiz answers, scores and streak, the stories you save for later, and your text-size choice. That data never leaves your device.</p>
+    <p>The site sets no advertising or tracking cookies. It uses your browser's <code>localStorage</code> only to remember, on your own device, which items you've already voted on, whether you've dismissed the "new edition" prompt, your daily quiz answers, scores, streak and badges, the stories you save for later, your text-size choice, and (only if you use leagues) your league codes and random device ID. That data never leaves your device.</p>
   </section>
 
   <section>
@@ -128,7 +133,7 @@
     <ul>
       <li><strong>Vercel</strong> — website hosting and the aggregate analytics.</li>
       <li><strong>MailerLite</strong> — email delivery, only if you subscribe.</li>
-      <li><strong>Upstash / Vercel KV</strong> — storage for vote counts, comments and the anonymous quiz tally.</li>
+      <li><strong>Upstash / Vercel KV</strong> — storage for vote counts, comments, the anonymous quiz tally and friends leagues.</li>
     </ul>
     <p>Each has its own privacy policy. No data is shared with anyone for advertising.</p>
   </section>
@@ -144,6 +149,7 @@
       <li><strong>Email address</strong>: kept until you unsubscribe, then removed from the mailing list.</li>
       <li><strong>Comments</strong>: kept as part of the public record for that edition. Email the address below to request removal of a comment.</li>
       <li><strong>IP hashes</strong>: expire automatically (about 24 hours for votes and quiz submissions; a short window for comment rate-limiting).</li>
+      <li><strong>League data</strong>: deleted about 120 days after a league&rsquo;s last activity, or sooner on request. Leaving a league removes you from its member list.</li>
       <li><strong>Quiz scores</strong>: the anonymous tally is deleted after about 30 days. Your own quiz history, saved stories and text-size choice live only on your device; clear them by clearing the site's data or uninstalling the app.</li>
     </ul>
   </section>

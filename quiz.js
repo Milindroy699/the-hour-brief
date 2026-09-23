@@ -360,6 +360,7 @@
       saved = res;
     }
     showResult(practice ? res : saved, !practice, !practice);
+    if (!practice) syncScores();
   }
 
   // ---------- badges + review prompt (kept on this device) ----------
@@ -673,9 +674,272 @@
     chip.appendChild(el('span', '', mine ? 'Review →' : 'Play →'));
   }
 
+  // ---------- friends leagues ----------
+  // The server keeps only a generated league name, generated player names keyed by a random
+  // device id, and one score per player per day. No accounts and no typed names.
+  var LG_KEY = 'hb-league-v1';
+  var MAX_LEAGUES = 3;
+  var joinBox = el('div', 'qz-join');
+  root.insertAdjacentElement('beforebegin', joinBox);
+  var lgBox = el('div', 'qz-leagues');
+  root.insertAdjacentElement('afterend', lgBox);
+  var boards = {}, viewWeek = {}, lgMsg = '', lgBusy = false;
+
+  function randomId() {
+    var a = new Uint8Array(16);
+    (window.crypto || window.msCrypto).getRandomValues(a);
+    return Array.prototype.map.call(a, function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+  }
+  function lgLoad() {
+    try { var o = JSON.parse(localStorage.getItem(LG_KEY) || ''); if (o && o.mid) { o.leagues = o.leagues || []; return o; } } catch (e) { /* new device */ }
+    return { mid: randomId(), leagues: [] };
+  }
+  function lgSave(o) { try { localStorage.setItem(LG_KEY, JSON.stringify(o)); } catch (e) { /* ignore */ } }
+  function lgFetch(url, opts) {
+    return fetch(url, opts).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, status: r.status, d: j }; });
+    });
+  }
+  function lgPost(body) {
+    return lgFetch('/api/league', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  }
+  function lgError(r) {
+    if (r.status === 404) return 'That league no longer exists.';
+    if (r.status === 409) return 'That league is full (30 players).';
+    if (r.status === 429) return 'Too many tries for now. Please try again tomorrow.';
+    return 'Could not reach leagues right now. Please try again.';
+  }
+  function setLgMsg(m) { lgMsg = m || ''; renderLeagues(); }
+
+  function refreshBoard(code) {
+    var st = lgLoad();
+    return getEditions().then(function (dates) {
+      var d = dates.length ? dates[dates.length - 1] : DATE;
+      return lgFetch('/api/league?' + new URLSearchParams({ code: code, mid: st.mid, date: d }));
+    }).then(function (r) {
+      if (r.ok) { boards[code] = r.d; checkChampion(code, r.d); } else if (r.status === 404) { boards[code] = { gone: true }; }
+      renderLeagues();
+    }).catch(function () { renderLeagues(); });
+  }
+
+  function checkChampion(code, s) {
+    var o = load();
+    o.cd = o.cd || {};
+    var added = 0;
+    (s.hist || []).forEach(function (h) {
+      var k = code + ':' + h.date;
+      if (h.meWon && !o.cd[k]) { o.cd[k] = 1; added++; }
+    });
+    if (!added) return;
+    o.champ = (o.champ || 0) + added;
+    save(o);
+    getEditions().then(function (dates) {
+      var aw = awardBadges(dates);
+      toast('👑 You topped ' + (s.name || 'your league') + '!');
+      if (aw.fresh.length) toast('👑 New badge: ' + aw.fresh[0].name);
+    });
+  }
+
+  function syncScores() {
+    var st = lgLoad();
+    var mine = load().r[DATE];
+    if (!mine || !st.leagues.length || Math.abs(Date.now() - Date.parse(DATE + 'T00:00:00Z')) > 3 * 86400000) return;
+    st.leagues.forEach(function (lg) {
+      var flag = 'hb-lgs-' + lg.code + '-' + DATE, done = false;
+      try { done = !!localStorage.getItem(flag); } catch (e) { /* ignore */ }
+      if (done) { refreshBoard(lg.code); return; }
+      lgPost({ action: 'score', code: lg.code, mid: st.mid, date: DATE, score: mine.s, total: mine.t }).then(function (r) {
+        if (r.ok && r.d.standings) { try { localStorage.setItem(flag, '1'); } catch (e) { /* ignore */ } boards[lg.code] = r.d.standings; checkChampion(lg.code, r.d.standings); renderLeagues(); }
+        else refreshBoard(lg.code);
+      }).catch(function () { /* the next visit retries */ });
+    });
+  }
+
+  function afterJoin(code) { setLgMsg(''); refreshBoard(code); syncScores(); }
+
+  function startLeague() {
+    if (lgBusy) return;
+    var st = lgLoad();
+    if (st.leagues.length >= MAX_LEAGUES) return;
+    lgBusy = true; setLgMsg('Creating your league…');
+    lgPost({ action: 'create', mid: st.mid }).then(function (r) {
+      lgBusy = false;
+      if (!r.ok) { setLgMsg(lgError(r)); return; }
+      st.leagues.push({ code: r.d.code, name: r.d.name });
+      lgSave(st);
+      afterJoin(r.d.code);
+    }).catch(function () { lgBusy = false; setLgMsg(lgError({})); });
+  }
+
+  function joinLeague(code) {
+    var st = lgLoad();
+    if (st.leagues.some(function (l) { return l.code === code; })) return Promise.resolve(true);
+    if (st.leagues.length >= MAX_LEAGUES) { setLgMsg('You can be in up to ' + MAX_LEAGUES + ' leagues. Leave one to join another.'); return Promise.resolve(false); }
+    return lgPost({ action: 'join', code: code, mid: st.mid }).then(function (r) {
+      if (!r.ok) { setLgMsg(lgError(r)); return false; }
+      st.leagues.push({ code: code, name: r.d.name });
+      lgSave(st);
+      afterJoin(code);
+      return true;
+    }).catch(function () { setLgMsg(lgError({})); return false; });
+  }
+
+  function leaveLeague(code) {
+    var st = lgLoad();
+    lgPost({ action: 'leave', code: code, mid: st.mid }).catch(function () { /* local leave still applies */ });
+    st.leagues = st.leagues.filter(function (l) { return l.code !== code; });
+    lgSave(st);
+    delete boards[code];
+    renderLeagues();
+  }
+
+  function inviteLink(lg) { return location.origin + '/l/' + lg.code + '?n=' + encodeURIComponent(lg.name); }
+  function invite(lg) {
+    share('Join my Hour Brief quiz league “' + lg.name + '” and beat me at today’s news quiz.', inviteLink(lg));
+  }
+
+  function boardList(s, week) {
+    var list = el('ol', 'qz-board');
+    if (week) {
+      (s.week || []).forEach(function (e) {
+        var li = el('li', e.me ? 'me' : '');
+        li.appendChild(el('span', 'qz-rank', String(e.rank)));
+        li.appendChild(el('span', 'qz-who', e.h + (e.me ? ' (you)' : '')));
+        li.appendChild(el('span', 'qz-pts', e.pts + ' pts · ' + e.played + (e.played === 1 ? ' day' : ' days')));
+        list.appendChild(li);
+      });
+      if (!list.children.length) list.appendChild(el('li', 'qz-empty', 'No scores this week yet.'));
+      return list;
+    }
+    (s.today || []).forEach(function (e) {
+      var li = el('li', e.me ? 'me' : '');
+      li.appendChild(el('span', 'qz-rank', String(e.rank)));
+      li.appendChild(el('span', 'qz-who', e.h + (e.me ? ' (you)' : '')));
+      li.appendChild(el('span', 'qz-pts', e.s + '/' + N));
+      list.appendChild(li);
+    });
+    if (!list.children.length) list.appendChild(el('li', 'qz-empty', 'Nobody has played yet today.'));
+    if ((s.yet || []).length) {
+      var w = el('li', 'qz-empty', 'Yet to play: ' + s.yet.map(function (y) { return y.h + (y.me ? ' (you)' : ''); }).join(', '));
+      list.appendChild(w);
+    }
+    return list;
+  }
+
+  function leagueCard(lg) {
+    var card = el('div', 'qz-league');
+    var head = el('div', 'qz-lg-head');
+    head.appendChild(el('b', '', lg.name));
+    head.appendChild(el('span', 'qz-code', 'Code ' + lg.code));
+    card.appendChild(head);
+    var s = boards[lg.code];
+    if (!s) { card.appendChild(el('p', 'qz-lg-note', 'Loading standings…')); }
+    else if (s.gone) { card.appendChild(el('p', 'qz-lg-note', 'This league has expired.')); }
+    else {
+      card.appendChild(el('p', 'qz-lg-note', s.members + (s.members === 1 ? ' player' : ' players') + (s.me ? ' · you are ' + s.me : '')));
+      var tabs = el('div', 'qz-tabs');
+      [['Today', false], ['This week', true]].forEach(function (t) {
+        var b = el('button', 'qz-tab' + (!!viewWeek[lg.code] === t[1] ? ' on' : ''), t[0]);
+        b.type = 'button';
+        b.setAttribute('aria-pressed', String(!!viewWeek[lg.code] === t[1]));
+        b.addEventListener('click', function () { viewWeek[lg.code] = t[1]; renderLeagues(); });
+        tabs.appendChild(b);
+      });
+      card.appendChild(tabs);
+      card.appendChild(boardList(s, !!viewWeek[lg.code]));
+    }
+    var row = el('div', 'quiz-actions');
+    var inv = el('button', 'quiz-btn primary', 'Invite friends');
+    inv.type = 'button';
+    inv.addEventListener('click', function () { invite(lg); });
+    var leave = el('button', 'quiz-btn', 'Leave');
+    leave.type = 'button';
+    leave.addEventListener('click', function () {
+      if (leave.dataset.sure) leaveLeague(lg.code);
+      else { leave.dataset.sure = '1'; leave.textContent = 'Tap again to leave'; setTimeout(function () { leave.dataset.sure = ''; leave.textContent = 'Leave'; }, 3000); }
+    });
+    row.appendChild(inv);
+    row.appendChild(leave);
+    card.appendChild(row);
+    return card;
+  }
+
+  function renderLeagues() {
+    var st = lgLoad();
+    lgBox.textContent = '';
+    lgBox.appendChild(el('h3', 'qz-lg-title', 'Friends leagues'));
+    if (!st.leagues.length) {
+      lgBox.appendChild(el('p', 'qz-lg-intro', 'Compete privately with friends — for two people or twenty. Start a league and send the link. No accounts: everyone gets a fun generated name.'));
+    }
+    st.leagues.forEach(function (lg) { lgBox.appendChild(leagueCard(lg)); });
+    if (st.leagues.length < MAX_LEAGUES) {
+      var row = el('div', 'quiz-actions');
+      var start = el('button', 'quiz-btn' + (st.leagues.length ? '' : ' primary'), st.leagues.length ? 'Start another league' : 'Start a league');
+      start.type = 'button';
+      start.addEventListener('click', startLeague);
+      row.appendChild(start);
+      lgBox.appendChild(row);
+      var jr = el('form', 'qz-joinrow');
+      var input = el('input', 'qz-input');
+      input.type = 'text';
+      input.maxLength = 6;
+      input.placeholder = 'Have a code?';
+      input.setAttribute('aria-label', 'League code');
+      input.setAttribute('autocapitalize', 'characters');
+      input.setAttribute('autocomplete', 'off');
+      var go = el('button', 'quiz-btn', 'Join');
+      go.type = 'submit';
+      jr.appendChild(input);
+      jr.appendChild(go);
+      jr.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var code = input.value.trim().toUpperCase();
+        if (!/^[A-Z2-9]{6}$/.test(code)) { setLgMsg('Codes are 6 letters or numbers.'); return; }
+        joinLeague(code);
+      });
+      lgBox.appendChild(jr);
+    }
+    if (lgMsg) { var m = el('p', 'qz-lg-msg', lgMsg); m.setAttribute('role', 'status'); lgBox.appendChild(m); }
+    var priv = el('p', 'qz-lg-priv');
+    priv.appendChild(document.createTextNode('Leagues store a random device ID, a generated name and your daily score for up to 4 months. '));
+    var a = el('a', '', 'Privacy');
+    a.href = '/privacy.html';
+    priv.appendChild(a);
+    lgBox.appendChild(priv);
+  }
+
+  function handleJoinParam() {
+    var code = '';
+    try { code = (new URLSearchParams(location.search).get('join') || '').toUpperCase(); } catch (e) { /* ignore */ }
+    if (!/^[A-Z2-9]{6}$/.test(code)) return;
+    if (lgLoad().leagues.some(function (l) { return l.code === code; })) return;
+    var clear = function () { try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) { /* ignore */ } joinBox.textContent = ''; };
+    lgFetch('/api/league?code=' + code + '&meta=1').then(function (r) {
+      joinBox.textContent = '';
+      var card = el('div', 'quiz-friend');
+      if (!r.ok) { card.textContent = 'This league invite is no longer valid.'; joinBox.appendChild(card); return; }
+      card.appendChild(el('p', 'qz-join-t', 'You’re invited to join “' + r.d.name + '” (' + r.d.members + (r.d.members === 1 ? ' player' : ' players') + ').'));
+      var row = el('div', 'quiz-actions');
+      var yes = el('button', 'quiz-btn primary', 'Join league');
+      yes.type = 'button';
+      yes.addEventListener('click', function () { joinLeague(code).then(function (ok) { if (ok) clear(); }); });
+      var no = el('button', 'quiz-btn', 'Not now');
+      no.type = 'button';
+      no.addEventListener('click', clear);
+      row.appendChild(yes);
+      row.appendChild(no);
+      card.appendChild(row);
+      joinBox.appendChild(card);
+    }).catch(function () { /* invite will still work from the code box */ });
+  }
+
   // ---------- start ----------
   if (saved && Array.isArray(saved.a)) showResult(saved, true);
   else showQuestion(0, false);
   updateChip([]);
   getEditions().then(updateChip);
+  renderLeagues();
+  lgLoad().leagues.forEach(function (lg) { refreshBoard(lg.code); });
+  syncScores();
+  handleJoinParam();
 })();
