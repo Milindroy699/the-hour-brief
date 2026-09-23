@@ -26,6 +26,8 @@
     var css =
       '.masthead-band{padding-top:calc(12px + env(safe-area-inset-top,0px)) !important;}' +
       'body{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);}' +
+      // Store UGC policies (Play, App Store 1.2) require in-app reporting/blocking for comments; the app omits them.
+      '.comments-section{display:none !important;}' +
       '#cap-ptr{position:fixed;left:0;right:0;top:0;z-index:9998;display:flex;justify-content:center;' +
         'pointer-events:none;opacity:0;transform:translateY(-44px);transition:opacity .15s ease;' +
         'padding-top:calc(env(safe-area-inset-top,0px) + 8px);}' +

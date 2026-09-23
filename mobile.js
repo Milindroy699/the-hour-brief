@@ -6,9 +6,11 @@
  * Everything here is gated on matchMedia('(max-width: 640px)') and is
  * independent of the page's own inline <script> (votes, comments, scrollspy).
  *
- *  - Collapsible story bodies: headline + Takeaway stay visible, the summary
- *    sits behind a "Read more" toggle so a full edition scans in ~3 screens.
- *  - The evergreen About paragraph gets a "More" toggle to match its CSS clamp.
+ *  - Stories keep their natural order (headline, summary, takeaway). On phones
+ *    the summary is clamped to a few lines with a "Read more" toggle right under
+ *    it — shown only when text is actually clipped.
+ *  - The lane headline (a long digest sentence) and the evergreen About
+ *    paragraph get matching "More" toggles.
  */
 (function () {
   var mq = window.matchMedia('(max-width: 640px)');
@@ -24,10 +26,9 @@
         });
         if (!bodyParas.length) { item.dataset.collapseReady = 'none'; return; }
 
-        // Wrap the summary paragraphs so they can be hidden as a unit. Do NOT
-        // reorder anything in the DOM — mobile.css uses flex `order` to float
-        // the Takeaway and toggle above the (collapsed) body on phones, so the
-        // desktop layout, which never loads mobile.css, is left exactly as-is.
+        // Wrap the summary paragraphs so the clamp and toggle target one unit.
+        // Nothing is reordered, so desktop (which never loads mobile.css) is
+        // untouched.
         var wrap = document.createElement('div');
         wrap.className = 'story-body';
         wrap.id = 'sb-' + (item.dataset.storyId || Math.random().toString(36).slice(2));
@@ -44,7 +45,7 @@
           btn.setAttribute('aria-expanded', String(!collapsed));
           btn.textContent = collapsed ? 'Read more' : 'Show less';
         });
-        inner.insertBefore(btn, wrap);
+        inner.insertBefore(btn, wrap.nextSibling);
         item.dataset.collapseReady = 'yes';
       }
       if (item.dataset.collapseReady !== 'yes') return;
@@ -61,6 +62,29 @@
         item.classList.remove('is-collapsed');
         if (toggle) toggle.hidden = true;
       }
+    });
+  }
+
+  function laneToggles() {
+    document.querySelectorAll('.lane-head').forEach(function (head) {
+      var h2 = head.querySelector('h2');
+      if (!h2) return;
+      var btn = head.querySelector('.lane-more');
+      if (!btn) {
+        btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'lane-more';
+        btn.textContent = 'More';
+        btn.setAttribute('aria-expanded', 'false');
+        btn.addEventListener('click', function () {
+          var expanded = head.classList.toggle('is-expanded');
+          btn.setAttribute('aria-expanded', String(expanded));
+          btn.textContent = expanded ? 'Less' : 'More';
+        });
+        h2.insertAdjacentElement('afterend', btn);
+      }
+      btn.hidden = !mq.matches;
+      if (!mq.matches) head.classList.remove('is-expanded');
     });
   }
 
@@ -90,9 +114,34 @@
     if (!mq.matches) about.classList.remove('is-expanded');
   }
 
+  // Show a toggle only where the clamp really hides something.
+  function measureClamps() {
+    if (!mq.matches) return;
+    document.querySelectorAll('.item.is-collapsed').forEach(function (item) {
+      var toggle = item.querySelector(':scope > div > .story-more');
+      var paras = item.querySelectorAll('.story-body > p');
+      if (!toggle || !paras.length) return;
+      toggle.hidden = !(paras.length > 1 || paras[0].scrollHeight > paras[0].clientHeight + 1);
+    });
+    document.querySelectorAll('.lane-head:not(.is-expanded)').forEach(function (head) {
+      var h2 = head.querySelector('h2');
+      var btn = head.querySelector('.lane-more');
+      if (h2 && btn) btn.hidden = !(h2.scrollHeight > h2.clientHeight + 1);
+    });
+  }
+
+  var measureQueued = false;
+  function queueMeasure() {
+    if (measureQueued) return;
+    measureQueued = true;
+    requestAnimationFrame(function () { measureQueued = false; measureClamps(); });
+  }
+
   function apply() {
     collapsibleStories();
+    laneToggles();
     aboutToggle();
+    measureClamps();
   }
 
   if (document.readyState === 'loading') {
@@ -100,5 +149,7 @@
   } else {
     apply();
   }
+  window.addEventListener('load', queueMeasure);
+  window.addEventListener('resize', queueMeasure);
   mq.addEventListener('change', apply);
 })();

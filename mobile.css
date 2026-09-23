@@ -5,7 +5,7 @@
  * so every rule here already applies only at <=640px. Desktop and tablet render
  * from the page's own inline <style>, untouched.
  *
- * Companion behaviour (collapsible stories, the About "More" toggle) lives in
+ * Companion behaviour (clamped summaries, the About/lane "More" toggles) lives in
  * /mobile.js. App-only native touches live in /capacitor-bridge.js.
  */
 
@@ -103,7 +103,30 @@ section.lane {
   scroll-margin-top: 56px;
 }
 .lane-head { margin-bottom: 14px; }
-.lane-head h2 { font-size: 1.3rem; }
+.lane-head h2 {
+  font-size: 1.05rem;
+  font-weight: 650;
+  line-height: 1.4;
+  text-wrap: pretty;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+}
+.lane-head.is-expanded h2 { -webkit-line-clamp: unset; overflow: visible; }
+.lane-more {
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: none;
+  border: 0;
+  color: var(--brand);
+  margin: 2px 0 0 17px;
+  padding: 6px 0;
+  min-height: 40px;
+  cursor: pointer;
+}
+.lane-more[hidden] { display: none; }
 
 /* ---- Items: reclaim the dot gutter, scannable headlines ---- */
 .item {
@@ -116,18 +139,31 @@ section.lane {
 .item p { font-size: 0.95rem; max-width: none; }
 .item .takeaway { max-width: none; font-size: 0.88rem; }
 
-/* ---- Collapsible story body (wired in /mobile.js) ----
-   The DOM order stays h3 / toggle / story-body / takeaway / src / vote-row;
-   flex `order` floats the Takeaway and toggle above the body on phones only. */
-.item > div { display: flex; flex-direction: column; }
-.item > div > h3 { order: 0; }
-.item > div > .takeaway { order: 1; }
-.item > div > .story-more { order: 2; }
-.item > div > .story-body { order: 3; }
-.item > div > .src { order: 4; }
-.item > div > .vote-row { order: 5; }
+/* ---- Story layout: natural reading order (wired in /mobile.js) ----
+   headline -> summary -> [Read more] -> takeaway, then the source and the vote
+   buttons share one row. Collapsed, only the summary is clamped to 4 lines;
+   the takeaway always stays visible and always follows the facts it comments on. */
+.item > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 12px;
+  align-items: center;
+}
+.item > div > :not(.src):not(.vote-row) { grid-column: 1 / -1; }
+.item > div > .src { grid-column: 1; }
+.item > div > .vote-row { grid-column: 2; margin-top: 8px; }
 
-.item.is-collapsed .story-body { display: none; }
+.item .story-body > p:first-child { margin-top: 6px; }
+.item .story-body > p + p { margin-top: 8px; }
+.item.is-collapsed .story-body > p:first-child {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+}
+.item.is-collapsed .story-body > p:not(:first-child) { display: none; }
+.story-more[hidden] { display: none; }
+.story-more + .takeaway { margin-top: 2px; }
 .story-more {
   font: inherit;
   font-size: 0.85rem;
@@ -135,15 +171,14 @@ section.lane {
   color: var(--brand);
   background: none;
   border: 0;
-  padding: 6px 0;
-  margin-top: 2px;
-  min-height: 40px;
+  padding: 4px 0;
+  margin-top: 0;
+  min-height: 36px;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 4px;
 }
-.item .story-body > p:first-child { margin-top: 8px; }
 
 /* ---- Touch targets ---- */
 .vote-row { gap: 10px; margin-top: 14px; }
@@ -167,6 +202,7 @@ section.lane {
 .subscribe-box { margin-top: 24px; padding: 16px; }
 .comments-section { margin-top: 36px; }
 .ticker { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+.ticker > :last-child:nth-child(odd) { grid-column: 1 / -1; }
 
 /* ---- Archive list + about page (their own layouts) ---- */
 .archive-banner { padding: 10px 16px; font-size: 0.8rem; }
