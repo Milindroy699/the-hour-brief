@@ -21,5 +21,15 @@
       "source": "/l/:code",
       "destination": "/api/share?t=l&code=:code"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/post-digest",
+      "schedule": "30 4 * * *"
+    },
+    {
+      "path": "/api/post-digest",
+      "schedule": "30 5 * * *"
+    }
   ]
 }

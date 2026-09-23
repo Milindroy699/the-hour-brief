@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Post kit — The Hour Brief</title>
+<style>
+  :root { --bg:#f2f3ee; --paper:#fff; --ink:#17191c; --soft:#52585a; --line:#d7dad2; --brand:#5b3e96; --brand-ink:#f2f3ee; --up:#2f7a52; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#131417; --paper:#1b1d21; --ink:#edeeec; --soft:#a9adaf; --line:#2c2f34; --brand:#a487d9; --brand-ink:#131417; --up:#4fb579; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif; }
+  main { max-width: 680px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  h2 { font-size: 1.1rem; margin: 28px 0 8px; }
+  .meta { color: var(--soft); margin: 0 0 16px; }
+  img.card { width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--line); display: block; }
+  textarea { width: 100%; min-height: 15em; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); font: inherit; font-size: .92rem; line-height: 1.5; resize: vertical; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 0; }
+  button, a.btn { min-height: 46px; padding: 0 18px; border-radius: 10px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); font: inherit; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
+  button.primary { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+  button:focus-visible, a.btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .hint { color: var(--soft); font-size: .9rem; margin: 10px 0 0; }
+  .ok { color: var(--up); font-weight: 600; min-height: 1.5em; }
+  details { margin-top: 28px; border-top: 1px solid var(--line); padding-top: 14px; }
+  summary { cursor: pointer; font-weight: 600; }
+  code { background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; font-size: .85em; }
+  ol li { margin: 6px 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Today’s channel post</h1>
+  <p class="meta" id="meta">Loading…</p>
+  <img class="card" id="card" alt="Preview card that appears when the link is posted" hidden>
+
+  <h2>WhatsApp channel</h2>
+  <textarea id="wa" readonly aria-label="WhatsApp post text"></textarea>
+  <div class="row">
+    <button class="primary" id="copy-wa" type="button">Copy for WhatsApp</button>
+    <a class="btn" id="open-wa" target="_blank" rel="noopener">Open WhatsApp</a>
+    <button id="share" type="button" hidden>Share…</button>
+  </div>
+  <p class="ok" id="status" role="status" aria-live="polite"></p>
+  <p class="hint">WhatsApp has no posting API for channels, so this is one tap: copy, open your channel, paste, send. The links expand into the preview card automatically.</p>
+
+  <h2>Telegram (by hand)</h2>
+  <textarea id="tg" readonly aria-label="Telegram post text" style="min-height:11em"></textarea>
+  <div class="row"><button id="copy-tg" type="button">Copy plain text</button></div>
+
+  <details>
+    <summary>Set up automatic Telegram posting</summary>
+    <ol>
+      <li>In Telegram, message <code>@BotFather</code> → <code>/newbot</code> → copy the bot token.</li>
+      <li>Create a channel and add the bot as an <strong>administrator</strong> that can post messages.</li>
+      <li>In Vercel → Project → Settings → Environment Variables (Production) add <code>TELEGRAM_BOT_TOKEN</code>, <code>TELEGRAM_CHAT_ID</code> (<code>@yourchannel</code>) and <code>CRON_SECRET</code> (any long random string), then redeploy.</li>
+      <li>Test without posting: <code>curl -H "Authorization: Bearer $CRON_SECRET" "https://the-hour-brief.vercel.app/api/post-digest?dry=1"</code>. Remove <code>?dry=1</code> to post for real.</li>
+    </ol>
+    <p class="hint">Once set up it posts around 10:00 IST after each edition, once per day, and retries an hour later if the edition wasn’t ready.</p>
+  </details>
+</main>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var status = $('status'), timer;
+  function say(msg) { status.textContent = msg; clearTimeout(timer); timer = setTimeout(function () { status.textContent = ''; }, 2500); }
+  function copy(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(text).then(function () { say('Copied'); });
+    var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); say('Copied'); } catch (e) { say('Select the text and copy it'); }
+    ta.remove(); return Promise.resolve();
+  }
+  fetch('/api/digest').then(function (r) { return r.ok ? r.json() : Promise.reject(); }).then(function (d) {
+    $('meta').textContent = 'Edition ' + d.edition + ' · ' + d.date + (d.quizQuestions ? ' · quiz included' : '');
+    $('wa').value = d.whatsapp;
+    $('tg').value = d.plain;
+    var img = $('card'); img.src = d.image; img.hidden = false;
+    $('open-wa').href = 'https://wa.me/?text=' + encodeURIComponent(d.whatsapp);
+    $('copy-wa').addEventListener('click', function () { copy(d.whatsapp); });
+    $('copy-tg').addEventListener('click', function () { copy(d.plain); });
+    if (navigator.share) { var s = $('share'); s.hidden = false; s.addEventListener('click', function () { navigator.share({ text: d.whatsapp }).catch(function () {}); }); }
+  }).catch(function () { $('meta').textContent = 'Could not load today’s edition. Try again in a minute.'; });
+})();
+</script>
+</body>
+</html>
