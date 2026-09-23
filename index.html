@@ -8,7 +8,9 @@
 <meta property="og:title" content="The Hour Brief">
 <meta property="og:description" content="A free daily one-hour digest of AI/tech, product & business (India + global), and the Indian stock market — every item links to its original source.">
 <meta property="og:type" content="website">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="https://the-hour-brief.vercel.app/og-image.png">
+<meta name="twitter:image" content="https://the-hour-brief.vercel.app/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="alternate" type="application/atom+xml" title="The Hour Brief" href="feed.xml">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%8F%B1%EF%B8%8F%3C/text%3E%3C/svg%3E">
 <style>
@@ -369,7 +371,19 @@
     color: var(--ink);
     max-width: 64ch;
   }
-  .item .takeaway-label {
+  .lane-head .lane-takeaway {
+    margin: 14px 0 0;
+    padding: 8px 12px;
+    border-left: 3px solid var(--brand);
+    background: var(--paper-2);
+    border-radius: 0 6px 6px 0;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: var(--ink);
+    max-width: 64ch;
+  }
+  .item .takeaway-label,
+  .lane-takeaway .takeaway-label {
     font-weight: 700;
     text-transform: uppercase;
     font-size: 0.68rem;
@@ -569,6 +583,8 @@
 <script defer src="/_vercel/insights/script.js"></script>
 <script defer src="/capacitor-bridge.js"></script>
 <script defer src="/mobile.js"></script>
+<link rel="stylesheet" href="/quiz.css">
+<script defer src="/quiz.js"></script>
 </head>
 <body>
 
@@ -603,6 +619,7 @@
     <a href="#ai">AI &amp; Tech</a>
     <a href="#biz">Product &amp; Business</a>
     <a href="#mkt">Stock Market</a>
+    <a href="#quiz">Quiz</a>
     <a href="archive/" target="_blank" rel="noopener">Past Editions</a>
   </nav>
 
@@ -980,6 +997,83 @@
       <strong>Zerodha Varsity principle for today:</strong> Today&rsquo;s tape &mdash; Coal India extending a rally, the Nasdaq notching another record close &mdash; is a live example of the momentum effect Varsity&rsquo;s chapter on momentum portfolios formalizes: rank stocks by trailing returns, and recent winners statistically tend to keep winning over medium-term horizons. But Varsity is explicit that the strategy trades responsiveness against transaction cost and drawdown risk &mdash; how often you rebalance should be set by how much drawdown you can tolerate, not by chasing every price move. That&rsquo;s a useful check on any urge to pile into today&rsquo;s biggest gainers just because they moved first.
       <br><span class="src"><a href="https://zerodha.com/varsity/chapter/momentum-portfolios/" target="_blank" rel="noopener">Zerodha Varsity &rarr;</a></span>
     </div>
+  </section>
+  <!-- DAILY QUIZ -->
+  <section class="lane quiz" id="quiz" aria-labelledby="quiz-title">
+    <div class="lane-head">
+      <span class="lane-tag">Daily quiz</span>
+      <h2 id="quiz-title">Five questions on today&rsquo;s edition</h2>
+    </div>
+    <div id="quiz-root"></div>
+    <script type="application/json" id="quiz-data">
+      {
+        "v": 1,
+        "date": "2026-09-23",
+        "questions": [
+          {
+            "q": "OpenAI's new GPT-6 Sol model halves API pricing. What does it now cost per million input/output tokens?",
+            "options": [
+              "$2 / $10",
+              "$4 / $20",
+              "$0.10 / $0.50",
+              "$1 / $5"
+            ],
+            "answer": 0,
+            "why": "Sol is now $2/$10 (down from $4/$20 on the GPT-5.6 tier), and OpenAI says the cut is permanent, not promotional.",
+            "story": "ai-1"
+          },
+          {
+            "q": "When is Alibaba's new Zhenwu V900 AI chip slated for mass production?",
+            "options": [
+              "Fourth quarter of 2026",
+              "It already ships to customers",
+              "First quarter of 2027",
+              "Mid-2028"
+            ],
+            "answer": 2,
+            "why": "Alibaba's T-Head unit says the V900, which it says triples the performance of the May chip, enters mass production in the first quarter of 2027.",
+            "story": "ai-3"
+          },
+          {
+            "q": "Which cricket legend backs used-car marketplace Spinny, which just pre-filed for a ₹2,500-3,000 crore IPO?",
+            "options": [
+              "Virat Kohli",
+              "MS Dhoni",
+              "Rohit Sharma",
+              "Sachin Tendulkar"
+            ],
+            "answer": 3,
+            "why": "Spinny is Sachin Tendulkar-backed; its FY25 revenue rose 25% to ₹4,657 crore ahead of the confidential filing.",
+            "story": "biz-1"
+          },
+          {
+            "q": "Which exchange will list NSE's own shares after its record IPO?",
+            "options": [
+              "NSE itself",
+              "BSE",
+              "Both NSE and BSE",
+              "Neither, it lists only in 2027"
+            ],
+            "answer": 1,
+            "why": "An exchange can't list its own stock on itself, so NSE's shares head for a BSE listing, tentatively September 24.",
+            "story": "biz-3"
+          },
+          {
+            "q": "Sensex and Nifty snapped a four-day winning run. Who were the net buyers that cushioned the fall?",
+            "options": [
+              "Foreign institutional investors",
+              "Domestic institutional investors",
+              "The RBI",
+              "Retail investors alone"
+            ],
+            "answer": 1,
+            "why": "Domestic institutions bought about ₹4,120 crore net while foreign institutions sold about ₹3,810 crore.",
+            "story": "mkt-1"
+          }
+        ]
+      }
+    </script>
+    <noscript><p>The daily quiz needs JavaScript.</p></noscript>
   </section>
   <section class="comments-section" id="comments" data-edition-date="2026-09-23">
     <h2>Discuss today's edition</h2>

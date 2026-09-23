@@ -14,6 +14,12 @@ No build step — this is a plain static site (`index.html`, `archive/`, `feed.x
 - `mobile.css` — phone-only (`<link media="(max-width: 640px)">`) layout refinements
 - `mobile.js` — phone-only reading enhancements (collapsible stories, About toggle)
 
-Every edition page must keep these three lines. The daily template is `index.html`, so a new edition copied from it inherits them automatically.
+Every edition page must keep these lines, plus `/quiz.css` and `/quiz.js` (the anonymous daily quiz; it renders from the `#quiz-data` JSON in the edition and hides itself if that is empty). The daily template is `index.html`, so a new edition copied from it inherits them automatically.
 
 Because the paths are absolute (`/mobile.css` …), the GitHub Pages mirror (served under `/the-hour-brief/`) does **not** pick up `mobile.css` / `mobile.js`. Vercel is canonical; the mirror is best-effort.
+
+## Daily quiz
+
+- `quiz.js` / `quiz.css` render the quiz from `<script type="application/json" id="quiz-data">` in each edition. Results and streaks live in the reader's `localStorage`; nothing personal is stored.
+- `api/quiz-stats.js` keeps an anonymous score tally per edition in Vercel KV (`quiz:dist:<date>:<total>`, 30-day expiry). It needs the same `KV_REST_API_URL` / `KV_REST_API_TOKEN` as the vote API.
+- Link previews use `og-image.png` (1200×630).

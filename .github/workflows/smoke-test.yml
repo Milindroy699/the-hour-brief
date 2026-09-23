@@ -41,6 +41,9 @@ jobs:
           check_status "$BASE/capacitor-bridge.js" 200
           check_status "$BASE/mobile.css" 200
           check_status "$BASE/mobile.js" 200
+          check_status "$BASE/quiz.js" 200
+          check_status "$BASE/quiz.css" 200
+          check_status "$BASE/og-image.png" 200
 
           echo "--- checking every archived edition referenced in editions.json ---"
           python3 - "$BASE" <<'PYEOF'
@@ -75,5 +78,23 @@ jobs:
 
           comments_resp=$(curl -s "$BASE/api/comments?date=2026-08-16")
           echo "$comments_resp" | python3 -c "import json,sys; json.load(sys.stdin)" || { echo "::error::/api/comments did not return valid JSON"; fail=1; }
+
+          quiz_resp=$(curl -s "$BASE/api/quiz-stats?date=2000-01-01&total=5")
+          echo "$quiz_resp" | python3 -c "import json,sys; d=json.load(sys.stdin); assert len(d['dist'])==6" || { echo "::error::/api/quiz-stats did not return a valid tally"; fail=1; }
+
+          echo "--- checking the latest edition carries valid quiz data ---"
+          python3 - "$BASE" <<'PYEOF2' || fail=1
+          import json, re, sys, urllib.request
+          html = urllib.request.urlopen(sys.argv[1] + "/").read().decode("utf-8")
+          m = re.search(r'<script type="application/json" id="quiz-data">(.*?)</script>', html, re.S)
+          if not m:
+              print("::warning::latest edition has no quiz section"); sys.exit(0)
+          qs = json.loads(m.group(1)).get("questions", [])
+          ids = set(re.findall(r'data-story-id="([a-z]+-\d+)"', html))
+          bad = [i for i, q in enumerate(qs, 1) if not (0 <= q["answer"] < len(q["options"])) or q.get("story") not in ids]
+          if bad:
+              print(f"::error::quiz questions {bad} are malformed"); sys.exit(1)
+          print(f"OK  quiz: {len(qs)} question(s)")
+          PYEOF2
 
           exit $fail

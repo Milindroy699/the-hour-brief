@@ -80,11 +80,11 @@
 <div class="page">
   <h1>Privacy</h1>
   <p class="lede">The Hour Brief runs no ads, sells no data, and needs no account to read. This page covers exactly what is collected — on the website and in the iOS and Android apps, which are the same website wrapped in a native shell.</p>
-  <p class="updated">Last updated: 30 August 2026</p>
+  <p class="updated">Last updated: 24 September 2026</p>
 
   <section>
     <h2>Just reading</h2>
-    <p>If you only read editions, the sole data collected is <strong>privacy-friendly, aggregate analytics</strong> through Vercel Web Analytics: counts of page views and referrers, with no cookies, no cross-site tracking, and nothing that identifies you personally. Everything below happens only if you choose to interact.</p>
+    <p>If you only read editions, the sole data collected is <strong>privacy-friendly, aggregate analytics</strong> through Vercel Web Analytics: counts of page views and referrers, plus the country, device type and browser of visitors in aggregate, with no cookies, no cross-site tracking, and nothing that identifies you personally. Everything below happens only if you choose to interact.</p>
   </section>
 
   <section>
@@ -102,10 +102,17 @@
   </section>
 
   <section>
+    <h2>If you play the daily quiz</h2>
+    <p>The quiz needs no account and asks for no name. Your answers, score and streak are stored <strong>only on your own device</strong>. When you finish a quiz, the site adds your score to an <strong>anonymous tally</strong> (for example, &ldquo;12 readers scored 4/5&rdquo;) so you can see how you compare. The tally contains only counts: no name, no identifier, and no link back to you. To limit repeat submissions, a one-way hash of your IP address is kept for about 24 hours and then deleted, the same as for votes. Tallies are stored in Vercel KV and deleted after about 30 days.</p>
+    <p>If you share your score or a story, the link contains only the score or story reference and a &ldquo;shared from The Hour Brief&rdquo; tag; nothing about you.</p>
+  </section>
+
+  <section>
     <h2>The mobile apps</h2>
     <p>The iOS and Android apps load this same website inside a native browser view. They collect <strong>no additional data</strong> beyond what the website does, described above.</p>
     <ul>
       <li>No push notifications are sent and no device token or advertising identifier is collected.</li>
+      <li>The optional <strong>daily reminder</strong> is a notification scheduled on your own device at the time you pick. It is not sent from a server, and nothing about it is sent to us. You can turn it off in the app or in your device settings.</li>
       <li>The <strong>Share</strong> button uses your device's built-in share sheet — nothing is sent back to us.</li>
       <li>Links to news sources open in your device's browser, which is governed by that browser's and that publisher's own privacy policies.</li>
     </ul>
@@ -113,7 +120,7 @@
 
   <section>
     <h2>Cookies and local storage</h2>
-    <p>The site sets no advertising or tracking cookies. It uses your browser's <code>localStorage</code> only to remember, on your own device, which items you've already voted on and whether you've dismissed the "new edition" prompt. That data never leaves your device.</p>
+    <p>The site sets no advertising or tracking cookies. It uses your browser's <code>localStorage</code> only to remember, on your own device, which items you've already voted on, whether you've dismissed the "new edition" prompt, and your daily quiz answers, scores and streak. That data never leaves your device.</p>
   </section>
 
   <section>
@@ -121,7 +128,7 @@
     <ul>
       <li><strong>Vercel</strong> — website hosting and the aggregate analytics.</li>
       <li><strong>MailerLite</strong> — email delivery, only if you subscribe.</li>
-      <li><strong>Upstash / Vercel KV</strong> — storage for vote counts and comments.</li>
+      <li><strong>Upstash / Vercel KV</strong> — storage for vote counts, comments and the anonymous quiz tally.</li>
     </ul>
     <p>Each has its own privacy policy. No data is shared with anyone for advertising.</p>
   </section>
@@ -136,7 +143,8 @@
     <ul>
       <li><strong>Email address</strong>: kept until you unsubscribe, then removed from the mailing list.</li>
       <li><strong>Comments</strong>: kept as part of the public record for that edition. Email the address below to request removal of a comment.</li>
-      <li><strong>IP hashes</strong>: expire automatically (about 24 hours for votes; a short window for comment rate-limiting).</li>
+      <li><strong>IP hashes</strong>: expire automatically (about 24 hours for votes and quiz submissions; a short window for comment rate-limiting).</li>
+      <li><strong>Quiz scores</strong>: the anonymous tally is deleted after about 30 days. Your own quiz history lives only on your device; clear it by clearing the site's data or uninstalling the app.</li>
     </ul>
   </section>
 
