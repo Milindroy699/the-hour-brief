@@ -14,9 +14,24 @@
  *  - Every story has a Share button (headline + link to that story), and long
  *    pages get a reading-progress bar and a back-to-top button.
  *  - The evergreen About paragraph gets a matching "More" toggle.
+ *  - Save-for-later bookmarks and a text-size control (both stored on this device only).
+ *
+ * "Reader mode" = phone widths, or the native apps at any width (tablets). The desktop
+ * website is left untouched.
  */
 (function () {
   var mq = window.matchMedia('(max-width: 640px)');
+  var Cap0 = window.Capacitor;
+  var NATIVE = !!(Cap0 && typeof Cap0.isNativePlatform === 'function' && Cap0.isNativePlatform());
+  function reader() { return mq.matches || NATIVE; }
+  function ensureReaderCss() {
+    if (document.querySelector('link[data-reader-css]')) return;
+    var l = document.createElement('link');
+    l.rel = 'stylesheet';
+    l.href = '/reader.css';
+    l.setAttribute('data-reader-css', '');
+    document.head.appendChild(l);
+  }
 
   function collapsibleStories() {
     document.querySelectorAll('.item').forEach(function (item) {
@@ -193,8 +208,8 @@
         var tag = head.querySelector('.lane-tag');
         if (tag) lane.setAttribute('aria-label', tag.textContent.trim());
       }
-      if (box) box.hidden = !mq.matches;
-      if (!mq.matches) head.classList.remove('digest-open');
+      if (box) box.hidden = !reader();
+      if (!reader()) head.classList.remove('digest-open');
     });
   }
 
@@ -215,7 +230,7 @@
         t.textContent = ' \u00B7 ' + Math.max(1, Math.round(words / 200)) + ' min';
         tag.appendChild(t);
       }
-      t.hidden = !mq.matches;
+      t.hidden = !reader();
     });
   }
 
@@ -257,23 +272,32 @@
     else if (navigator.clipboard) p = navigator.clipboard.writeText(payload.text + ' ' + payload.url).then(function () { toast('Link copied'); });
     if (p && p.catch) p.catch(function () {});
   }
-  function storyShareButtons() {
+  function storyButtons() {
     document.querySelectorAll('.item[data-story-id]').forEach(function (it) {
       if (!it.id) it.id = it.dataset.storyId;
       var row = it.querySelector('.vote-row');
       if (!row) return;
+      var sv = row.querySelector('.story-save');
+      if (!sv && editionDate()) {
+        sv = mk('button', 'story-save mob-only');
+        sv.type = 'button';
+        sv.innerHTML = STAR_SVG;
+        sv.addEventListener('click', function () { toggleSaved(it); });
+        row.appendChild(sv);
+      }
       var b = row.querySelector('.story-share');
       if (!b) {
-        b = document.createElement('button');
+        b = mk('button', 'story-share mob-only');
         b.type = 'button';
-        b.className = 'story-share mob-only';
         b.setAttribute('aria-label', 'Share this story');
         b.innerHTML = SHARE_SVG;
         b.addEventListener('click', function () { shareStory(it); });
         row.appendChild(b);
       }
-      b.hidden = !mq.matches;
+      if (sv) sv.hidden = !reader();
+      b.hidden = !reader();
     });
+    refreshSaved();
   }
 
   // ---- Reading progress + back to top ----
@@ -310,13 +334,199 @@
         });
       }, { passive: true });
     }
-    bar.hidden = top.hidden = !mq.matches;
+    bar.hidden = top.hidden = !reader();
+  }
+
+  // ---- Small DOM helper ----
+  function mk(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  function prettyDate(d) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d || '');
+    return m ? (+m[3]) + ' ' + MONTHS[+m[2] - 1] + ' ' + m[1] : (d || '');
+  }
+
+  // ---- Bottom sheet (used by text size and saved stories) ----
+  var sheetEl = null, sheetPrev = null;
+  function sheetKey(e) { if (e.key === 'Escape') closeSheet(); }
+  function closeSheet() {
+    if (!sheetEl) return;
+    sheetEl.remove();
+    sheetEl = null;
+    document.removeEventListener('keydown', sheetKey);
+    if (sheetPrev && sheetPrev.focus) sheetPrev.focus();
+  }
+  function openSheet(title, build) {
+    closeSheet();
+    sheetPrev = document.activeElement;
+    var bg = mk('div', 'rd-sheet-bg');
+    var box = mk('div', 'rd-sheet');
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-modal', 'true');
+    box.setAttribute('aria-label', title);
+    box.appendChild(mk('h2', '', title));
+    var body = mk('div');
+    box.appendChild(body);
+    build(body);
+    var close = mk('button', 'rd-btn rd-close', 'Close');
+    close.type = 'button';
+    close.addEventListener('click', closeSheet);
+    box.appendChild(close);
+    bg.appendChild(box);
+    bg.addEventListener('click', function (e) { if (e.target === bg) closeSheet(); });
+    document.addEventListener('keydown', sheetKey);
+    document.body.appendChild(bg);
+    sheetEl = bg;
+    close.focus();
+  }
+
+  // ---- Text size (root font-size scale; kept on this device) ----
+  var SIZES = [100, 112, 125, 140];
+  var SIZE_NAMES = ['Default', 'Large', 'Larger', 'Largest'];
+  function getSize() {
+    try { var i = parseInt(localStorage.getItem('hb-textsize'), 10); return i >= 0 && i < SIZES.length ? i : 0; }
+    catch (e) { return 0; }
+  }
+  function applyTextSize() {
+    var i = reader() ? getSize() : 0;
+    document.documentElement.style.fontSize = SIZES[i] === 100 ? '' : SIZES[i] + '%';
+  }
+  function setSize(i) {
+    try { localStorage.setItem('hb-textsize', String(i)); } catch (e) { /* ignore */ }
+    applyTextSize();
+  }
+  function openTextSize() {
+    openSheet('Text size', function (body) {
+      var label = mk('p', 'rd-size-label');
+      label.setAttribute('aria-live', 'polite');
+      var row = mk('div', 'rd-row');
+      var minus = mk('button', 'rd-btn', 'A−');
+      minus.type = 'button';
+      minus.setAttribute('aria-label', 'Smaller text');
+      var plus = mk('button', 'rd-btn', 'A+');
+      plus.type = 'button';
+      plus.setAttribute('aria-label', 'Larger text');
+      var reset = mk('button', 'rd-btn', 'Reset');
+      reset.type = 'button';
+      function upd() {
+        var i = getSize();
+        label.textContent = SIZE_NAMES[i] + ' (' + SIZES[i] + '%)';
+        minus.disabled = i === 0;
+        plus.disabled = i === SIZES.length - 1;
+      }
+      minus.addEventListener('click', function () { setSize(Math.max(0, getSize() - 1)); upd(); });
+      plus.addEventListener('click', function () { setSize(Math.min(SIZES.length - 1, getSize() + 1)); upd(); });
+      reset.addEventListener('click', function () { setSize(0); upd(); });
+      row.appendChild(minus);
+      row.appendChild(plus);
+      row.appendChild(reset);
+      body.appendChild(label);
+      body.appendChild(row);
+      body.appendChild(mk('p', 'rd-size-sample', 'Every item links back to its original source — read the take here, click through for the full story.'));
+      upd();
+    });
+  }
+
+  // ---- Save for later (bookmarks; a list on this device only) ----
+  var SAVED_KEY = 'hb-saved-v1';
+  var STAR_SVG = '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" ' +
+    'stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>';
+  function loadSaved() {
+    try { var a = JSON.parse(localStorage.getItem(SAVED_KEY) || '[]'); return Array.isArray(a) ? a : []; }
+    catch (e) { return []; }
+  }
+  function storeSaved(a) { try { localStorage.setItem(SAVED_KEY, JSON.stringify(a.slice(0, 200))); } catch (e) { /* ignore */ } }
+  function storyKey(it) { return editionDate() + ':' + it.dataset.storyId; }
+  function refreshSaved() {
+    var list = loadSaved(), keys = {};
+    list.forEach(function (x) { keys[x.k] = true; });
+    document.querySelectorAll('.item[data-story-id] .story-save').forEach(function (b) {
+      var on = !!keys[storyKey(b.closest('.item'))];
+      b.setAttribute('aria-pressed', String(on));
+      b.setAttribute('aria-label', on ? 'Remove from saved stories' : 'Save this story for later');
+    });
+    var btn = document.querySelector('.reader-saved');
+    if (btn) {
+      var count = btn.querySelector('.rd-count');
+      if (count) count.textContent = list.length ? String(list.length) : '';
+      btn.setAttribute('aria-label', 'Saved stories' + (list.length ? ', ' + list.length : ''));
+    }
+  }
+  function toggleSaved(it) {
+    var k = storyKey(it), list = loadSaved(), at = -1;
+    list.forEach(function (x, n) { if (x.k === k) at = n; });
+    var h3 = it.querySelector('h3');
+    if (at >= 0) { list.splice(at, 1); toast('Removed from saved'); }
+    else { list.unshift({ k: k, d: editionDate(), id: it.dataset.storyId, h: h3 ? h3.textContent.trim() : '', t: Date.now() }); toast('Saved for later'); }
+    storeSaved(list);
+    refreshSaved();
+  }
+  function openSaved() {
+    openSheet('Saved stories', function (body) {
+      var empty = 'Nothing saved yet. Tap the bookmark on a story to keep it here.';
+      var list = loadSaved();
+      if (!list.length) { body.appendChild(mk('p', '', empty)); return; }
+      var ul = mk('ul', 'rd-saved');
+      list.forEach(function (x) {
+        var li = mk('li');
+        var left = mk('div');
+        var a = mk('a', '', x.h || x.id);
+        a.href = '/archive/' + x.d + '.html#' + x.id;
+        left.appendChild(a);
+        left.appendChild(mk('small', '', prettyDate(x.d)));
+        var rm = mk('button', 'rd-btn rd-remove', 'Remove');
+        rm.type = 'button';
+        rm.setAttribute('aria-label', 'Remove ' + (x.h || 'story') + ' from saved');
+        rm.addEventListener('click', function () {
+          storeSaved(loadSaved().filter(function (y) { return y.k !== x.k; }));
+          li.remove();
+          refreshSaved();
+          if (!ul.children.length) { ul.remove(); body.appendChild(mk('p', '', empty)); }
+        });
+        li.appendChild(left);
+        li.appendChild(rm);
+        ul.appendChild(li);
+      });
+      body.appendChild(ul);
+    });
+  }
+
+  // ---- Tools row under the nav (text size, saved); also hosts the quiz chip ----
+  function readerTools() {
+    var nav = document.querySelector('.nav');
+    if (!nav) return;
+    var host = document.querySelector('.reader-tools');
+    if (!host) {
+      host = mk('div', 'reader-tools');
+      var aa = mk('button', 'reader-btn reader-size', 'Aa');
+      aa.type = 'button';
+      aa.setAttribute('aria-label', 'Text size');
+      aa.addEventListener('click', openTextSize);
+      var sv = mk('button', 'reader-btn reader-saved');
+      sv.type = 'button';
+      sv.innerHTML = STAR_SVG + '<span class="rd-count"></span>';
+      sv.addEventListener('click', openSaved);
+      host.appendChild(aa);
+      host.appendChild(sv);
+      nav.insertAdjacentElement('afterend', host);
+      refreshSaved();
+    }
+    host.hidden = !reader();
+    var chip = document.querySelector('.quiz-chip');
+    if (chip) {
+      if (reader() && chip.parentNode !== host) host.insertBefore(chip, host.firstChild);
+      else if (!reader() && chip.parentNode === host) nav.insertAdjacentElement('afterend', chip);
+    }
   }
 
   // ---- Open a shared story link: expand it, scroll to it, flash it ----
   function openFromHash() {
     var id = decodeURIComponent((location.hash || '').slice(1));
-    if (!id || !mq.matches) return;
+    if (!id || !reader()) return;
     var it = document.getElementById(id);
     if (!it || !it.classList.contains('item')) return;
     if (it.classList.contains('is-collapsed')) {
@@ -328,12 +538,15 @@
   }
 
   function apply() {
+    if (reader() && !mq.matches) ensureReaderCss();
+    applyTextSize();
     collapsibleStories();
     laneToggles();
     laneDigests();
     readTimes();
     aboutToggle();
-    storyShareButtons();
+    storyButtons();
+    readerTools();
     progressUi();
     measureClamps();
   }

@@ -1,0 +1,248 @@
+/*
+ * reader.css — reusable reading components for The Hour Brief: section highlights, per-story
+ * share/save buttons, reading progress, the tools row, sheets and the saved list.
+ *
+ * Not width-gated. It is imported by /mobile.css (phones) and injected by /mobile.js in the
+ * native apps at any width; the desktop website never loads it. Colours come from the page's
+ * own tokens, so light and dark themes just work.
+ */
+
+/* ---- Section header: highlights, then takeaway ----
+   The long "digest" sentence the daily edition puts in each lane <h2> is tucked behind a
+   toggle; a numbered list of the lane's story headlines (each a jump link) leads instead.
+   A short <h2> plus a .lane-takeaway (newer editions) shows as-is. */
+.lane-head.is-digest h2 { display: none; }
+.lane-head.is-digest.digest-open h2 {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+  margin-top: 12px;
+}
+.lane-digest { margin: 12px 0 0; }
+.lane-digest-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 4px;
+}
+.lane-digest-list { margin: 0; padding: 0; list-style: none; counter-reset: dg; }
+.lane-digest-list li {
+  counter-increment: dg;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+}
+.lane-digest-list li:first-child { border-top: 0; }
+.lane-digest-list li::before {
+  content: counter(dg);
+  flex: 0 0 22px;
+  height: 22px;
+  margin-top: 1px;
+  border-radius: 50%;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 22px;
+  text-align: center;
+}
+.ai .lane-digest-list li::before { background: var(--tag-ai-soft); color: var(--tag-ai); }
+.biz .lane-digest-list li::before { background: var(--tag-biz-soft); color: var(--tag-biz); }
+.mkt .lane-digest-list li::before { background: var(--tag-mkt-soft); color: var(--tag-mkt); }
+.lane-digest-list a {
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  font-weight: 550;
+}
+.digest-toggle {
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: none;
+  border: 0;
+  color: var(--brand);
+  padding: 8px 0;
+  min-height: 40px;
+  cursor: pointer;
+}
+.lane-head .lane-takeaway { margin-top: 12px; font-size: 0.9rem; }
+.lane-head .takeaway-label, .lane-takeaway .takeaway-label { margin-right: 6px; }
+
+/* ---- Per-story share, deep-link target, reading progress ---- */
+.item { scroll-margin-top: 72px; }
+.item.deeplinked { animation: hb-flash 1.8s ease-out 1; }
+@keyframes hb-flash { from { background: color-mix(in srgb, var(--brand) 14%, transparent); } to { background: transparent; } }
+.story-share {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border-radius: 22px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink-faint);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.story-share svg { width: 18px; height: 18px; fill: none; }
+#mob-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 0;
+  background: var(--brand);
+  z-index: 9990;
+  pointer-events: none;
+}
+#mob-top {
+  position: fixed;
+  left: 14px;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  z-index: 9990;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 20px;
+  border: 0;
+  background: var(--brand);
+  color: #fff;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+#mob-top.show { opacity: 1; pointer-events: auto; }
+#mob-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 9991;
+  background: #17191c;
+  color: #f2f3ee;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+}
+[hidden].mob-only { display: none; }
+.lane-time { font-weight: 600; letter-spacing: 0.04em; opacity: 0.85; }
+.lane-time[hidden] { display: none; }
+
+/* ---- Wide layouts (tablets, native apps): keep the highlights list readable ---- */
+.lane-digest { max-width: 66ch; }
+.story-share, .story-save { margin-left: 0; }
+
+/* ---- Save for later ---- */
+.story-save {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border-radius: 22px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink-faint);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.story-save svg { width: 18px; height: 18px; fill: none; }
+.story-save[aria-pressed="true"] { color: var(--brand); border-color: var(--brand); }
+.story-save[aria-pressed="true"] svg { fill: currentColor; }
+.story-save[hidden], .story-share[hidden] { display: none; }
+.story-share:focus-visible, .story-save:focus-visible, .reader-btn:focus-visible, .rd-btn:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* ---- Tools row under the nav: quiz chip + text size + saved ---- */
+.reader-tools { display: flex; align-items: stretch; gap: 8px; margin: -8px 0 22px; }
+.reader-tools[hidden] { display: none; }
+.reader-tools .quiz-chip { flex: 1 1 auto; min-width: 0; margin: 0; }
+.reader-tools > .reader-btn:first-child { margin-left: auto; }
+.reader-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 46px;
+  min-height: 46px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.reader-btn svg { width: 18px; height: 18px; fill: none; }
+.rd-count { font-size: 0.8rem; color: var(--brand); }
+.rd-count:empty { display: none; }
+
+/* ---- Sheets (text size, saved stories) ---- */
+.rd-sheet-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+}
+.rd-sheet {
+  width: 100%;
+  max-width: 520px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 20px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+  border-radius: 16px 16px 0 0;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.25);
+  font: 15px/1.5 -apple-system, system-ui, sans-serif;
+}
+@media (min-width: 641px) {
+  .rd-sheet-bg { align-items: center; }
+  .rd-sheet { border-radius: 16px; max-height: 70vh; }
+}
+.rd-sheet h2 { margin: 0 0 10px; font-size: 1.15rem; }
+.rd-sheet p { margin: 0 0 12px; color: var(--ink-soft); }
+.rd-row { display: flex; gap: 10px; margin-bottom: 12px; }
+.rd-btn {
+  flex: 1;
+  min-height: 46px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.rd-btn:disabled { opacity: 0.4; cursor: default; }
+.rd-close { width: 100%; margin-top: 8px; }
+.rd-size-label { font-weight: 700; color: var(--ink) !important; }
+.rd-size-sample { font-size: 0.94rem; line-height: 1.6; }
+.rd-saved { margin: 0 0 8px; padding: 0; list-style: none; }
+.rd-saved li { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+.rd-saved li:first-child { border-top: 0; }
+.rd-saved li > div { flex: 1; min-width: 0; }
+.rd-saved a { color: var(--ink); font-weight: 600; text-decoration: none; line-height: 1.35; }
+.rd-saved small { display: block; margin-top: 2px; color: var(--ink-faint); }
+.rd-remove { flex: 0 0 auto; min-height: 40px; }

@@ -43,6 +43,7 @@ jobs:
           check_status "$BASE/mobile.js" 200
           check_status "$BASE/quiz.js" 200
           check_status "$BASE/quiz.css" 200
+          check_status "$BASE/reader.css" 200
           check_status "$BASE/og-image.png" 200
 
           echo "--- checking every archived edition referenced in editions.json ---"

@@ -55,9 +55,10 @@
     return n;
   }
   function prevDay(d) { return new Date(Date.parse(d + 'T00:00:00Z') - 86400000).toISOString().slice(0, 10); }
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   function prettyDate(d) {
-    try { return new Date(d + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' }); }
-    catch (e) { return d; }
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d);
+    return m ? (+m[3]) + ' ' + MONTHS[+m[2] - 1] : d;
   }
   function toast(msg) {
     var t = document.querySelector('.quiz-toast');
@@ -150,6 +151,96 @@
     else if (navigator.share) p = navigator.share(payload);
     else p = copyText(text + '\n' + url);
     if (p && p.catch) p.catch(function () { /* user cancelled */ });
+  }
+
+  // ---------- shareable score image (drawn on the device, never uploaded) ----------
+  function roundRect(g, x, y, w, h, r) {
+    g.beginPath();
+    g.moveTo(x + r, y);
+    g.arcTo(x + w, y, x + w, y + h, r);
+    g.arcTo(x + w, y + h, x, y + h, r);
+    g.arcTo(x, y + h, x, y, r);
+    g.arcTo(x, y, x + w, y, r);
+    g.closePath();
+  }
+  function cardMessage(res) {
+    var r = res.s / res.t;
+    return r === 1 ? 'Perfect. Read closely.' : r >= 0.8 ? 'Sharp reading.' : r >= 0.6 ? 'Solid.' : r >= 0.4 ? 'Not bad.' : 'Tough one.';
+  }
+  function drawCard(res, streak) {
+    var W = 1080, H = 1080;
+    var c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    var g = c.getContext('2d');
+    var SANS = '-apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+    var SERIF = 'Georgia, "Times New Roman", serif';
+    g.fillStyle = '#17191c'; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#5b3e96'; g.fillRect(0, H - 18, W, 18);
+    g.textBaseline = 'alphabetic';
+    g.textAlign = 'left';
+    g.font = '800 64px ' + SANS;
+    g.fillStyle = '#f2f3ee'; g.fillText('THE HOUR', 72, 132);
+    var w = g.measureText('THE HOUR ').width;
+    g.fillStyle = '#a487d9'; g.fillText('BRIEF', 72 + w, 132);
+    g.textAlign = 'right';
+    g.font = '600 34px ' + SANS; g.fillStyle = '#9ba3a6';
+    g.fillText(prettyDate(DATE).toUpperCase(), W - 72, 130);
+    g.textAlign = 'center';
+    g.font = '700 38px ' + SANS; g.fillStyle = '#a487d9';
+    g.fillText('DAILY QUIZ', W / 2, 300);
+    g.font = '700 300px ' + SERIF; g.fillStyle = '#f2f3ee';
+    g.fillText(res.s + '/' + res.t, W / 2, 545);
+    if (res.a) {
+      var n = res.t, size = Math.min(110, Math.floor((W - 144 - (n - 1) * 20) / n)), gap = 20;
+      var x0 = (W - (n * size + (n - 1) * gap)) / 2;
+      questions.forEach(function (q, i) {
+        g.fillStyle = res.a[i] === q.answer ? '#4fb579' : '#d9645f';
+        roundRect(g, x0 + i * (size + gap), 660, size, size, 20);
+        g.fill();
+      });
+    }
+    g.font = '700 56px ' + SANS; g.fillStyle = '#f2f3ee';
+    g.fillText(cardMessage(res), W / 2, 880);
+    if (streak >= 2) {
+      g.font = '600 44px ' + SANS; g.fillStyle = '#d9a94e';
+      g.fillText('\uD83D\uDD25 ' + streak + '-day streak', W / 2, 942);
+    }
+    g.font = '700 46px ' + SANS; g.fillStyle = '#f2f3ee';
+    g.fillText('Think you can beat me?', W / 2, 1002);
+    g.font = '600 36px ' + SANS; g.fillStyle = '#a487d9';
+    g.fillText('the-hour-brief.vercel.app', W / 2, 1046);
+    return c;
+  }
+  function shareScore(res, streak) {
+    var text = shareText(res, streak), url = shareUrl(res.s);
+    var Cap = window.Capacitor, P = (Cap && Cap.Plugins) || {};
+    var native = Cap && typeof Cap.isNativePlatform === 'function' && Cap.isNativePlatform();
+    var canvas = null;
+    try { canvas = drawCard(res, streak); } catch (e) { /* fall back to text */ }
+    if (!canvas) return share(text, url);
+    var full = text + '\n' + url;
+    if (native && P.Filesystem && P.Share) {
+      var b64 = canvas.toDataURL('image/png').split(',')[1];
+      P.Filesystem.writeFile({ path: 'hour-brief-quiz-' + DATE + '.png', data: b64, directory: 'CACHE' })
+        .then(function (r) {
+          var p = P.Share.share({ title: 'The Hour Brief quiz', text: full, files: [r.uri], dialogTitle: 'Share your score' });
+          if (p && p.catch) p.catch(function () { /* cancelled */ });
+        }, function () { share(text, url); });
+      return;
+    }
+    if (navigator.canShare && navigator.share && canvas.toBlob) {
+      canvas.toBlob(function (blob) {
+        var file = null;
+        try { file = blob && new File([blob], 'hour-brief-quiz.png', { type: 'image/png' }); } catch (e) { /* ignore */ }
+        if (file && navigator.canShare({ files: [file] })) {
+          navigator.share({ files: [file], title: 'The Hour Brief quiz', text: full }).catch(function () { /* cancelled */ });
+        } else {
+          share(text, url);
+        }
+      }, 'image/png');
+      return;
+    }
+    share(text, url);
   }
 
   // ---------- friend challenge (?beat=N on a shared link) ----------
@@ -313,7 +404,7 @@
     var shareBtn = el('button', 'quiz-btn primary', 'Share my score');
     shareBtn.type = 'button';
     var streakN = 0;
-    shareBtn.addEventListener('click', function () { share(shareText(mine, streakN), shareUrl(mine.s)); });
+    shareBtn.addEventListener('click', function () { shareScore(mine, streakN); });
     actions.appendChild(shareBtn);
     var reviewBtn = el('button', 'quiz-btn', 'Review answers');
     reviewBtn.type = 'button';
@@ -424,7 +515,9 @@
     if (!chip) {
       chip = el('a', 'quiz-chip');
       chip.href = '#quiz';
-      nav.insertAdjacentElement('afterend', chip);
+      var tools = document.querySelector('.reader-tools');
+      if (tools && !tools.hidden) tools.insertBefore(chip, tools.firstChild);
+      else nav.insertAdjacentElement('afterend', chip);
     }
     var results = load().r, mine = results[DATE];
     var latest = dates.length ? dates[dates.length - 1] : DATE;
