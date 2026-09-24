@@ -9,7 +9,8 @@
     "allowNavigation": [
       "the-hour-brief.vercel.app",
       "*.the-hour-brief.vercel.app"
-    ]
+    ],
+    "errorPath": "offline.html"
   },
   "ios": {
     "contentInset": "always",

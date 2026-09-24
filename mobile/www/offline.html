@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>The Hour Brief</title>
+<style>
+  html, body { margin: 0; min-height: 100%; background: #5b3e96; color: #f2f3ee;
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif; }
+  .wrap { min-height: 100vh; box-sizing: border-box; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center; padding: 32px 24px; }
+  h1 { font-size: 20px; font-weight: 600; margin: 20px 0 6px; }
+  h2 { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; margin: 0 0 8px; color: #d8cfe9; }
+  p { color: #d8cfe9; font-size: 14px; margin: 0 0 20px; max-width: 20rem; line-height: 1.5; }
+  a { color: #f2f3ee; }
+  button { background: #f2f3ee; color: #17191c; border: 0; border-radius: 10px;
+    padding: 12px 22px; font-size: 15px; font-weight: 600; }
+  .contact { margin-top: 32px; padding-top: 20px; border-top: 1px solid rgba(242,243,238,.25); }
+  .contact p { margin-bottom: 8px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: #f2f3ee;
+    animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: .3; transform: scale(.8);} 50% { opacity: 1; transform: scale(1);} }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="dot" id="dot" style="animation:none;opacity:.5"></div>
+    <h1 id="title">We couldn&rsquo;t load today&rsquo;s brief</h1>
+    <p id="msg">You may be offline, or the page may have moved. Check your connection and try again. Every item in The Hour Brief links to its original source.</p>
+    <button id="retry" onclick="location.href='https://the-hour-brief.vercel.app/'">Try again</button>
+    <div class="contact">
+      <h2>Contact us</h2>
+      <p>Questions, corrections or feedback? Email <a href="mailto:milindroy101292@gmail.com">milindroy101292@gmail.com</a></p>
+      <p><a href="https://the-hour-brief.vercel.app/contact.html">Contact page</a> · <a href="https://the-hour-brief.vercel.app/privacy.html">Privacy</a></p>
+    </div>
+  </div>
+<script>
+  window.addEventListener('online', function () { location.href = 'https://the-hour-brief.vercel.app/'; });
+</script>
+</body>
+</html>

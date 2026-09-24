@@ -13,7 +13,7 @@
  *    takeaway; the long digest sentence sits behind a toggle.
  *  - Every story has a Share button (headline + link to that story), and long
  *    pages get a reading-progress bar and a back-to-top button.
- *  - The evergreen About paragraph gets a matching "More" toggle.
+ *  - The evergreen About paragraph gets a matching "More" toggle, and a "Contact us · About · Privacy" line sits above the pills.
  *  - Save-for-later bookmarks and a text-size control (both stored on this device only).
  *  - "Listen to today's brief" (listen.js, loaded on demand where the device can speak).
  *
@@ -549,9 +549,28 @@
     readTimes();
     aboutToggle();
     storyButtons();
+    siteLinks();
     readerTools();
     progressUi();
     measureClamps();
+  }
+
+  // ---- Contact / About / Privacy, right above the section pills, so contact info is easy to find ----
+  function siteLinks() {
+    var nav = document.querySelector('.nav');
+    if (!nav) return;
+    var row = document.querySelector('.site-links');
+    if (!row) {
+      row = mk('div', 'site-links');
+      [['Contact us', '/contact.html'], ['About', '/about.html'], ['Privacy', '/privacy.html']].forEach(function (l, i) {
+        if (i) row.appendChild(document.createTextNode(' · '));
+        var a = mk('a', i ? '' : 'site-contact', l[0]);
+        a.href = l[1];
+        row.appendChild(a);
+      });
+      nav.insertAdjacentElement('beforebegin', row);
+    }
+    row.hidden = !reader();
   }
 
   // ---- Listen mode: the player lives in listen.js, fetched only where speech is available ----
