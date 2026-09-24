@@ -5,7 +5,14 @@
   <link href="https://the-hour-brief.vercel.app/feed.xml" rel="self"/>
   <link href="https://the-hour-brief.vercel.app/"/>
   <id>https://the-hour-brief.vercel.app/</id>
-  <updated>2026-09-23T02:55:00Z</updated>
+  <updated>2026-09-24T02:55:00Z</updated>
+  <entry>
+    <title>Edition 039 — 24 September 2026</title>
+    <link href="https://the-hour-brief.vercel.app/archive/2026-09-24.html"/>
+    <id>https://the-hour-brief.vercel.app/archive/2026-09-24.html</id>
+    <updated>2026-09-24T02:55:00Z</updated>
+    <summary type="text">AI &amp; Tech: Trump and Xi meet at the White House today with AI chip controls off the table but a joint AI-incident hotline the likeliest outcome, a day after Sam Altman and Dario Amodei urged the UN Security Council to adopt shared global AI safety standards, even as Anthropic ships a cheaper, faster Claude Opus 5.5 and its own AI agents help discover a CRISPR-like enzyme system, while Meta unveils $1,299 VR glasses and three new smart-glasses lines at Connect 2026, and a critical flaw in the open-source Bifrost AI gateway exposes every connected LLM provider's API keys. Product &amp; Business: Goa's Hughes Precision Manufacturing raises over ₹250 crore to nearly triple its ammunition capacity and Prime Focus-backed Brahma AI raises $150 million at a $2 billion valuation, even as the Enforcement Directorate names EaseMyTrip co-founder Nishant Pitti in its Mahadev betting-app chargesheet and FSSAI moves against Amazon, Flipkart, Zepto, Swiggy Instamart and BigBasket over food-safety lapses, while Ola Electric seeks board approval for a fresh rights issue, Telix agrees to buy Germany's ITM for $1.65 billion, and OpenAI is reportedly in talks for a funding round above $1.2 trillion even as it rules out a 2026 IPO. Stock Market: NSE lists on the BSE today after its record ₹22,569 crore IPO closes 5.71 times subscribed even as Wall Street sells off on a 10-year Treasury yield spike to its highest since 2007, dragging the Nasdaq down 1.13%, while Sensex and Nifty rebound from Tuesday's dip on Bajaj Finance and Hindalco even as IT stocks lag, Brent crude climbs above $100 on Saudi supply recovery and Iran diplomacy, the rupee slips to 95.74 against the dollar, and Shapoorji Pallonji Group's hunt for ₹3,500 crore puts fresh focus on the unresolved Tata Sons listing fight.</summary>
+  </entry>
   <entry>
     <title>Edition 038 — 23 September 2026</title>
     <link href="https://the-hour-brief.vercel.app/archive/2026-09-23.html"/>
@@ -208,12 +215,5 @@
     <id>https://the-hour-brief.vercel.app/archive/2026-08-25.html</id>
     <updated>2026-08-25T02:55:00Z</updated>
     <summary type="text">AI &amp; Tech: Hugging Face explores a sale that could value it near $13 billion and Nvidia weighs a stake in Perplexity above $30 billion, as the AI industry's memory crunch forces Amazon to quietly raise prices on Echo, Kindle and Fire TV, and the SEC opens a probe into a hedge fund that nearly imploded betting big on AI stocks. Product &amp; Business: India's capital markets have their best month on record as a $10 billion deal rush led by the LIC share sale rolls on, even as fresh funding for NeoGeoInfo, CtrlS and voice-AI startup Wispr Flow keeps AI and data-centre infrastructure the hottest category in tech, and Flipkart's senior ranks thin out over an unresolved IPO timeline. Stock Market: Fresh US sanctions on Iran jolt oil and the rupee, chip stocks slide ahead of Nvidia's make-or-break earnings, and metal stocks shield the Sensex and Nifty from a deeper Monday slide.</summary>
-  </entry>
-  <entry>
-    <title>Edition 009 — 24 August 2026</title>
-    <link href="https://the-hour-brief.vercel.app/archive/2026-08-24.html"/>
-    <id>https://the-hour-brief.vercel.app/archive/2026-08-24.html</id>
-    <updated>2026-08-24T02:55:00Z</updated>
-    <summary type="text">AI &amp; Tech: Anthropic's IPO prospectus will name public backlash against AI and data centers as a formal risk factor as Nvidia warns its biggest customers of AI server price hikes above 15% on soaring memory costs, while Hugging Face explores a sale that could value the open-model hub at $13 billion or more. Product &amp; Business: Sachin Bansal's Navi raises its first-ever institutional capital — a $100 million Prosus round at a $1.3 billion valuation — as Nvidia pays $6 billion to license AI coding startup Poolside's model-building software and hire over 100 of its staff, while Battery Smart, Cashfree Payments and a Nobel Hygiene IPO filing round out a busy week for Indian fintech, EV infrastructure and hygiene-products manufacturing. Stock Market: US Treasury yields hold near 20-month highs as markets brace for Kevin Warsh's first Jackson Hole address as Fed chair, Brent crude holds near $94 a barrel on an unresolved US-Iran standoff, and Bitcoin claws back above $78,000 as a broader crypto rally resumes after Saturday's flash crash.</summary>
   </entry>
 </feed>
