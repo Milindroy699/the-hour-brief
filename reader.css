@@ -347,6 +347,7 @@ body.hb-listening #mob-toast { bottom: calc(160px + env(safe-area-inset-bottom, 
 
 /* ---- Contact / About / Privacy line above the section pills ---- */
 .site-links { margin: -6px 0 14px; font-size: 0.88rem; color: var(--ink-faint); }
+.site-links.in-footer { margin: 0 0 16px; font-size: 0.95rem; }
 .site-links[hidden] { display: none; }
 .site-links a { color: var(--ink-soft); text-decoration: underline; text-underline-offset: 3px; padding: 6px 2px; }
 .site-links .site-contact { font-weight: 700; color: var(--ink); }

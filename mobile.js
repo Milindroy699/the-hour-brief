@@ -13,7 +13,7 @@
  *    takeaway; the long digest sentence sits behind a toggle.
  *  - Every story has a Share button (headline + link to that story), and long
  *    pages get a reading-progress bar and a back-to-top button.
- *  - The evergreen About paragraph gets a matching "More" toggle, and a "Contact us · About · Privacy" line sits above the pills.
+ *  - The evergreen About paragraph gets a matching "More" toggle, and a "Contact us · About · Privacy" row leads the footer.
  *  - Save-for-later bookmarks and a text-size control (both stored on this device only).
  *  - "Listen to today's brief" (listen.js, loaded on demand where the device can speak).
  *
@@ -555,10 +555,11 @@
     measureClamps();
   }
 
-  // ---- Contact / About / Privacy, right above the section pills, so contact info is easy to find ----
+  // ---- Contact / About / Privacy: one row at the top of the footer (above the pills only if a page has no footer) ----
   function siteLinks() {
     var nav = document.querySelector('.nav');
-    if (!nav) return;
+    var footer = document.querySelector('footer.colophon');
+    if (!nav && !footer) return;
     var row = document.querySelector('.site-links');
     if (!row) {
       row = mk('div', 'site-links');
@@ -568,7 +569,8 @@
         a.href = l[1];
         row.appendChild(a);
       });
-      nav.insertAdjacentElement('beforebegin', row);
+      if (footer) { footer.insertBefore(row, footer.firstChild); row.classList.add('in-footer'); }
+      else nav.insertAdjacentElement('beforebegin', row);
     }
     row.hidden = !reader();
   }

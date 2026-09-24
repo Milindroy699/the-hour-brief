@@ -5,13 +5,13 @@
 (SHA-256 `CE:1E:B6:18:75:18:51:6E:D3:03:5B:5D:7C:69:D1:FC:31:3F:4A:64:4F:80:82:8A:1F:00:02:54:2D:F1:E5:35`), target/compile SDK 36,
 min SDK 24, not debuggable, HTTPS only, no native libraries (the 16 KB page-size rule does not apply), zip-aligned, permissions
 `INTERNET, VIBRATE, POST_NOTIFICATIONS, RECEIVE_BOOT_COMPLETED, WAKE_LOCK` only (no exact-alarm, no storage), server URL = production.
-Smoke-tested on the emulator: loads the live edition, Contact line and Listen card on the first screen; with the network off it
+Smoke-tested on the emulator: loads the live edition, Listen card on the first screen and the Contact row in the footer; with the network off it
 shows the bundled offline page (`www/offline.html`) that carries the contact details.
 
 ## Google Play: what got the app removed and how it was fixed
 Policy: News and Magazines (enforced 24 Sep): no easy-to-find contact page in the app and on the website.
-- Site (live, loaded by the app): `/contact.html` (labelled "Contact us", email, topics), a "Contact us · About · Privacy" line above the
-  section pills on phones/apps, a "Contact" pill in each edition's nav, a labelled Contact block with the email in each edition's footer,
+- Site (live, loaded by the app): `/contact.html` (labelled "Contact us", email, topics), a "Contact us · About · Privacy" row leading the
+  footer on phones/apps, a "Contact" pill in each edition's nav, a labelled Contact block with the email in each edition's footer,
   and links from About/Privacy/archive. CI fails if the latest edition loses the link.
 - Bundle: offline/error page with the email. (Reviewers who cannot load the site still see contact details.)
 - **Console, you do these:**
