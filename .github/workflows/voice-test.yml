@@ -7,7 +7,7 @@ on:
     inputs:
       pace:
         description: Speech pace (0.5 to 2.0)
-        default: '1'
+        default: '1.15'
 
 jobs:
   voices:
@@ -28,6 +28,14 @@ jobs:
         env:
           SARVAM_API_KEY: ${{ secrets.SARVAM_API_KEY }}
         run: node voice-test.mjs --pace "${{ inputs.pace }}"
+      - name: Keep the samples as a downloadable artifact (in case the upload fails)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: voice-samples
+          path: tools/audio/out
+          retention-days: 3
+          if-no-files-found: ignore
       - name: Upload to R2
         working-directory: tools/audio
         env:

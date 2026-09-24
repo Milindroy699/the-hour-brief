@@ -1,0 +1,29 @@
+name: R2 check
+
+# Free health check for the R2 credentials: writes a tiny file, reads it back over the public URL, deletes it.
+on:
+  workflow_dispatch: {}
+
+jobs:
+  r2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+    steps:
+      - name: Credential shape (lengths only, never the values)
+        run: |
+          echo "access key id length: ${#AWS_ACCESS_KEY_ID} (should be 32)"
+          echo "secret access key length: ${#AWS_SECRET_ACCESS_KEY} (should be 64)"
+      - name: Write, read back, delete
+        run: |
+          EP="https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com"
+          echo "ok $(date -u +%FT%TZ)" > ok.txt
+          aws s3 cp ok.txt "s3://${{ secrets.R2_BUCKET }}/_check/ok.txt" --endpoint-url "$EP" --cache-control no-cache
+          curl -fsS "${{ secrets.R2_PUBLIC_URL }}/_check/ok.txt"
+          aws s3 rm "s3://${{ secrets.R2_BUCKET }}/_check/ok.txt" --endpoint-url "$EP"
+          echo "R2 write, public read and delete all worked"
