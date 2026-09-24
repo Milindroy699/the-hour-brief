@@ -18,6 +18,16 @@ Every edition page must keep these lines, plus `/quiz.css` and `/quiz.js` (the a
 
 Because the paths are absolute (`/mobile.css` …), the GitHub Pages mirror (served under `/the-hour-brief/`) does **not** pick up `mobile.css` / `mobile.js`. Vercel is canonical; the mirror is best-effort.
 
+## Your sections (show / hide / reorder)
+
+`mobile.js` (reader mode only: phones and the apps) lets readers switch the sections (`section.lane`: AI, Business, Markets, Quiz) on or off
+and move them up or down, from the sliders button under the section pills. The apps also offer the sheet once on first launch (never on the
+website, never when opened from a shared link). The choice lives in `localStorage` key `hb-prefs-v1` (`{order:[ids], off:[ids]}`); nothing is sent anywhere.
+Sections are moved and hidden in place (`data-pref-off` marks hidden ones), so ids, links and scripts keep working; unknown ids are ignored, so new
+sections just appear at the end. `listen.js` follows the choice: hidden sections are skipped and the recording jumps between the manifest's
+timings to play the reader's order (the recorded outro is dropped when the quiz is hidden). A shared story link into a hidden section still shows it for that visit.
+Tests: `node tools/browser-tests/prefs.mjs`.
+
 ## Daily quiz
 
 - `reader.css` holds the reusable reader components (section highlights, story share/save, tools row, sheets). `mobile.css` imports it on phones and `mobile.js` injects it in the native apps at any width; the desktop website never loads it.

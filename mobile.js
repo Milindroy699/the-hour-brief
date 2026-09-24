@@ -13,8 +13,10 @@
  *    takeaway; the long digest sentence sits behind a toggle.
  *  - Every story has a Share button (headline + link to that story), and long
  *    pages get a reading-progress bar and a back-to-top button.
- *  - The evergreen About paragraph gets a matching "More" toggle, and a "Contact us · About · Privacy" line sits above the pills.
+ *  - The evergreen About paragraph gets a matching "More" toggle, and a "Contact us · About · Privacy" row leads the footer.
  *  - Save-for-later bookmarks and a text-size control (both stored on this device only).
+ *  - "Your sections": readers pick which sections show and in what order (sliders button; the apps
+ *    offer it once on first launch). Stored on this device only.
  *  - "Listen to today's brief" (listen.js, loaded on demand where the device can speak).
  *
  * "Reader mode" = phone widths, or the native apps at any width (tablets). The desktop
@@ -363,7 +365,7 @@
     document.removeEventListener('keydown', sheetKey);
     if (sheetPrev && sheetPrev.focus) sheetPrev.focus();
   }
-  function openSheet(title, build, returnTo) {
+  function openSheet(title, build, returnTo, closeLabel) {
     closeSheet();
     sheetPrev = returnTo || document.activeElement;
     var bg = mk('div', 'rd-sheet-bg');
@@ -375,7 +377,7 @@
     var body = mk('div');
     box.appendChild(body);
     build(body);
-    var close = mk('button', 'rd-btn rd-close', 'Close');
+    var close = mk('button', 'rd-btn rd-close' + (closeLabel ? ' primary' : ''), closeLabel || 'Close');
     close.type = 'button';
     close.addEventListener('click', closeSheet);
     box.appendChild(close);
@@ -498,6 +500,164 @@
     }, returnTo);
   }
 
+  // ---- Your sections: which sections show, and in what order (kept on this device only) ----
+  // Stored as { order: [section ids], off: [section ids] }. Sections are moved and hidden in place,
+  // so every id, link and script keeps working; hidden ones carry data-pref-off (listen.js reads it).
+  var PREF_KEY = 'hb-prefs-v1';
+  var SLIDERS_SVG = '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" ' +
+    'stroke-linejoin="round" aria-hidden="true"><path d="M4 6h9"/><path d="M17 6h3"/><circle cx="15" cy="6" r="2"/>' +
+    '<path d="M4 12h3"/><path d="M11 12h9"/><circle cx="9" cy="12" r="2"/><path d="M4 18h9"/><path d="M17 18h3"/><circle cx="15" cy="18" r="2"/></svg>';
+  var prefs = null, laneBase = null, prefSig = null, lastNavKey = '';
+
+  function idList(a) { return Array.isArray(a) ? a.filter(function (x) { return typeof x === 'string'; }) : []; }
+  function loadPrefs() {
+    try {
+      var o = JSON.parse(localStorage.getItem(PREF_KEY) || 'null');
+      if (o && typeof o === 'object') return { order: idList(o.order), off: idList(o.off) };
+    } catch (e) { /* none saved */ }
+    return null;
+  }
+  function storePrefs() {
+    try { localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); return true; } catch (e) { return false; }
+  }
+  function laneName(el) {
+    var tag = el.querySelector('.lane-tag');
+    if (!tag) return el.id;
+    var c = tag.cloneNode(true), t = c.querySelector('.lane-time');
+    if (t) t.remove();
+    return c.textContent.trim() || el.id;
+  }
+  function orderedIds(canon) {
+    var seen = {}, out = [];
+    prefs.order.forEach(function (id) { if (canon.indexOf(id) >= 0 && !seen[id]) { seen[id] = true; out.push(id); } });
+    canon.forEach(function (id) { if (!seen[id]) out.push(id); });
+    return out;
+  }
+  // The sections a reader can choose between (a quiz with no questions today is not one of them).
+  function choosable() {
+    return laneBase ? orderedIds(laneBase.ids).filter(function (id) { var el = document.getElementById(id); return el && !el.hidden; }) : [];
+  }
+
+  function applyPrefs() {
+    if (!prefs) prefs = loadPrefs() || { order: [], off: [] };
+    var els = Array.prototype.slice.call(document.querySelectorAll('section.lane[id]'));
+    if (!els.length) return;
+    var parent = els[0].parentNode;
+    if (els.some(function (e) { return e.parentNode !== parent; })) return;   // an unfamiliar page layout: leave it alone
+    if (!laneBase) {
+      laneBase = { ids: els.map(function (e) { return e.id; }), end: document.createComment('lanes-end') };
+      parent.insertBefore(laneBase.end, els[els.length - 1].nextSibling);
+    }
+    var on = reader(), byId = {};
+    els.forEach(function (e) { byId[e.id] = e; });
+    var ids = on ? orderedIds(laneBase.ids) : laneBase.ids;
+    ids.forEach(function (id) { parent.insertBefore(byId[id], laneBase.end); });
+
+    var nav = document.querySelector('.nav'), pills = {};
+    if (nav) {
+      nav.querySelectorAll('a[href^="#"]').forEach(function (a) { pills[a.getAttribute('href').slice(1)] = a; });
+      var after = nav.querySelector('a:not([href^="#"])');
+      ids.forEach(function (id) { if (pills[id]) nav.insertBefore(pills[id], after); });
+    }
+    var shown = [];
+    ids.forEach(function (id) {
+      var off = on && prefs.off.indexOf(id) >= 0;
+      byId[id].style.display = off ? 'none' : '';
+      if (off) byId[id].setAttribute('data-pref-off', ''); else byId[id].removeAttribute('data-pref-off');
+      if (pills[id]) pills[id].style.display = off ? 'none' : '';
+      if (!off) shown.push(id);
+    });
+    document.body.classList.toggle('hb-quiz-off', on && prefs.off.indexOf('quiz') >= 0);
+    // The pill row snaps to the pill it was on: after a reorder, start again from the first one.
+    var navKey = shown.join(',') + '|' + ids.join(',');
+    if (nav && navKey !== lastNavKey) { nav.scrollLeft = 0; lastNavKey = navKey; }
+
+    var sig = on ? shown.join(',') : '';
+    if (prefSig !== null && sig !== prefSig) document.dispatchEvent(new CustomEvent('hb:prefs'));
+    prefSig = sig;
+  }
+  function commitPrefs() { storePrefs(); applyPrefs(); }
+
+  function openPrefs(returnTo, first) {
+    if (!laneBase) return;
+    var msg = null;
+    openSheet(first ? 'Make the brief yours' : 'Your sections', function (body) {
+      body.appendChild(mk('p', '', first
+        ? 'Choose what goes in your daily brief and in what order. You can change this any time with the sliders button under the section pills.'
+        : 'Switch sections on or off and move them up or down. Changes apply straight away.'));
+      var ul = mk('ul', 'rd-prefs');
+      msg = mk('p', 'rd-prefs-msg');
+      msg.setAttribute('role', 'status');
+      var reset = mk('button', 'rd-btn rd-reset', 'Reset to default');
+      reset.type = 'button';
+      body.appendChild(ul);
+      body.appendChild(msg);
+      body.appendChild(reset);
+
+      function draw(focus) {
+        var ids = choosable(), onCount = ids.filter(function (id) { return prefs.off.indexOf(id) < 0; }).length;
+        ul.textContent = '';
+        ids.forEach(function (id, i) {
+          var name = laneName(document.getElementById(id));
+          var li = mk('li');
+          li.setAttribute('data-id', id);
+          var lab = mk('label', 'rd-sw');
+          var cb = mk('input');
+          cb.type = 'checkbox';
+          cb.setAttribute('role', 'switch');
+          cb.checked = prefs.off.indexOf(id) < 0;
+          cb.addEventListener('change', function () {
+            if (!cb.checked && onCount <= 1) { cb.checked = true; msg.textContent = 'Keep at least one section on.'; return; }
+            msg.textContent = '';
+            prefs.off = prefs.off.filter(function (x) { return x !== id; });
+            if (!cb.checked) prefs.off.push(id);
+            commitPrefs();
+            draw('[data-id="' + id + '"] input');
+          });
+          lab.appendChild(cb);
+          lab.appendChild(mk('span', 'rd-sw-name', name));
+          li.appendChild(lab);
+          [['up', '↑', -1], ['down', '↓', 1]].forEach(function (d) {
+            var b = mk('button', 'rd-btn rd-mv rd-' + d[0], d[1]);
+            b.type = 'button';
+            b.setAttribute('aria-label', 'Move ' + name + ' ' + d[0]);
+            b.disabled = i + d[2] < 0 || i + d[2] >= ids.length;
+            b.addEventListener('click', function () {
+              var order = ids.slice(), t = order[i];
+              order[i] = order[i + d[2]];
+              order[i + d[2]] = t;
+              prefs.order = order;
+              msg.textContent = '';
+              commitPrefs();
+              draw('[data-id="' + id + '"] .rd-' + d[0]);
+            });
+            li.appendChild(b);
+          });
+          ul.appendChild(li);
+        });
+        var f = focus && ul.querySelector(focus);
+        if (f && f.disabled) f = ul.querySelector(focus.replace(/\.rd-(up|down)$/, function (m, w) { return '.rd-' + (w === 'up' ? 'down' : 'up'); }));
+        if (f && !f.disabled) f.focus({ preventScroll: true });
+      }
+      reset.addEventListener('click', function () {
+        prefs = { order: [], off: [] };
+        msg.textContent = 'Back to the default order, everything on.';
+        commitPrefs();
+        draw();
+      });
+      draw();
+    }, returnTo, first ? 'Start reading' : 'Done');
+  }
+
+  // First time in the app: offer the choice once (the website is never interrupted this way).
+  function maybeOnboard() {
+    if (!NATIVE || !laneBase || loadPrefs() || location.hash || /[?&]utm_/.test(location.search)) return;
+    if (choosable().length < 2) return;
+    prefs = { order: [], off: [] };
+    if (!storePrefs()) return;                     // cannot remember the answer: do not ask every time
+    setTimeout(function () { if (!sheetEl) openPrefs(null, true); }, 700);
+  }
+
   // ---- Tools row under the nav (text size, saved); also hosts the quiz chip ----
   function readerTools() {
     var nav = document.querySelector('.nav');
@@ -505,6 +665,12 @@
     var host = document.querySelector('.reader-tools');
     if (!host) {
       host = mk('div', 'reader-tools');
+      var pf = mk('button', 'reader-btn reader-prefs');
+      pf.type = 'button';
+      pf.setAttribute('aria-label', 'Customise sections');
+      pf.innerHTML = SLIDERS_SVG;
+      pf.addEventListener('click', function () { openPrefs(pf); });
+      host.appendChild(pf);
       var aa = mk('button', 'reader-btn reader-size', 'Aa');
       aa.type = 'button';
       aa.setAttribute('aria-label', 'Text size');
@@ -532,6 +698,8 @@
     if (!id || !reader()) return;
     var it = document.getElementById(id);
     if (!it || !it.classList.contains('item')) return;
+    var lane = it.closest('section.lane');      // someone sent this story: show it even if its section is switched off here
+    if (lane && lane.hasAttribute('data-pref-off')) { lane.style.display = ''; lane.removeAttribute('data-pref-off'); }
     if (it.classList.contains('is-collapsed')) {
       var b = it.querySelector(':scope > div > .story-more');
       if (b && !b.hidden) b.click();
@@ -543,6 +711,7 @@
   function apply() {
     if (reader() && !mq.matches) ensureReaderCss();
     applyTextSize();
+    applyPrefs();
     collapsibleStories();
     laneToggles();
     laneDigests();
@@ -555,10 +724,11 @@
     measureClamps();
   }
 
-  // ---- Contact / About / Privacy, right above the section pills, so contact info is easy to find ----
+  // ---- Contact / About / Privacy: one row at the top of the footer (above the pills only if a page has no footer) ----
   function siteLinks() {
     var nav = document.querySelector('.nav');
-    if (!nav) return;
+    var footer = document.querySelector('footer.colophon');
+    if (!nav && !footer) return;
     var row = document.querySelector('.site-links');
     if (!row) {
       row = mk('div', 'site-links');
@@ -568,7 +738,8 @@
         a.href = l[1];
         row.appendChild(a);
       });
-      nav.insertAdjacentElement('beforebegin', row);
+      if (footer) { footer.insertBefore(row, footer.firstChild); row.classList.add('in-footer'); }
+      else nav.insertAdjacentElement('beforebegin', row);
     }
     row.hidden = !reader();
   }
@@ -584,7 +755,7 @@
     document.head.appendChild(s);
   }
 
-  function start() { apply(); openFromHash(); loadListen(); }
+  function start() { apply(); openFromHash(); loadListen(); maybeOnboard(); }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', start);
   } else {

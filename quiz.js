@@ -76,6 +76,7 @@
   }
   function storyHeadline(id) {
     var it = id && document.querySelector('.item[data-story-id="' + id + '"]');
+    if (it && it.closest('[data-pref-off]')) return '';       // its section is switched off on this device: no link to nowhere
     var h = it && it.querySelector('h3');
     return h ? h.textContent.trim() : '';
   }

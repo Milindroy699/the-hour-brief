@@ -20,6 +20,9 @@
  * recorded (it would cost too much): it is always read by the device voice, free, and starts at
  * 1.25x. Anything missing or failing falls back to the device voice described above.
  *
+ * The reader's section choices (mobile.js: sections switched off or moved) are followed: hidden sections are left out, and
+ * the recording jumps over them / plays sections in the reader's order using the manifest's timings.
+ *
  * Speed is remembered per length on this device (localStorage "hb-listen-v1").
  */
 (function () {
@@ -82,7 +85,7 @@
 
   // src: 'rec' = recorded audio, 'tts' = the device voice.  cues[mode][i] is the recording's timing for unit i.
   var S = { mode: 'quick', rate: 1, rates: { quick: 1, full: 1.25 }, units: {}, list: [], ui: 0, ci: 0, state: 'idle', gen: 0, started: false, timer: 0, dog: 0, cur: null,
-    src: 'tts', manifest: null, date: '', cues: {}, bad: {}, seekTo: null, seeking: false };
+    src: 'tts', manifest: null, date: '', cues: {}, until: {}, jump: {}, bad: {}, seekTo: null, seeking: false, edge: 0 };
   var cta = null, player = null, nowEl = null, laneEl = null, badgeEl = null, noteEl = null, playBtn = null, prevBtn = null, nextBtn = null, rateBtn = null;
   var audio = null;
   var lit = null;
@@ -200,7 +203,7 @@
       var tag = speakable(tagClone ? tagClone.textContent : '') || 'This section';
       var lt = lane.querySelector('.lane-takeaway');
       var items = lane.querySelectorAll('.item[data-story-id]');
-      if (!items.length) return;                 // e.g. the quiz section: nothing to read
+      if (!items.length || lane.hasAttribute('data-pref-off')) return;     // e.g. the quiz section (nothing to read), or one the reader switched off
       units.push({
         id: 'lane:' + (lane.id || ''), kind: 'lane', el: lane.querySelector('.lane-head'), lane: tag, title: tag, pos: '',
         chunks: chunk(stop1(tag) + (lt ? ' ' + stop1(withoutLabel(lt)) : '')),
@@ -225,7 +228,9 @@
         units.push({ id: 'story:' + it.getAttribute('data-story-id'), kind: 'story', el: it, lane: tag, title: head, pos: (i + 1) + ' of ' + items.length, chunks: chunk(parts.join(' ')) });
       });
     });
-    if (document.getElementById('quiz')) units.push({ id: 'outro', kind: 'outro', el: null, lane: 'The Hour Brief', title: 'That’s the brief', pos: '', chunks: chunk('That is today’s brief. Try the quiz below to see what stuck.') });
+    var quiz = document.getElementById('quiz');
+    if (quiz && quiz.hasAttribute('data-pref-off')) { /* the recorded outro points to the quiz: end on the last story instead */ }
+    else if (quiz) units.push({ id: 'outro', kind: 'outro', el: null, lane: 'The Hour Brief', title: 'That’s the brief', pos: '', chunks: chunk('That is today’s brief. Try the quiz below to see what stuck.') });
     else units.push({ id: 'outro', kind: 'outro', el: null, lane: 'The Hour Brief', title: 'That’s the brief', pos: '', chunks: chunk('That is today’s brief. See you tomorrow.') });
     units.forEach(function (u) {
       u.words = u.chunks.reduce(function (n, c) { return n + (c.match(/\S+/g) || []).length; }, 0);
@@ -233,7 +238,11 @@
     return units;
   }
   function minutes(mode) {
-    if (hasRec(mode)) return Math.max(1, Math.round(S.manifest.modes[mode].duration / 60 / S.rates[mode]));
+    if (hasRec(mode)) {                            // the recording's own timings, so hidden sections do not count
+      var secs = 0;
+      S.cues[mode].forEach(function (c, i) { secs += S.until[mode][i] - c.start; });
+      return Math.max(1, Math.round(secs / 60 / S.rates[mode]));
+    }
     var w = S.units[mode].reduce(function (n, u) { return n + u.words; }, 0);
     return Math.max(1, Math.round(w / (WPM * S.rates[mode])));
   }
@@ -255,17 +264,27 @@
   function recUrl(mode) { return AUDIO_BASE + '/audio/' + S.date + '/' + S.manifest.modes[mode].file; }
 
   // Timings are used only if every unit on this page has one (the page and the recording must agree).
+  // The recording is in the edition's own order. Where the next unit to play is not the next one in the
+  // recording (a section is switched off or has been moved), jump[i] says where to go: an index, or 'end'.
   function mapCues(mode) {
     var m = S.manifest && S.manifest.modes && S.manifest.modes[mode];
     if (!m || !/^[a-z]+\.[0-9a-f]{8}\.mp3$/.test(m.file) || !Array.isArray(m.cues) || !(m.duration > 0)) return;
-    var byId = {}, out = [];
-    m.cues.forEach(function (c) { byId[c.id] = c; });
+    var at = {}, out = [], until = [], jump = [];
+    m.cues.forEach(function (c, k) { at[c.id] = k; });
     for (var i = 0; i < S.units[mode].length; i++) {
-      var c = byId[S.units[mode][i].id];
-      if (!c || !(c.end > c.start) || (i && c.start < out[i - 1].start)) return;
+      var k = at[S.units[mode][i].id], c = m.cues[k];
+      if (k === undefined || !(c.end > c.start) || c.start < 0) return;
       out.push(c);
+      until.push(k + 1 < m.cues.length ? m.cues[k + 1].start : m.duration);
+    }
+    for (var j = 0; j < out.length; j++) {
+      var here = at[out[j].id];
+      if (j === out.length - 1) jump.push(here === m.cues.length - 1 ? undefined : 'end');
+      else jump.push(at[out[j + 1].id] === here + 1 ? undefined : j + 1);
     }
     S.cues[mode] = out;
+    S.until[mode] = until;
+    S.jump[mode] = jump;
   }
   function loadManifest(done) {
     var page = document.querySelector('[data-edition-date]');
@@ -302,9 +321,25 @@
   // Follow the recording: highlight whichever story is being read.
   function recSync() {
     if (S.src !== 'rec' || S.state !== 'playing' || S.seeking || !audio) return;
-    var cues = S.cues[S.mode], t = audio.currentTime, j = 0;
-    while (j + 1 < cues.length && cues[j + 1].start <= t + 0.05) j++;
-    if (j !== S.ui) { S.ui = j; S.ci = 0; light(S.list[j].el); render(); mediaMeta(); }
+    var cues = S.cues[S.mode], until = S.until[S.mode], t = audio.currentTime + 0.05, j = S.ui;
+    if (!(t >= cues[j].start && t < until[j])) {
+      j = -1;
+      for (var i = 0; i < cues.length; i++) if (t >= cues[i].start && t < until[i]) { j = i; break; }
+    }
+    if (j >= 0 && j !== S.ui) { S.ui = j; S.ci = 0; light(S.list[j].el); render(); mediaMeta(); }
+    recEdge();
+  }
+  // At the end of a unit whose successor is not next in the recording, jump there (or stop, if it was the last one).
+  function recEdge() {
+    clearTimeout(S.edge);
+    if (S.src !== 'rec' || S.state !== 'playing' || S.seeking || !audio) return;
+    var nx = S.jump[S.mode][S.ui];
+    if (nx === undefined) return;
+    var left = S.cues[S.mode][S.ui].end - audio.currentTime;
+    if (left > 0.03) { S.edge = setTimeout(recEdge, Math.max(30, left / S.rate * 1000 - 15)); return; }
+    if (nx === 'end') { finish(); return; }
+    enter(nx);
+    go();
   }
   function recGo() {
     var a = ensureAudio(), url = recUrl(S.mode);
@@ -319,6 +354,7 @@
     var p = a.play();
     if (p && p.catch) p.catch(function (e) { if (S.src === 'rec' && S.state === 'playing' && !(e && e.name === 'AbortError')) recFail(); });
     mediaMeta();
+    recEdge();
   }
   // The recording would not play: carry on from this story in the device voice (or say so if it cannot speak).
   function recFail() {
@@ -359,7 +395,7 @@
   }
 
   // ---- Playback ----
-  function clearTimers() { clearTimeout(S.timer); clearTimeout(S.dog); }
+  function clearTimers() { clearTimeout(S.timer); clearTimeout(S.dog); clearTimeout(S.edge); }
   function speakChunk() {
     var u = S.list[S.ui];
     if (!u || S.state !== 'playing') return;
@@ -500,7 +536,7 @@
         S.rate = RATES[(RATES.indexOf(S.rate) + 1) % RATES.length];
         S.rates[S.mode] = S.rate;
         save();
-        if (S.src === 'rec') { if (audio) audio.playbackRate = S.rate; }
+        if (S.src === 'rec') { if (audio) { audio.playbackRate = S.rate; recEdge(); } }
         else if (S.state === 'playing') go();
         render();
       });
@@ -557,7 +593,10 @@
 
   function ensureCta() {
     var host = document.querySelector('.reader-tools');
-    if (!host || !S.units.quick.some(function (u) { return u.kind === 'story'; }) || !(synth || hasRec('quick') || hasRec('full'))) return;
+    if (!host || !S.units.quick.some(function (u) { return u.kind === 'story'; }) || !(synth || hasRec('quick') || hasRec('full'))) {
+      if (cta) cta.hidden = true;                  // e.g. every section with stories has been switched off
+      return;
+    }
     if (!cta) {
       cta = mk('div', 'listen-cta');
       cta.setAttribute('role', 'group');
@@ -598,6 +637,19 @@
   });
   window.addEventListener('pagehide', function () { haltAll(); });
   mq.addEventListener('change', function () { if (cta) cta.hidden = !reader(); if (!reader()) stop(); });
+
+  // The reader switched sections on or off, or moved them: start over on the new list.
+  function rebuild() {
+    if (S.state !== 'idle') stop();
+    S.units = {};
+    S.cues = {}; S.until = {}; S.jump = {};
+    MODES.forEach(function (m) { S.units[m] = build(m); });
+    S.list = S.units[S.mode];
+    if (S.manifest) MODES.forEach(mapCues);
+    ensureCta();
+    render();
+  }
+  document.addEventListener('hb:prefs', function () { if (S.units.quick) rebuild(); });
 
   function init() {
     load();
