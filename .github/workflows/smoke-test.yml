@@ -45,6 +45,9 @@ jobs:
           check_status "$BASE/quiz.css" 200
           check_status "$BASE/reader.css" 200
           check_status "$BASE/listen.js" 200
+          check_status "$BASE/contact.html" 200
+          curl -s "$BASE/" | grep -q 'href="/contact.html"' || { echo "::error::latest edition lost its Contact us link (Play News policy needs it)"; fail=1; }
+          curl -s "$BASE/contact.html" | grep -q 'mailto:' || { echo "::error::contact page has no email address"; fail=1; }
           check_status "$BASE/og-image.png" 200
 
           echo "--- checking every archived edition referenced in editions.json ---"

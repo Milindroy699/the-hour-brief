@@ -40,7 +40,7 @@ Internal / closed testing note: `Testing build 1.0.0 — please check that it in
 - **App name:** The Hour Brief
 - **Short description (74/80):** A daily brief on AI, business and markets — built for one hour of reading.
 - **Category:** News & Magazines · **Free** · **No ads**
-- **Contact:** milindroy101292@gmail.com · https://the-hour-brief.vercel.app
+- **Contact:** milindroy101292@gmail.com · https://the-hour-brief.vercel.app · contact page https://the-hour-brief.vercel.app/contact.html
 - **Privacy policy:** https://the-hour-brief.vercel.app/privacy.html
 
 **Full description**
@@ -92,6 +92,14 @@ Nothing is sold. League members can see each other's generated name and score (t
 Judgement calls to confirm before submitting:
 - Vercel Web Analytics also reports country, device and browser in aggregate. To be conservative, also declare **Approximate location** and **App info and performance**, and consider adding "country, device type and browser" to the analytics sentence in `privacy.html` (it currently says only page views and referrers). Declaring slightly more than you collect is safe; declaring less is what gets apps rejected.
 - **Comments are hidden inside the app** (`capacitor-bridge.js`), so no user-generated content is collected or shown via the app. Play's UGC policy would otherwise require in-app reporting and blocking.
+
+## News and Magazines policy: contact requirements
+
+Play flagged the app for lacking an easy-to-find contact page. Fixes shipped in the site (the app loads it): `/contact.html` (labelled "Contact us", email address, reply time), a "Contact" pill in every edition's section nav, a labelled "Contact us:" block with the email in every edition's footer, and a link from About, Privacy and the archive. A CI check fails if the latest edition ever loses the link. Console values:
+
+- **Grow users → Store presence → Store settings → Store listing contact details:** Email `milindroy101292@gmail.com`; Website `https://the-hour-brief.vercel.app`.
+- **App content → News and Magazines declaration:** category News app, contact information URL `https://the-hour-brief.vercel.app/contact.html`; re-check every answer is still accurate.
+- Social media links do not count as contact information. The app must show content under three months old (a new edition every day) and name the original source of each article (each story links its publisher).
 
 ## Before you submit
 

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Contact us — The Hour Brief</title>
+<meta name="description" content="How to contact The Hour Brief: corrections, feedback, app support, privacy requests and publisher questions. Email us and we will reply.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%8F%B1%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #f2f3ee; --paper: #ffffff; --paper-2: #e7e9e1;
+    --ink: #17191c; --ink-soft: #52585a; --ink-faint: #838a8a; --line: #d7dad2;
+    --brand: #5b3e96; --brand-soft: #efe9f7;
+    --shadow: 0 1px 2px rgba(23,25,28,0.06), 0 10px 28px rgba(23,25,28,0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #131417; --paper: #1b1d21; --paper-2: #24262b;
+      --ink: #edeeec; --ink-soft: #a9adaf; --ink-faint: #757a7c; --line: #2c2f34;
+      --brand: #a487d9; --brand-soft: #241f34;
+      --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #131417; --paper: #1b1d21; --paper-2: #24262b;
+    --ink: #edeeec; --ink-soft: #a9adaf; --ink-faint: #757a7c; --line: #2c2f34;
+    --brand: #a487d9; --brand-soft: #241f34;
+    --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.4);
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--bg); }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, "Inter", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .masthead-band { background: var(--ink); color: var(--bg); padding: 30px 24px 26px; }
+  .masthead-inner { max-width: 720px; margin: 0 auto; display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; }
+  .wordmark { font-weight: 800; font-size: 2.1rem; letter-spacing: -0.01em; margin: 0; text-transform: uppercase; }
+  .wordmark span { color: var(--brand); }
+  .back-link { font-size: 0.78rem; letter-spacing: 0.03em; text-transform: uppercase; color: color-mix(in srgb, var(--bg) 70%, transparent); text-decoration: none; white-space: nowrap; }
+  .back-link:hover { color: var(--bg); }
+
+  .page { max-width: 720px; margin: 0 auto; padding: 40px 24px 96px; }
+  h1 { font-family: Georgia, "Iowan Old Style", "Times New Roman", serif; font-size: 1.8rem; margin: 0 0 8px; }
+  .lede { color: var(--ink-soft); font-size: 1.02rem; line-height: 1.6; margin: 0 0 12px; }
+  .updated { color: var(--ink-faint); font-size: 0.82rem; margin: 0 0 36px; }
+
+  section { margin-bottom: 32px; }
+  h2 { font-family: Georgia, "Iowan Old Style", "Times New Roman", serif; font-size: 1.2rem; margin: 0 0 10px; }
+  p { line-height: 1.65; color: var(--ink-soft); margin: 0 0 12px; font-size: 0.96rem; }
+  strong { color: var(--ink); }
+  ul { margin: 0 0 12px; padding-left: 20px; color: var(--ink-soft); line-height: 1.65; font-size: 0.96rem; }
+  li { margin-bottom: 6px; }
+  a { color: var(--brand); }
+
+  .callout {
+    background: var(--paper); border: 1px solid var(--line); border-radius: 10px;
+    padding: 16px 18px; box-shadow: var(--shadow); font-size: 0.92rem; color: var(--ink-soft); line-height: 1.6;
+  }
+  .callout strong { color: var(--ink); }
+
+  footer.colophon { margin-top: 48px; padding-top: 22px; border-top: 1px solid var(--line); font-size: 0.8rem; color: var(--ink-faint); }
+  footer.colophon a { color: var(--ink-soft); }
+  .contact-card { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; box-shadow: var(--shadow); }
+  .contact-card .label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand); margin: 0 0 6px; }
+  .contact-card .email { display: inline-block; font-size: 1.25rem; font-weight: 700; word-break: break-all; margin: 0 0 6px; }
+  .contact-card p:last-child { margin-bottom: 0; }
+  .topics { list-style: none; padding: 0; }
+  .topics li { padding: 12px 0; border-top: 1px solid var(--line); margin: 0; }
+  .topics li:first-child { border-top: 0; }
+  .topics strong { display: block; margin-bottom: 2px; }
+</style>
+<link rel="stylesheet" href="/mobile.css" media="(max-width: 640px)">
+<script defer src="/_vercel/insights/script.js"></script>
+<script defer src="/capacitor-bridge.js"></script>
+<script defer src="/mobile.js"></script>
+<link rel="canonical" href="https://the-hour-brief.vercel.app/contact.html">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"ContactPage","name":"Contact The Hour Brief","url":"https://the-hour-brief.vercel.app/contact.html","about":{"@type":"NewsMediaOrganization","name":"The Hour Brief","url":"https://the-hour-brief.vercel.app/","email":"milindroy101292@gmail.com","contactPoint":{"@type":"ContactPoint","contactType":"customer support","email":"milindroy101292@gmail.com","availableLanguage":"English"}}}</script>
+</head>
+<body>
+
+<div class="masthead-band">
+  <div class="masthead-inner">
+    <h1 class="wordmark">The Hour <span>Brief</span></h1>
+    <a class="back-link" href="/">← Back to today's edition</a>
+  </div>
+</div>
+
+<div class="page">
+  <h1 id="contact">Contact us</h1>
+  <p class="lede">The Hour Brief is a free daily digest of AI &amp; tech, product &amp; business, and the Indian stock market. If something is wrong, unclear or missing, or you just want to say hello, email us. A person reads every message.</p>
+  <p class="updated">Last updated: 24 September 2026</p>
+
+  <section aria-labelledby="email-h">
+    <div class="contact-card">
+      <p class="label" id="email-h">Email</p>
+      <a class="email" href="mailto:milindroy101292@gmail.com">milindroy101292@gmail.com</a>
+      <p>This is the best way to reach us, from the website or from the iOS and Android apps. We aim to reply within three working days.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>What to write to us about</h2>
+    <ul class="topics">
+      <li><strong>Corrections and feedback</strong>Spotted a mistake in a summary, a number that looks off, or a link that does not work? Tell us the edition date and the story and we will fix it.</li>
+      <li><strong>Sources, publishers and copyright</strong>Every item summarises public reporting and links back to the original publisher. If you are a publisher or author and want a credit, link or summary changed or removed, write to us and we will act on it.</li>
+      <li><strong>App support</strong>Trouble with the Android or iOS app, the daily reminder, Listen mode, the quiz or friends leagues? Tell us your device and app version.</li>
+      <li><strong>Privacy and data requests</strong>To remove your email address, a comment, or your friends-league data, email us. See the <a href="/privacy.html">privacy policy</a> for what is stored and for how long.</li>
+      <li><strong>Partnerships and press</strong>Ideas, collaborations and media enquiries are welcome at the same address.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>About The Hour Brief</h2>
+    <p>The Hour Brief is an independent publication. It is compiled every morning from public reporting, newsletters and market data, with each summary linked to its original source. Read <a href="/about.html">how it is made</a>. It carries no ads and needs no account.</p>
+  </section>
+
+  <footer class="colophon">
+    <a href="/">Back to today's edition</a> · <a href="/about.html">How this is made</a> · <a href="/privacy.html">Privacy</a>
+  </footer>
+</div>
+</body>
+</html>
