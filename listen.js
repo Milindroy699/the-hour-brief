@@ -68,7 +68,7 @@
   var mq = window.matchMedia('(max-width: 640px)');
   var Cap0 = window.Capacitor;
   var NATIVE = !!(Cap0 && typeof Cap0.isNativePlatform === 'function' && Cap0.isNativePlatform());
-  function reader() { return mq.matches || NATIVE; }
+  function reader() { return !window.HB_CLASSIC || mq.matches || NATIVE; }        // the reading skin runs on the desktop site too (?classic=1 opts out)
 
   // The longer "Full" reading (device voice, 1.25x, about 13 minutes) is switched off for now.
   // Change this default to true (or set window.HB_OFFER_FULL = true) to offer it again.

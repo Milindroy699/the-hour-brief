@@ -3,8 +3,8 @@
  *
  * Loaded on every edition page as <script defer src="/mobile.js">. Pure
  * progressive enhancement: with no JS the page still shows every story in full.
- * Everything here is gated on matchMedia('(max-width: 640px)') and is
- * independent of the page's own inline <script> (votes, comments, scrollspy).
+ * Everything here is independent of the page's own inline <script> (votes, comments, scrollspy). The reading skin
+ * ("reader mode") runs on phones, in the apps at any width and on the desktop website; ?classic=1 opts out on desktop.
  *
  *  - Stories keep their natural order (headline, summary, takeaway). On phones
  *    the summary is clamped to a few lines with a "Read more" toggle right under
@@ -19,26 +19,26 @@
  *    offer it once on first launch). Stored on this device only.
  *  - "Listen to today's brief" (listen.js, loaded on demand where the device can speak).
  *
- * "Reader mode" = phone widths, or the native apps at any width (tablets). The desktop
- * website is left untouched.
+ * "Reader mode" = everywhere except the desktop site with ?classic=1: phones get /mobile.css from the page's own link,
+ * wider screens get it injected (ensureReaderCss), and the wide-screen block in /app.css centres the column.
  */
 (function () {
   var mq = window.matchMedia('(max-width: 640px)');
   var Cap0 = window.Capacitor;
   var NATIVE = !!(Cap0 && typeof Cap0.isNativePlatform === 'function' && Cap0.isNativePlatform());
-  function reader() { return mq.matches || NATIVE; }
+  // The reading skin is everywhere now: phones, the apps at any width, and the desktop website (one centred column).
+  // ?classic=1 shows the old wide layout (a safety valve; phones and the apps are unaffected).
+  var CLASSIC = /[?&]classic=1(&|$)/.test(location.search);
+  window.HB_CLASSIC = CLASSIC;
+  if (NATIVE) document.documentElement.classList.add('hb-native');
+  function reader() { return !CLASSIC || mq.matches || NATIVE; }
   function ensureReaderCss() {
     if (document.querySelector('link[data-reader-css]')) return;
     var l = document.createElement('link');
     l.rel = 'stylesheet';
-    l.href = '/reader.css';
+    l.href = '/mobile.css';                      // imports reader.css and app.css; the page only links it for phone widths
     l.setAttribute('data-reader-css', '');
     document.head.appendChild(l);
-    var a = document.createElement('link');      // the premium skin, after the shared components
-    a.rel = 'stylesheet';
-    a.href = '/app.css';
-    a.setAttribute('data-reader-css', '');
-    document.head.appendChild(a);
   }
 
   function collapsibleStories() {
@@ -77,7 +77,7 @@
       if (item.dataset.collapseReady !== 'yes') return;
 
       var toggle = item.querySelector(':scope > div > .story-more');
-      if (mq.matches) {
+      if (reader()) {
         item.classList.add('is-collapsed');
         if (toggle) {
           toggle.hidden = false;
@@ -109,8 +109,8 @@
         });
         h2.insertAdjacentElement('afterend', btn);
       }
-      btn.hidden = !mq.matches;
-      if (!mq.matches) head.classList.remove('is-expanded');
+      btn.hidden = !reader();
+      if (!reader()) head.classList.remove('is-expanded');
     });
   }
 
@@ -136,13 +136,13 @@
       if (freeLine) about.insertBefore(btn, freeLine);
       else para.parentNode.appendChild(btn);
     }
-    btn.hidden = !mq.matches;
-    if (!mq.matches) about.classList.remove('is-expanded');
+    btn.hidden = !reader();
+    if (!reader()) about.classList.remove('is-expanded');
   }
 
   // Show a toggle only where the clamp really hides something.
   function measureClamps() {
-    if (!mq.matches) return;
+    if (!reader()) return;
     document.querySelectorAll('.item.is-collapsed').forEach(function (item) {
       var toggle = item.querySelector(':scope > div > .story-more');
       var paras = item.querySelectorAll('.story-body > p');
@@ -687,6 +687,7 @@
   // ---- App chrome: app bar (logo, wordmark, screen name; text size, saved, menu), tab bar, section chips ----
   var ICON = {
     aa: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8V6h9v2"/><path d="M7.5 6v12"/><path d="M5.5 18h4"/><path d="M13.5 12v-1.5H21V12"/><path d="M17.25 10.5V18"/><path d="M15.5 18h3.5"/></svg>',
+    mail: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>',
     bell: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>',
     today: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5h12.5v13H6.5a2.5 2.5 0 0 1-2.5-2.5V5.5z"/><path d="M16.5 9H20v7a2.5 2.5 0 0 1-2.5 2.5"/><path d="M7.5 9h6M7.5 12h6M7.5 15h3.5"/></svg>',
     audio: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 10v4M8 6.5v11M12 3.5v17M16 7.5v9M20 10v4"/></svg>',
@@ -795,6 +796,8 @@
       item('textsize', ICON.aa, 'Text size', SIZE_NAMES[getSize()], function () { openTextSize(returnTo); });
       if (document.getElementById('cap-remind')) item('reminder', ICON.bell, 'Daily reminder', 'A morning nudge on this device', function () { closeSheet(); document.getElementById('cap-remind').click(); });
       item('share', SHARE_SVG, 'Share this edition', 'Send today’s brief to a friend', function () { closeSheet(); shareEdition(); });
+      var sub = document.querySelector('.subscribe-box');
+      if (sub) item('email', ICON.mail, 'Get it by email', 'One email every morning', function () { closeSheet(); sub.scrollIntoView({ block: 'center', behavior: 'smooth' }); var i = sub.querySelector('input'); if (i) setTimeout(function () { try { i.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }, 500); });
       body.appendChild(ul);
       var foot = mk('div', 'rd-menu-foot');
       [['Contact us', '/contact.html'], ['About', '/about.html'], ['Privacy', '/privacy.html']].forEach(function (l, i) {

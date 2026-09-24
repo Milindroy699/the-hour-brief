@@ -1,9 +1,10 @@
 /*
- * app.css — the premium reading skin for The Hour Brief on phones and in the apps.
+ * app.css — the premium reading skin for The Hour Brief: phones, the apps and the desktop website.
  *
  * Design: Stitch "The Editorial Brief" (Newsreader headlines, Inter body, Space Grotesk labels; lavender-white
- * canvas, violet accent, quiet green badges, hairline borders, tonal surfaces). It is imported by /mobile.css
- * (phones) and injected by /mobile.js in the native apps at any width; the desktop website never loads it.
+ * canvas, violet accent, quiet green badges, hairline borders, tonal surfaces). It is imported by /mobile.css, which
+ * the page links for phone widths and /mobile.js injects at wider widths (apps and desktop: one centred column, see the
+ * min-width block at the end). ?classic=1 on the URL skips it at wide widths (the old desktop layout).
  * Structure and behaviour (app bar, tab bar, audio hub) are built in /mobile.js and /listen.js.
  *
  * Loaded after /reader.css, and before /mobile.css's own rules. Everything here is plain selectors, so it wins over
@@ -192,8 +193,8 @@ body { font-family: var(--hb-sans); font-feature-settings: "cv11", "ss03"; }
 .ab-menu:active { background: var(--hb-primary); filter: brightness(0.92); }
 .ab-menu svg { width: 22px; height: 22px; }
 
-/* Info pages (About, Privacy, Contact, Archive): the same type */
-.page > h1, .page > section > h2, .page > .archive-head h1 { font-family: var(--hb-serif); font-weight: 500; letter-spacing: -0.015em; }
+/* Info pages (About, Privacy, Contact, Archive) and the comments heading: the same type */
+.page > h1, .page > section > h2, .page > .archive-head h1, .comments-section > h2 { font-family: var(--hb-serif); font-weight: 500; letter-spacing: -0.015em; }
 .page > h1 { font-size: 1.9rem; line-height: 1.15; }
 .edition-card { border-radius: 20px; border-color: var(--line); background: var(--paper); }
 
@@ -543,3 +544,32 @@ html.hb-hub-open .hb-player { display: none; }
 :root .qz-badge-icon { background: var(--hb-lav); }
 
 .rd-btn.no-ring:focus-visible { outline: none; }
+
+/* ---- Wide screens (tablets and the desktop website): the same app in one centred reading column ----
+   Design system: a single column, about 640px of text, centred; the tab bar becomes a floating pill.
+   The "html" prefix beats mobile.css's own phone rules (they load after this file). */
+@media (min-width: 641px) {
+  :root { --hb-col: 680px; --hb-tab-h: 96px; }
+  html .masthead-band { padding: 12px 24px; }
+  html .masthead-inner { max-width: var(--hb-col); margin: 0 auto; padding: 0; }
+  html .pause-band { padding: 24px 24px 0; }
+  html .pause-inner { max-width: calc(var(--hb-col) - 48px); margin: 0 auto; }
+  html .page { display: block; max-width: var(--hb-col); margin-left: auto; margin-right: auto; padding-left: 24px; padding-right: 24px; padding-bottom: calc(var(--hb-tab-h) + 32px); }
+  html .side-col { position: static; }
+  html .nav { margin: 0 -24px 16px; padding: 10px 24px; }
+  html:not(.hb-native) .nav a:not([href^="#"]) { display: none; }         /* Past editions and Contact live in the tabs, the menu and the footer */
+  html .subscribe-box { margin-top: 32px; }
+  html .ticker { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }        /* one row of index cards, no empty grey slots */
+  html .ticker > :last-child:nth-child(odd) { grid-column: auto; }
+
+  .tab-bar { left: 50%; right: auto; bottom: 16px; width: min(540px, calc(100% - 32px)); transform: translateX(-50%); padding: 6px 10px; border: 1px solid var(--line); border-radius: 32px; box-shadow: 0 14px 36px rgba(18, 19, 22, 0.16); }
+  .tab { min-height: 56px; }
+  #mob-top { left: auto; right: 24px; }
+
+  .hub-top { padding-left: max(24px, calc((100% - var(--hb-col)) / 2 + 24px)); padding-right: max(24px, calc((100% - var(--hb-col)) / 2 + 24px)); }
+  .hub-scroll { padding-left: max(24px, calc((100% - var(--hb-col)) / 2 + 24px)); padding-right: max(24px, calc((100% - var(--hb-col)) / 2 + 24px)); }
+  .hb-hub { bottom: 0; padding-bottom: var(--hb-tab-h); box-sizing: border-box; }
+
+  .rd-sheet { border-radius: 26px; }
+  :root .qz-sheet { border-radius: 26px; }
+}

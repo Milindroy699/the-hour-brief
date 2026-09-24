@@ -157,7 +157,15 @@ check('no engine and no recording: no Listen card at all', (await c.ev(`!documen
 
 // ---------- 7. desktop ----------
 await open({ tts: true, width: 1280 });
-check('desktop: nothing is loaded or shown', (await c.ev(`!document.querySelector('.listen-cta') && typeof window.HBListen === 'undefined'`)) === true);
+check('desktop: the website has Listen too (the same card, and the recording plays)', (await c.ev(`!!document.querySelector('.listen-cta') && !document.querySelector('.listen-cta').hidden && typeof window.HBListen === 'object'`)) === true);
+await c.ev(`document.querySelector('.listen-cta button[data-mode=quick]').click()`); await waitFor(`window.__audio && __audio.currentTime > 0.5`, 6000);
+check('desktop: playing works and shows the mini player', (await c.ev(`HBListen.state() === 'playing' && HBListen.source() === 'rec' && !document.querySelector('.hb-player').hidden`)) === true);
+await c.ev(`HBListen.stop()`);
+for (const id of ids) await c.unpreload(id);
+ids = [await c.preload(hook(false)), await c.preload(FAKE_TTS)];
+await c.viewport(1280, 915, false, false);
+await c.goto(B + '/?classic=1', 1200);
+check('desktop with ?classic=1: nothing is loaded or shown (the old page)', (await c.ev(`!document.querySelector('.listen-cta') && typeof window.HBListen === 'undefined'`)) === true);
 
 // ---------- visuals ----------
 await open({ tts: true, dark: true, width: 360 });

@@ -18,10 +18,13 @@ Every edition page must keep these lines, plus `/quiz.css` and `/quiz.js` (the a
 
 Because the paths are absolute (`/mobile.css` …), the GitHub Pages mirror (served under `/the-hour-brief/`) does **not** pick up `mobile.css` / `mobile.js`. Vercel is canonical; the mirror is best-effort.
 
-## Premium app skin (phones and the apps)
+## Premium skin (phones, the apps and the desktop website)
 
-Design: Stitch "The Editorial Brief" (project "App Logo and Splash Screen"). It is `app.css`, imported by `mobile.css` (phones) and injected by
-`mobile.js` in the native apps at any width; the desktop website never loads it (a test checks that). Pieces: app bar (the masthead, reworked: logo,
+Design: Stitch "The Editorial Brief" (project "App Logo and Splash Screen"). It is `app.css`, imported by `mobile.css`, which the pages link for phone
+widths and `mobile.js` injects at wider widths (apps and desktop). Wide screens get the same app in one centred 680px column (the tab bar becomes a
+floating pill, the Audio screen and dialogs centre, the signup box sits below the feed and is reachable from the menu's "Get it by email").
+`?classic=1` on any URL shows the old wide layout (a safety valve; also the fastest rollback test). To switch the desktop redesign off for everyone,
+make `reader()` in `mobile.js` and `listen.js` return `mq.matches || NATIVE`. Pieces: app bar (the masthead, reworked: logo,
 wordmark, screen name, text size, saved, menu), bottom tabs (Today / Audio / Challenge / Archive), an "All" chip plus the section chips (the one in
 view is filled), the "Before the news" card, the quiz chip and Listen card, green section badges, numbered highlights, takeaway callouts, the Audio hub
 (`listen.js`: progress from the recording's real timings, chapters, narrator; opens from the Audio tab, the mini player, or `/?audio=1`), and the quiz

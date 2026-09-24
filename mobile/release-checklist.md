@@ -9,7 +9,7 @@ Smoke-tested on the emulator (new icon on the launcher, hourglass splash on navy
 shows the bundled offline page (`www/offline.html`) that carries the contact details.
 
 ## Web UI the app loads
-The redesigned screens are part of the website (see DEPLOY.md, "Premium app skin"). Verified on the emulator's Android WebView (Chrome 113): app bar, tabs, chips, Listen card, Audio hub with the device voice, quiz with the streak strip, first-launch sheet. Deploy them after Play's review of the current build, so reviewers keep seeing what they already saw.
+The redesigned screens are part of the website and now also its desktop version (see DEPLOY.md, "Premium skin"). Verified on the emulator's Android WebView (Chrome 113): app bar, tabs, chips, Listen card, Audio hub with the device voice, quiz with the streak strip, first-launch sheet. Deploy them after Play's review of the current build, so reviewers keep seeing what they already saw.
 
 ## Google Play: what got the app removed and how it was fixed
 Policy: News and Magazines (enforced 24 Sep): no easy-to-find contact page in the app and on the website.

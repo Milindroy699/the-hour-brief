@@ -139,10 +139,12 @@ await open({ prefs: { order: [], off: ['mkt'] }, hash: '#mkt-2', wait: 1500 });
 t = await J(`({ display: getComputedStyle(document.querySelector('#mkt')).display, off: document.querySelector('#mkt').hasAttribute('data-pref-off'), saved: JSON.parse(localStorage.getItem('hb-prefs-v1')).off })`);
 check('deep link into a hidden section shows that section for this visit only (the choice is not changed)', t.display !== 'none' && !t.off && eq(t.saved, ['mkt']), JSON.stringify(t));
 
-// ---------- 10. desktop is untouched ----------
+// ---------- 10. the desktop website follows the choices too (and ?classic=1 opts out) ----------
 await open({ prefs: { order: ['quiz', 'mkt', 'biz', 'ai'], off: ['ai'] }, width: 1280 });
-check('desktop: the footer row is not added to view (the desktop footer already has its links)', (await c.ev(`getComputedStyle(document.querySelector('.site-links')).display === 'none'`)) === true);
-check('desktop: choices are ignored, the site looks as it always did', eq(await order(), ['ai', 'biz', 'mkt', 'quiz']) && eq(await shown(), ['ai', 'biz', 'mkt', 'quiz']) && (await c.ev(`getComputedStyle(document.querySelector('.reader-tools')).display === 'none'`)), JSON.stringify(await order()));
+check('desktop: the choices apply here too (order and hidden sections), and no first-launch sheet on the website', eq(await order(), ['quiz', 'mkt', 'biz', 'ai']) && eq(await shown(), ['quiz', 'mkt', 'biz']) && (await c.ev(`!document.querySelector('.rd-sheet')`)) === true, JSON.stringify({ o: await order(), s: await shown() }));
+check('desktop: the footer row (Contact us · About · Privacy) is shown', (await c.ev(`getComputedStyle(document.querySelector('.site-links')).display !== 'none'`)) === true);
+await open({ prefs: { order: ['quiz', 'mkt', 'biz', 'ai'], off: ['ai'] }, width: 1280, query: '?classic=1' });
+check('desktop with ?classic=1: the old layout, so the choices are ignored', eq(await order(), ['ai', 'biz', 'mkt', 'quiz']) && eq(await shown(), ['ai', 'biz', 'mkt', 'quiz']), JSON.stringify(await order()));
 
 // ---------- 11. the quiz does not link to a story that is switched off ----------
 await open({ prefs: { order: [], off: ['ai'] }, wait: 2000 });

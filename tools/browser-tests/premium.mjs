@@ -189,11 +189,32 @@ for (const w of [360, 412]) {
   check(`${w}px wide: no sideways scrolling on the feed, the hub or the quiz`, flow.every((x) => x === false), JSON.stringify(flow));
 }
 
-// ---------- 7b. the desktop website is untouched ----------
-await open({ width: 1280, quiz: past });
-t = await J(`(() => { const vis = (sel) => [...document.querySelectorAll(sel)].some((e) => { const r = e.getBoundingClientRect(); return getComputedStyle(e).display !== 'none' && r.width > 0 && r.height > 0; }); return { app: vis('.ab-actions, .ab-logo, .ab-screen'), tab: vis('.tab-bar'), edition: vis('.pause-edition'), count: vis('.lane-count'), all: vis('.nav-all'), streak: vis('.qz-streak'), past: vis('.qz-past-box'), chipText: document.querySelector('.quiz-chip .qc-text').innerText, bg: getComputedStyle(document.querySelector('.masthead-band')).backgroundColor, font: getComputedStyle(document.body).fontFamily.slice(0, 20), sheets: [...document.styleSheets].some((s) => /app\.css|reader\.css/.test(s.href || '')) }; })()`);
-check('desktop: none of the app pieces show (no app bar buttons, tab bar, edition line, story counts, "All" chip, streak card, past list), the quiz chip reads as one line with a separator, the masthead keeps its dark band, and the skin is not loaded', !t.app && !t.tab && !t.edition && !t.count && !t.all && !t.streak && !t.past && /· /.test(t.chipText) && t.bg !== 'rgb(255, 255, 255)' && !t.sheets, JSON.stringify(t));
+// ---------- 7b. the desktop website wears the same skin ----------
+await open({ width: 1280, quiz: past, tts: true });
+t = await J(`(() => { const box = (sel) => { const e = document.querySelector(sel); return e ? e.getBoundingClientRect() : null; }; const vis = (sel) => [...document.querySelectorAll(sel)].some((e) => { const r = e.getBoundingClientRect(); return getComputedStyle(e).display !== 'none' && r.width > 0 && r.height > 0; });
+  const page = box('.page'), tab = box('.tab-bar'), nav = document.querySelector('.nav'), chips = [...nav.querySelectorAll('a')].filter((a) => getComputedStyle(a).display !== 'none').map((a) => a.textContent.trim());
+  return { app: vis('.ab-actions'), tab: vis('.tab-bar'), pageW: Math.round(page.width), pageCentred: Math.abs(page.left + page.width / 2 - innerWidth / 2) < 2, tabW: Math.round(tab.width), tabCentred: Math.abs(tab.left + tab.width / 2 - innerWidth / 2) < 2, tabBottom: Math.round(innerHeight - tab.bottom), chips, chipsFit: nav.scrollWidth <= nav.clientWidth + 1, side: getComputedStyle(document.querySelector('.side-col')).position, over: document.documentElement.scrollWidth > innerWidth, listen: vis('.listen-cta'), streak: vis('.qz-streak'), bg: getComputedStyle(document.querySelector('.masthead-band')).backgroundColor, grid: getComputedStyle(document.querySelector('.page')).display }; })()`);
+check('desktop: the same app in one centred column (680px), an app bar with its buttons, Listen and the streak card', t.app && t.listen && t.streak && t.pageW === 680 && t.pageCentred && t.grid === 'block' && t.side === 'static' && t.bg === 'rgb(255, 255, 255)' && !t.over, JSON.stringify(t));
+check('desktop: the tab bar is a floating pill (centred, lifted off the bottom); the chip row fits without scrolling (Past editions and Contact live in the tabs, menu and footer)', t.tab && t.tabCentred && t.tabW <= 540 && t.tabBottom > 8 && eq(t.chips, ['All', 'AI & Tech', 'Product & Business', 'Stock Market', 'Quiz']) && t.chipsFit, JSON.stringify(t));
+t = await J(`(() => { const tk = document.querySelector('.ticker'); return tk ? { cols: getComputedStyle(tk).gridTemplateColumns.split(' ').length, cells: tk.children.length } : null; })()`);
+check('desktop: the market ticker is one row of cards (a column per cell, no empty grey slot)', !t || t.cols === t.cells, JSON.stringify(t));
+await c.ev(`document.querySelector('.tab[data-tab=audio]').click()`); await waitFor(`!document.querySelector('.hb-hub').hidden`, 2000); await c.sleep(300);
+t = await J(`(() => { const card = document.querySelector('.hub-card').getBoundingClientRect(); return { centred: Math.abs(card.left + card.width / 2 - innerWidth / 2) < 2, w: Math.round(card.width), close: document.querySelector('.hub-close').getBoundingClientRect().right < innerWidth - 300 }; })()`);
+check('desktop: the Audio screen is a centred column too (the ✕ sits at its edge, not the window edge)', t.centred && t.w <= 680 && t.close, JSON.stringify(t));
+await c.shot(`${OUT}/p_desktop_hub.png`);
+await c.ev(`document.querySelector('.hub-close').click()`);
+await c.ev(`document.querySelector('.ab-menu').click()`); await waitFor(`!!document.querySelector('.rd-menu')`);
+t = await J(`(() => { const r = document.querySelector('.rd-sheet').getBoundingClientRect(); return { centred: Math.abs(r.left + r.width / 2 - innerWidth / 2) < 2, mid: r.top > 40 && r.bottom < innerHeight - 40, items: [...document.querySelectorAll('.rd-item')].map((b) => b.dataset.act) }; })()`);
+check('desktop: the menu opens as a centred dialog, with "Get it by email" (the signup box is now below the feed)', t.centred && t.mid && eq(t.items, ['sections', 'textsize', 'share', 'email']), JSON.stringify(t));
+await c.ev(`document.querySelector('.rd-item[data-act=email]').click()`); await c.sleep(900);
+check('"Get it by email" scrolls to the signup box and focuses its email field', (await c.ev(`document.activeElement && document.activeElement.type === 'email'`)) === true);
 await c.shot(`${OUT}/p_desktop.png`);
+await open({ width: 1280, path: '/?classic=1', quiz: past });
+t = await J(`({ bg: getComputedStyle(document.querySelector('.masthead-band')).backgroundColor, tab: !!document.querySelector('.tab-bar') && getComputedStyle(document.querySelector('.tab-bar')).display !== 'none', grid: getComputedStyle(document.querySelector('.page')).display, all: !!document.querySelector('.nav-all') && getComputedStyle(document.querySelector('.nav-all')).display !== 'none' })`);
+check('desktop with ?classic=1: the old wide layout comes back (dark masthead band, two-column grid, no tab bar)', t.bg !== 'rgb(255, 255, 255)' && t.grid === 'grid' && !t.tab && !t.all, JSON.stringify(t));
+await open({ width: 820, quiz: past });
+t = await J(`(() => { const p = document.querySelector('.page').getBoundingClientRect(); return { w: Math.round(p.width), over: document.documentElement.scrollWidth > innerWidth, tab: getComputedStyle(document.querySelector('.tab-bar')).position }; })()`);
+check('tablet (820px): the same column, no sideways scrolling, tab pill fixed', t.w === 680 && !t.over && t.tab === 'fixed', JSON.stringify(t));
 
 // ---------- 8. the info pages ----------
 await open({ path: '/about.html' });
@@ -209,7 +230,7 @@ await open({ native: true, prefs: { order: ['ai', 'biz', 'mkt', 'quiz'], off: []
 await c.ev(`(document.querySelector('.rd-sheet') && document.querySelector('.rd-sheet .rd-close').click(), 'ok')`); await c.sleep(300);
 await c.ev(`document.querySelector('.ab-menu').click()`); await waitFor(`!!document.querySelector('.rd-menu')`);
 t = await J(`[...document.querySelectorAll('.rd-item')].map((b) => b.dataset.act)`);
-check('in the apps the menu also offers the daily reminder and sharing (the existing native buttons are reused)', eq(t, ['sections', 'textsize', 'reminder', 'share']), JSON.stringify(t));
+check('in the apps the menu also offers the daily reminder and sharing (the existing native buttons are reused)', eq(t, ['sections', 'textsize', 'reminder', 'share', 'email']), JSON.stringify(t));
 await c.ev(`document.querySelector('.rd-item[data-act=reminder]').click()`); await c.sleep(150);
 await c.ev(`document.querySelector('.ab-menu').click()`); await waitFor(`!!document.querySelector('.rd-menu')`);
 await c.ev(`document.querySelector('.rd-item[data-act=share]').click()`); await c.sleep(150);
