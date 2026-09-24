@@ -1,8 +1,8 @@
 # Release checklist (last verified 2026-09-25)
 
 ## Android bundle
-`mobile/dist/the-hour-brief-1.1.2-vc5.aab` (versionCode 5; vc4 had the old stopwatch icon and is superseded).
-Rebuilt 2026-09-25 from `main` with the final config (white status-bar default); SHA-256 `0cad52a33fd06953626faa18215165d19afc5f279b3f689498294b397ab7f521` (`shasum -a 256` to confirm you are uploading this file). Loaded on the emulator against the live site: new design, AI voice card, version 5. Verified on the built artifact: signed with the upload key
+`mobile/dist/the-hour-brief-1.1.2-vc6.aab` (versionCode 6; Play already had a version code 5 from an earlier upload attempt, and version codes can never be reused, so vc5 is superseded, as is vc4).
+Rebuilt 2026-09-25 from `main` with the final config (white status-bar default); SHA-256 `2de0d800de4cd408dc8934c5a43ac8407f1e19fb61fc3bb3f27facf8f814fc8d` (`shasum -a 256` to confirm you are uploading this file). Loaded on the emulator against the live site: new design, AI voice card, version 5. Verified on the built artifact: signed with the upload key
 (SHA-256 `CE:1E:B6:18:75:18:51:6E:D3:03:5B:5D:7C:69:D1:FC:31:3F:4A:64:4F:80:82:8A:1F:00:02:54:2D:F1:E5:35`), target/compile SDK 36,
 min SDK 24, not debuggable, HTTPS only, no native libraries (the 16 KB page-size rule does not apply), zip-aligned, permissions
 `INTERNET, VIBRATE, POST_NOTIFICATIONS, RECEIVE_BOOT_COMPLETED, WAKE_LOCK` only (no exact-alarm, no storage), server URL = production.
@@ -24,7 +24,7 @@ Policy: News and Magazines (enforced 24 Sep): no easy-to-find contact page in th
   2. App content -> News and Magazines declaration: contact URL `https://the-hour-brief.vercel.app/contact.html`; check every other answer.
   3. Data safety: add the leagues purposes (only if leagues are used; see `play-store/listing.md`). Audio is a plain file
      download from Cloudflare: nothing new is collected.
-  4. Upload the vc5 AAB to the track, add the release notes from `play-store/listing.md`, then use "Send for review" / appeal on the
+  4. Upload the vc6 AAB to the track, add the release notes from `play-store/listing.md`, then use "Send for review" / appeal on the
      policy-status page and say what changed (contact page, in-app contact line, updated declaration).
 - Other requirements met: content is under 3 months old (daily), every story links its original publisher, no ads, comments hidden in
   the app (no UGC), leagues use generated names (no UGC), notification permission asked only when the bell is tapped,
