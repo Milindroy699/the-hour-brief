@@ -3,3 +3,5 @@
 .DS_Store
 mobile/node_modules
 node_modules
+
+tools/audio/out

@@ -1,0 +1,9 @@
+{
+  "name": "hourbrief-audio-tools",
+  "private": true,
+  "type": "module",
+  "description": "Builds the spoken script from an edition and (later) the daily audio. Not part of the site build.",
+  "dependencies": {
+    "cheerio": "1.0.0"
+  }
+}

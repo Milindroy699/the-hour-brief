@@ -1,0 +1,46 @@
+name: Voice test
+
+# One-off: reads the same excerpt of the latest edition in several Sarvam voices, uploads the MP3s
+# and a listening page to R2 (_samples/), which also proves the R2 credentials work. Costs ~₹20.
+on:
+  workflow_dispatch:
+    inputs:
+      pace:
+        description: Speech pace (0.5 to 2.0)
+        default: '1'
+
+jobs:
+  voices:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Make sure ffmpeg is available
+        run: command -v ffmpeg >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg)
+      - name: Install tools
+        working-directory: tools/audio
+        run: npm ci --silent
+      - name: Generate samples
+        working-directory: tools/audio
+        env:
+          SARVAM_API_KEY: ${{ secrets.SARVAM_API_KEY }}
+        run: node voice-test.mjs --pace "${{ inputs.pace }}"
+      - name: Upload to R2
+        working-directory: tools/audio
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+          AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+          AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+        run: |
+          aws s3 cp out/ "s3://${{ secrets.R2_BUCKET }}/_samples/" --recursive \
+            --endpoint-url "https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com" \
+            --cache-control "no-cache"
+      - name: Check the public URL
+        run: |
+          curl -fsS -o /dev/null -w "index page: %{http_code}\n" "${{ secrets.R2_PUBLIC_URL }}/_samples/index.html"
+          curl -fsS -o /dev/null -w "priya.mp3: %{http_code}\n" "${{ secrets.R2_PUBLIC_URL }}/_samples/priya.mp3"
