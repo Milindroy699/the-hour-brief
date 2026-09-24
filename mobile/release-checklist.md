@@ -1,7 +1,8 @@
 # Release checklist (last verified 2026-09-25)
 
 ## Android bundle
-`mobile/dist/the-hour-brief-1.1.2-vc5.aab` (versionCode 5; vc4 had the old stopwatch icon and is superseded). Verified on the built artifact: signed with the upload key
+`mobile/dist/the-hour-brief-1.1.2-vc5.aab` (versionCode 5; vc4 had the old stopwatch icon and is superseded).
+Rebuilt 2026-09-25 from `main` with the final config (white status-bar default); SHA-256 `0cad52a33fd06953626faa18215165d19afc5f279b3f689498294b397ab7f521` (`shasum -a 256` to confirm you are uploading this file). Loaded on the emulator against the live site: new design, AI voice card, version 5. Verified on the built artifact: signed with the upload key
 (SHA-256 `CE:1E:B6:18:75:18:51:6E:D3:03:5B:5D:7C:69:D1:FC:31:3F:4A:64:4F:80:82:8A:1F:00:02:54:2D:F1:E5:35`), target/compile SDK 36,
 min SDK 24, not debuggable, HTTPS only, no native libraries (the 16 KB page-size rule does not apply), zip-aligned, permissions
 `INTERNET, VIBRATE, POST_NOTIFICATIONS, RECEIVE_BOOT_COMPLETED, WAKE_LOCK` only (no exact-alarm, no storage), server URL = production.
