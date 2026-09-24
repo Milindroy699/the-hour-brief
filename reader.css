@@ -342,3 +342,5 @@ body.hb-listening #mob-toast { bottom: calc(160px + env(safe-area-inset-bottom, 
 .hb-pl-voice:empty { display: none; }
 .listen-cta-note { margin: 10px 2px 0; font-size: 0.78rem; line-height: 1.4; color: var(--ink-faint); }
 .listen-cta-note[hidden], .listen-cta-btn[hidden] { display: none; }
+.listen-cta-b.single .listen-cta-btn { flex-direction: row; gap: 10px; }
+.listen-cta-b.single .hb-cta-name { font-size: 1rem; }

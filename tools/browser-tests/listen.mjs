@@ -23,7 +23,7 @@ const c = await launch(9370);
 const J = async (e) => JSON.parse(await c.ev(`JSON.stringify(${e})`));
 const waitFor = async (expr, ms = 4000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (await c.ev(expr)) return true; await c.sleep(60); } return false; };
 
-const HOOK = `(() => { const A = window.Audio; window.Audio = function (...a) { const el = new A(...a); window.__audio = el; return el; }; window.Audio.prototype = A.prototype; })(); window.HB_AUDIO_BASE = ${JSON.stringify(B + '/__audio')};`;
+const hook = (full) => `(() => { const A = window.Audio; window.Audio = function (...a) { const el = new A(...a); window.__audio = el; return el; }; window.Audio.prototype = A.prototype; })(); window.HB_AUDIO_BASE = ${JSON.stringify(B + '/__audio')}; window.HB_OFFER_FULL = ${!!full};`;
 const FAKE_TTS = `(() => { const log = window.__spoken = []; window.__rates = []; let cur = null, t = null, sp = false;
   window.__ttsMs = 30;
   const synth = { get speaking() { return sp; }, pending: false,
@@ -34,9 +34,9 @@ const FAKE_TTS = `(() => { const log = window.__spoken = []; window.__rates = []
 const NO_TTS = `delete window.speechSynthesis; delete window.SpeechSynthesisUtterance;`;
 
 let ids = [];
-async function open({ tts, manifest: mf = 'ok', audio = 'ok', dark = false, width = 412 }) {
+async function open({ tts, manifest: mf = 'ok', audio = 'ok', dark = false, width = 412, full = false }) {
   for (const id of ids) await c.unpreload(id);
-  ids = [await c.preload(HOOK), await c.preload(tts ? FAKE_TTS : NO_TTS)];
+  ids = [await c.preload(hook(full)), await c.preload(tts ? FAKE_TTS : NO_TTS)];
   await fetch(`${B}/__ctl?manifest=${mf}&audio=${audio}`);
   await c.viewport(width, 915, width < 700, dark);
   await c.goto(B + '/', 900);
@@ -50,12 +50,12 @@ const hlId = `(document.querySelector('.item.hb-listening') || {dataset:{}}).dat
 
 // ---------- 1. recording available, device can also speak ----------
 await open({ tts: true });
-let t = await J(`({ n: document.querySelectorAll('.listen-cta button:not([hidden])').length, quick: ${btn}.textContent, full: ${fullBtn}.textContent, note: document.querySelector('.listen-cta-note').textContent, noteHidden: document.querySelector('.listen-cta-note').hidden, hidden: document.querySelector('.listen-cta').hidden })`);
+let t = await J(`({ n: document.querySelectorAll('.listen-cta button:not([hidden])').length, quick: ${btn}.textContent, full: ${fullBtn} ? ${fullBtn}.textContent : null, note: document.querySelector('.listen-cta-note').textContent, noteHidden: document.querySelector('.listen-cta-note').hidden, hidden: document.querySelector('.listen-cta').hidden })`);
 const mins = Math.round(DUR / 60);
-check('two lengths: Quick shows the recording length, Full shows its own (at 1.25x)', t.n === 2 && t.quick.startsWith('Quick') && t.quick.includes(mins + ' min') && t.full.startsWith('Full') && /\d+ min/.test(t.full), JSON.stringify(t) + ' expected ' + mins + ' min');
-check('the card says Quick is an AI voice and Full uses the device voice', !t.noteHidden && t.note === 'Quick is read by Neha, an AI voice. Full uses your device’s voice.', t.note);
+check('Full is switched off: one "Play the brief" button showing the recording length', t.n === 1 && /^Play the brief/.test(t.quick) && t.quick.includes(mins + ' min') && t.full === null, JSON.stringify(t) + ' expected ' + mins + ' min');
+check('the card says it is read by an AI voice', !t.noteHidden && t.note === 'Read by Neha, an AI voice.', t.note);
 await c.ev(`(document.querySelector('.listen-cta').scrollIntoView({block:'center'}), 'ok')`); await c.sleep(300); await c.shot(`${OUT}/rec_cta.png`);
-await c.ev(`${btn}.click()`); await c.sleep(1800);
+await c.ev(`${btn}.click()`); await waitFor(`window.__audio && __audio.currentTime > 0.8`, 6000);
 t = await J(`({ st: HBListen.state(), src: HBListen.source(), url: __audio.getAttribute('src'), paused: __audio.paused, time: __audio.currentTime, badge: document.querySelector('.hb-pl-voice').textContent, spoken: window.__spoken.length })`);
 check('click starts the recording (not the device voice) and it advances', t.st === 'playing' && t.src === 'rec' && !t.paused && t.time > 0.8 && t.url.endsWith(manifest.modes.quick.file) && t.spoken === 0, JSON.stringify(t));
 check('the player is labelled "AI voice · Neha"', t.badge === 'AI voice · Neha', t.badge);
@@ -100,7 +100,11 @@ await c.ev(`${pl('.hb-pl-close')}.click()`); await c.sleep(300);
 t = await J(`({ hidden: document.querySelector('.hb-player').hidden, src: __audio.getAttribute('src'), st: HBListen.state(), ms: navigator.mediaSession.playbackState, body: document.body.classList.contains('hb-listening') })`);
 check('Close stops the audio, releases it and hides the player', t.hidden && !t.src && t.st === 'idle' && t.ms === 'none' && !t.body, JSON.stringify(t));
 
-// ---------- 1b. Full = free device voice at 1.25x; each length keeps its own speed ----------
+// ---------- 1b. Full (switched on for this test only) = free device voice at 1.25x; each length keeps its own speed ----------
+await open({ tts: true, full: true });
+t = await J(`({ n: document.querySelectorAll('.listen-cta button:not([hidden])').length, quick: ${btn}.textContent, full: ${fullBtn}.textContent, note: document.querySelector('.listen-cta-note').textContent })`);
+const mins125 = Math.round(DUR / 60 / 1.25);      // Quick's speed was set to 1.25x earlier in this run and is remembered
+check('with Full switched on: two lengths, Quick from the recording and Full on the device voice', t.n === 2 && t.quick.startsWith('Quick') && t.quick.includes(mins125 + ' min') && t.full.startsWith('Full') && /\d+ min/.test(t.full) && t.note === 'Quick is read by Neha, an AI voice. Full uses your device’s voice.', JSON.stringify(t));
 await c.ev(`window.__spoken.length = 0; window.__rates.length = 0; ${btn}.click()`); await c.sleep(900);
 await c.ev(`${fullBtn}.click()`); await c.sleep(900);
 t = await J(`({ src: HBListen.source(), st: HBListen.state(), badge: document.querySelector('.hb-pl-voice').textContent, rate: document.querySelector('.hb-pl-rate').textContent, rates: window.__rates.slice(-3), first: window.__spoken[0], recPaused: __audio.paused, recSrc: __audio.getAttribute('src') })`);
@@ -135,7 +139,7 @@ check('no recording yet: today\'s behaviour is unchanged (device voice)', t.src 
 await c.ev(`${pl('.hb-pl-close')}.click()`);
 
 // ---------- 5. recording available on a device that cannot speak ----------
-await open({ tts: false });
+await open({ tts: false, full: true });
 t = await J(`({ has: !!document.querySelector('.listen-cta'), hidden: document.querySelector('.listen-cta') && document.querySelector('.listen-cta').hidden, quickShown: !${btn}.hidden, fullHidden: ${fullBtn}.hidden })`);
 check('a device with no speech engine still gets Listen (Quick only, since Full needs a voice) when a recording exists', t.has && !t.hidden && t.quickShown && t.fullHidden, JSON.stringify(t));
 await c.ev(`${btn}.click()`); await c.sleep(1500);

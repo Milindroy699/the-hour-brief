@@ -57,7 +57,7 @@ Made to be read, not scrolled:
 • Every story has a short summary you can expand and a one-line takeaway
 • A five-question daily quiz on the edition, with streaks, badges and a shareable score (no account needed)
 • Friends leagues: start a private league, invite friends with a link and compare quiz scores every day (no sign-up, no typed names)
-• Listen to today's brief: a 7-minute Quick read-aloud in an Indian-English voice, or a longer read-aloud in your device's own voice
+• Listen to today's brief: a 7-minute read-aloud of the day's headlines and takeaways in an Indian-English voice
 • Every summary links back to its original source
 • Clean layout, no ads, and it follows your phone's light or dark theme
 • Share any edition with one tap, pull down to refresh, and see a banner when a newer edition is out

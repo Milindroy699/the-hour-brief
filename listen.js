@@ -6,7 +6,8 @@
  * is generated, uploaded or stored and nothing leaves the device.
  *
  *  - Quick: each section's takeaway, then every story's headline and takeaway.
- *  - Full:  each story's headline, summary and takeaway (about 15 minutes at 1.25x).
+ *  - Full:  each story's headline, summary and takeaway (about 13 minutes at 1.25x). Switched off
+ *           for now (see OFFER_FULL); the code is kept so it can be offered again.
  *  - A mini player (previous / play-pause / next story, speed, close) sits at the bottom;
  *    the story being read is highlighted and scrolled into view.
  *  - Speech is queued sentence by sentence: long utterances get cut off by some engines, and
@@ -65,6 +66,11 @@
   var Cap0 = window.Capacitor;
   var NATIVE = !!(Cap0 && typeof Cap0.isNativePlatform === 'function' && Cap0.isNativePlatform());
   function reader() { return mq.matches || NATIVE; }
+
+  // The longer "Full" reading (device voice, 1.25x, about 13 minutes) is switched off for now.
+  // Change this default to true (or set window.HB_OFFER_FULL = true) to offer it again.
+  var OFFER_FULL = typeof window.HB_OFFER_FULL === 'boolean' ? window.HB_OFFER_FULL : false;
+  var MODES = OFFER_FULL ? ['quick', 'full'] : ['quick'];
 
   var KEY = 'hb-listen-v1';
   var WPM = 165;                       // typical device voice at 1x
@@ -273,7 +279,7 @@
         if (!m || m.v !== 1 || !m.modes) return;
         S.manifest = m;
         S.date = date;
-        ['quick', 'full'].forEach(mapCues);      // Full has no recording today, but would be used if one existed
+        MODES.forEach(mapCues);      // Full has no recording today, but would be used if one existed
       })
       .catch(function () { /* no recording today: the device voice is used */ })
       .then(function () { clearTimeout(t); done(); });
@@ -519,9 +525,10 @@
         b.querySelector('.hb-cta-min').textContent = minutes(m) + ' min';
       });
       var rec = [], dev = [];
-      ['quick', 'full'].forEach(function (m) { if (avail(m)) (hasRec(m) ? rec : dev).push(m === 'quick' ? 'Quick' : 'Full'); });
+      MODES.forEach(function (m) { if (avail(m)) (hasRec(m) ? rec : dev).push(m === 'quick' ? 'Quick' : 'Full'); });
       noteEl.hidden = !rec.length;
-      noteEl.textContent = rec.length ? rec.join(' and ') + (rec.length > 1 ? ' are' : ' is') + ' read by ' + voiceName() + ', an AI voice.' +
+      if (MODES.length === 1) noteEl.textContent = rec.length ? 'Read by ' + voiceName() + ', an AI voice.' : '';
+      else noteEl.textContent = rec.length ? rec.join(' and ') + (rec.length > 1 ? ' are' : ' is') + ' read by ' + voiceName() + ', an AI voice.' +
         (dev.length ? ' ' + dev.join(' and ') + ' uses your device’s voice.' : '') : '';
     }
     if (!player || player.hidden) return;
@@ -558,15 +565,15 @@
       var t = mk('div', 'listen-cta-t');
       t.innerHTML = I_HEAD;
       t.appendChild(mk('span', '', 'Listen to today’s brief'));
-      var row = mk('div', 'listen-cta-b');
-      [['quick', 'Quick', 'headlines and takeaways'], ['full', 'Full', 'every story in full']].forEach(function (m) {
+      var row = mk('div', 'listen-cta-b' + (MODES.length === 1 ? ' single' : ''));
+      [['quick', 'Quick', 'headlines and takeaways'], ['full', 'Full', 'every story in full']].filter(function (m) { return MODES.indexOf(m[0]) >= 0; }).forEach(function (m) {
         var b = mk('button', 'listen-cta-btn');
         b.type = 'button';
         b.setAttribute('data-mode', m[0]);
         b.setAttribute('aria-pressed', 'false');
-        b.setAttribute('aria-label', 'Listen: ' + m[1].toLowerCase() + ' version, ' + m[2]);
+        b.setAttribute('aria-label', MODES.length === 1 ? 'Listen to today’s brief: ' + m[2] : 'Listen: ' + m[1].toLowerCase() + ' version, ' + m[2]);
         b.innerHTML = '<span class="hb-cta-name"></span><span class="hb-cta-min"></span>';
-        b.querySelector('.hb-cta-name').textContent = m[1];
+        b.querySelector('.hb-cta-name').textContent = MODES.length === 1 ? 'Play the brief' : m[1];
         b.addEventListener('click', function () {
           if (S.state === 'playing' && S.mode === m[0]) toggle();       // tapping the active length pauses
           else if (S.state === 'paused' && S.mode === m[0]) toggle();
@@ -594,7 +601,8 @@
 
   function init() {
     load();
-    S.units = { quick: build('quick'), full: build('full') };
+    S.units = {};
+    MODES.forEach(function (m) { S.units[m] = build(m); });
     S.list = S.units[S.mode];
     ensureCta();                                   // shown at once where the device can speak
     loadManifest(function () { ensureCta(); render(); });   // then upgraded once we know there is a recording
