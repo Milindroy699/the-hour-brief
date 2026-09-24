@@ -56,14 +56,15 @@
     (document.head || document.documentElement).appendChild(s);
   })();
 
-  // ---- Status bar: track the (theme-aware) masthead ----
+  // ---- Status bar: track the (theme-aware) app bar ----
   (function statusBar() {
     if (!P.StatusBar) return;
     var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     try {
-      P.StatusBar.setStyle({ style: prefersDark ? 'LIGHT' : 'DARK' });
+      // The app bar is white in light mode and near-black in dark mode: match it (DARK = light icons, LIGHT = dark icons).
+      P.StatusBar.setStyle({ style: prefersDark ? 'DARK' : 'LIGHT' });
       if (P.StatusBar.setBackgroundColor) {
-        P.StatusBar.setBackgroundColor({ color: prefersDark ? '#edeeec' : '#17191c' });
+        P.StatusBar.setBackgroundColor({ color: prefersDark ? '#1a1b20' : '#ffffff' });
       }
     } catch (e) {}
   })();

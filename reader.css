@@ -166,10 +166,11 @@
 }
 
 /* ---- Tools row under the nav: quiz chip + text size + saved ---- */
-.reader-tools { display: flex; align-items: stretch; gap: 8px; margin: -8px 0 22px; }
+.reader-tools { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; margin: -8px 0 22px; }
 .reader-tools[hidden] { display: none; }
-.reader-tools .quiz-chip { flex: 1 1 auto; min-width: 0; margin: 0; }
-.reader-tools > .reader-btn:first-child { margin-left: auto; }
+.reader-tools .quiz-chip { flex: 1 1 100%; min-width: 0; margin: 0; }   /* its own row: the buttons sit under it */
+.reader-tools > .reader-prefs { margin-left: auto; }
+.hb-quiz-off .quiz-chip { display: none !important; }
 .reader-btn {
   flex: 0 0 auto;
   display: inline-flex;
@@ -237,6 +238,30 @@
 }
 .rd-btn:disabled { opacity: 0.4; cursor: default; }
 .rd-close { width: 100%; margin-top: 8px; }
+.rd-close.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+
+/* ---- Your sections: switches + move up / down ---- */
+.rd-prefs { margin: 0 0 6px; padding: 0; list-style: none; }
+.rd-prefs li { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid var(--line); }
+.rd-prefs li:first-child { border-top: 0; }
+.rd-sw { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; min-height: 46px; color: var(--ink); font-weight: 600; cursor: pointer; }
+.rd-sw input {
+  -webkit-appearance: none; appearance: none;
+  flex: none; position: relative; width: 46px; height: 28px; margin: 0;
+  border-radius: 14px; background: var(--line); box-shadow: inset 0 0 0 1px var(--ink-faint);
+  cursor: pointer; transition: background 0.15s;
+}
+.rd-sw input::after {
+  content: ''; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px;
+  border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35); transition: transform 0.15s;
+}
+.rd-sw input:checked { background: var(--brand); box-shadow: none; }
+.rd-sw input:checked::after { transform: translateX(18px); }
+.rd-sw input:focus-visible { outline: 2px solid var(--ink-soft); outline-offset: 2px; }
+.rd-sw input:not(:checked) + .rd-sw-name { color: var(--ink-faint); }
+.rd-mv { flex: none; width: 44px; min-height: 44px; padding: 0; font-size: 1.1rem; }
+.rd-prefs-msg { min-height: 1.4em; margin: 0 0 8px; font-size: 0.9rem; }
+.rd-reset { width: 100%; flex: none; }
 .rd-size-label { font-weight: 700; color: var(--ink) !important; }
 .rd-size-sample { font-size: 0.94rem; line-height: 1.6; }
 .rd-saved { margin: 0 0 8px; padding: 0; list-style: none; }

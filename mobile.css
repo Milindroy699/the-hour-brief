@@ -5,11 +5,13 @@
  * so every rule here already applies only at <=640px. Desktop and tablet render
  * from the page's own inline <style>, untouched.
  *
+ * The premium skin (fonts, palette, app bar, tab bar, cards) is /app.css; only phone layout lives here.
  * Companion behaviour (clamped summaries, the About/lane "More" toggles) lives in
  * /mobile.js. Shared reader components live in /reader.css (imported below). App-only
  * native touches live in /capacitor-bridge.js.
  */
 @import url("/reader.css");
+@import url("/app.css");
 
 /* ---- Platform polish ---- */
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
@@ -17,24 +19,9 @@ body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
 a, button, summary, .vote-btn, .nav a, .story-more, .about-toggle {
   -webkit-tap-highlight-color: transparent;
 }
-.page { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
 
-/* ---- Masthead: compact, one glance ---- */
-.masthead-band { padding: 12px 16px; }
-.masthead-inner { gap: 2px 12px; align-items: baseline; }
-.wordmark { font-size: 1.4rem; }
-.tagline { display: none; }              /* evergreen — never changes day to day */
-.edition {
-  font-size: 0.68rem;
-  text-align: left;
-  white-space: normal;
-}
-
-/* ---- Pause band: keep the daily quote, shrink the frame ---- */
-.pause-inner { padding: 12px 16px; }
-.pause-label { margin-bottom: 4px; font-size: 0.66rem; }
-.pause-text { font-size: 0.98rem; line-height: 1.5; }
-.pause-attr { margin-top: 6px; font-size: 0.76rem; }
+/* ---- Masthead is the app bar (see app.css); the tagline never changes day to day ---- */
+.tagline { display: none; }
 
 /* ---- About: evergreen boilerplate, clamped with a toggle ---- */
 .about {
@@ -81,30 +68,19 @@ a, button, summary, .vote-btn, .nav a, .story-more, .about-toggle {
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
-  scroll-snap-type: x proximity;
   gap: 8px;
-  padding: 10px 0;
-  margin: 0 0 24px;
   top: env(safe-area-inset-top, 0px);
 }
 .nav::-webkit-scrollbar { display: none; }
 .nav a {
   flex: 0 0 auto;
   white-space: nowrap;
-  scroll-snap-align: start;
   display: inline-flex;
   align-items: center;
-  min-height: 40px;
-  padding: 10px 16px;
-  font-size: 0.78rem;
 }
 
 /* ---- Sections: headers clear the sticky nav ---- */
-section.lane {
-  margin-bottom: 32px;
-  scroll-margin-top: 56px;
-}
-.lane-head { margin-bottom: 14px; }
+section.lane { scroll-margin-top: 64px; }
 .lane-head h2 {
   font-size: 1.05rem;
   font-weight: 650;
@@ -134,12 +110,10 @@ section.lane {
 .item {
   grid-template-columns: 1fr;
   gap: 0;
-  padding: 16px 0;
 }
 .item .dot { display: none; }
-.item h3 { font-size: 1.05rem; font-weight: 600; line-height: 1.35; }
-.item p { font-size: 0.95rem; max-width: none; }
-.item .takeaway { max-width: none; font-size: 0.88rem; }
+.item p { max-width: none; }
+.item .takeaway { max-width: none; }
 
 /* ---- Story layout: natural reading order (wired in /mobile.js) ----
    headline -> summary -> [Read more] -> takeaway, then the source and the vote

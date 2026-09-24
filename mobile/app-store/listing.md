@@ -96,3 +96,6 @@ Contact for review questions: milindroy101292@gmail.com, [add your phone number 
 2. **Guideline 4.2 (minimum functionality) is the main rejection risk** for a web-content app. The review notes above make the case, but adding one substantial native feature lowers the risk a lot (see the options in the launch steps).
 3. Tablet and desktop widths still show the very long lane headline (the clamp only applies at phone widths). Not a rejection risk, but worth fixing for iPad.
 4. Screenshots use the current layout and today's edition; the headlines in them will date. That's normal.
+
+## Screenshots
+Fresh 6.7-inch screenshots (1290x2796, light and dark: feed, highlights, Audio, quiz) are in `mobile/app-store/screenshots/`; `node tools/brand/screenshots.mjs` remakes them from the live UI. Other sizes need to be captured from Simulator.

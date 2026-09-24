@@ -1,7 +1,7 @@
 {
   "functions": {
     "api/og.mjs": {
-      "includeFiles": "{fonts/**,node_modules/harfbuzzjs/**}"
+      "includeFiles": "{fonts/**,brand/**,node_modules/harfbuzzjs/**}"
     }
   },
   "rewrites": [

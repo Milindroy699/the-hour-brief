@@ -50,9 +50,9 @@ const hlId = `(document.querySelector('.item.hb-listening') || {dataset:{}}).dat
 
 // ---------- 1. recording available, device can also speak ----------
 await open({ tts: true });
-let t = await J(`({ n: document.querySelectorAll('.listen-cta button:not([hidden])').length, quick: ${btn}.textContent, full: ${fullBtn} ? ${fullBtn}.textContent : null, note: document.querySelector('.listen-cta-note').textContent, noteHidden: document.querySelector('.listen-cta-note').hidden, hidden: document.querySelector('.listen-cta').hidden })`);
+let t = await J(`({ n: document.querySelectorAll('.listen-cta button[data-mode]:not([hidden])').length, quick: ${btn}.textContent, full: ${fullBtn} ? ${fullBtn}.textContent : null, note: document.querySelector('.listen-cta-note').textContent, noteHidden: document.querySelector('.listen-cta-note').hidden, hidden: document.querySelector('.listen-cta').hidden })`);
 const mins = Math.round(DUR / 60);
-check('Full is switched off: one "Play the brief" button showing the recording length', t.n === 1 && /^Play the brief/.test(t.quick) && t.quick.includes(mins + ' min') && t.full === null, JSON.stringify(t) + ' expected ' + mins + ' min');
+check('Full is switched off: one "Quick brief" tile showing the recording length and the voice', t.n === 1 && /^Quick brief/.test(t.quick) && t.quick.includes('Neha (AI)') && t.quick.includes(mins + ' min') && t.full === null, JSON.stringify(t) + ' expected ' + mins + ' min');
 check('the card says it is read by an AI voice', !t.noteHidden && t.note === 'Read by Neha, an AI voice.', t.note);
 await c.ev(`(document.querySelector('.listen-cta').scrollIntoView({block:'center'}), 'ok')`); await c.sleep(300); await c.shot(`${OUT}/rec_cta.png`);
 await c.ev(`${btn}.click()`); await waitFor(`window.__audio && __audio.currentTime > 0.8`, 6000);
@@ -102,7 +102,7 @@ check('Close stops the audio, releases it and hides the player', t.hidden && !t.
 
 // ---------- 1b. Full (switched on for this test only) = free device voice at 1.25x; each length keeps its own speed ----------
 await open({ tts: true, full: true });
-t = await J(`({ n: document.querySelectorAll('.listen-cta button:not([hidden])').length, quick: ${btn}.textContent, full: ${fullBtn}.textContent, note: document.querySelector('.listen-cta-note').textContent })`);
+t = await J(`({ n: document.querySelectorAll('.listen-cta button[data-mode]:not([hidden])').length, quick: ${btn}.textContent, full: ${fullBtn}.textContent, note: document.querySelector('.listen-cta-note').textContent })`);
 const mins125 = Math.round(DUR / 60 / 1.25);      // Quick's speed was set to 1.25x earlier in this run and is remembered
 check('with Full switched on: two lengths, Quick from the recording and Full on the device voice', t.n === 2 && t.quick.startsWith('Quick') && t.quick.includes(mins125 + ' min') && t.full.startsWith('Full') && /\d+ min/.test(t.full) && t.note === 'Quick is read by Neha, an AI voice. Full uses your device’s voice.', JSON.stringify(t));
 await c.ev(`window.__spoken.length = 0; window.__rates.length = 0; ${btn}.click()`); await c.sleep(900);
@@ -120,22 +120,22 @@ await c.ev(`${pl('.hb-pl-close')}.click()`); await c.sleep(300);
 // ---------- 2. the recording fails to load: fall back to the device voice ----------
 await open({ tts: true, audio: '404' });
 await c.ev(`window.__ttsMs = 700; ${btn}.click()`); await c.sleep(2200);
-t = await J(`({ st: HBListen.state(), src: HBListen.source(), spoken: window.__spoken.length, first: window.__spoken[0], badge: document.querySelector('.hb-pl-voice').textContent, noteHidden: document.querySelector('.listen-cta-note').hidden })`);
-check('audio file missing: carries on in the device voice from the same place', t.st === 'playing' && t.src === 'tts' && t.spoken > 0 && /^The Hour Brief, edition/.test(t.first) && t.badge === 'Device voice' && t.noteHidden, JSON.stringify(t));
+t = await J(`({ st: HBListen.state(), src: HBListen.source(), spoken: window.__spoken.length, first: window.__spoken[0], badge: document.querySelector('.hb-pl-voice').textContent, note: document.querySelector('.listen-cta-note').textContent })`);
+check('audio file missing: carries on in the device voice from the same place', t.st === 'playing' && t.src === 'tts' && t.spoken > 0 && /^The Hour Brief, edition/.test(t.first) && t.badge === 'Device voice' && /^Read aloud by your device/.test(t.note), JSON.stringify(t));
 await c.ev(`${pl('.hb-pl-close')}.click()`);
 
 // ---------- 3. recording does not match the page ----------
 await open({ tts: true, manifest: 'mismatch' });
-t = await J(`({ noteHidden: document.querySelector('.listen-cta-note').hidden })`);
+t = await J(`({ note: document.querySelector('.listen-cta-note').textContent })`);
 await c.ev(`${btn}.click()`); await c.sleep(900);
-check('timings that do not match the page are ignored (device voice, no AI-voice note)', t.noteHidden && (await c.ev(`HBListen.source()`)) === 'tts' && (await c.ev(`window.__spoken.length`)) > 0);
+check('timings that do not match the page are ignored (device voice, and the card says so instead of claiming an AI voice)', /^Read aloud by your device/.test(t.note) && (await c.ev(`HBListen.source()`)) === 'tts' && (await c.ev(`window.__spoken.length`)) > 0);
 await c.ev(`${pl('.hb-pl-close')}.click()`);
 
 // ---------- 4. no recording today ----------
 await open({ tts: true, manifest: '404' });
 await c.ev(`${btn}.click()`); await c.sleep(900);
-t = await J(`({ src: HBListen.source(), noteHidden: document.querySelector('.listen-cta-note').hidden, badge: document.querySelector('.hb-pl-voice').textContent })`);
-check('no recording yet: today\'s behaviour is unchanged (device voice)', t.src === 'tts' && t.noteHidden && t.badge === 'Device voice', JSON.stringify(t));
+t = await J(`({ src: HBListen.source(), note: document.querySelector('.listen-cta-note').textContent, badge: document.querySelector('.hb-pl-voice').textContent })`);
+check('no recording yet: today\'s behaviour is unchanged (device voice)', t.src === 'tts' && /^Read aloud by your device/.test(t.note) && t.badge === 'Device voice', JSON.stringify(t));
 await c.ev(`${pl('.hb-pl-close')}.click()`);
 
 // ---------- 5. recording available on a device that cannot speak ----------
@@ -157,7 +157,15 @@ check('no engine and no recording: no Listen card at all', (await c.ev(`!documen
 
 // ---------- 7. desktop ----------
 await open({ tts: true, width: 1280 });
-check('desktop: nothing is loaded or shown', (await c.ev(`!document.querySelector('.listen-cta') && typeof window.HBListen === 'undefined'`)) === true);
+check('desktop: the website has Listen too (the same card, and the recording plays)', (await c.ev(`!!document.querySelector('.listen-cta') && !document.querySelector('.listen-cta').hidden && typeof window.HBListen === 'object'`)) === true);
+await c.ev(`document.querySelector('.listen-cta button[data-mode=quick]').click()`); await waitFor(`window.__audio && __audio.currentTime > 0.5`, 6000);
+check('desktop: playing works and shows the mini player', (await c.ev(`HBListen.state() === 'playing' && HBListen.source() === 'rec' && !document.querySelector('.hb-player').hidden`)) === true);
+await c.ev(`HBListen.stop()`);
+for (const id of ids) await c.unpreload(id);
+ids = [await c.preload(hook(false)), await c.preload(FAKE_TTS)];
+await c.viewport(1280, 915, false, false);
+await c.goto(B + '/?classic=1', 1200);
+check('desktop with ?classic=1: nothing is loaded or shown (the old page)', (await c.ev(`!document.querySelector('.listen-cta') && typeof window.HBListen === 'undefined'`)) === true);
 
 // ---------- visuals ----------
 await open({ tts: true, dark: true, width: 360 });
