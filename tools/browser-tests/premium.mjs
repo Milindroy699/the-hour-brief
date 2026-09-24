@@ -161,6 +161,14 @@ t = await J(`({ chip: [document.querySelector('.qc-title').textContent, document
 check('after the quiz: the chip says "Quiz done" with a check and "Review →"; the card shows completion and a 4-day streak; today’s square is checked', /^Quiz done: \d\/5$/.test(t.chip[0]) && t.chip[1] === 'Review →' && /done/.test(t.chip[2]) && /completed/i.test(t.drill) && /4-day streak/.test(t.pill) && t.done === 4, JSON.stringify(t));
 check('past quizzes come from the reader’s own results (newest first), with edition numbers and links to that edition’s quiz', eq(t.past.map((r) => r[1]), ['5/5', '4/5', '3/5']) && t.past[0][0] === '/archive/2026-09-23.html#quiz' && /^\d{3}$/.test(t.past[0][2]), JSON.stringify(t.past));
 await scrollTo('.qz-past-box', 200); await c.sleep(300); await c.shot(`${OUT}/p_quiz_done.png`);
+// the shareable score picture is drawn on the device: new brand, logo, correct size
+await c.ev(`navigator.canShare = () => true; window.__sh = null; navigator.share = (d) => { window.__sh = d; return Promise.resolve(); }; 'ok'`);
+await c.ev(`[...document.querySelectorAll('.quiz-btn')].find((b) => /Share my score/.test(b.textContent)).click()`);
+check('sharing a score hands the system a picture (PNG file) plus the text and link', await waitFor(`!!window.__sh && !!window.__sh.files && window.__sh.files[0].type === 'image/png'`, 4000));
+const b64 = await c.ev(`(async () => { const f = window.__sh.files[0]; const bmp = await createImageBitmap(f); window.__dim = [bmp.width, bmp.height]; const buf = new Uint8Array(await f.arrayBuffer()); let s = ''; for (const x of buf) s += String.fromCharCode(x); return btoa(s); })()`);
+fs.writeFileSync(`${OUT}/p_score_card.png`, Buffer.from(b64, 'base64'));
+t = await J(`({ dim: window.__dim, text: window.__sh.text })`);
+check('the score picture is 1080x1080 and the message carries the link', eq(t.dim, [1080, 1080]) && /\/q\/\d{4}-\d{2}-\d{2}\/\d/.test(t.text), JSON.stringify(t));
 
 // ---------- 7. dark mode, and a narrow phone ----------
 await open({ dark: true, quiz: past });

@@ -172,56 +172,90 @@
     var r = res.s / res.t;
     return r === 1 ? 'Perfect. Read closely.' : r >= 0.8 ? 'Sharp reading.' : r >= 0.6 ? 'Solid.' : r >= 0.4 ? 'Not bad.' : 'Tough one.';
   }
-  function drawCard(res, streak) {
+  // Fonts and the logo the card uses; fetched ahead of time (when the result shows) so sharing is never delayed.
+  var cardP = null;
+  function cardAssets() {
+    if (!cardP) {
+      var fonts = (document.fonts && document.fonts.load)
+        ? Promise.all([document.fonts.load('500 300px Newsreader'), document.fonts.load('700 40px "Space Grotesk"'), document.fonts.load('600 36px Inter')]).catch(function () { /* system fonts will do */ })
+        : Promise.resolve();
+      var logo = new Promise(function (resolve) {
+        var img = new Image();
+        img.onload = function () { resolve(img); };
+        img.onerror = function () { resolve(null); };
+        img.src = '/brand/logo-256.png';
+      });
+      var cap = new Promise(function (resolve) { setTimeout(function () { resolve(null); }, 1500); });
+      cardP = Promise.race([Promise.all([fonts, logo]).then(function (a) { return a[1]; }), cap]);
+    }
+    return cardP;
+  }
+  function drawCard(res, streak, logo) {
     var W = 1080, H = 1080;
     var c = document.createElement('canvas');
     c.width = W; c.height = H;
     var g = c.getContext('2d');
-    var SANS = '-apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
-    var SERIF = 'Georgia, "Times New Roman", serif';
-    g.fillStyle = '#17191c'; g.fillRect(0, 0, W, H);
-    g.fillStyle = '#5b3e96'; g.fillRect(0, H - 18, W, 18);
+    var SANS = 'Inter, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+    var LABEL = '"Space Grotesk", Inter, -apple-system, "Segoe UI", Roboto, sans-serif';
+    var SERIF = 'Newsreader, Georgia, "Times New Roman", serif';
+    g.fillStyle = '#0c0d15'; g.fillRect(0, 0, W, H);
+    var glow = g.createRadialGradient(140, 0, 0, 140, 0, 780);
+    glow.addColorStop(0, 'rgba(94,67,243,0.34)'); glow.addColorStop(1, 'rgba(12,13,21,0)');
+    g.fillStyle = glow; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#5e43f3'; g.fillRect(0, H - 18, W, 18);
     g.textBaseline = 'alphabetic';
     g.textAlign = 'left';
-    g.font = '800 64px ' + SANS;
-    g.fillStyle = '#f2f3ee'; g.fillText('THE HOUR', 72, 132);
+    var x0 = 72;
+    if (logo) {
+      g.save();
+      roundRect(g, 72, 62, 96, 96, 24);
+      g.clip();
+      g.drawImage(logo, 72, 62, 96, 96);
+      g.restore();
+      x0 = 192;
+    }
+    g.font = '700 58px ' + LABEL;
+    g.fillStyle = '#ffffff'; g.fillText('THE HOUR', x0, 132);
     var w = g.measureText('THE HOUR ').width;
-    g.fillStyle = '#a487d9'; g.fillText('BRIEF', 72 + w, 132);
+    g.fillStyle = '#8b6cf6'; g.fillText('BRIEF', x0 + w, 132);
     g.textAlign = 'right';
-    g.font = '600 34px ' + SANS; g.fillStyle = '#9ba3a6';
-    g.fillText(prettyDate(DATE).toUpperCase(), W - 72, 130);
+    g.font = '600 32px ' + SANS; g.fillStyle = '#a6a8c4';
+    g.fillText(prettyDate(DATE).toUpperCase(), W - 72, 128);
     g.textAlign = 'center';
-    g.font = '700 38px ' + SANS; g.fillStyle = '#a487d9';
+    g.font = '700 38px ' + LABEL; g.fillStyle = '#b9acff';
     g.fillText('DAILY QUIZ', W / 2, 300);
-    g.font = '700 300px ' + SERIF; g.fillStyle = '#f2f3ee';
+    g.font = '500 300px ' + SERIF; g.fillStyle = '#ffffff';
     g.fillText(res.s + '/' + res.t, W / 2, 545);
     if (res.a) {
       var n = res.t, size = Math.min(110, Math.floor((W - 144 - (n - 1) * 20) / n)), gap = 20;
-      var x0 = (W - (n * size + (n - 1) * gap)) / 2;
+      var xs = (W - (n * size + (n - 1) * gap)) / 2;
       questions.forEach(function (q, i) {
-        g.fillStyle = res.a[i] === q.answer ? '#4fb579' : '#d9645f';
-        roundRect(g, x0 + i * (size + gap), 660, size, size, 20);
+        g.fillStyle = res.a[i] === q.answer ? '#3fbf95' : '#e5645f';
+        roundRect(g, xs + i * (size + gap), 660, size, size, 22);
         g.fill();
       });
     }
-    g.font = '700 56px ' + SANS; g.fillStyle = '#f2f3ee';
+    g.font = '500 60px ' + SERIF; g.fillStyle = '#ffffff';
     g.fillText(cardMessage(res), W / 2, 880);
     if (streak >= 2) {
-      g.font = '600 44px ' + SANS; g.fillStyle = '#d9a94e';
-      g.fillText('\uD83D\uDD25 ' + streak + '-day streak', W / 2, 942);
+      g.font = '600 44px ' + SANS; g.fillStyle = '#ffb961';
+      g.fillText('🔥 ' + streak + '-day streak', W / 2, 942);
     }
-    g.font = '700 46px ' + SANS; g.fillStyle = '#f2f3ee';
+    g.font = '700 46px ' + SANS; g.fillStyle = '#ffffff';
     g.fillText('Think you can beat me?', W / 2, 1002);
-    g.font = '600 36px ' + SANS; g.fillStyle = '#a487d9';
+    g.font = '600 36px ' + SANS; g.fillStyle = '#b9acff';
     g.fillText('the-hour-brief.vercel.app', W / 2, 1046);
     return c;
   }
   function shareScore(res, streak) {
     var text = shareText(res, streak), url = shareUrl(res);
+    cardAssets().then(function (logo) { shareCard(res, streak, text, url, logo); });
+  }
+  function shareCard(res, streak, text, url, logo) {
     var Cap = window.Capacitor, P = (Cap && Cap.Plugins) || {};
     var native = Cap && typeof Cap.isNativePlatform === 'function' && Cap.isNativePlatform();
     var canvas = null;
-    try { canvas = drawCard(res, streak); } catch (e) { /* fall back to text */ }
+    try { canvas = drawCard(res, streak, logo); } catch (e) { /* fall back to text */ }
     if (!canvas) return share(text, url);
     var full = text + '\n' + url;
     if (native && P.Filesystem && P.Share) {
@@ -571,6 +605,7 @@
     });
     root.appendChild(card);
 
+    cardAssets();                                   // warm the share card's fonts and logo
     getEditions().then(function (dates) {
       var results = load().r;
       streakN = streakEndingAt(dates, results, DATE);

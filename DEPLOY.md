@@ -30,7 +30,10 @@ Left out on purpose because we do not have them: XP, "Top 8% recall", spatial au
 - Fonts are self-hosted in `webfonts/` (Inter, Newsreader, Space Grotesk, Latin subsets, OFL licences alongside); nothing is fetched from a third party.
 - Colours come from the page's own tokens re-pointed in `app.css`, with light and dark sets. Do not use `color-mix(..., transparent)`: the Android
   WebView on Chrome 113 renders it as an opaque colour; use the `rgba(var(--hb-*-rgb), a)` tokens.
-- Logo asset for the site: `brand/logo-128.png` (from `tools/brand`); `node tools/brand/screenshots.mjs` remakes the store screenshots.
+- Brand files: `brand/` (logo 128/256, favicon, touch icon; all made by `node tools/brand/render.mjs`), `og-image.png` (`node tools/brand/og.mjs`, drawn by the
+  same code as the dynamic share cards in `api/og.mjs`, which bundles `fonts/` and `brand/` via `vercel.json`), the quiz score picture (`quiz.js` drawCard, on the
+  device). The favicon links live in every page's `<head>`; the daily routine copies `index.html` as its template, so new editions inherit them.
+  `node tools/brand/screenshots.mjs` remakes the store screenshots.
 - Tests: `node tools/browser-tests/premium.mjs` (with `prefs.mjs` and `listen.mjs`). To see the app itself, build a debug APK whose `server.url` is a
   local static server (`http://10.0.2.2:PORT`, `cleartext: true`), run it on the emulator, then put `mobile/capacitor.config.json` back (never commit that).
 
