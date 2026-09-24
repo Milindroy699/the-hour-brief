@@ -18,7 +18,7 @@ Policy: News and Magazines (enforced 24 Sep): no easy-to-find contact page in th
   1. Grow users -> Store presence -> Store settings -> Store listing contact details: website `https://the-hour-brief.vercel.app`, email
      `milindroy101292@gmail.com`.
   2. App content -> News and Magazines declaration: contact URL `https://the-hour-brief.vercel.app/contact.html`; check every other answer.
-  3. Data safety: add User IDs + Other in-app content (only if leagues are used; see `play-store/listing.md`). Audio is a plain file
+  3. Data safety: add the leagues purposes (only if leagues are used; see `play-store/listing.md`). Audio is a plain file
      download from Cloudflare: nothing new is collected.
   4. Upload the vc4 AAB to the track, add the release notes from `play-store/listing.md`, then use "Send for review" / appeal on the
      policy-status page and say what changed (contact page, in-app contact line, updated declaration).

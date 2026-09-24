@@ -86,9 +86,8 @@ Nothing is sold. League members can see each other's generated name and score (t
 |---|---|---|---|
 | Email address (Personal info) | Yes | App functionality (newsletter delivery via MailerLite) | Yes — only if they subscribe |
 | App interactions (App activity) | Yes | Analytics; app functionality (👍/👎 vote totals) | No |
-| Device or other IDs | Yes | Fraud prevention — one-way IP hash kept ~24 h to stop repeat voting | No |
-| User IDs (Personal info) | Yes | App functionality — the random device ID used only if the reader joins a friends league; linked to a generated name and daily quiz score, kept ~120 days | Yes — only if they use leagues |
-| Other in-app content (App activity) → quiz scores | Yes | App functionality — daily score shown to league members | Yes — only if they use leagues |
+| Device or other IDs | Yes | Fraud prevention (one-way IP hash kept ~24 h to stop repeat voting) and App functionality (the random app-generated ID used only if the reader joins a friends league, linked to a generated name and daily score, kept ~120 days) | No (leagues part: only if they use leagues) |
+| Other actions (App activity) | Yes | App functionality — the daily quiz score shown to league members | Yes — only if they use leagues |
 
 Judgement calls to confirm before submitting:
 - Vercel Web Analytics also reports country, device and browser in aggregate. To be conservative, also declare **Approximate location** and **App info and performance**, and consider adding "country, device type and browser" to the analytics sentence in `privacy.html` (it currently says only page views and referrers). Declaring slightly more than you collect is safe; declaring less is what gets apps rejected.
