@@ -2,7 +2,7 @@
   "appId": "app.thehourbrief",
   "appName": "The Hour Brief",
   "webDir": "www",
-  "backgroundColor": "#5b3e96",
+  "backgroundColor": "#0c0d15",
   "server": {
     "url": "https://the-hour-brief.vercel.app",
     "cleartext": false,
@@ -14,16 +14,16 @@
   },
   "ios": {
     "contentInset": "always",
-    "backgroundColor": "#5b3e96"
+    "backgroundColor": "#0c0d15"
   },
   "android": {
-    "backgroundColor": "#5b3e96"
+    "backgroundColor": "#0c0d15"
   },
   "plugins": {
     "SplashScreen": {
       "launchShowDuration": 2000,
       "launchAutoHide": true,
-      "backgroundColor": "#5b3e96",
+      "backgroundColor": "#0c0d15",
       "showSpinner": false,
       "androidScaleType": "CENTER_CROP",
       "splashFullScreen": true,
@@ -36,7 +36,7 @@
     },
     "LocalNotifications": {
       "smallIcon": "ic_stat_thb",
-      "iconColor": "#5b3e96"
+      "iconColor": "#7c5cf0"
     }
   }
 }

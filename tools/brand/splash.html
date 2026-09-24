@@ -1,0 +1,22 @@
+<!doctype html>
+<meta charset="utf-8">
+<!-- Launch image for the apps (2732x2732, centre-cropped on phones, so everything sits in the middle ~1000px).
+     Rendered to mobile/resources/splash*.png by render.mjs. Logo + look from the Stitch design "App Logo and Splash Screen". -->
+<style>
+  html, body { margin: 0; width: 2732px; height: 2732px; overflow: hidden; }
+  body {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background:
+      radial-gradient(ellipse 900px 900px at 50% 40%, rgba(112, 72, 232, 0.42), rgba(112, 72, 232, 0) 70%),
+      linear-gradient(180deg, #0b0b17 0%, #12102a 55%, #0b0b17 100%);
+    font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+  }
+  .logo { width: 600px; height: 600px; filter: drop-shadow(0 0 90px rgba(124, 92, 240, 0.55)); }
+  h1 { margin: 120px 0 0; font-size: 112px; letter-spacing: 6px; font-weight: 800; color: #fff; text-transform: uppercase; white-space: nowrap; }
+  h1 span { color: #8b6cf6; }
+  p { margin: 44px 0 0; font-size: 58px; line-height: 1.45; text-align: center; color: #a6a8c4; }
+  p b { display: block; font-weight: 500; color: #d8d9ea; }
+</style>
+<img class="logo" src="logo-source.png" alt="">
+<h1>The Hour <span>Brief</span></h1>
+<p><b>Built for one sitting.</b>What matters in AI &amp; technology.</p>

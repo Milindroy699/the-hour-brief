@@ -16,10 +16,11 @@ Assets (git-ignored, upload from here): `mobile/dist/play-store/`
 
 ### Which bundle to upload
 
-- **Upload `the-hour-brief-1.1.1-vc4.aab`** (versionCode 4). It supersedes everything before it.
+- **Upload `the-hour-brief-1.1.2-vc5.aab`** (versionCode 5). It supersedes everything before it, including `1.1.1-vc4` (same app, old icon and splash; do not upload it).
+- New in vc5: the app icon and launch screen (from the Stitch design). Upload `play-store/icon-512.png` as the **App icon** in Main store listing so the store and the installed app match.
 - `1.0.0-vc2` was rejected under the News and Magazines policy (no easy-to-find contact page). That is fixed in the site the app loads (`/contact.html`, a Contact link in every edition's nav and footer) and in the Console fields listed below. `1.1.0-vc3` was never uploaded; do not use it.
 - What it contains vs 1.0.0: daily reminder (local notification), image sharing (Filesystem plugin, cache folder only), a native rating prompt (in-app review), and Listen (text-to-speech plugin for the on-device fallback; the main recording is a web audio file). Permissions: `INTERNET`, `VIBRATE`, `POST_NOTIFICATIONS`, `RECEIVE_BOOT_COMPLETED`, `WAKE_LOCK`. No exact-alarm and no storage permissions. Target and compile SDK 36, min SDK 24.
-- Notes for 1.1.1: `<en-US>` Listen to today's brief in an AI-generated Indian-English voice. Take the 5-question daily quiz, earn streak badges and challenge friends in private leagues. Save stories for later, set a daily reminder (tap the bell) and pick a text size that suits you. New Contact page. </en-US>
+- Notes for 1.1.2 (306 chars): `<en-US>` Listen to today's brief in an AI-generated Indian-English voice. Take the 5-question daily quiz, earn streak badges and challenge friends in private leagues. Save stories for later, set a daily reminder (tap the bell) and pick a text size that suits you. New app icon and launch screen, and a Contact page. </en-US>
 
 ### Release notes ("What's new", max 500 chars — paste with the tags)
 
