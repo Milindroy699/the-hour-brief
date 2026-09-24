@@ -335,3 +335,10 @@ body.hb-listening #mob-toast { bottom: calc(160px + env(safe-area-inset-bottom, 
   border-radius: 8px;
 }
 @media (prefers-reduced-motion: reduce) { .item.hb-listening, .lane-head.hb-listening { transition: none; } }
+
+/* ---- Listen: recorded voice label and note ---- */
+.hb-pl-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.hb-pl-voice { font-size: 0.68rem; font-weight: 600; color: var(--ink-faint); white-space: nowrap; }
+.hb-pl-voice:empty { display: none; }
+.listen-cta-note { margin: 10px 2px 0; font-size: 0.78rem; line-height: 1.4; color: var(--ink-faint); }
+.listen-cta-note[hidden], .listen-cta-btn[hidden] { display: none; }

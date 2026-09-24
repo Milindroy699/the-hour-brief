@@ -557,9 +557,7 @@
   // ---- Listen mode: the player lives in listen.js, fetched only where speech is available ----
   var listenLoaded = false;
   function loadListen() {
-    var P = window.Capacitor && window.Capacitor.Plugins;
-    var canSpeak = ('speechSynthesis' in window) || !!(NATIVE && P && P.TextToSpeech);   // the Android WebView has no Web Speech API
-    if (listenLoaded || !reader() || !canSpeak) return;
+    if (listenLoaded || !reader()) return;     // listen.js decides what can play: a recording, or the device voice
     listenLoaded = true;
     var s = document.createElement('script');
     s.src = '/listen.js';

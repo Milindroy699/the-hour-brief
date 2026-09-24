@@ -53,6 +53,7 @@ export function buildUnits(html, mode = 'quick') {
     text: `The Hour Brief${number ? ', edition ' + number : ''}${when ? ', ' + when : ''}.` }];
 
   $('section.lane').each((_, lane) => {
+    if (!$(lane).find('.item[data-story-id]').length) return;      // e.g. the quiz section: nothing to read
     const laneId = $(lane).attr('id') || '';
     const tag = clean($, $(lane).find('.lane-tag').first()) || 'This section';
     const lt = $(lane).find('.lane-takeaway').first();
