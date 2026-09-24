@@ -16,9 +16,10 @@ Assets (git-ignored, upload from here): `mobile/dist/play-store/`
 
 ### Which bundle to upload
 
-- **`the-hour-brief-1.0.0-vc2.aab`** is what is in the closed-test review now.
-- **`the-hour-brief-1.1.0-vc3.aab`** adds the daily reminder (local notification), image sharing (Filesystem plugin, cache folder only), a native rating prompt (in-app review) and Listen mode (text-to-speech plugin, on-device). Extra permissions vs 1.0.0: `POST_NOTIFICATIONS`, `RECEIVE_BOOT_COMPLETED`, `WAKE_LOCK`. No exact-alarm permission and no storage permissions. Upload it to the same closed-test track as a new release once the current review clears (or replace the pending release, accepting a fresh review). Data safety only changes for friends leagues (see the table below): the reminder and Listen run on the device and send nothing.
-- Notes for 1.1.0: `<en-US>` Take the new 5-question daily quiz and share your score as an image. Listen to today's brief with on-device text-to-speech. Challenge friends in private quiz leagues and earn streak badges. Save stories for later and pick a text size that suits you. Set a daily reminder: tap the bell and pick a time. Read each section's highlights at a glance, and share a single story with a link back to it. </en-US>
+- **Upload `the-hour-brief-1.1.1-vc4.aab`** (versionCode 4). It supersedes everything before it.
+- `1.0.0-vc2` was rejected under the News and Magazines policy (no easy-to-find contact page). That is fixed in the site the app loads (`/contact.html`, a Contact link in every edition's nav and footer) and in the Console fields listed below. `1.1.0-vc3` was never uploaded; do not use it.
+- What it contains vs 1.0.0: daily reminder (local notification), image sharing (Filesystem plugin, cache folder only), a native rating prompt (in-app review), and Listen (text-to-speech plugin for the on-device fallback; the main recording is a web audio file). Permissions: `INTERNET`, `VIBRATE`, `POST_NOTIFICATIONS`, `RECEIVE_BOOT_COMPLETED`, `WAKE_LOCK`. No exact-alarm and no storage permissions. Target and compile SDK 36, min SDK 24.
+- Notes for 1.1.1: `<en-US>` Listen to today's brief in an AI-generated Indian-English voice. Take the 5-question daily quiz, earn streak badges and challenge friends in private leagues. Save stories for later, set a daily reminder (tap the bell) and pick a text size that suits you. New Contact page. </en-US>
 
 ### Release notes ("What's new", max 500 chars — paste with the tags)
 
@@ -57,7 +58,7 @@ Made to be read, not scrolled:
 • Every story has a short summary you can expand and a one-line takeaway
 • A five-question daily quiz on the edition, with streaks, badges and a shareable score (no account needed)
 • Friends leagues: start a private league, invite friends with a link and compare quiz scores every day (no sign-up, no typed names)
-• Listen to today's brief: a 7-minute read-aloud of the day's headlines and takeaways in an Indian-English voice
+• Listen to today's brief: a 7-minute read-aloud of the day's headlines and takeaways in an AI-generated Indian-English voice
 • Every summary links back to its original source
 • Clean layout, no ads, and it follows your phone's light or dark theme
 • Share any edition with one tap, pull down to refresh, and see a banner when a newer edition is out

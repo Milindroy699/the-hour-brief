@@ -109,7 +109,7 @@
 
   <section>
     <h2>If you use Listen</h2>
-    <p>&ldquo;Listen to today&rsquo;s brief&rdquo; reads the edition aloud using your device&rsquo;s own text-to-speech engine. The speech is generated on your device: nothing is recorded, uploaded or sent to us, and no audio files are stored. Your chosen playback speeds are remembered on your device only.</p>
+    <p>&ldquo;Listen to today&rsquo;s brief&rdquo; plays a <strong>recording</strong> of the day&rsquo;s edition read in an <strong>AI-generated voice</strong>. Once a day we send the <em>public text of the edition</em> (nothing about any reader) to <strong>Sarvam AI</strong>&rsquo;s text-to-speech service, and the resulting audio file is stored on <strong>Cloudflare R2</strong>. When you press play, your device downloads that file, just as it downloads any other page or image from this site; Cloudflare, like Vercel, sees the request and your IP address in order to deliver it, and we do not use that to identify you. If the recording is not available, your device&rsquo;s own text-to-speech engine reads the edition aloud instead: that speech is generated on your device and nothing is sent to us. Your chosen playback speeds are remembered on your device only.</p>
   </section>
 
   <section>
@@ -139,6 +139,8 @@
       <li><strong>Vercel</strong> — website hosting and the aggregate analytics.</li>
       <li><strong>MailerLite</strong> — email delivery, only if you subscribe.</li>
       <li><strong>Upstash / Vercel KV</strong> — storage for vote counts, comments, the anonymous quiz tally and friends leagues.</li>
+      <li><strong>Sarvam AI</strong> — turns the public edition text into the AI voice recording. It receives only that public text, never any reader&rsquo;s data.</li>
+      <li><strong>Cloudflare (R2)</strong> — hosts the audio recording files and delivers them when you press play.</li>
     </ul>
     <p>Each has its own privacy policy. No data is shared with anyone for advertising.</p>
   </section>
