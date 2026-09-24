@@ -1,0 +1,32 @@
+name: R2 cleanup (temporary)
+
+# One-off: lists and then removes the voice-test samples under _samples/ in the audio bucket. Nothing else is touched:
+# the prefix is fixed in this file. The recordings under audio/ are only listed, never deleted.
+on:
+  workflow_dispatch: {}
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      EP: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+      BUCKET: ${{ secrets.R2_BUCKET }}
+    steps:
+      - name: What is in the bucket now (top level)
+        run: aws s3 ls "s3://$BUCKET/" --endpoint-url "$EP"
+      - name: The samples that will be removed
+        run: aws s3 ls "s3://$BUCKET/_samples/" --recursive --summarize --human-readable --endpoint-url "$EP" || true
+      - name: Remove _samples/ (and only that)
+        run: |
+          test -n "$BUCKET"
+          aws s3 rm "s3://$BUCKET/_samples/" --recursive --endpoint-url "$EP"
+      - name: After
+        run: |
+          echo "--- _samples/ (should be empty)"; aws s3 ls "s3://$BUCKET/_samples/" --recursive --endpoint-url "$EP" || true
+          echo "--- audio/ (must still be there)"; aws s3 ls "s3://$BUCKET/audio/" --recursive --endpoint-url "$EP" | head -5
