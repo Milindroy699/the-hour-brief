@@ -122,7 +122,7 @@ Change in `capacitor.config.json` + `npm run sync`:
 
 - **App ID:** `app.thehourbrief`
 - **Display name:** The Hour Brief
-- **Brand colour / splash:** `#5b3e96`
+- **Brand colour / splash:** `#0c0d15` (the logo's navy), accent `#7c5cf0`
 
 Version numbers live in the native projects:
 - iOS: `MARKETING_VERSION` / `CURRENT_PROJECT_VERSION` in Xcode target settings
@@ -130,7 +130,8 @@ Version numbers live in the native projects:
   `versionCode` (integer) for every Play upload.
 
 Icons/splash regenerate from `resources/icon.png` + `resources/splash.png` via
-`npm run assets` (the current art is a placeholder stopwatch — swap the PNGs).
+`npm run assets`. The art comes from the Stitch design "App Logo and Splash Screen": `node ../tools/brand/render.mjs`
+re-renders `resources/*` and `play-store/icon-512.png` from `tools/brand/logo-source.png` + `splash.html`.
 
 ---
 

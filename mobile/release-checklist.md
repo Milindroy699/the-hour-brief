@@ -1,11 +1,11 @@
 # Release checklist (last verified 2026-09-25)
 
 ## Android bundle
-`mobile/dist/the-hour-brief-1.1.1-vc4.aab` (versionCode 4). Verified on the built artifact: signed with the upload key
+`mobile/dist/the-hour-brief-1.1.2-vc5.aab` (versionCode 5; vc4 had the old stopwatch icon and is superseded). Verified on the built artifact: signed with the upload key
 (SHA-256 `CE:1E:B6:18:75:18:51:6E:D3:03:5B:5D:7C:69:D1:FC:31:3F:4A:64:4F:80:82:8A:1F:00:02:54:2D:F1:E5:35`), target/compile SDK 36,
 min SDK 24, not debuggable, HTTPS only, no native libraries (the 16 KB page-size rule does not apply), zip-aligned, permissions
 `INTERNET, VIBRATE, POST_NOTIFICATIONS, RECEIVE_BOOT_COMPLETED, WAKE_LOCK` only (no exact-alarm, no storage), server URL = production.
-Smoke-tested on the emulator: loads the live edition, Contact line and Listen card on the first screen; with the network off it
+Smoke-tested on the emulator (new icon on the launcher, hourglass splash on navy, offline page in the new colours): loads the live edition, Contact line and Listen card on the first screen; with the network off it
 shows the bundled offline page (`www/offline.html`) that carries the contact details.
 
 ## Google Play: what got the app removed and how it was fixed
@@ -20,7 +20,7 @@ Policy: News and Magazines (enforced 24 Sep): no easy-to-find contact page in th
   2. App content -> News and Magazines declaration: contact URL `https://the-hour-brief.vercel.app/contact.html`; check every other answer.
   3. Data safety: add the leagues purposes (only if leagues are used; see `play-store/listing.md`). Audio is a plain file
      download from Cloudflare: nothing new is collected.
-  4. Upload the vc4 AAB to the track, add the release notes from `play-store/listing.md`, then use "Send for review" / appeal on the
+  4. Upload the vc5 AAB to the track, add the release notes from `play-store/listing.md`, then use "Send for review" / appeal on the
      policy-status page and say what changed (contact page, in-app contact line, updated declaration).
 - Other requirements met: content is under 3 months old (daily), every story links its original publisher, no ads, comments hidden in
   the app (no UGC), leagues use generated names (no UGC), notification permission asked only when the bell is tapped,
