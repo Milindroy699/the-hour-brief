@@ -9,10 +9,10 @@ import { synthesize } from './sarvam.mjs';
 
 const arg = (name, def) => { const i = process.argv.indexOf(name); return i > 0 ? process.argv[i + 1] : def; };
 const DRY = process.argv.includes('--dry');
+const REUSE = process.argv.includes('--reuse');       // keep MP3s already in --out and only generate the missing voices
 const OUT = path.resolve(arg('--out', 'out'));
 const EDITION = path.resolve(arg('--edition', '../../index.html'));
 const KEY = process.env.SARVAM_API_KEY;
-if (!DRY && !KEY) { console.error('SARVAM_API_KEY is not set'); process.exit(1); }
 
 // --voices "shubh,shubh@0.35,mani": a speaker, optionally with @temperature (Bulbul v3: 0.01-2.0, default 0.6).
 const FEMALE = new Set(['ritu', 'priya', 'neha', 'pooja', 'simran', 'kavya', 'ishita', 'shreya', 'roopa', 'tanya', 'shruti', 'suhani', 'kavitha', 'rupali']);
@@ -38,7 +38,7 @@ function excerpt(html) {
   return { text, used };
 }
 
-fs.rmSync(OUT, { recursive: true, force: true });
+if (!REUSE) fs.rmSync(OUT, { recursive: true, force: true });
 fs.mkdirSync(OUT, { recursive: true });
 const html = fs.readFileSync(EDITION, 'utf8');
 const meta = editionMeta(html);
@@ -51,14 +51,19 @@ const rows = [];
 for (const v of VOICES) {
   const wav = path.join(OUT, v.id + '.wav');
   const mp3 = path.join(OUT, v.id + '.mp3');
-  if (DRY) {
+  if (REUSE && fs.existsSync(mp3)) {
+    console.log(`(reusing ${v.id}.mp3)`);
+  } else if (DRY) {
     execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-f', 'lavfi', '-i', `sine=frequency=${300 + rows.length * 60}:duration=4`, wav]);
   } else {
+    if (!KEY) throw new Error('SARVAM_API_KEY is not set');
     const parts = await synthesize(KEY, { text, speaker: v.speaker, pace: PACE, temperature: v.temperature });
     fs.writeFileSync(wav, Buffer.concat(parts.length === 1 ? parts : parts));   // one request => one WAV
   }
-  execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-i', wav, '-ac', '1', '-codec:a', 'libmp3lame', '-b:a', '64k', mp3]);
-  fs.rmSync(wav);
+  if (fs.existsSync(wav)) {
+    execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-i', wav, '-ac', '1', '-codec:a', 'libmp3lame', '-b:a', '64k', mp3]);
+    fs.rmSync(wav);
+  }
   const secs = Number(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=nw=1:nk=1', mp3]).toString().trim());
   rows.push({ ...v, file: v.id + '.mp3', secs });
   console.log(`${v.label}: ${secs.toFixed(1)}s, ${(fs.statSync(mp3).size / 1024).toFixed(0)} KB`);
