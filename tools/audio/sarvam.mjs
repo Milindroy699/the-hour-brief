@@ -1,5 +1,5 @@
 // Minimal Sarvam Bulbul text-to-speech client (REST). Returns WAV bytes.
-const URL_TTS = 'https://api.sarvam.ai/text-to-speech';
+const URL_TTS = process.env.SARVAM_URL || 'https://api.sarvam.ai/text-to-speech';   // overridable so tests can use a fake server
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function call(key, body) {

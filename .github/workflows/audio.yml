@@ -1,0 +1,98 @@
+name: Daily audio
+
+# Reads the latest edition aloud with Sarvam (voice and pace set in tools/audio/generate.mjs) and publishes
+# an MP3 plus a manifest of story timings to R2. Each run spends Sarvam credit (about ₹18 for Quick), so the
+# automatic triggers stay off until the repository variable AUDIO_ENABLED is 'true'; a manual run always works.
+on:
+  push:
+    branches: [main]
+    paths: ['archive/20*.html']
+  schedule:
+    - cron: '20 3 * * *'
+    - cron: '20 4 * * *'
+  workflow_dispatch:
+    inputs:
+      date:
+        description: Edition date (YYYY-MM-DD) or "latest"
+        default: latest
+      modes:
+        description: Lengths to record (quick, full or quick,full)
+        default: quick
+      force:
+        description: Record again even if audio already exists
+        type: boolean
+        default: false
+
+concurrency:
+  group: daily-audio
+  cancel-in-progress: false
+
+jobs:
+  audio:
+    if: github.event_name == 'workflow_dispatch' || vars.AUDIO_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      R2_ENDPOINT: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Make sure ffmpeg is available
+        run: command -v ffmpeg >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg)
+      - name: Install tools
+        working-directory: tools/audio
+        run: npm ci --silent
+      - name: Record the edition
+        working-directory: tools/audio
+        env:
+          SARVAM_API_KEY: ${{ secrets.SARVAM_API_KEY }}
+          DATE: ${{ inputs.date }}
+          MODES: ${{ inputs.modes }}
+          FORCE: ${{ inputs.force }}
+        run: |
+          ARGS=(--date "${DATE:-latest}" --modes "${MODES:-quick}" --skip-existing)
+          [ "$FORCE" = "true" ] && ARGS+=(--force)
+          node generate.mjs "${ARGS[@]}"
+      - name: Publish (audio first, manifest last)
+        if: hashFiles('tools/audio/out/audio/**') != ''
+        working-directory: tools/audio/out/audio
+        run: |
+          for dir in */; do
+            d="${dir%/}"
+            for f in "$d"/*.mp3; do
+              aws s3 cp "$f" "s3://$R2_BUCKET/audio/$f" --endpoint-url "$R2_ENDPOINT" \
+                --content-type audio/mpeg --cache-control "public, max-age=31536000, immutable"
+            done
+            aws s3 cp "$d/manifest.json" "s3://$R2_BUCKET/audio/$d/manifest.json" --endpoint-url "$R2_ENDPOINT" \
+              --content-type application/json --cache-control "public, max-age=300"
+            # drop older recordings of the same day (the manifest now points at the new files)
+            aws s3 sync "$d" "s3://$R2_BUCKET/audio/$d" --delete --size-only --endpoint-url "$R2_ENDPOINT" --only-show-errors
+            echo "published $d"
+          done
+      - name: Keep the last 30 days
+        run: |
+          cutoff=$(date -u -d "30 days ago" +%F)
+          aws s3 ls "s3://$R2_BUCKET/audio/" --endpoint-url "$R2_ENDPOINT" | awk '{print $2}' | tr -d '/' | while read -r d; do
+            if [[ "$d" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] && [[ "$d" < "$cutoff" ]]; then
+              aws s3 rm "s3://$R2_BUCKET/audio/$d/" --recursive --endpoint-url "$R2_ENDPOINT" --only-show-errors && echo "removed $d"
+            fi
+          done
+      - name: Check what was published
+        if: hashFiles('tools/audio/out/audio/**') != ''
+        working-directory: tools/audio/out/audio
+        run: |
+          for dir in */; do
+            d="${dir%/}"
+            curl -fsS "$R2_PUBLIC_URL/audio/$d/manifest.json" -o /tmp/m.json
+            f=$(node -e "const m=require('/tmp/m.json');console.log(Object.values(m.modes).map(x=>x.file).join(' '))")
+            for x in $f; do curl -fsS -o /dev/null -r 0-99 -w "$x: %{http_code} %{content_type}\n" "$R2_PUBLIC_URL/audio/$d/$x"; done
+          done
