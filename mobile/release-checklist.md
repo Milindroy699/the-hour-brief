@@ -8,6 +8,9 @@ min SDK 24, not debuggable, HTTPS only, no native libraries (the 16 KB page-size
 Smoke-tested on the emulator (new icon on the launcher, hourglass splash on navy, offline page in the new colours): loads the live edition, Listen card on the first screen and the Contact row in the footer; with the network off it
 shows the bundled offline page (`www/offline.html`) that carries the contact details.
 
+## Web UI the app loads
+The redesigned screens are part of the website (see DEPLOY.md, "Premium app skin"). Verified on the emulator's Android WebView (Chrome 113): app bar, tabs, chips, Listen card, Audio hub with the device voice, quiz with the streak strip, first-launch sheet. Deploy them after Play's review of the current build, so reviewers keep seeing what they already saw.
+
 ## Google Play: what got the app removed and how it was fixed
 Policy: News and Magazines (enforced 24 Sep): no easy-to-find contact page in the app and on the website.
 - Site (live, loaded by the app): `/contact.html` (labelled "Contact us", email, topics), a "Contact us · About · Privacy" row leading the

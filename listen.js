@@ -86,7 +86,7 @@
   // src: 'rec' = recorded audio, 'tts' = the device voice.  cues[mode][i] is the recording's timing for unit i.
   var S = { mode: 'quick', rate: 1, rates: { quick: 1, full: 1.25 }, units: {}, list: [], ui: 0, ci: 0, state: 'idle', gen: 0, started: false, timer: 0, dog: 0, cur: null,
     src: 'tts', manifest: null, date: '', cues: {}, until: {}, jump: {}, bad: {}, seekTo: null, seeking: false, edge: 0 };
-  var cta = null, player = null, nowEl = null, laneEl = null, badgeEl = null, noteEl = null, playBtn = null, prevBtn = null, nextBtn = null, rateBtn = null;
+  var cta = null, liveEl = null, goEl = null, player = null, nowEl = null, laneEl = null, badgeEl = null, noteEl = null, playBtn = null, prevBtn = null, nextBtn = null, rateBtn = null;
   var audio = null;
   var lit = null;
 
@@ -123,6 +123,11 @@
   var I_NEXT = svg('<rect x="16.6" y="5" width="2.4" height="14" rx="1"/><path d="M5 6.2v11.6a.8.8 0 0 0 1.25.66l8.2-5.8a.8.8 0 0 0 0-1.32l-8.2-5.8A.8.8 0 0 0 5 6.2z"/>');
   var I_CLOSE = svg('<path d="M6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12 19 6.4 17.6 5 12 10.6z"/>');
   var I_REPLAY = svg('<path d="M12 5V2L7 6.5 12 11V8a5 5 0 1 1-5 5H5a7 7 0 1 0 7-8z"/>');
+  var I_CHECK = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.8"/></svg>';
+  var I_SOUND = svg('<path d="M4 9.5v5h3.5l4.5 3.8V5.7L7.5 9.5H4z"/><path d="M15 9a4.2 4.2 0 0 1 0 6M17.6 6.6a8 8 0 0 1 0 10.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>');
+  var I_PAUSED = svg('<path d="M4 9.5v5h3.5l4.5 3.8V5.7L7.5 9.5H4z"/>');
+  var I_PLAYC = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10.2 8.6v6.8l5.4-3.4z" fill="currentColor"/></svg>';
+  var I_MIC = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3"/></svg>';
   var I_HEAD = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><path d="M4 14h3a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2v-4z"/><path d="M20 14h-3a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h1a2 2 0 0 0 2-2v-4z"/></svg>';
 
   // ---- Turning the page into something worth hearing ----
@@ -205,7 +210,7 @@
       var items = lane.querySelectorAll('.item[data-story-id]');
       if (!items.length || lane.hasAttribute('data-pref-off')) return;     // e.g. the quiz section (nothing to read), or one the reader switched off
       units.push({
-        id: 'lane:' + (lane.id || ''), kind: 'lane', el: lane.querySelector('.lane-head'), lane: tag, title: tag, pos: '',
+        id: 'lane:' + (lane.id || ''), kind: 'lane', el: lane.querySelector('.lane-head'), lane: tag, title: tag, label: tagClone ? tagClone.textContent.trim() : tag, pos: '',
         chunks: chunk(stop1(tag) + (lt ? ' ' + stop1(withoutLabel(lt)) : '')),
       });
       items.forEach(function (it, i) {
@@ -327,6 +332,7 @@
       for (var i = 0; i < cues.length; i++) if (t >= cues[i].start && t < until[i]) { j = i; break; }
     }
     if (j >= 0 && j !== S.ui) { S.ui = j; S.ci = 0; light(S.list[j].el); render(); mediaMeta(); }
+    hubProgress();
     recEdge();
   }
   // At the end of a unit whose successor is not next in the recording, jump there (or stop, if it was the last one).
@@ -436,7 +442,7 @@
   }
   function advance() {
     var u = S.list[S.ui];
-    if (S.ci + 1 < u.chunks.length) { S.ci++; S.gen++; speakChunk(); return; }
+    if (S.ci + 1 < u.chunks.length) { S.ci++; S.gen++; hubProgress(); speakChunk(); return; }
     if (S.ui + 1 < S.list.length) { enter(S.ui + 1); S.gen++; speakChunk(); return; }
     finish();
   }
@@ -455,7 +461,7 @@
     render();
   }
 
-  function begin(mode) {
+  function begin(mode, startAt) {
     var carry = S.state === 'playing' || S.state === 'paused';
     var el = carry && S.list[S.ui] && S.list[S.ui].el;
     haltAll();
@@ -469,6 +475,7 @@
     if (el) {                          // switching length mid-listen: carry on from the same story
       for (var i = 0; i < S.list.length; i++) if (S.list[i].el === el) { at = i; break; }
     }
+    if (typeof startAt === 'number') at = Math.max(0, Math.min(S.list.length - 1, startAt));   // a chapter picked in the hub
     if (S.src === 'tts' && !synth) { S.state = 'error'; render(); return; }
     S.state = 'playing';
     enter(at);
@@ -509,6 +516,15 @@
   }
 
   // ---- UI ----
+  function cycleRate() {
+    S.rate = RATES[(RATES.indexOf(S.rate) + 1) % RATES.length];
+    S.rates[S.mode] = S.rate;
+    save();
+    if (S.src === 'rec') { if (audio) { audio.playbackRate = S.rate; recEdge(); } }
+    else if (S.state === 'playing') go();
+    render();
+  }
+
   function ensurePlayer() {
     if (!player) {
       player = mk('div', 'hb-player');
@@ -532,14 +548,12 @@
       prevBtn.addEventListener('click', function () { skip(-1); });
       nextBtn.addEventListener('click', function () { skip(1); });
       playBtn.addEventListener('click', toggle);
-      rateBtn.addEventListener('click', function () {
-        S.rate = RATES[(RATES.indexOf(S.rate) + 1) % RATES.length];
-        S.rates[S.mode] = S.rate;
-        save();
-        if (S.src === 'rec') { if (audio) { audio.playbackRate = S.rate; recEdge(); } }
-        else if (S.state === 'playing') go();
-        render();
-      });
+      rateBtn.addEventListener('click', cycleRate);
+      now.setAttribute('role', 'button');                       // tap the title area to open the full player
+      now.tabIndex = 0;
+      now.setAttribute('aria-label', 'Open the audio player');
+      now.addEventListener('click', openHub);
+      now.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openHub(); } });
       close.addEventListener('click', function () { stop(); var b = cta && cta.querySelector('button'); if (b) b.focus({ preventScroll: true }); });
       [prevBtn, playBtn, nextBtn, rateBtn, close].forEach(function (b) { ctl.appendChild(b); });
       player.appendChild(now);
@@ -558,15 +572,22 @@
         var m = b.getAttribute('data-mode');
         b.hidden = !avail(m);
         b.setAttribute('aria-pressed', String(on && S.mode === m));
-        b.querySelector('.hb-cta-min').textContent = minutes(m) + ' min';
+        b.querySelector('.hb-cta-min').textContent = minutes(m) + ' min · ' + (hasRec(m) ? voiceName() + ' (AI)' : 'device voice');
       });
       var rec = [], dev = [];
       MODES.forEach(function (m) { if (avail(m)) (hasRec(m) ? rec : dev).push(m === 'quick' ? 'Quick' : 'Full'); });
-      noteEl.hidden = !rec.length;
-      if (MODES.length === 1) noteEl.textContent = rec.length ? 'Read by ' + voiceName() + ', an AI voice.' : '';
+      noteEl.hidden = !(rec.length || dev.length);
+      if (MODES.length === 1) noteEl.textContent = rec.length ? 'Read by ' + voiceName() + ', an AI voice.' : dev.length ? 'Read aloud by your device’s voice.' : '';
       else noteEl.textContent = rec.length ? rec.join(' and ') + (rec.length > 1 ? ' are' : ' is') + ' read by ' + voiceName() + ', an AI voice.' +
         (dev.length ? ' ' + dev.join(' and ') + ' uses your device’s voice.' : '') : '';
     }
+    if (cta && goEl) {
+      var pl = S.state === 'playing';
+      goEl.innerHTML = pl ? I_PAUSE : (S.state === 'done' || S.state === 'error') ? I_REPLAY : I_PLAY;
+      goEl.setAttribute('aria-label', pl ? 'Pause' : 'Play today’s brief');
+      liveEl.hidden = !MODES.some(hasRec);
+    }
+    renderHub();
     if (!player || player.hidden) return;
     var u = S.list[S.ui] || {};
     if (S.state === 'error') {
@@ -604,6 +625,10 @@
       var t = mk('div', 'listen-cta-t');
       t.innerHTML = I_HEAD;
       t.appendChild(mk('span', '', 'Listen to today’s brief'));
+      liveEl = mk('i', 'listen-live');
+      liveEl.hidden = true;
+      liveEl.setAttribute('aria-hidden', 'true');
+      t.appendChild(liveEl);
       var row = mk('div', 'listen-cta-b' + (MODES.length === 1 ? ' single' : ''));
       [['quick', 'Quick', 'headlines and takeaways'], ['full', 'Full', 'every story in full']].filter(function (m) { return MODES.indexOf(m[0]) >= 0; }).forEach(function (m) {
         var b = mk('button', 'listen-cta-btn');
@@ -612,7 +637,7 @@
         b.setAttribute('aria-pressed', 'false');
         b.setAttribute('aria-label', MODES.length === 1 ? 'Listen to today’s brief: ' + m[2] : 'Listen: ' + m[1].toLowerCase() + ' version, ' + m[2]);
         b.innerHTML = '<span class="hb-cta-name"></span><span class="hb-cta-min"></span>';
-        b.querySelector('.hb-cta-name').textContent = MODES.length === 1 ? 'Play the brief' : m[1];
+        b.querySelector('.hb-cta-name').textContent = MODES.length === 1 ? 'Quick brief' : m[1];
         b.addEventListener('click', function () {
           if (S.state === 'playing' && S.mode === m[0]) toggle();       // tapping the active length pauses
           else if (S.state === 'paused' && S.mode === m[0]) toggle();
@@ -622,13 +647,238 @@
       });
       noteEl = mk('p', 'listen-cta-note');
       noteEl.hidden = true;
+      goEl = mk('button', 'listen-go');
+      goEl.type = 'button';
+      goEl.innerHTML = I_PLAY;
+      goEl.setAttribute('aria-label', 'Play today’s brief');
+      goEl.addEventListener('click', function () {
+        if (S.state === 'playing' || S.state === 'paused') toggle();
+        else begin(S.mode);
+      });
+      var foot = mk('div', 'listen-cta-foot');
+      foot.appendChild(noteEl);
+      foot.appendChild(goEl);
       cta.appendChild(t);
       cta.appendChild(row);
-      cta.appendChild(noteEl);
+      cta.appendChild(foot);
     }
     if (cta.parentNode !== host.parentNode || cta.previousElementSibling !== host) host.insertAdjacentElement('afterend', cta);
     cta.hidden = !reader();
     render();
+  }
+
+  // ---- Audio hub: a full-screen player with progress, controls, the narrator and a chapter list ----
+  var hub = null, hubEl = {}, hubShown = false, hubPrev = null;
+  function fmt(sec) { sec = Math.max(0, Math.round(sec)); var m = Math.floor(sec / 60), r = sec % 60; return (m < 10 ? '0' : '') + m + ':' + (r < 10 ? '0' : '') + r; }
+  // Wall-clock seconds a unit takes at the current speed: the recording's own timing, or an estimate for the device voice.
+  function unitSecs(mode, i, rate) {
+    return hasRec(mode) ? (S.until[mode][i] - S.cues[mode][i].start) / rate : S.units[mode][i].words / (WPM * rate) * 60;
+  }
+  function progress() {
+    var list = S.units[S.mode], rate = S.rate, done = 0, tot = 0;
+    for (var i = 0; i < list.length; i++) {
+      var d = unitSecs(S.mode, i, rate);
+      tot += d;
+      if (S.state !== 'idle' && i < S.ui) done += d;
+      else if (S.state !== 'idle' && i === S.ui) {
+        if (S.state === 'done') done += d;
+        else if (S.src === 'rec' && audio && hasRec(S.mode)) done += Math.max(0, Math.min(d, (audio.currentTime - S.cues[S.mode][i].start) / rate));
+        else done += d * (S.ci / Math.max(1, list[i].chunks.length));
+      }
+    }
+    if (S.state === 'done') done = tot;
+    return { cur: Math.min(done, tot), tot: tot };
+  }
+  function chapters() {
+    var out = [];
+    (S.units[S.mode] || []).forEach(function (u, i) { if (u.kind !== 'story') out.push(i); });
+    return out;
+  }
+  function buildHub() {
+    if (hub) return;
+    hub = mk('section', 'hb-hub');
+    hub.hidden = true;
+    hub.setAttribute('role', 'region');
+    hub.setAttribute('aria-label', 'Audio');
+    var top = mk('header', 'hub-top');
+    var logo = mk('img', 'ab-logo');
+    logo.src = '/brand/logo-128.png';
+    logo.alt = '';
+    logo.width = logo.height = 34;
+    var brand = mk('div', 'ab-brand');
+    var word = mk('div', 'hub-word');
+    word.innerHTML = 'THE HOUR <span>BRIEF</span>';
+    brand.appendChild(word);
+    brand.appendChild(mk('p', 'ab-screen', 'Audio'));
+    hubEl.close = btn('ab-btn hub-close', 'Close the audio player', I_CLOSE);
+    hubEl.close.addEventListener('click', closeHub);
+    top.appendChild(logo);
+    top.appendChild(brand);
+    top.appendChild(hubEl.close);
+
+    var sc = mk('div', 'hub-scroll');
+    var st = mk('div', 'hub-status');
+    hubEl.pill = mk('span', 'hub-pill');
+    st.appendChild(hubEl.pill);
+    var card = mk('div', 'hub-card');
+    var kick = mk('div', 'hub-kick');
+    hubEl.ed = mk('span', 'hub-ed');
+    hubEl.date = mk('span', 'hub-date');
+    kick.appendChild(hubEl.ed);
+    kick.appendChild(hubEl.date);
+    hubEl.title = mk('h2', 'hub-title', 'Today’s brief');
+    hubEl.sub = mk('p', 'hub-sub');
+    var prog = mk('div', 'hub-prog');
+    var bar = mk('div', 'hub-bar');
+    hubEl.fill = mk('i');
+    bar.appendChild(hubEl.fill);
+    var times = mk('div', 'hub-times');
+    hubEl.cur = mk('span', 'hub-cur', '00:00');
+    hubEl.rem = mk('span', 'hub-rem');
+    hubEl.tot = mk('span', 'hub-tot');
+    times.appendChild(hubEl.cur);
+    times.appendChild(hubEl.rem);
+    times.appendChild(hubEl.tot);
+    prog.appendChild(bar);
+    prog.appendChild(times);
+    var ctl = mk('div', 'hub-ctl');
+    hubEl.rate = btn('hub-b hub-rate', 'Speed', '');
+    hubEl.prev = btn('hub-b hub-prev', 'Previous', I_PREV);
+    hubEl.play = btn('hub-b hub-play', 'Play', I_PLAY);
+    hubEl.next = btn('hub-b hub-next', 'Next', I_NEXT);
+    hubEl.rate.addEventListener('click', cycleRate);
+    hubEl.prev.addEventListener('click', function () { skip(-1); });
+    hubEl.next.addEventListener('click', function () { skip(1); });
+    hubEl.play.addEventListener('click', function () { if (S.state === 'idle') begin(S.mode); else toggle(); });
+    [hubEl.rate, hubEl.prev, hubEl.play, hubEl.next].forEach(function (b) { ctl.appendChild(b); });
+    var voice = mk('div', 'hub-voice');
+    var mic = mk('span', 'hub-mic');
+    mic.innerHTML = I_MIC;
+    var vt = mk('div');
+    vt.appendChild(mk('small', '', 'NARRATOR VOICE'));
+    hubEl.voice = mk('b');
+    vt.appendChild(hubEl.voice);
+    voice.appendChild(mic);
+    voice.appendChild(vt);
+    hubEl.msg = mk('p', 'hub-msg');
+    hubEl.msg.setAttribute('role', 'status');
+    card.appendChild(kick);
+    card.appendChild(hubEl.title);
+    card.appendChild(hubEl.sub);
+    card.appendChild(prog);
+    card.appendChild(ctl);
+    card.appendChild(voice);
+    card.appendChild(hubEl.msg);
+
+    var chh = mk('div', 'hub-chh');
+    chh.appendChild(mk('h3', '', 'Chapters'));
+    hubEl.chn = mk('span');
+    chh.appendChild(hubEl.chn);
+    hubEl.list = mk('ol', 'hub-ch');
+    sc.appendChild(st);
+    sc.appendChild(card);
+    sc.appendChild(chh);
+    sc.appendChild(hubEl.list);
+    hub.appendChild(top);
+    hub.appendChild(sc);
+    document.body.appendChild(hub);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && hubShown) closeHub(); });
+  }
+  function buildChapters() {
+    if (!hub) return;
+    hubEl.list.textContent = '';
+    var list = S.units[S.mode] || [], chs = chapters(), n = 0;
+    chs.forEach(function (i, k) {
+      var u = list[i], next = k + 1 < chs.length ? chs[k + 1] : list.length, stories = 0;
+      for (var j = i + 1; j < next; j++) if (list[j].kind === 'story') stories++;
+      var when = 0;
+      for (var q = 0; q < i; q++) when += unitSecs(S.mode, q, S.rate);
+      var li = mk('li');
+      var b = mk('button', 'hub-row');
+      b.type = 'button';
+      b.setAttribute('data-i', String(i));
+      var tm = mk('span', 'hub-t', hasRec(S.mode) ? fmt(when) : String(k + 1));
+      var tx = mk('span', 'hub-tx');
+      tx.appendChild(mk('b', '', u.kind === 'intro' ? 'Introduction' : u.kind === 'outro' ? 'Wrap-up' : (u.label || u.title)));
+      tx.appendChild(mk('small', '', u.kind === 'lane' ? stories + (stories === 1 ? ' story' : ' stories') + ' · ' + Math.max(1, Math.round(sectionSecs(i, next) / 60)) + ' min' : u.kind === 'intro' ? 'Edition and the day’s quote' : 'Before you go'));
+      var ic = mk('span', 'hub-i');
+      b.appendChild(tm);
+      b.appendChild(tx);
+      b.appendChild(ic);
+      b.addEventListener('click', function () { playFrom(i); });
+      li.appendChild(b);
+      hubEl.list.appendChild(li);
+      n++;
+    });
+    hubEl.chn.textContent = n + (n === 1 ? ' section' : ' sections');
+  }
+  function sectionSecs(from, to) { var t = 0; for (var i = from; i < to; i++) t += unitSecs(S.mode, i, S.rate); return t; }
+  function playFrom(i) {
+    if (S.state === 'playing' || S.state === 'paused') { S.state = 'playing'; enter(i); go(); }
+    else begin(S.mode, i);
+  }
+  function hubProgress() {
+    if (!hub || hub.hidden) return;
+    var p = progress();
+    hubEl.fill.style.width = (p.tot ? Math.min(100, p.cur / p.tot * 100) : 0) + '%';
+    hubEl.cur.textContent = fmt(p.cur);
+    hubEl.rem.textContent = 'Remaining -' + fmt(p.tot - p.cur);
+    hubEl.tot.textContent = fmt(p.tot);
+  }
+  var hubKey = '';
+  function renderHub() {
+    if (!hub || hub.hidden) return;
+    var key = S.mode + '|' + S.rate + '|' + hasRec(S.mode) + '|' + (S.units[S.mode] || []).length;
+    if (key !== hubKey) { hubKey = key; buildChapters(); }      // timings depend on the voice, the speed and what is switched on
+    var can = avail(S.mode), list = S.units[S.mode] || [], stories = 0, lanes = 0;
+    list.forEach(function (u) { if (u.kind === 'story') stories++; else if (u.kind === 'lane') lanes++; });
+    var pe = document.querySelector('.pause-edition'), parts = pe ? pe.textContent.split(' \u00B7 ') : [];
+    hubEl.ed.textContent = (parts[0] || 'Today').toUpperCase();
+    hubEl.date.textContent = parts[1] || '';
+    var rec = hasRec(S.mode);
+    hubEl.pill.className = 'hub-pill ' + (rec ? 'rec' : 'dev');
+    hubEl.pill.textContent = !can ? 'Audio unavailable' : rec ? 'AI voice ready' : 'Device voice';
+    hubEl.sub.textContent = stories ? Math.max(1, Math.round(progress().tot / 60)) + ' min · ' + stories + (stories === 1 ? ' story' : ' stories') + ' across ' + lanes + (lanes === 1 ? ' section' : ' sections') : 'Nothing to play: every section with stories is switched off.';
+    hubEl.voice.textContent = rec ? voiceName() + ' (AI voice)' : 'Your device’s voice';
+    var playing = S.state === 'playing', again = S.state === 'done' || S.state === 'error', idle = S.state === 'idle';
+    hubEl.play.innerHTML = playing ? I_PAUSE : again ? I_REPLAY : I_PLAY;
+    hubEl.play.setAttribute('aria-label', playing ? 'Pause' : again ? 'Play again' : 'Play');
+    hubEl.play.disabled = !can || !stories;
+    hubEl.prev.disabled = idle || S.state === 'done' || S.ui <= 0;
+    hubEl.next.disabled = idle || S.state === 'done' || S.ui >= list.length - 1;
+    hubEl.rate.textContent = String(S.rate).replace(/^0\./, '.') + '×';
+    hubEl.rate.setAttribute('aria-label', 'Speed ' + S.rate + ' times. Tap to change.');
+    hubEl.msg.textContent = S.state === 'error' ? 'Audio isn’t available right now. Check your connection or your device’s text-to-speech settings.' : !can ? 'Audio isn’t available on this device yet.' : '';
+    // chapter rows: done, current, upcoming
+    var chs = chapters(), curK = -1;
+    chs.forEach(function (i, k) { if (i <= S.ui) curK = k; });
+    hubEl.list.querySelectorAll('.hub-row').forEach(function (b, k) {
+      var state = idle ? 'next' : S.state === 'done' ? 'done' : k < curK ? 'done' : k === curK ? 'now' : 'next';
+      b.className = 'hub-row ' + state;
+      b.setAttribute('aria-current', state === 'now' ? 'true' : 'false');
+      b.querySelector('.hub-i').innerHTML = state === 'done' ? I_CHECK : state === 'now' ? (playing ? I_SOUND : I_PAUSED) : I_PLAYC;
+    });
+    hubProgress();
+  }
+  function openHub() {
+    buildHub();
+    if (hubShown) return;
+    hubPrev = document.activeElement;
+    buildChapters();
+    hub.hidden = false;
+    hubShown = true;
+    document.documentElement.classList.add('hb-hub-open');
+    renderHub();
+    try { hubEl.play.focus({ preventScroll: true }); } catch (e) { /* ignore */ }
+    document.dispatchEvent(new CustomEvent('hb:hub'));
+  }
+  function closeHub() {
+    if (!hub || !hubShown) return;
+    hub.hidden = true;
+    hubShown = false;
+    document.documentElement.classList.remove('hb-hub-open');
+    document.dispatchEvent(new CustomEvent('hb:hub'));
+    if (hubPrev && hubPrev.focus && document.contains(hubPrev)) { try { hubPrev.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }
   }
 
   // Coming back to the app after the OS suspended speech: carry on from this sentence.
@@ -662,5 +912,5 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 
-  window.HBListen = { start: begin, stop: stop, state: function () { return S.state; }, source: function () { return S.src; } };
+  window.HBListen = { start: begin, stop: stop, state: function () { return S.state; }, source: function () { return S.src; }, openHub: openHub, closeHub: closeHub, hubOpen: function () { return hubShown; } };
 })();

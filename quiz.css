@@ -162,6 +162,18 @@
   text-decoration: none;
 }
 .quiz-chip span:last-child { margin-left: auto; color: var(--brand); white-space: nowrap; }
+/* the chip's inner structure (icon disc, title, sub-line, action); phones restyle it in /app.css */
+.quiz-chip .qc-disc { flex: none; font-size: 1rem; }
+.quiz-chip .qc-disc.done { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: var(--up); color: #fff; font-size: 0.8rem; font-weight: 700; }
+.quiz-chip .qc-text { flex: 1 1 auto; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 8px; min-width: 0; }
+.quiz-chip .qc-text span:last-child { margin-left: 0; color: var(--ink-soft); font-weight: 500; white-space: normal; }
+.quiz-chip .qc-sub::before { content: '\00B7'; margin-right: 8px; color: var(--ink-faint); }
+/* new pieces that only the phone/app skin (/app.css) shows */
+.qz-streak, .qz-past-box { display: none; }
+.quiz-where { display: inline-flex; align-items: center; gap: 4px 10px; flex-wrap: wrap; }
+.quiz-topic { color: var(--brand); }
+.quiz-why-label { display: block; margin-bottom: 2px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); }
+.quiz-why-text { display: block; }
 
 .item.deeplinked { animation: hb-flash 1.8s ease-out 1; }
 @keyframes hb-flash { from { background: color-mix(in srgb, var(--brand) 14%, transparent); } to { background: transparent; } }

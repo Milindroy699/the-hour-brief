@@ -94,13 +94,15 @@
   }
 
   // ---------- streaks (consecutive published editions with a result) ----------
-  var editionsPromise = null;
+  var editionsPromise = null, edNo = {};
   function getEditions() {
     if (!editionsPromise) {
       editionsPromise = fetch('/editions.json', { cache: 'no-store' })
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (d) {
-          return ((d && d.editions) || []).map(function (e) { return e.date; }).filter(Boolean).sort();
+          var list = (d && d.editions) || [];
+          list.forEach(function (e) { if (e && e.date && e.edition) edNo[e.date] = e.edition; });
+          return list.map(function (e) { return e.date; }).filter(Boolean).sort();
         })
         .catch(function () { return []; });
     }
@@ -258,9 +260,22 @@
   var picks = [];
   var practice = false;
 
+  // The section a question's story belongs to ("AI & Tech"), for the small badge above the question
+  function topicOf(q) {
+    var it = q && q.story && document.querySelector('.item[data-story-id="' + q.story + '"]');
+    var tag = it && it.closest('section.lane') && it.closest('section.lane').querySelector('.lane-tag');
+    if (!tag) return '';
+    var c = tag.cloneNode(true), t = c.querySelector('.lane-time');
+    if (t) t.remove();
+    return c.textContent.trim();
+  }
   function progress(i, done) {
     var bar = el('div', 'quiz-progress');
-    bar.appendChild(el('span', '', done ? 'Quiz complete' : 'Question ' + (i + 1) + ' of ' + N));
+    var left = el('span', 'quiz-where');
+    var topic = done ? '' : topicOf(questions[i]);
+    if (topic) left.appendChild(el('span', 'quiz-topic', topic));
+    left.appendChild(el('span', 'quiz-count', done ? 'Quiz complete' : 'Question ' + (i + 1) + ' of ' + N));
+    bar.appendChild(left);
     var dots = el('div', 'quiz-dots');
     dots.setAttribute('aria-hidden', 'true');
     for (var k = 0; k < N; k++) {
@@ -330,7 +345,8 @@
 
     var live = card.querySelector('.quiz-feedback');
     var why = el('div', 'quiz-why');
-    why.appendChild(el('span', '', (ok ? 'Correct. ' : 'Not quite. ') + (q.why || '')));
+    why.appendChild(el('span', 'quiz-why-label', 'Insight'));
+    why.appendChild(el('span', 'quiz-why-text', (ok ? 'Correct. ' : 'Not quite. ') + (q.why || '')));
     var head = storyHeadline(q.story);
     if (head) {
       why.appendChild(document.createElement('br'));
@@ -349,6 +365,7 @@
     actions.appendChild(next);
     live.appendChild(actions);
     next.focus({ preventScroll: true });
+    refreshStreak();
   }
 
   function finish() {
@@ -362,6 +379,7 @@
     }
     showResult(practice ? res : saved, !practice, !practice);
     if (!practice) syncScores();
+    refreshStreak();
   }
 
   // ---------- badges + review prompt (kept on this device) ----------
@@ -660,19 +678,96 @@
       streak = mine ? streakEndingAt(dates, results, DATE)
         : streakEndingAt(dates, results, dates.length > 1 ? dates[dates.length - 2] : prevDay(DATE));
     }
-    var label;
+    var title, sub;
     if (mine) {
-      label = 'Quiz done: ' + mine.s + '/' + mine.t + (streak >= 2 ? ' · 🔥 ' + streak + '-day streak' : '');
+      title = 'Quiz done: ' + mine.s + '/' + mine.t;
+      sub = streak >= 2 ? '🔥 ' + streak + '-day streak' : 'Nice reading';
     } else {
-      label = (isLatest ? 'Today’s quiz' : 'Quiz for this edition') + ' · ' + N + ' questions' +
-        (streak >= 1 ? ' · 🔥 keep your ' + streak + '-day streak' : ' · ~1 min');
+      title = (isLatest ? 'Today’s quiz' : 'Quiz for this edition') + ' · ' + N + ' questions';
+      sub = streak >= 1 ? '🔥 keep your ' + streak + '-day streak' : '~1 min';
     }
     chip.textContent = '';
-    var icon = el('span', '', mine ? '✅' : '🧠');
-    icon.setAttribute('aria-hidden', 'true');
-    chip.appendChild(icon);
-    chip.appendChild(el('span', '', label));
-    chip.appendChild(el('span', '', mine ? 'Review →' : 'Play →'));
+    var disc = el('span', 'qc-disc' + (mine ? ' done' : ''), mine ? '✓' : '🧠');
+    disc.setAttribute('aria-hidden', 'true');
+    var text = el('span', 'qc-text');
+    text.appendChild(el('span', 'qc-title', title));
+    text.appendChild(el('span', 'qc-sub', sub));
+    chip.appendChild(disc);
+    chip.appendChild(text);
+    chip.appendChild(el('span', 'qc-go', mine ? 'Review →' : 'Play →'));
+  }
+
+  // ---------- streak card (a week strip from your own results), past quizzes ----------
+  var section2 = document.getElementById('quiz');
+  var streakBox = el('div', 'qz-streak');
+  var headEl = section2 && section2.querySelector('.lane-head');
+  if (headEl) headEl.insertAdjacentElement('afterend', streakBox); else root.insertAdjacentElement('beforebegin', streakBox);
+  var pastBox = el('div', 'qz-past-box');
+  var lastDates = [];
+  var DAY_LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  function addDays(d, n) { return new Date(Date.parse(d + 'T00:00:00Z') + n * 86400000).toISOString().slice(0, 10); }
+  function refreshStreak(dates) {
+    if (dates) lastDates = dates;
+    var results = load().r, mine = results[DATE];
+    var latest = lastDates.length ? lastDates[lastDates.length - 1] : DATE;
+    var streak = mine ? streakEndingAt(lastDates, results, DATE)
+      : (latest === DATE ? streakEndingAt(lastDates, results, lastDates.length > 1 ? lastDates[lastDates.length - 2] : prevDay(DATE)) : 0);
+    var st = computeStats(lastDates);
+    streakBox.textContent = '';
+    var top = el('div', 'qz-st-top');
+    top.appendChild(el('span', 'qz-st-pill' + (streak ? ' on' : ''), (streak ? '🔥 ' + streak + '-day streak' : 'Start a streak')));
+    if (st.best >= 2) top.appendChild(el('span', 'qz-st-best', 'Best streak ' + st.best));
+    streakBox.appendChild(top);
+    var wd = new Date(Date.parse(DATE + 'T00:00:00Z')).getUTCDay();
+    var monday = addDays(DATE, -((wd + 6) % 7));
+    var week = el('div', 'qz-week');
+    week.setAttribute('role', 'list');
+    for (var k = 0; k < 7; k++) {
+      var d = addDays(monday, k), cell = el('div', 'qz-day');
+      cell.setAttribute('role', 'listitem');
+      var state = results[d] ? 'done' : d === DATE ? 'today' : d > DATE ? 'later' : 'missed';
+      cell.className += ' ' + state;
+      cell.appendChild(el('span', 'qz-dl', DAY_LETTERS[k]));
+      var dot = el('span', 'qz-dd', state === 'done' ? '✓' : (state === 'today' && !mine && streak >= 1 ? '🔥' : String(+d.slice(8))));
+      dot.setAttribute('aria-hidden', 'true');
+      cell.appendChild(dot);
+      cell.setAttribute('aria-label', prettyDate(d) + (state === 'done' ? ', quiz played' : state === 'today' ? ', today' : ''));
+      week.appendChild(cell);
+    }
+    streakBox.appendChild(week);
+    var tile = el('div', 'qz-drill');
+    var tx = el('div');
+    var answered = mine ? N : Math.min(N, picks.length);
+    tx.appendChild(el('b', '', mine ? 'Today’s quiz completed' : 'Today’s quiz'));
+    tx.appendChild(el('span', '', mine ? mine.s + ' of ' + mine.t + ' correct' : answered + ' of ' + N + ' answered' + (answered < N ? ' · ' + (N - answered) + ' to go' : '')));
+    tile.appendChild(tx);
+    tile.appendChild(el('span', 'qz-drill-score', mine ? mine.s + '/' + mine.t : N + ' questions'));
+    streakBox.appendChild(tile);
+    renderPast();
+  }
+  function renderPast() {
+    var results = load().r;
+    var dates = Object.keys(results).filter(function (d) { return d !== DATE; }).sort().reverse().slice(0, 4);
+    pastBox.textContent = '';
+    pastBox.hidden = !dates.length;
+    if (!dates.length) return;
+    var head = el('div', 'qz-past-head');
+    head.appendChild(el('h3', '', 'Past quizzes'));
+    var all = el('a', '', 'Archive');
+    all.href = '/archive/';
+    head.appendChild(all);
+    pastBox.appendChild(head);
+    dates.forEach(function (d) {
+      var r = results[d], row = el('a', 'qz-past');
+      row.href = '/archive/' + d + '.html#quiz';
+      row.appendChild(el('span', 'qz-past-no', edNo[d] ? ('00' + edNo[d]).slice(-3) : '·'));
+      var tx = el('span', 'qz-past-tx');
+      tx.appendChild(el('b', '', prettyDate(d)));
+      tx.appendChild(el('small', '', r.t + ' questions'));
+      row.appendChild(tx);
+      row.appendChild(el('span', 'qz-past-score' + (r.s === r.t ? ' perfect' : ''), r.s + '/' + r.t));
+      pastBox.appendChild(row);
+    });
   }
 
   // ---------- friends leagues ----------
@@ -935,10 +1030,12 @@
   }
 
   // ---------- start ----------
+  root.insertAdjacentElement('afterend', pastBox);            // between the quiz and the leagues
   if (saved && Array.isArray(saved.a)) showResult(saved, true);
   else showQuestion(0, false);
+  refreshStreak([]);
   updateChip([]);
-  getEditions().then(updateChip);
+  getEditions().then(function (dates) { updateChip(dates); refreshStreak(dates); });
   renderLeagues();
   lgLoad().leagues.forEach(function (lg) { refreshBoard(lg.code); });
   syncScores();

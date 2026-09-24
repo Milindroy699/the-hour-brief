@@ -53,17 +53,20 @@ async function open({ prefs = null, native = false, width = 412, dark = false, h
 }
 const order = () => J(`[...document.querySelectorAll('section.lane')].map(s => s.id)`);
 const shown = () => J(`[...document.querySelectorAll('section.lane')].filter(s => getComputedStyle(s).display !== 'none').map(s => s.id)`);
-const pills = () => J(`[...document.querySelectorAll('.nav a')].map(a => ({ t: a.textContent.trim(), hidden: getComputedStyle(a).display === 'none' }))`);
+const pills = () => J(`[...document.querySelectorAll('.nav a:not(.nav-all)')].map(a => ({ t: a.textContent.trim(), hidden: getComputedStyle(a).display === 'none' }))`);
 const stored = () => J(`JSON.parse(localStorage.getItem('hb-prefs-v1') || 'null')`);
 const sheet = `document.querySelector('.rd-sheet')`;
 const row = (id) => `document.querySelector('.rd-prefs li[data-id="${id}"]')`;
-const openSheet = async () => { await c.ev(`document.querySelector('.reader-prefs').click()`); await waitFor(sheet); };
+const openSheet = async () => {                       // the menu (top right) -> Sections
+  await c.ev(`document.querySelector('.ab-menu').click()`); await waitFor(`!!document.querySelector('.rd-menu')`);
+  await c.ev(`document.querySelector('.rd-item[data-act=sections]').click()`); await waitFor(`!!document.querySelector('.rd-prefs')`);
+};
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 // ---------- 1. the website on a phone: default, then the sheet ----------
 await open();
 check('default: canonical order, every section visible', eq(await order(), ['ai', 'biz', 'mkt', 'quiz']) && eq(await shown(), ['ai', 'biz', 'mkt', 'quiz']), JSON.stringify(await order()));
-check('the sliders button is in the tools row, and the website never pops the sheet up by itself', (await c.ev(`!!document.querySelector('.reader-tools .reader-prefs') && !document.querySelector('.rd-sheet')`)) === true);
+check('the menu button sits in the app bar (top right), and the website never pops the sheet up by itself', (await c.ev(`!!document.querySelector('.ab-actions .ab-menu') && !document.querySelector('.rd-sheet')`)) === true);
 await openSheet();
 let t = await J(`({ dialog: ${sheet}.getAttribute('role'), title: ${sheet}.querySelector('h2').textContent, names: [...document.querySelectorAll('.rd-prefs .rd-sw-name')].map(n => n.textContent), on: [...document.querySelectorAll('.rd-prefs input')].map(i => i.checked), upFirst: ${row('ai')}.querySelector('.rd-up').disabled, downLast: ${row('quiz')}.querySelector('.rd-down').disabled, done: ${sheet}.querySelector('.rd-close').textContent })`);
 check('the sheet lists the four sections, all on, with sensible arrows', t.dialog === 'dialog' && t.title === 'Your sections' && eq(t.names, ['AI & Tech', 'Product & Business', 'Stock Market', 'Daily quiz']) && t.on.every(Boolean) && t.upFirst && t.downLast && t.done === 'Done', JSON.stringify(t));
@@ -103,7 +106,7 @@ await c.ev(`${row('ai')}.querySelector('input').click()`); await c.sleep(150);
 await c.ev(`${row('quiz')}.querySelector('input').click()`); await c.sleep(200);
 await c.ev(`${sheet}.querySelector('.rd-close').click()`); await c.sleep(200);
 t = await J(`({ chip: document.querySelector('.quiz-chip') ? getComputedStyle(document.querySelector('.quiz-chip')).display : 'none', body: document.body.classList.contains('hb-quiz-off'), sheet: !!${sheet}, focus: document.activeElement.className })`);
-check('quiz off: its chip under the pills is gone too; Done closes the sheet and returns focus to the button', t.chip === 'none' && t.body && !t.sheet && /reader-prefs/.test(t.focus), JSON.stringify(t));
+check('quiz off: its chip under the pills is gone too; Done closes the sheet and returns focus to the menu button', t.chip === 'none' && t.body && !t.sheet && /ab-menu/.test(t.focus), JSON.stringify(t));
 
 // ---------- 6. it survives a reload, with no sheet ----------
 const before = { o: await order(), s: await shown(), p: await pills() };
@@ -244,9 +247,9 @@ check('device voice: hidden section is not read, the others are read in the read
 
 // ---------- visuals ----------
 await open({ prefs: { order: ['mkt', 'ai', 'biz', 'quiz'], off: ['biz'] }, dark: true, width: 360, wait: 1500 });
-t = await J(`(() => { const nav = document.querySelector('.nav'), first = [...nav.querySelectorAll('a')].find((a) => getComputedStyle(a).display !== 'none'); const chip = document.querySelector('.quiz-chip'), tools = document.querySelector('.reader-tools'); const cr = chip.getBoundingClientRect(), tr = tools.getBoundingClientRect(); const bs = [...tools.querySelectorAll('.reader-btn')].map((b) => Math.round(b.getBoundingClientRect().top)); return { scroll: nav.scrollLeft, first: first.textContent.trim(), left: Math.round(first.getBoundingClientRect().left), chipH: Math.round(cr.height), chipW: Math.round(cr.width), toolsW: Math.round(tr.width), btnRowBelow: bs.every((y) => y >= cr.bottom - 1) }; })()`);
-check('a reordered pill row starts at its first pill (not scrolled sideways by scroll-snap)', t.scroll === 0 && t.first === 'Stock Market' && t.left >= 0, JSON.stringify(t));
-check('360px: the quiz chip has its own row (one or two lines) and the three buttons sit under it', t.chipH <= 84 && t.chipW >= t.toolsW - 2 && t.btnRowBelow, JSON.stringify(t));
+t = await J(`(() => { const nav = document.querySelector('.nav'), all = nav.querySelector('.nav-all'), first = [...nav.querySelectorAll('a:not(.nav-all)')].find((a) => getComputedStyle(a).display !== 'none'); const chip = document.querySelector('.quiz-chip'), tools = document.querySelector('.reader-tools'); const cr = chip.getBoundingClientRect(), tr = tools.getBoundingClientRect(); const bs = [...tools.querySelectorAll('.reader-btn')].map((b) => Math.round(b.getBoundingClientRect().top)); return { scroll: nav.scrollLeft, first: first.textContent.trim(), left: Math.round(all.getBoundingClientRect().left), chipH: Math.round(cr.height), chipW: Math.round(cr.width), toolsW: Math.round(tr.width), bar: [...document.querySelectorAll('.ab-actions .ab-btn')].map((b) => { const r = b.getBoundingClientRect(); return { l: Math.round(r.left), r: Math.round(r.right) }; }) }; })()`);
+check('a reordered chip row starts at the beginning (All, then the first section), not scrolled sideways by scroll-snap', t.scroll === 0 && t.first === 'Stock Market' && t.left >= 0, JSON.stringify(t));
+check('360px: the quiz chip is one full-width tile, and the app bar keeps its three buttons on screen', t.chipH <= 84 && t.chipW >= t.toolsW - 2 && t.bar.every((r) => r.l >= 0 && r.r <= 360), JSON.stringify(t));
 await c.shot(`${OUT}/prefs_page_dark.png`);
 await openSheet(); await c.sleep(200); await c.shot(`${OUT}/prefs_sheet_dark.png`);
 const geo = await J(`(() => { const r = ${sheet}.getBoundingClientRect(); return { l: r.left, r: innerWidth - r.right, over: document.documentElement.scrollWidth > innerWidth, rows: [...document.querySelectorAll('.rd-prefs li')].map(li => { const b = li.getBoundingClientRect(); return [Math.round(b.height), Math.round(li.querySelector('.rd-up').getBoundingClientRect().width)]; }) }; })()`);

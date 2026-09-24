@@ -15,6 +15,7 @@ const SRC = 2048, CUT = Math.round(SRC * 0.066);
 const icon = sharp(path.join(here, 'logo-source.png')).extract({ left: CUT, top: CUT, width: SRC - 2 * CUT, height: SRC - 2 * CUT }).flatten({ background: '#0c0d15' });
 await icon.clone().resize(1024, 1024).png().toFile(path.join(root, 'mobile/resources/icon.png'));
 await icon.clone().resize(512, 512).png().toFile(path.join(root, 'mobile/play-store/icon-512.png'));
+await icon.clone().resize(128, 128).png({ compressionLevel: 9 }).toFile(path.join(root, 'brand/logo-128.png'));   // the app bar / site logo
 
 // Launch image: the HTML page, screenshotted at 1:1.
 const c = await launch(9391);

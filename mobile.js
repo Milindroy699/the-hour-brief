@@ -34,6 +34,11 @@
     l.href = '/reader.css';
     l.setAttribute('data-reader-css', '');
     document.head.appendChild(l);
+    var a = document.createElement('link');      // the premium skin, after the shared components
+    a.rel = 'stylesheet';
+    a.href = '/app.css';
+    a.setAttribute('data-reader-css', '');
+    document.head.appendChild(a);
   }
 
   function collapsibleStories() {
@@ -198,12 +203,12 @@
           var t = document.createElement('button');
           t.type = 'button';
           t.className = 'digest-toggle';
-          t.textContent = 'Read the day’s digest';
+          t.textContent = 'Read the day’s digest \u2192';
           t.setAttribute('aria-expanded', 'false');
           t.addEventListener('click', function () {
             var open = head.classList.toggle('digest-open');
             t.setAttribute('aria-expanded', String(open));
-            t.textContent = open ? 'Hide the digest' : 'Read the day’s digest';
+            t.textContent = open ? 'Hide the digest' : 'Read the day’s digest \u2192';
           });
           box.appendChild(t);
         }
@@ -230,7 +235,7 @@
         });
         t = document.createElement('span');
         t.className = 'lane-time';
-        t.textContent = ' \u00B7 ' + Math.max(1, Math.round(words / 200)) + ' min';
+        t.textContent = ' \u00B7 ' + Math.max(1, Math.round(words / 200)) + ' min read';
         tag.appendChild(t);
       }
       t.hidden = !reader();
@@ -356,6 +361,9 @@
   }
 
   // ---- Bottom sheet (used by text size and saved stories) ----
+  var usedKeyboard = false;
+  document.addEventListener('keydown', function () { usedKeyboard = true; var r = document.querySelector('.no-ring'); if (r) r.classList.remove('no-ring'); }, true);
+  document.addEventListener('pointerdown', function () { usedKeyboard = false; }, true);
   var sheetEl = null, sheetPrev = null;
   function sheetKey(e) { if (e.key === 'Escape') closeSheet(); }
   function closeSheet() {
@@ -387,6 +395,7 @@
     document.body.appendChild(bg);
     sheetEl = bg;
     close.focus({ preventScroll: true });
+    if (!usedKeyboard) close.classList.add('no-ring');       // focus moved in for screen readers, not because someone tabbed here
   }
 
   // ---- Text size (root font-size scale; kept on this device) ----
@@ -576,14 +585,14 @@
     if (prefSig !== null && sig !== prefSig) document.dispatchEvent(new CustomEvent('hb:prefs'));
     prefSig = sig;
   }
-  function commitPrefs() { storePrefs(); applyPrefs(); }
+  function commitPrefs() { storePrefs(); applyPrefs(); syncSoon(); }
 
   function openPrefs(returnTo, first) {
     if (!laneBase) return;
     var msg = null;
     openSheet(first ? 'Make the brief yours' : 'Your sections', function (body) {
       body.appendChild(mk('p', '', first
-        ? 'Choose what goes in your daily brief and in what order. You can change this any time with the sliders button under the section pills.'
+        ? 'Choose what goes in your daily brief and in what order. You can change this any time from the menu at the top right.'
         : 'Switch sections on or off and move them up or down. Changes apply straight away.'));
       var ul = mk('ul', 'rd-prefs');
       msg = mk('p', 'rd-prefs-msg');
@@ -658,31 +667,14 @@
     setTimeout(function () { if (!sheetEl) openPrefs(null, true); }, 700);
   }
 
-  // ---- Tools row under the nav (text size, saved); also hosts the quiz chip ----
+  // ---- Tools row under the chips: hosts the quiz chip (and, in Listen, the listen card follows it) ----
   function readerTools() {
     var nav = document.querySelector('.nav');
     if (!nav) return;
     var host = document.querySelector('.reader-tools');
     if (!host) {
       host = mk('div', 'reader-tools');
-      var pf = mk('button', 'reader-btn reader-prefs');
-      pf.type = 'button';
-      pf.setAttribute('aria-label', 'Customise sections');
-      pf.innerHTML = SLIDERS_SVG;
-      pf.addEventListener('click', function () { openPrefs(pf); });
-      host.appendChild(pf);
-      var aa = mk('button', 'reader-btn reader-size', 'Aa');
-      aa.type = 'button';
-      aa.setAttribute('aria-label', 'Text size');
-      aa.addEventListener('click', function () { openTextSize(aa); });
-      var sv = mk('button', 'reader-btn reader-saved');
-      sv.type = 'button';
-      sv.innerHTML = STAR_SVG + '<span class="rd-count"></span>';
-      sv.addEventListener('click', function () { openSaved(sv); });
-      host.appendChild(aa);
-      host.appendChild(sv);
       nav.insertAdjacentElement('afterend', host);
-      refreshSaved();
     }
     host.hidden = !reader();
     var chip = document.querySelector('.quiz-chip');
@@ -690,6 +682,256 @@
       if (reader() && chip.parentNode !== host) host.insertBefore(chip, host.firstChild);
       else if (!reader() && chip.parentNode === host) nav.insertAdjacentElement('afterend', chip);
     }
+  }
+
+  // ---- App chrome: app bar (logo, wordmark, screen name; text size, saved, menu), tab bar, section chips ----
+  var ICON = {
+    aa: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8V6h9v2"/><path d="M7.5 6v12"/><path d="M5.5 18h4"/><path d="M13.5 12v-1.5H21V12"/><path d="M17.25 10.5V18"/><path d="M15.5 18h3.5"/></svg>',
+    bell: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>',
+    today: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5h12.5v13H6.5a2.5 2.5 0 0 1-2.5-2.5V5.5z"/><path d="M16.5 9H20v7a2.5 2.5 0 0 1-2.5 2.5"/><path d="M7.5 9h6M7.5 12h6M7.5 15h3.5"/></svg>',
+    audio: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 10v4M8 6.5v11M12 3.5v17M16 7.5v9M20 10v4"/></svg>',
+    quiz: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/></svg>',
+    archive: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.8c2.4-1 5.6-.8 9 .9 3.4-1.7 6.6-1.9 9-.9V19c-2.4-1-5.6-.8-9 .9-3.4-1.7-6.6-1.9-9-.9V5.8z"/><path d="M12 6.7v13.2"/></svg>',
+  };
+  var LOGO_SRC = '/brand/logo-128.png';
+
+  // "Edition 039 · Thu, 24 Sep" from the masthead, for the Before-the-news card
+  function editionText() {
+    var ed = document.querySelector('.edition');
+    if (!ed) return '';
+    var parts = ed.innerHTML.split(/<br\s*\/?>/i).map(function (x) { return x.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim(); }).filter(Boolean);
+    if (parts.length > 1) parts[1] = parts[1].replace(/\s+\d{4}$/, '');
+    return parts.join(' · ');
+  }
+  function pauseCard() {
+    var inner = document.querySelector('.pause-inner');
+    if (!inner) return;
+    var head = inner.querySelector('.pause-head');
+    if (!head) {
+      var label = inner.querySelector('.pause-label');
+      if (!label) return;
+      head = mk('div', 'pause-head');
+      inner.insertBefore(head, inner.firstChild);
+      head.appendChild(label);
+      head.appendChild(mk('span', 'pause-edition', editionText()));
+    }
+    head.querySelector('.pause-edition').hidden = !reader();     // the desktop site keeps its own masthead line
+  }
+
+  function appBar() {
+    var inner = document.querySelector('.masthead-inner');
+    if (!inner) return;
+    var bar = inner.querySelector('.ab-actions');
+    if (!bar) {
+      var h1 = inner.querySelector('.wordmark'), brand = null;
+      if (h1) {
+        brand = h1.parentElement;
+        if (brand === inner) {                            // the info pages put the wordmark straight in the row
+          brand = mk('div');
+          inner.insertBefore(brand, h1);
+          brand.appendChild(h1);
+        }
+        brand.classList.add('ab-brand');
+        h1.insertAdjacentElement('afterend', mk('p', 'ab-screen', screenName()));
+      }
+      var logo = mk('img', 'ab-logo');
+      logo.src = LOGO_SRC;
+      logo.alt = '';
+      logo.width = logo.height = 34;
+      inner.insertBefore(logo, inner.firstChild);
+
+      bar = mk('div', 'ab-actions');
+      var aa = mk('button', 'ab-btn reader-size');
+      aa.type = 'button';
+      aa.setAttribute('aria-label', 'Text size');
+      aa.innerHTML = ICON.aa;
+      aa.addEventListener('click', function () { openTextSize(aa); });
+      var sv = mk('button', 'ab-btn reader-saved');
+      sv.type = 'button';
+      sv.innerHTML = STAR_SVG + '<span class="rd-count"></span>';
+      sv.addEventListener('click', function () { openSaved(sv); });
+      var mn = mk('button', 'ab-btn ab-menu');
+      mn.type = 'button';
+      mn.setAttribute('aria-label', 'Menu: sections, text size, reminder, share');
+      mn.innerHTML = SLIDERS_SVG;
+      mn.addEventListener('click', function () { openMenu(mn); });
+      bar.appendChild(aa);
+      bar.appendChild(sv);
+      bar.appendChild(mn);
+      inner.appendChild(bar);
+      refreshSaved();
+    }
+    var on = reader();
+    [inner.querySelector('.ab-logo'), inner.querySelector('.ab-screen'), bar].forEach(function (el) { if (el) el.hidden = !on; });
+  }
+
+  function shareEdition() {
+    var btn = document.getElementById('cap-share');       // the apps' own share button (app-only code) does the native share
+    if (btn) { btn.click(); return; }
+    var d = editionDate();
+    var payload = { title: document.title, text: document.title, url: d ? location.origin + '/e/' + d : location.href };
+    var p;
+    if (navigator.share) p = navigator.share(payload);
+    else if (navigator.clipboard) p = navigator.clipboard.writeText(payload.url).then(function () { toast('Link copied'); });
+    if (p && p.catch) p.catch(function () {});
+  }
+  function openMenu(returnTo) {
+    openSheet('Menu', function (body) {
+      var ul = mk('ul', 'rd-menu');
+      function item(act, icon, title, sub, fn) {
+        var li = mk('li');
+        var b = mk('button', 'rd-item');
+        b.type = 'button';
+        b.setAttribute('data-act', act);
+        b.innerHTML = icon;
+        var t = mk('span', '', title);
+        if (sub) t.appendChild(mk('small', '', sub));
+        b.appendChild(t);
+        b.addEventListener('click', fn);
+        li.appendChild(b);
+        ul.appendChild(li);
+      }
+      if (laneBase) item('sections', SLIDERS_SVG, 'Sections', 'Show, hide and reorder', function () { openPrefs(returnTo); });
+      item('textsize', ICON.aa, 'Text size', SIZE_NAMES[getSize()], function () { openTextSize(returnTo); });
+      if (document.getElementById('cap-remind')) item('reminder', ICON.bell, 'Daily reminder', 'A morning nudge on this device', function () { closeSheet(); document.getElementById('cap-remind').click(); });
+      item('share', SHARE_SVG, 'Share this edition', 'Send today’s brief to a friend', function () { closeSheet(); shareEdition(); });
+      body.appendChild(ul);
+      var foot = mk('div', 'rd-menu-foot');
+      [['Contact us', '/contact.html'], ['About', '/about.html'], ['Privacy', '/privacy.html']].forEach(function (l, i) {
+        if (i) foot.appendChild(document.createTextNode(' · '));
+        var a = mk('a', '', l[0]);
+        a.href = l[1];
+        foot.appendChild(a);
+      });
+      body.appendChild(foot);
+    }, returnTo);
+  }
+
+  // Bottom tabs: Today (the feed), Audio (the Listen hub), Challenge (the quiz), Archive (past editions)
+  var TABS = [['today', 'Today'], ['audio', 'Audio'], ['quiz', 'Challenge'], ['archive', 'Archive']];
+  function isFeed() { return !!document.querySelector('section.lane'); }          // an edition page (today's or an archived one)
+  var INFO_TITLES = { '/about.html': 'About', '/privacy.html': 'Privacy', '/contact.html': 'Contact us' };
+  function screenName() {
+    var p = location.pathname;
+    if (INFO_TITLES[p]) return INFO_TITLES[p];
+    if (/^\/archive\/(index\.html)?$/.test(p)) return 'Archive';
+    return 'Feed';
+  }
+  // On pages that are not editions the tabs are plain links back to the right place.
+  var TAB_HREF = { today: '/', audio: '/?audio=1', quiz: '/#quiz', archive: '/archive/' };
+  function tabGo(name) {
+    var L = window.HBListen;
+    if (name === 'audio') { if (L && L.openHub) L.openHub(); else toast('Audio is loading…'); return; }
+    if (L && L.closeHub) L.closeHub();
+    if (name === 'today') window.scrollTo({ top: 0, behavior: 'smooth' });
+    else if (name === 'quiz') { var q = document.getElementById('quiz'); if (q) q.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
+    setTimeout(syncTabs, 60);
+  }
+  function tabBar() {
+    var bar = document.querySelector('.tab-bar');
+    if (!bar) {
+      bar = mk('nav', 'tab-bar');
+      bar.setAttribute('aria-label', 'App sections');
+      var feed = isFeed();
+      TABS.forEach(function (t) {
+        var link = t[0] === 'archive' || !feed;
+        var el = link ? mk('a', 'tab') : mk('button', 'tab');
+        el.setAttribute('data-tab', t[0]);
+        el.innerHTML = '<span class="tab-ic">' + ICON[t[0]] + '</span><span class="tab-lb">' + t[1] + '</span>';
+        if (link) el.href = TAB_HREF[t[0]];
+        else { el.type = 'button'; el.addEventListener('click', function () { tabGo(t[0]); }); }
+        bar.appendChild(el);
+      });
+      document.body.appendChild(bar);
+      window.addEventListener('scroll', syncSoon, { passive: true });
+      document.addEventListener('hb:hub', syncTabs);
+    }
+    bar.hidden = !reader();
+    syncTabs();
+  }
+  function syncTabs() {
+    var bar = document.querySelector('.tab-bar');
+    if (!bar || bar.hidden) return;
+    if (!isFeed()) {                                           // About, Privacy, Contact, the archive list
+      var here = screenName();
+      bar.querySelectorAll('.tab').forEach(function (t) {
+        if (t.getAttribute('data-tab') === 'archive' && here === 'Archive') t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
+        if (t.getAttribute('data-tab') === 'quiz') t.hidden = false;
+      });
+      var l2 = document.querySelector('.ab-screen');
+      if (l2) l2.textContent = here;
+      return;
+    }
+    var q = document.getElementById('quiz'), qOk = !!(q && !q.hidden && !q.hasAttribute('data-pref-off'));
+    var L = window.HBListen, hub = !!(L && L.hubOpen && L.hubOpen());
+    var r = qOk ? q.getBoundingClientRect() : null;
+    var cur = hub ? 'audio' : (r && r.top < window.innerHeight * 0.5 && r.bottom > 90) ? 'quiz' : 'today';
+    bar.querySelectorAll('.tab').forEach(function (t) {
+      var n = t.getAttribute('data-tab');
+      if (n === cur) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
+      if (n === 'quiz') t.hidden = !qOk;
+    });
+    var lb = document.querySelector('.ab-screen');
+    if (lb) lb.textContent = cur === 'audio' ? 'Audio' : cur === 'quiz' ? 'Quiz' : 'Feed';
+  }
+
+  // Section chips: an "All" chip, and the one for the section in view is filled (replaces the page's own three-section spy)
+  function syncChips() {
+    var nav = document.querySelector('.nav');
+    if (!nav || !reader()) return;
+    var cur = 'all';
+    document.querySelectorAll('section.lane[id]').forEach(function (l) {
+      if (l.style.display !== 'none' && !l.hidden && l.getBoundingClientRect().top <= 110) cur = l.id;
+    });
+    var on = null;
+    nav.querySelectorAll('a').forEach(function (a) {
+      var h = a.getAttribute('href') || '';
+      var is = h.charAt(0) === '#' && h.slice(1) === cur;
+      a.classList.toggle('is-current', is);
+      if (is) on = a;
+    });
+    if (on && on !== nav._cur) {                     // keep the current chip in view in the scrolling row
+      nav._cur = on;
+      var l = on.offsetLeft - 16, r = on.offsetLeft + on.offsetWidth - nav.clientWidth + 16;
+      if (l < nav.scrollLeft) nav.scrollTo({ left: Math.max(0, l), behavior: 'smooth' });
+      else if (r > nav.scrollLeft) nav.scrollTo({ left: r, behavior: 'smooth' });
+    }
+  }
+  var syncQueued = false;
+  function syncSoon() {
+    if (syncQueued) return;
+    syncQueued = true;
+    requestAnimationFrame(function () { syncQueued = false; syncChips(); syncTabs(); });
+  }
+  function navChips() {
+    var nav = document.querySelector('.nav');
+    if (!nav) return;
+    var all = nav.querySelector('.nav-all');
+    if (!all) {
+      all = mk('a', 'nav-all', 'All');
+      all.href = '#all';
+      all.addEventListener('click', function (e) {
+        e.preventDefault();
+        var first = document.querySelector('section.lane[id]:not([data-pref-off])');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setTimeout(syncSoon, 80);
+      });
+      nav.insertBefore(all, nav.firstChild);
+    }
+    all.hidden = !reader();
+    window.addEventListener('scroll', syncSoon, { passive: true });
+    syncChips();
+  }
+
+  // "6 stories" at the right of each section badge
+  function laneCounts() {
+    document.querySelectorAll('section.lane').forEach(function (lane) {
+      var head = lane.querySelector('.lane-head'), n = lane.querySelectorAll('.item[data-story-id]').length;
+      if (!head || !n) return;
+      var c = head.querySelector('.lane-count');
+      if (!c) { c = mk('span', 'lane-count', n + (n === 1 ? ' story' : ' stories')); head.appendChild(c); }
+      c.hidden = !reader();
+    });
   }
 
   // ---- Open a shared story link: expand it, scroll to it, flash it ----
@@ -720,6 +962,11 @@
     storyButtons();
     siteLinks();
     readerTools();
+    pauseCard();
+    appBar();
+    navChips();
+    laneCounts();
+    tabBar();
     progressUi();
     measureClamps();
   }
@@ -755,7 +1002,15 @@
     document.head.appendChild(s);
   }
 
-  function start() { apply(); openFromHash(); loadListen(); maybeOnboard(); }
+  function openAudioFromUrl() {                       // /?audio=1 from another page's Audio tab
+    if (!reader() || !/[?&]audio=1(&|$)/.test(location.search)) return;
+    var tries = 0;
+    (function wait() {
+      if (window.HBListen && window.HBListen.openHub) { window.HBListen.openHub(); return; }
+      if (++tries < 40) setTimeout(wait, 100);
+    })();
+  }
+  function start() { apply(); openFromHash(); loadListen(); maybeOnboard(); openAudioFromUrl(); }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', start);
   } else {
