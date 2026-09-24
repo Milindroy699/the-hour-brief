@@ -8,6 +8,12 @@ on:
       pace:
         description: Speech pace (0.5 to 2.0)
         default: '1.15'
+      voices:
+        description: 'Comma-separated speakers; add @temperature for a variant (e.g. shubh,shubh@0.35,mani)'
+        default: 'priya,ritu,kavya,shubh,aditya,rahul'
+      folder:
+        description: Folder under _samples/ in the bucket ('.' for the top level)
+        default: '.'
 
 jobs:
   voices:
@@ -27,7 +33,9 @@ jobs:
         working-directory: tools/audio
         env:
           SARVAM_API_KEY: ${{ secrets.SARVAM_API_KEY }}
-        run: node voice-test.mjs --pace "${{ inputs.pace }}"
+          PACE: ${{ inputs.pace }}
+          VOICES: ${{ inputs.voices }}
+        run: node voice-test.mjs --pace "$PACE" --voices "$VOICES"
       - name: Keep the samples as a downloadable artifact (in case the upload fails)
         if: always()
         uses: actions/upload-artifact@v4
@@ -44,11 +52,14 @@ jobs:
           AWS_DEFAULT_REGION: auto
           AWS_REQUEST_CHECKSUM_CALCULATION: when_required
           AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+          FOLDER: ${{ inputs.folder }}
         run: |
-          aws s3 cp out/ "s3://${{ secrets.R2_BUCKET }}/_samples/" --recursive \
+          aws s3 cp out/ "s3://${{ secrets.R2_BUCKET }}/_samples/$FOLDER/" --recursive \
             --endpoint-url "https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com" \
             --cache-control "no-cache"
       - name: Check the public URL
+        env:
+          FOLDER: ${{ inputs.folder }}
         run: |
-          curl -fsS -o /dev/null -w "index page: %{http_code}\n" "${{ secrets.R2_PUBLIC_URL }}/_samples/index.html"
-          curl -fsS -o /dev/null -w "priya.mp3: %{http_code}\n" "${{ secrets.R2_PUBLIC_URL }}/_samples/priya.mp3"
+          curl -fsS -o /dev/null -w "index page: %{http_code}\n" "${{ secrets.R2_PUBLIC_URL }}/_samples/$FOLDER/index.html"
+          

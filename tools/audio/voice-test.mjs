@@ -14,10 +14,15 @@ const EDITION = path.resolve(arg('--edition', '../../index.html'));
 const KEY = process.env.SARVAM_API_KEY;
 if (!DRY && !KEY) { console.error('SARVAM_API_KEY is not set'); process.exit(1); }
 
-const VOICES = [
-  { speaker: 'priya', label: 'Female · priya' }, { speaker: 'ritu', label: 'Female · ritu' }, { speaker: 'kavya', label: 'Female · kavya' },
-  { speaker: 'shubh', label: 'Male · shubh (Sarvam default)' }, { speaker: 'aditya', label: 'Male · aditya' }, { speaker: 'rahul', label: 'Male · rahul' },
-];
+// --voices "shubh,shubh@0.35,mani": a speaker, optionally with @temperature (Bulbul v3: 0.01-2.0, default 0.6).
+const FEMALE = new Set(['ritu', 'priya', 'neha', 'pooja', 'simran', 'kavya', 'ishita', 'shreya', 'roopa', 'tanya', 'shruti', 'suhani', 'kavitha', 'rupali']);
+const DEFAULT_VOICES = 'priya,ritu,kavya,shubh,aditya,rahul';
+const VOICES = arg('--voices', DEFAULT_VOICES).split(',').map((v) => v.trim()).filter(Boolean).map((v) => {
+  const [speaker, temp] = v.split('@');
+  const temperature = temp ? Number(temp) : undefined;
+  const id = speaker + (temperature != null ? '-t' + String(temperature).replace('.', '') : '');
+  return { speaker, temperature, id, label: `${FEMALE.has(speaker) ? 'Female' : 'Male'} · ${speaker}${temperature != null ? ' · temperature ' + temperature : ''}` };
+});
 const PACE = Number(arg('--pace', '1'));
 
 // A representative ~1,000 character excerpt: intro, the markets lane opener and two market stories, one AI story.
@@ -44,18 +49,18 @@ if (text.length > 2400) throw new Error('excerpt too long for one request');
 
 const rows = [];
 for (const v of VOICES) {
-  const wav = path.join(OUT, v.speaker + '.wav');
-  const mp3 = path.join(OUT, v.speaker + '.mp3');
+  const wav = path.join(OUT, v.id + '.wav');
+  const mp3 = path.join(OUT, v.id + '.mp3');
   if (DRY) {
     execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-f', 'lavfi', '-i', `sine=frequency=${300 + rows.length * 60}:duration=4`, wav]);
   } else {
-    const parts = await synthesize(KEY, { text, speaker: v.speaker, pace: PACE });
+    const parts = await synthesize(KEY, { text, speaker: v.speaker, pace: PACE, temperature: v.temperature });
     fs.writeFileSync(wav, Buffer.concat(parts.length === 1 ? parts : parts));   // one request => one WAV
   }
   execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-i', wav, '-ac', '1', '-codec:a', 'libmp3lame', '-b:a', '64k', mp3]);
   fs.rmSync(wav);
   const secs = Number(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=nw=1:nk=1', mp3]).toString().trim());
-  rows.push({ ...v, file: v.speaker + '.mp3', secs });
+  rows.push({ ...v, file: v.id + '.mp3', secs });
   console.log(`${v.label}: ${secs.toFixed(1)}s, ${(fs.statSync(mp3).size / 1024).toFixed(0)} KB`);
 }
 
@@ -64,7 +69,7 @@ fs.writeFileSync(path.join(OUT, 'index.html'), `<!doctype html><html lang="en"><
 <title>Voice test</title><style>body{font:16px/1.5 system-ui,sans-serif;max-width:640px;margin:0 auto;padding:20px;background:#f2f3ee;color:#17191c}
 h1{font-size:1.3rem}.card{background:#fff;border:1px solid #d7dad2;border-radius:12px;padding:12px 14px;margin:12px 0}.card b{display:block;margin-bottom:6px}audio{width:100%}
 blockquote{margin:12px 0;padding:10px 14px;border-left:3px solid #5b3e96;background:#fff;color:#52585a;font-size:.92rem}small{color:#838a8a}</style></head><body>
-<h1>Voice test · same excerpt, ${rows.length} Sarvam voices</h1>
+<h1>Voice test · same excerpt, ${rows.length} voices</h1>
 <p>Edition ${meta.number} (${meta.date}) · pace ${PACE} · ${DRY ? 'DRY RUN (tones, not speech)' : 'bulbul:v3, en-IN'}. Listen for: ₹ / crore / lakh, NSE, Nifty, names, GPT, and how it feels over a whole morning.</p>
 <blockquote>${esc(text)}</blockquote>
 ${rows.map((r) => `<div class="card"><b>${esc(r.label)} <small>· ${r.secs.toFixed(0)}s</small></b><audio controls preload="none" src="${r.file}"></audio></div>`).join('\n')}
