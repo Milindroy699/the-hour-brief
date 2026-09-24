@@ -1,7 +1,7 @@
 # Google Play — release package (v1.0.0)
 
 Assets (git-ignored, upload from here): `mobile/dist/play-store/`
-`icon-512.png` · `feature-graphic-1024x500.png` · `screenshots/01…05` (1080×2100)
+`icon-512.png` (App icon) · `feature-graphic-1024x500.png` (Feature graphic, made by `node tools/brand/feature-graphic.mjs`) · `screenshots/` (8 phone screenshots, 1080×1919; `node tools/brand/screenshots.mjs` remakes them). All of these are in this folder now; the old copies in `mobile/dist/play-store/` show the retired stopwatch icon, do not upload those.
 
 ## Release
 
