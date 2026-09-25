@@ -138,16 +138,23 @@ check('nothing can play: the hub says "Audio unavailable" with a plain message a
 await c.ev(`document.querySelector('.hub-close').click()`);
 
 // ---------- 6. the quiz ----------
-const past = { r: { '2026-09-21': { s: 3, t: 5 }, '2026-09-22': { s: 4, t: 5 }, '2026-09-23': { s: 5, t: 5 } } };
+// Dates come from the latest edition (index.html), so this keeps working as the site moves on: the three days before it were played.
+const TODAY = /data-edition-date="(\d{4}-\d{2}-\d{2})"/.exec(fs.readFileSync(path.join(path.resolve(import.meta.dirname, '../..'), 'index.html'), 'utf8'))[1];
+const dayBefore = (n) => new Date(Date.parse(TODAY + 'T00:00:00Z') - n * 86400000).toISOString().slice(0, 10);
+const past = { r: { [dayBefore(3)]: { s: 3, t: 5 }, [dayBefore(2)]: { s: 4, t: 5 }, [dayBefore(1)]: { s: 5, t: 5 } } };
+const weekdayIdx = (new Date(TODAY + 'T00:00:00Z').getUTCDay() + 6) % 7;                 // Monday = 0
+// Expected week strip: a played day is 'done', today is 'today', later days are 'later', earlier unplayed days are 'missed'.
+const played = (n) => n <= 3 && n >= 1;
+const strip = (doneToday) => Array.from({ length: 7 }, (_, k) => k === weekdayIdx ? (doneToday ? 'done' : 'today') : k > weekdayIdx ? 'later' : played(weekdayIdx - k) ? 'done' : 'missed');
 await open({ quiz: past, wait: 2200 });
 t = await J(`({ chip: [document.querySelector('.qc-title').textContent, document.querySelector('.qc-sub').textContent, document.querySelector('.qc-go').textContent], disc: document.querySelector('.qc-disc').className })`);
 check('quiz chip in the feed: title, streak line and "Play →" (a streak of 3 is on the line)', /^Today’s quiz · 5 questions$/.test(t.chip[0]) && /3-day streak/.test(t.chip[1]) && t.chip[2] === 'Play →', JSON.stringify(t));
 await scrollTo('#quiz .lane-head', 90); await c.sleep(300);
 t = await J(`({ pill: document.querySelector('.qz-st-pill').textContent, best: (document.querySelector('.qz-st-best') || {}).textContent, days: [...document.querySelectorAll('.qz-day')].map((d) => d.className.replace('qz-day ', '')), letters: [...document.querySelectorAll('.qz-dl')].map((x) => x.textContent).join(''), drill: document.querySelector('.qz-drill').textContent })`);
-check('streak card: "3-day streak", best 3, a Monday–Sunday strip from the real results (3 checked, today marked, the rest ahead)', /3-day streak/.test(t.pill) && /Best streak 3/.test(t.best) && eq(t.days, ['done', 'done', 'done', 'today', 'later', 'later', 'later']) && t.letters === 'MTWTFSS' && /0 of 5 answered/.test(t.drill), JSON.stringify(t));
+check('streak card: "3-day streak", best 3, a Monday–Sunday strip from the real results (played days checked, today marked, the rest ahead)', /3-day streak/.test(t.pill) && /Best streak 3/.test(t.best) && eq(t.days, strip(false)) && t.letters === 'MTWTFSS' && /0 of 5 answered/.test(t.drill), JSON.stringify(t));
 t = await J(`({ topic: document.querySelector('.quiz-topic').textContent, count: document.querySelector('.quiz-count').textContent, segs: document.querySelectorAll('.quiz-dot').length, now: document.querySelectorAll('.quiz-dot.now').length })`);
 check('question header: section badge ("AI & Tech" from the story), "Question 1 of 5", five progress segments', t.topic === 'AI & Tech' && t.count === 'Question 1 of 5' && t.segs === 5 && t.now === 1, JSON.stringify(t));
-await c.ev(`document.querySelectorAll('.quiz-opt')[2].click()`); await c.sleep(400);
+await c.ev(`(() => { const q = JSON.parse(document.getElementById('quiz-data').textContent).questions[0]; document.querySelectorAll('.quiz-opt')[(q.answer + 1) % q.options.length].click(); })()`); await c.sleep(400);       // a wrong answer, whatever today's quiz is
 t = await J(`({ good: document.querySelectorAll('.quiz-opt.is-correct').length, bad: document.querySelectorAll('.quiz-opt.is-wrong').length, label: document.querySelector('.quiz-why-label').textContent, from: !!document.querySelector('.quiz-from'), next: document.querySelector('.quiz-feedback .quiz-btn').textContent, drill: document.querySelector('.qz-drill').textContent, faded: getComputedStyle([...document.querySelectorAll('.quiz-opt')].find((o) => !o.classList.contains('is-correct') && !o.classList.contains('is-wrong'))).opacity })`);
 check('after an answer: correct and wrong tiles, an "Insight" callout, the story link, "Next question", and the card shows "1 of 5 answered"', t.good === 1 && t.bad === 1 && t.label === 'Insight' && t.from && /Next question/.test(t.next) && /1 of 5 answered · 4 to go/.test(t.drill) && Number(t.faded) < 1, JSON.stringify(t));
 await c.shot(`${OUT}/p_quiz.png`);
@@ -158,8 +165,8 @@ for (let i = 0; i < 5; i++) {
 }
 await waitFor(`!!document.querySelector('.quiz-result')`, 3000); await c.sleep(600);
 t = await J(`({ chip: [document.querySelector('.qc-title').textContent, document.querySelector('.qc-go').textContent, document.querySelector('.qc-disc').className], drill: document.querySelector('.qz-drill').textContent, pill: document.querySelector('.qz-st-pill').textContent, done: document.querySelectorAll('.qz-day.done').length, past: [...document.querySelectorAll('.qz-past')].map((r) => [r.getAttribute('href'), r.querySelector('.qz-past-score').textContent, r.querySelector('.qz-past-no').textContent]) })`);
-check('after the quiz: the chip says "Quiz done" with a check and "Review →"; the card shows completion and a 4-day streak; today’s square is checked', /^Quiz done: \d\/5$/.test(t.chip[0]) && t.chip[1] === 'Review →' && /done/.test(t.chip[2]) && /completed/i.test(t.drill) && /4-day streak/.test(t.pill) && t.done === 4, JSON.stringify(t));
-check('past quizzes come from the reader’s own results (newest first), with edition numbers and links to that edition’s quiz', eq(t.past.map((r) => r[1]), ['5/5', '4/5', '3/5']) && t.past[0][0] === '/archive/2026-09-23.html#quiz' && /^\d{3}$/.test(t.past[0][2]), JSON.stringify(t.past));
+check('after the quiz: the chip says "Quiz done" with a check and "Review →"; the card shows completion and a 4-day streak; today’s square is checked', /^Quiz done: \d\/5$/.test(t.chip[0]) && t.chip[1] === 'Review →' && /done/.test(t.chip[2]) && /completed/i.test(t.drill) && /4-day streak/.test(t.pill) && t.done === strip(true).filter((x) => x === 'done').length, JSON.stringify(t));
+check('past quizzes come from the reader’s own results (newest first), with edition numbers and links to that edition’s quiz', eq(t.past.map((r) => r[1]), ['5/5', '4/5', '3/5']) && t.past[0][0] === `/archive/${dayBefore(1)}.html#quiz` && /^\d{3}$/.test(t.past[0][2]), JSON.stringify(t.past));
 await scrollTo('.qz-past-box', 200); await c.sleep(300); await c.shot(`${OUT}/p_quiz_done.png`);
 // the shareable score picture is drawn on the device: new brand, logo, correct size
 await c.ev(`navigator.canShare = () => true; window.__sh = null; navigator.share = (d) => { window.__sh = d; return Promise.resolve(); }; 'ok'`);

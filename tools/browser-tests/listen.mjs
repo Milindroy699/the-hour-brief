@@ -23,7 +23,7 @@ const c = await launch(9370);
 const J = async (e) => JSON.parse(await c.ev(`JSON.stringify(${e})`));
 const waitFor = async (expr, ms = 4000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (await c.ev(expr)) return true; await c.sleep(60); } return false; };
 
-const hook = (full) => `(() => { const A = window.Audio; window.Audio = function (...a) { const el = new A(...a); window.__audio = el; return el; }; window.Audio.prototype = A.prototype; })(); window.HB_AUDIO_BASE = ${JSON.stringify(B + '/__audio')}; window.HB_OFFER_FULL = ${!!full};`;
+const hook = (full) => `(() => { const A = window.Audio; window.Audio = function (...a) { const el = new A(...a); window.__audio = el; return el; }; window.Audio.prototype = A.prototype; })(); window.HB_AUDIO_BASE = ${JSON.stringify(B + '/__audio')}; window.HB_LOOK_MS = 300; window.__mf = 0; (() => { const f = window.fetch; window.fetch = function (u, ...a) { if (/manifest\\.json/.test(String(u))) window.__mf++; return f.call(this, u, ...a); }; })(); window.HB_OFFER_FULL = ${!!full};`;
 const FAKE_TTS = `(() => { const log = window.__spoken = []; window.__rates = []; let cur = null, t = null, sp = false;
   window.__ttsMs = 30;
   const synth = { get speaking() { return sp; }, pending: false,
@@ -166,6 +166,39 @@ ids = [await c.preload(hook(false)), await c.preload(FAKE_TTS)];
 await c.viewport(1280, 915, false, false);
 await c.goto(B + '/?classic=1', 1200);
 check('desktop with ?classic=1: nothing is loaded or shown (the old page)', (await c.ev(`!document.querySelector('.listen-cta') && typeof window.HBListen === 'undefined'`)) === true);
+
+// ---------- 8. a recording that appears after the page opened ----------
+const manifestHits = `window.__mf`;                               // how many times the page asked for a manifest (404s do not show up in resource timing)
+await open({ tts: true, manifest: '404' });
+t = await J(`({ btn: ${btn}.textContent, note: document.querySelector('.listen-cta-note').textContent })`);
+check('page opened before the recording existed: the card says device voice', /device voice/.test(t.btn) && /device/.test(t.note), JSON.stringify(t));
+await fetch(`${B}/__ctl?manifest=ok`);                              // the recording lands
+const found = await waitFor(`/Neha \\(AI\\)/.test(${btn}.textContent)`, 4000);
+t = await J(`({ btn: ${btn}.textContent, note: document.querySelector('.listen-cta-note').textContent, hits: ${manifestHits} })`);
+check('it notices by itself (no reload): the card now offers the AI voice', found && /Read by Neha/.test(t.note), JSON.stringify(t));
+const hits1 = t.hits; await c.sleep(1500);
+check('and stops looking once it has found it (it asked more than once before, and not again after)', hits1 >= 2 && (await c.ev(manifestHits)) === hits1, hits1 + ' vs ' + await c.ev(manifestHits));
+await c.ev(`${btn}.click()`); await waitFor(`window.__audio && __audio.currentTime > 0.5`, 6000);
+check('playing now uses the recording, not the device voice', (await c.ev(`HBListen.source()`)) === 'rec' && (await c.ev(`HBListen.state()`)) === 'playing');
+await c.ev(`${pl('.hb-pl-close')}.click()`);
+
+await open({ tts: true, manifest: '404' });
+await c.ev(`window.__ttsMs = 700; ${btn}.click()`); await c.sleep(700);
+await fetch(`${B}/__ctl?manifest=ok`);
+await c.sleep(1800);
+t = await J(`({ st: HBListen.state(), src: HBListen.source(), note: document.querySelector('.listen-cta-note').textContent, badge: document.querySelector('.hb-pl-voice').textContent })`);
+check('while it is reading in the device voice, a late recording does not swap the sound mid-way', t.st === 'playing' && t.src === 'tts' && /Device voice/.test(t.badge), JSON.stringify(t));
+await c.ev(`${pl('.hb-pl-close')}.click()`);
+check('once stopped, it picks the recording up', await waitFor(`/Neha \\(AI\\)/.test(${btn}.textContent)`, 4000));
+
+for (const id of ids) await c.unpreload(id);
+ids = [await c.preload(hook(false)), await c.preload(FAKE_TTS)];
+await fetch(`${B}/__ctl?manifest=404&audio=ok`);
+await c.viewport(412, 915, true, false);
+await c.goto(B + '/archive/2026-09-10.html', 1200);
+await fetch(`${B}/__ctl?manifest=ok`);
+const h0 = await c.ev(manifestHits); await c.sleep(2500);
+check('an old edition (over three days) is never re-checked', (await c.ev(manifestHits)) === h0 && h0 === 1, `${h0} vs ${await c.ev(manifestHits)}`);
 
 // ---------- visuals ----------
 await open({ tts: true, dark: true, width: 360 });

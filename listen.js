@@ -881,8 +881,29 @@
     if (hubPrev && hubPrev.focus && document.contains(hubPrev)) { try { hubPrev.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }
   }
 
+  // A recording can appear after this page opened: the edition goes out, and the recording lands a few minutes later. So while
+  // nothing is playing, look again quietly (never at the moment of tapping play: iPhones only start audio straight from a tap).
+  // Editions older than three days are never re-checked, and it stops after 40 tries.
+  var look = { n: 0, at: 0 };
+  function anyRec() { return MODES.some(hasRec); }
+  function pageIsRecent() {
+    var el = document.querySelector('[data-edition-date]'), d = el && el.getAttribute('data-edition-date');
+    var t = d && /^\d{4}-\d{2}-\d{2}$/.test(d) ? Date.parse(d + 'T00:00:00Z') : NaN;
+    return !isNaN(t) && Date.now() - t < 3 * 86400000;
+  }
+  function lookAgain(force) {
+    if (anyRec() || !reader() || !S.units.quick || document.visibilityState !== 'visible' || S.state !== 'idle' || look.n >= 40 || !pageIsRecent()) return;
+    if (!force && !window.HB_LOOK_MS && Date.now() - look.at < 30000) return;
+    look.n++; look.at = Date.now();
+    loadManifest(function () { if (anyRec()) { ensureCta(); render(); } });
+  }
+  setInterval(lookAgain, window.HB_LOOK_MS || 60000);
+  window.addEventListener('online', function () { lookAgain(true); });
+  window.addEventListener('pageshow', function (e) { if (e.persisted) lookAgain(true); });
+
   // Coming back to the app after the OS suspended speech: carry on from this sentence.
   document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') lookAgain();
     if (document.visibilityState === 'visible' && S.state === 'playing' && S.src === 'tts' && synth && !synth.busy()) go();
   });
   window.addEventListener('pagehide', function () { haltAll(); });
