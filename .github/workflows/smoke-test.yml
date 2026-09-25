@@ -49,6 +49,7 @@ jobs:
           check_status "$BASE/webfonts/newsreader-latin-wght-normal.woff2" 200
           check_status "$BASE/webfonts/space-grotesk-latin-wght-normal.woff2" 200
           check_status "$BASE/brand/logo-128.png" 200
+          check_status "$BASE/brand/podcast-cover.jpg" 200  # cover art named in the podcast feed
           check_status "$BASE/brand/logo-256.png" 200      # the share cards (api/og.mjs) read this file
           check_status "$BASE/brand/favicon-32.png" 200
           check_status "$BASE/brand/apple-touch-icon.png" 200

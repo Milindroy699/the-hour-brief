@@ -40,6 +40,25 @@ Left out on purpose because we do not have them: XP, "Top 8% recall", spatial au
 - Tests: `node tools/browser-tests/premium.mjs` (with `prefs.mjs` and `listen.mjs`). To see the app itself, build a debug APK whose `server.url` is a
   local static server (`http://10.0.2.2:PORT`, `cleartext: true`), run it on the emulator, then put `mobile/capacitor.config.json` back (never commit that).
 
+## Podcast (Spotify, Apple Podcasts)
+
+The daily Quick recording is also a podcast. `tools/audio/podcast.mjs` builds an RSS feed from the manifests already in R2 (file, size, duration) and
+the edition page (title, section takeaways): one episode per day, guid `hourbrief-<date>`, newest first, AI-voice disclosure in every description.
+`tools/audio/publish-feed.sh` (run by `audio.yml` after each recording, or by hand with the "Podcast feed" workflow) syncs the manifests, builds
+`podcast.xml`, uploads it to R2 with the right content type, then `--verify`s it: feed structure, cover art, and that the newest audio is served with
+the right size, `audio/mpeg` and range support. It costs nothing (no Sarvam) and refuses to publish an empty feed.
+- Feed address: `<R2_PUBLIC_URL>/podcast.xml` (today `https://pub-1dafea4a948540db8413a044895e083c.r2.dev/podcast.xml`). Cover: `brand/podcast-cover.jpg`
+  (2048px, `node tools/brand/podcast-cover.mjs`), served by Vercel, so deploy it BEFORE submitting the feed. Show details (name, description, category,
+  owner email) are `SHOW` in `podcast.mjs`.
+- Episodes must not disappear from R2 (removing an item can remove it from Spotify), so `audio.yml` now keeps everything unless the repository variable
+  `AUDIO_KEEP_DAYS` is set. About 3 MB a day.
+- `r2.dev` links are meant for light traffic and can be rate-limited by Cloudflare; if the show grows, put a custom domain on the bucket and set `R2_PUBLIC_URL` to it
+  (the feed address changes, so tell Spotify/Apple through their "change feed" option, or do this before submitting).
+- New episodes only appear once `AUDIO_ENABLED=true` (about ₹18 a day). Tests: `node --test test/*.test.mjs` in `tools/audio` (25 checks, including the publish script run end to end
+  against a fake `aws` and a local host).
+- Submit once: creators.spotify.com -> add an existing podcast -> paste the feed address -> enter the code Spotify emails to the owner address in the feed
+  (`milindroy101292@gmail.com`) -> choose category, language and country. Apple Podcasts Connect takes the same feed.
+
 ## Your sections (show / hide / reorder)
 
 `mobile.js` (reader mode only: phones and the apps) lets readers switch the sections (`section.lane`: AI, Business, Markets, Quiz) on or off

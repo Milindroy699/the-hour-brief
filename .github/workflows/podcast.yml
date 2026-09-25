@@ -1,0 +1,42 @@
+name: Podcast feed
+
+# Rebuilds and publishes podcast.xml from the recordings already in R2. Free: it never calls Sarvam.
+# Run it by hand to publish the feed for the first time, or after changing the show details in tools/audio/podcast.mjs.
+# (audio.yml also runs the same script after every recording.)
+on:
+  workflow_dispatch:
+    inputs:
+      dry:
+        description: Build and check the feed but do not upload it
+        type: boolean
+        default: false
+
+concurrency:
+  group: podcast-feed
+  cancel-in-progress: false
+
+jobs:
+  feed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      R2_ENDPOINT: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install tools
+        working-directory: tools/audio
+        run: npm ci --silent
+      - name: Build, publish and check the feed
+        env:
+          FEED_DRY: ${{ inputs.dry && '1' || '' }}
+        run: bash tools/audio/publish-feed.sh
