@@ -47,6 +47,7 @@ the edition page (title, section takeaways): one episode per day, guid `hourbrie
 `tools/audio/publish-feed.sh` (run by `audio.yml` after each recording, or by hand with the "Podcast feed" workflow) syncs the manifests, builds
 `podcast.xml`, uploads it to R2 with the right content type, then `--verify`s it: feed structure, cover art, and that the newest audio is served with
 the right size, `audio/mpeg` and range support. It costs nothing (no Sarvam) and refuses to publish an empty feed.
+- **Live since 2026-09-26** with the 24 and 25 Sep episodes (published and verified by the "Podcast feed" workflow; `audio.yml` refreshes it after each recording). Not yet submitted to Spotify/Apple: that is the owner's step below.
 - Feed address: `<R2_PUBLIC_URL>/podcast.xml` (today `https://pub-1dafea4a948540db8413a044895e083c.r2.dev/podcast.xml`). Cover: `brand/podcast-cover.jpg`
   (2048px, `node tools/brand/podcast-cover.mjs`), served by Vercel, so deploy it BEFORE submitting the feed. Show details (name, description, category,
   owner email) are `SHOW` in `podcast.mjs`.
