@@ -27,12 +27,20 @@ concurrency:
   group: daily-audio
   cancel-in-progress: false
 
+permissions:
+  contents: read
+  issues: write          # to open the Sarvam-credit alert (an issue that mentions the owner)
+
 jobs:
   audio:
     if: github.event_name == 'workflow_dispatch' || vars.AUDIO_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      SARVAM_LOW_RUPEES: ${{ vars.SARVAM_LOW_RUPEES }}
+      SARVAM_MIN_DAYS: ${{ vars.SARVAM_MIN_DAYS }}
       AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: auto
@@ -62,6 +70,12 @@ jobs:
           ARGS=(--date "${DATE:-latest}" --modes "${MODES:-quick}" --skip-existing)
           [ "$FORCE" = "true" ] && ARGS+=(--force)
           node generate.mjs "${ARGS[@]}"
+      - name: Alert if Sarvam has no credit left
+        if: failure()
+        run: |
+          if [ -f tools/audio/out/error.json ] && grep -q '"no_credit"' tools/audio/out/error.json; then
+            bash tools/audio/credit.sh alert ran-out "$(node -pe 'JSON.parse(require("fs").readFileSync("tools/audio/out/error.json","utf8")).date || "today"')"
+          fi
       - name: Publish (audio first, manifest last)
         if: hashFiles('tools/audio/out/audio/**') != ''
         working-directory: tools/audio/out/audio
@@ -78,6 +92,10 @@ jobs:
             aws s3 sync "$d" "s3://$R2_BUCKET/audio/$d" --delete --size-only --endpoint-url "$R2_ENDPOINT" --only-show-errors
             echo "published $d"
           done
+      - name: Track Sarvam credit (alerts you by email when it is low)
+        if: hashFiles('tools/audio/out/audio/**') != ''
+        continue-on-error: true            # never fail the recording over bookkeeping
+        run: bash tools/audio/credit.sh charge
       - name: Remove old recordings (only if AUDIO_KEEP_DAYS is set)
         env:
           KEEP_DAYS: ${{ vars.AUDIO_KEEP_DAYS }}

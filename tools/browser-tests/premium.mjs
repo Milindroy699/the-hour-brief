@@ -16,6 +16,10 @@ const date = fs.readdirSync(path.join(tmp, 'audio'))[0];
 const manifest = JSON.parse(fs.readFileSync(path.join(tmp, 'audio', date, 'manifest.json'), 'utf8'));
 const cues = manifest.modes.quick.cues;
 const cue = (id) => cues.find((c) => c.id === id);
+const LATEST = /data-edition-date="(\d{4}-\d{2}-\d{2})"/.exec(fs.readFileSync(path.join(path.resolve(import.meta.dirname, '../..'), 'index.html'), 'utf8'))[1];
+const daysBefore = (n) => new Date(Date.parse(LATEST + 'T00:00:00Z') - n * 86400000).toISOString().slice(0, 10);
+const EPISODES = { v: 1, episodes: [0, 1, 2].map((n) => ({ date: daysBefore(n), edition: 40 - n, minutes: 6 + n, duration: 390 + n * 30, bytes: 3000000, voice: 'neha' })) };
+fs.writeFileSync(path.join(tmp, 'episodes.json'), JSON.stringify(EPISODES));
 const { server } = await start({ port: 8790, audioDir: tmp });
 const B = 'http://127.0.0.1:8790';
 
@@ -97,14 +101,14 @@ await c.ev(`document.querySelector('.hb-pl-now').click()`); await waitFor(`!docu
 check('tapping the mini player’s title opens the full Audio hub (which hides the mini player)', (await c.ev(`!document.querySelector('.hb-hub').hidden && getComputedStyle(document.querySelector('.hb-player')).display === 'none' && document.querySelector('.tab[aria-current]').dataset.tab === 'audio'`)) === true);
 
 // ---------- 4. the Audio hub with the recording ----------
-t = await J(`(() => { const rows = [...document.querySelectorAll('.hub-row')]; return { pill: document.querySelector('.hub-pill').textContent, voice: document.querySelector('.hub-voice b').textContent, title: document.querySelector('.hub-title').textContent, ed: document.querySelector('.hub-ed').textContent, rows: rows.map((r) => [r.querySelector('.hub-t').textContent, r.querySelector('b').textContent, r.className.replace('hub-row ', '')]), head: document.querySelector('.hub-top .ab-screen').textContent, close: (() => { const b = document.querySelector('.hub-close'), r = b.getBoundingClientRect(); return { w: Math.round(r.width), fill: getComputedStyle(b.querySelector('svg')).fill }; })(), lock: document.documentElement.classList.contains('hb-hub-open') }; })()`);
+t = await J(`(() => { const rows = [...document.querySelectorAll('.hub-ch:not(.hub-eps) .hub-row')]; return { pill: document.querySelector('.hub-pill').textContent, voice: document.querySelector('.hub-voice b').textContent, title: document.querySelector('.hub-title').textContent, ed: document.querySelector('.hub-ed').textContent, rows: rows.map((r) => [r.querySelector('.hub-t').textContent, r.querySelector('b').textContent, r.className.replace('hub-row ', '')]), head: document.querySelector('.hub-top .ab-screen').textContent, close: (() => { const b = document.querySelector('.hub-close'), r = b.getBoundingClientRect(); return { w: Math.round(r.width), fill: getComputedStyle(b.querySelector('svg')).fill }; })(), lock: document.documentElement.classList.contains('hb-hub-open') }; })()`);
 check('hub: "AI voice ready", narrator Neha, five chapters with real timestamps (intro, three sections, wrap-up); the ✕ button is visible', t.pill === 'AI voice ready' && /Neha/.test(t.voice) && t.rows.length === 5 && t.rows[0][1] === 'Introduction' && t.rows[1][1] === 'AI & Tech' && t.rows[4][1] === 'Wrap-up' && t.rows.every((r) => /^\d\d:\d\d$/.test(r[0])) && t.close.w >= 44 && t.close.fill !== 'none' && t.lock && t.head === 'Audio', JSON.stringify(t));
 const mm = (sec) => `${String(Math.floor(Math.round(sec) / 60)).padStart(2, '0')}:${String(Math.round(sec) % 60).padStart(2, '0')}`;
-check('hub: the chapter times are the recording’s own (each section starts where the manifest says, at 1×)', eq(await J(`[...document.querySelectorAll('.hub-row .hub-t')].map((x) => x.textContent)`), ['intro', 'lane:ai', 'lane:biz', 'lane:mkt', 'outro'].map((id) => mm(cue(id).start))), JSON.stringify(await J(`[...document.querySelectorAll('.hub-row .hub-t')].map((x) => x.textContent)`)));
-t = await J(`({ w: parseFloat(document.querySelector('.hub-bar i').style.width), cur: document.querySelector('.hub-cur').textContent, rem: document.querySelector('.hub-rem').textContent, tot: document.querySelector('.hub-tot').textContent, now: document.querySelector('.hub-row.now b') && document.querySelector('.hub-row.now b').textContent, play: document.querySelector('.hub-play').getAttribute('aria-label') })`);
+check('hub: the chapter times are the recording’s own (each section starts where the manifest says, at 1×)', eq(await J(`[...document.querySelectorAll('.hub-ch:not(.hub-eps) .hub-row .hub-t')].map((x) => x.textContent)`), ['intro', 'lane:ai', 'lane:biz', 'lane:mkt', 'outro'].map((id) => mm(cue(id).start))), JSON.stringify(await J(`[...document.querySelectorAll('.hub-ch:not(.hub-eps) .hub-row .hub-t')].map((x) => x.textContent)`)));
+t = await J(`({ w: parseFloat(document.querySelector('.hub-bar i').style.width), cur: document.querySelector('.hub-cur').textContent, rem: document.querySelector('.hub-rem').textContent, tot: document.querySelector('.hub-tot').textContent, now: document.querySelector('.hub-ch:not(.hub-eps) .hub-row.now b') && document.querySelector('.hub-ch:not(.hub-eps) .hub-row.now b').textContent, play: document.querySelector('.hub-play').getAttribute('aria-label') })`);
 check('hub while playing: progress bar and clock move, the current chapter is marked, the big button says Pause', t.w > 0 && /^\d\d:\d\d$/.test(t.cur) && /^Remaining -\d\d:\d\d$/.test(t.rem) && /^\d\d:\d\d$/.test(t.tot) && t.now === 'Introduction' && t.play === 'Pause', JSON.stringify(t));
-await c.ev(`[...document.querySelectorAll('.hub-row')].find((r) => r.querySelector('b').textContent === 'Stock Market').click()`); await c.sleep(1200);
-t = await J(`({ now: document.querySelector('.hub-row.now b').textContent, time: __audio.currentTime, done: [...document.querySelectorAll('.hub-row.done b')].map((b) => b.textContent), st: HBListen.state() })`);
+await c.ev(`[...document.querySelectorAll('.hub-ch:not(.hub-eps) .hub-row')].find((r) => r.querySelector('b').textContent === 'Stock Market').click()`); await c.sleep(1200);
+t = await J(`({ now: document.querySelector('.hub-ch:not(.hub-eps) .hub-row.now b').textContent, time: __audio.currentTime, done: [...document.querySelectorAll('.hub-ch:not(.hub-eps) .hub-row.done b')].map((b) => b.textContent), st: HBListen.state() })`);
 check('tapping a chapter jumps the recording there: it becomes current, earlier chapters show as done', t.now === 'Stock Market' && t.time >= cue('lane:mkt').start - 0.3 && t.time < cue('lane:mkt').start + 3 && eq(t.done, ['Introduction', 'AI & Tech', 'Product & Business']) && t.st === 'playing', JSON.stringify(t));
 await c.shot(`${OUT}/p_hub.png`);
 await c.ev(`document.querySelector('.hub-play').click()`); await c.sleep(300);
@@ -118,23 +122,53 @@ check('Escape closes the hub: scrolling is unlocked, the Today tab is current, t
 // hub follows the reader's sections
 await open({ tts: true, prefs: { order: ['mkt', 'ai', 'biz', 'quiz'], off: ['biz'] } });
 await c.ev(`document.querySelector('.tab[data-tab=audio]').click()`); await waitFor(`!document.querySelector('.hb-hub').hidden`, 2000); await c.sleep(300);
-t = await J(`[...document.querySelectorAll('.hub-row b')].map((b) => b.textContent)`);
+t = await J(`[...document.querySelectorAll('.hub-ch:not(.hub-eps) .hub-row b')].map((b) => b.textContent)`);
 check('the hub lists the reader’s sections: Stock Market first, Product & Business left out', eq(t, ['Introduction', 'Stock Market', 'AI & Tech', 'Wrap-up']), JSON.stringify(t));
 await c.ev(`document.querySelector('.hub-close').click()`);
 
 // ---------- 5. the hub with the device voice, and with nothing to play ----------
 await open({ tts: true, manifestOk: false });
 await c.ev(`document.querySelector('.tab[data-tab=audio]').click()`); await waitFor(`!document.querySelector('.hb-hub').hidden`, 2000); await c.sleep(300);
-t = await J(`({ pill: document.querySelector('.hub-pill').textContent, voice: document.querySelector('.hub-voice b').textContent, nums: [...document.querySelectorAll('.hub-t')].map((x) => x.textContent) })`);
+t = await J(`({ pill: document.querySelector('.hub-pill').textContent, voice: document.querySelector('.hub-voice b').textContent, nums: [...document.querySelectorAll('.hub-ch:not(.hub-eps) .hub-t')].map((x) => x.textContent) })`);
 check('device voice: the hub says so, and chapters are numbered (no invented timestamps)', t.pill === 'Device voice' && /device/i.test(t.voice) && eq(t.nums, ['1', '2', '3', '4', '5']), JSON.stringify(t));
 await c.ev(`window.__ttsMs = 500; document.querySelector('.hub-play').click()`); await c.sleep(1500);
-t = await J(`({ st: HBListen.state(), src: HBListen.source(), spoken: window.__spoken.length, now: (document.querySelector('.hub-row.now b') || {}).textContent, w: parseFloat(document.querySelector('.hub-bar i').style.width) })`);
+t = await J(`({ st: HBListen.state(), src: HBListen.source(), spoken: window.__spoken.length, now: (document.querySelector('.hub-ch:not(.hub-eps) .hub-row.now b') || {}).textContent, w: parseFloat(document.querySelector('.hub-bar i').style.width) })`);
 check('device voice: the big button plays it and the bar moves', t.st === 'playing' && t.src === 'tts' && t.spoken > 0 && t.now && t.w > 0, JSON.stringify(t));
 await c.ev(`document.querySelector('.hub-close').click(); HBListen.stop()`);
 await open({ tts: false, manifestOk: false });
 await c.ev(`document.querySelector('.tab[data-tab=audio]').click()`); await waitFor(`!document.querySelector('.hb-hub').hidden`, 2000); await c.sleep(300);
 t = await J(`({ pill: document.querySelector('.hub-pill').textContent, play: document.querySelector('.hub-play').disabled, msg: document.querySelector('.hub-msg').textContent })`);
 check('nothing can play: the hub says "Audio unavailable" with a plain message and a disabled button (no crash)', t.pill === 'Audio unavailable' && t.play && /isn.t available/.test(t.msg), JSON.stringify(t));
+await c.ev(`document.querySelector('.hub-close').click()`);
+
+// ---------- 5b. All episodes: every recording since the first, newest first ----------
+await open({ tts: true });
+await c.ev(`document.querySelector('.tab[data-tab=audio]').click()`); await waitFor(`!document.querySelector('.hb-hub').hidden`, 2000);
+await waitFor(`document.querySelectorAll('.hub-eps li').length === 3`, 3000);
+t = await J(`(() => { const rows = [...document.querySelectorAll('.hub-eps li')].map((li) => { const r = li.firstElementChild; return { tag: r.tagName, href: r.getAttribute('href'), cur: r.getAttribute('aria-current'), no: r.querySelector('.hub-t').textContent, title: r.querySelector('b').textContent, sub: r.querySelector('small').textContent, here: (r.querySelector('.hub-here') || {}).textContent }; }); return { head: document.querySelector('.hub-eph h3').textContent, count: document.querySelector('.hub-eph span').textContent, rows, hidden: document.querySelector('.hub-eps').hidden }; })()`);
+const nice = (d) => new Date(d + 'T00:00:00Z').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+check('All episodes lists every recording, newest first, with edition number, date, length and voice; the count says how far back it goes', t.head === 'All episodes' && /^3 episodes · since \d{1,2} \w+$/.test(t.count) && !t.hidden && eq(t.rows.map((r) => r.title), [0, 1, 2].map((n) => nice(daysBefore(n)))) && t.rows[0].no === '040' && t.rows[1].sub === '7 min · Neha (AI voice)', JSON.stringify(t));
+check('the page you are on is marked ("This page", not a link); the others link to that edition with the Audio screen open', t.rows[0].tag === 'DIV' && t.rows[0].cur === 'true' && t.rows[0].here === 'This page' && t.rows[1].tag === 'A' && t.rows[1].href === `/archive/${daysBefore(1)}.html?audio=1` && t.rows[2].href === `/archive/${daysBefore(2)}.html?audio=1`, JSON.stringify(t.rows));
+await c.shot(`${OUT}/p_episodes.png`);
+await c.ev(`document.querySelector('.hub-eps li:nth-child(2) a').click()`);
+await waitFor(`location.pathname === '/archive/${daysBefore(1)}.html'`, 4000); await c.sleep(1500);
+t = await J(`({ path: location.pathname + location.search, hub: !!document.querySelector('.hb-hub') && !document.querySelector('.hb-hub').hidden, rows: [...document.querySelectorAll('.hub-eps li')].map((li) => li.firstElementChild.getAttribute('aria-current') === 'true'), edition: document.querySelector('.hub-ed') && document.querySelector('.hub-ed').textContent })`);
+check('tapping an earlier episode opens that day\'s edition with the Audio screen already open, and now that row is the marked one', t.path === `/archive/${daysBefore(1)}.html?audio=1` && t.hub && eq(t.rows, [false, true, false]), JSON.stringify(t));
+// no list published yet (or it cannot be fetched): the section quietly stays away
+fs.renameSync(path.join(tmp, 'episodes.json'), path.join(tmp, 'episodes.off'));
+await open({ tts: true });
+await c.ev(`document.querySelector('.tab[data-tab=audio]').click()`); await waitFor(`!document.querySelector('.hb-hub').hidden`, 2000); await c.sleep(1200);
+check('without an episode list the section is simply not shown (no empty heading, no error)', (await c.ev(`document.querySelector('.hub-eph').hidden && document.querySelector('.hub-eps').hidden`)) === true);
+fs.renameSync(path.join(tmp, 'episodes.off'), path.join(tmp, 'episodes.json'));
+fs.writeFileSync(path.join(tmp, 'episodes.json'), '{"v":1,"episodes":[{"date":"nope","minutes":3},{"date":"2026-09-01","minutes":0},null,{"date":"' + LATEST + '","edition":1,"minutes":5,"voice":""}]}');
+await open({ tts: true });
+await c.ev(`document.querySelector('.tab[data-tab=audio]').click()`); await waitFor(`!document.querySelector('.hb-hub').hidden`, 2000); await c.sleep(1200);
+t = await J(`({ n: document.querySelectorAll('.hub-eps li').length, sub: (document.querySelector('.hub-eps small') || {}).textContent, count: document.querySelector('.hub-eph span').textContent })`);
+check('a damaged list is cleaned: bad rows are dropped, a missing voice just says "AI voice"', t.n === 1 && t.sub === '5 min · AI voice' && t.count === '1 episode', JSON.stringify(t));
+fs.writeFileSync(path.join(tmp, 'episodes.json'), JSON.stringify(EPISODES));
+await open({ width: 360, tts: true });
+await c.ev(`document.querySelector('.tab[data-tab=audio]').click()`); await waitFor(`!document.querySelector('.hb-hub').hidden`, 2000); await waitFor(`document.querySelectorAll('.hub-eps li').length === 3`, 3000);
+check('360px wide: the episode rows fit (no sideways scrolling, rows are tall enough to tap)', (await c.ev(`document.querySelector('.hub-scroll').scrollWidth <= document.querySelector('.hub-scroll').clientWidth && [...document.querySelectorAll('.hub-eps li')].every((li) => li.getBoundingClientRect().height >= 60)`)) === true);
 await c.ev(`document.querySelector('.hub-close').click()`);
 
 // ---------- 6. the quiz ----------

@@ -64,6 +64,15 @@ async function speak(text) {
   return wavs;
 }
 
+// If the run dies, leave a note the workflow can act on (e.g. open an alert when Sarvam says there is no credit left).
+function died(e) {
+  console.error(String((e && e.stack) || e));
+  try { fs.mkdirSync(OUT, { recursive: true }); fs.writeFileSync(path.join(OUT, 'error.json'), JSON.stringify({ code: e && e.noCredit ? 'no_credit' : 'error', message: String((e && e.message) || e).slice(0, 300), date: meta.date })); } catch (x) { /* nothing more to do */ }
+  process.exit(e && e.noCredit ? 3 : 1);
+}
+process.on('unhandledRejection', died);
+process.on('uncaughtException', died);
+
 const outDir = path.join(OUT, 'audio', meta.date);
 fs.rmSync(outDir, { recursive: true, force: true });
 fs.mkdirSync(outDir, { recursive: true });

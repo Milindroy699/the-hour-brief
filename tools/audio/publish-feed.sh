@@ -17,7 +17,7 @@ echo "manifests found: $(find "$WORK/manifests" -name manifest.json | wc -l | tr
 # Fails (and publishes nothing) if there are no usable episodes or the feed does not pass its own checks.
 SITE_ARGS=()
 [ -n "${PODCAST_SITE:-}" ] && SITE_ARGS=(--site "$PODCAST_SITE")          # only the tests set this
-node podcast.mjs --audio "$WORK/manifests" --audio-base "$R2_PUBLIC_URL" --feed-url "$R2_PUBLIC_URL/podcast.xml" --out "$WORK/podcast.xml" ${SITE_ARGS[@]+"${SITE_ARGS[@]}"}
+node podcast.mjs --audio "$WORK/manifests" --audio-base "$R2_PUBLIC_URL" --feed-url "$R2_PUBLIC_URL/podcast.xml" --out "$WORK/podcast.xml" --episodes-out "$WORK/episodes.json" ${SITE_ARGS[@]+"${SITE_ARGS[@]}"}
 
 if [ "${FEED_DRY:-}" = "1" ]; then
   echo "FEED_DRY=1: not uploading. Feed is at $WORK/podcast.xml"; cat "$WORK/podcast.xml" | head -40; exit 0
@@ -25,5 +25,8 @@ fi
 
 aws s3 cp "$WORK/podcast.xml" "s3://$R2_BUCKET/podcast.xml" --endpoint-url "$R2_ENDPOINT" \
   --content-type "application/rss+xml; charset=utf-8" --cache-control "public, max-age=600"
-echo "published $R2_PUBLIC_URL/podcast.xml"
+# the Audio screen's list of all episodes (the site reads this, the podcast apps read the feed)
+aws s3 cp "$WORK/episodes.json" "s3://$R2_BUCKET/episodes.json" --endpoint-url "$R2_ENDPOINT" \
+  --content-type "application/json" --cache-control "public, max-age=300"
+echo "published $R2_PUBLIC_URL/podcast.xml and episodes.json"
 node podcast.mjs --verify "$R2_PUBLIC_URL/podcast.xml"

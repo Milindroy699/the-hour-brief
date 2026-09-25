@@ -60,6 +60,20 @@ the right size, `audio/mpeg` and range support. It costs nothing (no Sarvam) and
 - Submit once: creators.spotify.com -> add an existing podcast -> paste the feed address -> enter the code Spotify emails to the owner address in the feed
   (`milindroy101292@gmail.com`) -> choose category, language and country. Apple Podcasts Connect takes the same feed.
 
+## Audio screen: all episodes, and Sarvam credit alerts
+
+- **All episodes:** the Audio screen (`listen.js`, hub) lists every recording since the first one (24 Sep), newest first. The list is `episodes.json` in the audio bucket,
+  written by `podcast.mjs --episodes-out` and uploaded by `publish-feed.sh` (so `audio.yml` refreshes it after each recording, and the "Podcast feed" workflow can rebuild it by hand).
+  Each row opens `/archive/<date>.html?audio=1`: that edition's page with the Audio screen open (chapters, highlighting); the row of the page you are on is marked "This page".
+  No list published, or a broken one: the section stays hidden.
+- **Late recordings:** a page opened before its recording existed looks again quietly (every minute while visible, on returning to the tab, when back online), never at the moment of tapping play.
+- **Credit alerts:** Sarvam has no way to read the balance from code, so `tools/audio/credit.mjs` keeps an ESTIMATE in R2 (`_ledger/sarvam.json`): you enter the balance once
+  (Actions -> "Sarvam credit" -> Run workflow -> balance), each recording subtracts its cost (₹3 per 1,000 characters), and when the estimate is under ₹100 or under 5 days
+  (repository variables `SARVAM_LOW_RUPEES` and `SARVAM_MIN_DAYS` change that) a GitHub issue labelled `sarvam-credit` is opened that @mentions the owner, which GitHub emails.
+  Separately, if Sarvam answers "no credits" (402) the run leaves `out/error.json`, exits 3 and opens a "ran out" alert straight away, no estimate needed.
+  Entering a new balance above the alert level closes open alerts. "Sarvam credit" with `test_alert` opens and closes a test issue to check the email arrives.
+  Tests: `node --test test/*.test.mjs` in `tools/audio` (43 checks).
+
 ## Your sections (show / hide / reorder)
 
 `mobile.js` (reader mode only: phones and the apps) lets readers switch the sections (`section.lane`: AI, Business, Markets, Quiz) on or off

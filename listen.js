@@ -775,10 +775,19 @@
     hubEl.chn = mk('span');
     chh.appendChild(hubEl.chn);
     hubEl.list = mk('ol', 'hub-ch');
+    hubEl.eph = mk('div', 'hub-chh hub-eph');                 // every episode since the first recording
+    hubEl.eph.hidden = true;
+    hubEl.eph.appendChild(mk('h3', '', 'All episodes'));
+    hubEl.epn = mk('span');
+    hubEl.eph.appendChild(hubEl.epn);
+    hubEl.eps = mk('ol', 'hub-ch hub-eps');
+    hubEl.eps.hidden = true;
     sc.appendChild(st);
     sc.appendChild(card);
     sc.appendChild(chh);
     sc.appendChild(hubEl.list);
+    sc.appendChild(hubEl.eph);
+    sc.appendChild(hubEl.eps);
     hub.appendChild(top);
     hub.appendChild(sc);
     document.body.appendChild(hub);
@@ -860,8 +869,59 @@
     });
     hubProgress();
   }
+  // ---- All episodes: the list published next to the recordings (episodes.json). Each row opens that edition, whose page
+  // has the chapters and the story highlighting; the row for the page you are on is marked instead of linked. ----
+  var eps = null, epsAt = 0;
+  function pageDate() { var el = document.querySelector('[data-edition-date]'); return el && el.getAttribute('data-edition-date'); }
+  function niceDate(iso) {
+    try { return new Date(iso + 'T00:00:00Z').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }); } catch (e) { return iso; }
+  }
+  function niceDay(iso) {
+    try { return new Date(iso + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', timeZone: 'UTC' }); } catch (e) { return iso; }
+  }
+  function loadEpisodes() {
+    if (!window.fetch || (eps && Date.now() - epsAt < 300000)) return;
+    epsAt = Date.now();
+    var ctl = window.AbortController ? new AbortController() : null;
+    var t = setTimeout(function () { if (ctl) ctl.abort(); }, 6000);
+    fetch(AUDIO_BASE + '/episodes.json', { cache: 'no-cache', signal: ctl ? ctl.signal : undefined })
+      .then(function (r) { if (!r.ok) throw new Error('no list'); return r.json(); })
+      .then(function (j) {
+        if (!j || j.v !== 1 || !Array.isArray(j.episodes)) return;
+        eps = j.episodes.filter(function (e) { return e && /^\d{4}-\d{2}-\d{2}$/.test(e.date) && e.minutes > 0; }).slice(0, 200);
+        renderEpisodes();
+      })
+      .catch(function () { /* no list yet: the section stays hidden */ })
+      .then(function () { clearTimeout(t); });
+  }
+  function renderEpisodes() {
+    if (!hub || !hubEl.eps) return;
+    var show = !!(eps && eps.length);
+    hubEl.eph.hidden = hubEl.eps.hidden = !show;
+    if (!show) return;
+    var here = pageDate(), oldest = eps[eps.length - 1].date;
+    hubEl.epn.textContent = eps.length + (eps.length === 1 ? ' episode' : ' episodes') + (eps.length > 1 ? ' · since ' + niceDay(oldest) : '');
+    hubEl.eps.textContent = '';
+    eps.forEach(function (e) {
+      var li = mk('li'), current = e.date === here;
+      var row = mk(current ? 'div' : 'a', 'hub-row ep' + (current ? ' now' : ''));
+      if (current) row.setAttribute('aria-current', 'true'); else row.href = '/archive/' + e.date + '.html?audio=1';
+      row.appendChild(mk('span', 'hub-t', e.edition ? ('00' + e.edition).slice(-3) : '·'));
+      var tx = mk('span', 'hub-tx');
+      tx.appendChild(mk('b', '', niceDate(e.date)));
+      var voice = e.voice ? e.voice.charAt(0).toUpperCase() + e.voice.slice(1) + ' (AI voice)' : 'AI voice';
+      tx.appendChild(mk('small', '', e.minutes + ' min · ' + voice));
+      row.appendChild(tx);
+      if (current) row.appendChild(mk('span', 'hub-here', 'This page'));
+      else { var ic = mk('span', 'hub-i'); ic.innerHTML = I_PLAYC; row.appendChild(ic); }
+      li.appendChild(row);
+      hubEl.eps.appendChild(li);
+    });
+  }
+
   function openHub() {
     buildHub();
+    loadEpisodes();
     if (hubShown) return;
     hubPrev = document.activeElement;
     buildChapters();

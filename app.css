@@ -573,3 +573,10 @@ html.hb-hub-open .hb-player { display: none; }
   .rd-sheet { border-radius: 26px; }
   :root .qz-sheet { border-radius: 26px; }
 }
+
+/* All episodes (the Audio screen): rows are links to that edition; the page you are on is marked */
+.hub-eps a.hub-row { text-decoration: none; }
+.hub-eps .hub-row .hub-tx b { font-size: 0.98rem; }
+.hub-here { flex: none; padding: 6px 12px; border-radius: 999px; background: var(--hb-primary); color: #fff; font-family: var(--hb-label); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.hub-eph[hidden], .hub-eps[hidden] { display: none; }
+.hub-eps { margin-bottom: 8px; }

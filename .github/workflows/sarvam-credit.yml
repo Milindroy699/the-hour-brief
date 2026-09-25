@@ -1,0 +1,55 @@
+name: Sarvam credit
+
+# Tell the daily recording how much Sarvam credit you have (do this once, and again after every top-up). Each recording then
+# subtracts its cost, and when the estimate gets low a GitHub issue that mentions you is opened, which GitHub emails to you.
+# The estimate is stored in the audio bucket (_ledger/sarvam.json). It is an estimate: Sarvam gives no way to read the balance from code.
+on:
+  workflow_dispatch:
+    inputs:
+      balance:
+        description: Your Sarvam balance in rupees, as shown in the Sarvam dashboard (for example 300)
+        required: false
+      test_alert:
+        description: Send a test alert (opens and closes an issue that mentions you, to check that the email arrives)
+        type: boolean
+        default: false
+
+concurrency:
+  group: sarvam-credit
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  credit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      R2_ENDPOINT: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      SARVAM_LOW_RUPEES: ${{ vars.SARVAM_LOW_RUPEES }}
+      SARVAM_MIN_DAYS: ${{ vars.SARVAM_MIN_DAYS }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Record the balance
+        if: ${{ inputs.balance != '' }}
+        env:
+          BALANCE: ${{ inputs.balance }}
+        run: bash tools/audio/credit.sh set "$BALANCE"
+      - name: Show the estimate
+        run: bash tools/audio/credit.sh status
+      - name: Test alert
+        if: ${{ inputs.test_alert }}
+        run: bash tools/audio/credit.sh alert test

@@ -9,7 +9,7 @@ import path from 'node:path';
 import { execFile, execFileSync } from 'node:child_process';
 import { promisify } from 'node:util';
 import * as cheerio from 'cheerio';
-import { buildFeed, checkFeedXml, collect, episodeFrom, esc, hms, sections, SHOW } from '../podcast.mjs';
+import { buildEpisodeList, buildFeed, checkFeedXml, collect, episodeFrom, esc, hms, sections, SHOW } from '../podcast.mjs';
 
 const run = promisify(execFile);
 const DIR = path.resolve(import.meta.dirname, '..');
@@ -269,5 +269,32 @@ test('publish-feed.sh: a feed whose audio is not actually served is reported as 
     const r = await publish({ PATH: `${bin}:${process.env.PATH}`, FAKE_BUCKET: bucket, R2_BUCKET: 'b', R2_ENDPOINT: 'http://unused', R2_PUBLIC_URL: host.url, PODCAST_SITE: host.url, HB_ALLOW_HTTP: '1' });
     assert.notEqual(r.code, 0);
     assert.match(r.out, /answered 404/);
+  } finally { host.server.close(); }
+});
+
+test('the episode list for the Audio screen: newest first, one row per recorded day, only what a row needs', () => {
+  const list = buildEpisodeList(eps());
+  assert.equal(list.v, 1);
+  assert.deepEqual(list.episodes.map((e) => e.date), ['2026-09-24', '2026-09-23', '2026-09-10']);
+  const first = list.episodes[0];
+  assert.deepEqual(Object.keys(first).sort(), ['bytes', 'date', 'duration', 'edition', 'minutes', 'voice']);
+  assert.equal(first.edition, 39);
+  assert.equal(first.voice, 'neha');
+  assert.ok(first.minutes >= 1 && Number.isInteger(first.minutes));
+  assert.ok(!/https?:/.test(JSON.stringify(list)), 'no links in the list: the page builds its own');
+});
+
+test('publish-feed.sh also publishes episodes.json (JSON content type, short cache) next to the feed', async () => {
+  const { bucket, bin } = fakeBucket();
+  fs.cpSync(AUDIO, path.join(bucket, 'audio'), { recursive: true });
+  const host = await publicHost(bucket);
+  try {
+    const env = { PATH: `${bin}:${process.env.PATH}`, FAKE_BUCKET: bucket, R2_BUCKET: 'b', R2_ENDPOINT: 'http://unused', R2_PUBLIC_URL: host.url, PODCAST_SITE: host.url, HB_ALLOW_HTTP: '1' };
+    const r = await publish(env);
+    assert.equal(r.code, 0, r.out);
+    assert.match(r.out, /published .*podcast\.xml and episodes\.json/);
+    const list = JSON.parse(fs.readFileSync(path.join(bucket, 'episodes.json'), 'utf8'));
+    assert.deepEqual(list.episodes.map((e) => e.date), ['2026-09-24', '2026-09-23', '2026-09-10']);
+    assert.equal(fs.readFileSync(path.join(bucket, 'episodes.json.ctype'), 'utf8'), 'application/json');
   } finally { host.server.close(); }
 });

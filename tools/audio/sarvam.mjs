@@ -25,7 +25,10 @@ export async function synthesize(key, { text, speaker, pace = 1, temperature, mo
     }
     if (r.status === 422 && langField === 'language_code' && /language_code|target_language_code/i.test(r.text)) { langField = 'target_language_code'; continue; }
     if (r.status === 429 || r.status >= 500) { await sleep(1500 * attempt); continue; }
-    throw new Error(`Sarvam ${r.status}: ${r.text.slice(0, 300)}`);
+    const err = new Error(`Sarvam ${r.status}: ${r.text.slice(0, 300)}`);
+    err.status = r.status;
+    err.noCredit = r.status === 402 || /no credits?|insufficient (credit|balance)|out of credits?/i.test(r.text);      // the run has to tell someone, not just fail
+    throw err;
   }
   throw new Error('Sarvam kept failing after retries');
 }

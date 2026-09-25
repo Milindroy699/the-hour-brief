@@ -2,7 +2,7 @@
 // recorded edition. It reads only what the daily audio job already publishes (each day's manifest.json: file, bytes,
 // duration) and the edition page (title, takeaways), so building it costs nothing and never touches Sarvam.
 //
-//   node podcast.mjs --audio DIR --audio-base URL --feed-url URL [--site URL] [--repo ROOT] [--out podcast.xml]
+//   node podcast.mjs --audio DIR --audio-base URL --feed-url URL [--site URL] [--repo ROOT] [--out podcast.xml] [--episodes-out episodes.json]
 //       DIR        folder holding <date>/manifest.json for every recorded day (the workflow syncs it from R2)
 //       audio-base where the audio lives; episode audio is <audio-base>/audio/<date>/<file>
 //       feed-url   the address the feed itself will be published at (goes into atom:link rel="self")
@@ -88,7 +88,18 @@ export function episodeFrom(manifest, html, { audioBase, site }) {
     title: `${number ? `Edition ${pad(number, 3)} · ` : ''}${longDate(date)}`,
     description: body,
     pubDate: new Date(`${date}T03:30:00Z`).toUTCString(),           // 09:00 in India, the time the edition is out
-    url: `${audioBase}/audio/${date}/${q.file}`, bytes: q.bytes, duration: q.duration, page,
+    url: `${audioBase}/audio/${date}/${q.file}`, bytes: q.bytes, duration: q.duration, page, voice: manifest.voice || '',
+  };
+}
+
+// The list the Audio screen shows ("all episodes"): newest first, just what a row needs. The audio itself is opened from the
+// edition's own page, which has the chapters and highlights.
+export function buildEpisodeList(episodes) {
+  return {
+    v: 1,
+    episodes: [...episodes].sort((a, b) => (a.date < b.date ? 1 : -1)).map((e) => ({
+      date: e.date, edition: e.number || 0, minutes: Math.max(1, Math.round(e.duration / 60)), duration: Math.round(e.duration), bytes: e.bytes, voice: e.voice || '',
+    })),
   };
 }
 
@@ -247,6 +258,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     const problems = checkFeedXml(xml);
     if (problems.length) { console.error('Feed problems:\n - ' + problems.join('\n - ')); process.exit(1); }
     fs.writeFileSync(path.resolve(arg('--out', 'podcast.xml')), xml);
+    if (arg('--episodes-out')) fs.writeFileSync(path.resolve(arg('--episodes-out')), JSON.stringify(buildEpisodeList(eps)));
     console.log(`Wrote ${eps.length} episode(s) to ${arg('--out', 'podcast.xml')}`);
   }
 }
