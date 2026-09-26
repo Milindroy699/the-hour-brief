@@ -935,9 +935,9 @@
     if (L && L.closeHub) L.closeHub();
     if (name === 'today') { if (deckOpen()) window.HBCards.goTo(0, true); else window.scrollTo({ top: 0, behavior: 'smooth' }); }
     else if (name === 'quiz') {
-      if (deckOpen()) window.HBCards.close({ keep: true, noScroll: true });
       var q = document.getElementById('quiz');
-      if (q) q.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      if (deckOpen()) window.HBCards.close({ keep: true, to: q });                      // one instant change of screen, no sweep through the feed
+      else if (q) q.scrollIntoView({ block: 'start', behavior: 'smooth' });
     }
     setTimeout(syncTabs, 60);
   }

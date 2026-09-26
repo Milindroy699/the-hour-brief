@@ -228,9 +228,8 @@
     b.scroll.appendChild(mk('p', 'dk-body-lg', done ? 'You have played today’s quiz. Look back at your answers, or keep your streak going tomorrow.' : 'Five quick questions on what you just read. It takes about a minute.'));
     var go = btn('dk-cta', done ? 'Review your answers' : 'Play the quiz');
     go.addEventListener('click', function () {
-      close({ keep: true, noScroll: true });
-      var ch = document.querySelector('.quiz-chip');
-      if (ch) ch.click(); else { var q = document.getElementById('quiz'); if (q) q.scrollIntoView({ block: 'start' }); }
+      // Hand over instantly, straight onto the question: the deck is replaced by the quiz in one step, with none of the feed scrolling past.
+      close({ keep: true, to: document.querySelector('#quiz .quiz-card') || c.lane });
     });
     b.scroll.appendChild(go);
     return b.card;
@@ -544,6 +543,8 @@
   }
 
   // keep: leave the reader's saved choice (Cards) alone, because this is only a trip to the quiz or similar.
+  // to: an element to land the list on (default: what was being read). The jump is instant, made in the same moment the
+  // deck goes, so the reader sees one change of screen, never the feed scrolling past.
   function close(o) {
     o = o || {};
     if (!shown) return;
@@ -555,10 +556,8 @@
     stopFit();
     if (mirrorObs) mirrorObs.disconnect();
     if (!o.keep) setView('list');
-    if (!o.noScroll && c) {
-      var target = c.kind === 'story' ? c.item : c.lane;
-      if (target && target.scrollIntoView) target.scrollIntoView({ block: 'start', behavior: 'instant' });   // the page's own CSS is smooth
-    }
+    var target = o.to || (c && (c.kind === 'story' ? c.item : c.lane));
+    if (target && target.scrollIntoView) target.scrollIntoView({ block: 'start', behavior: 'instant' });   // the page's own CSS is smooth
     document.dispatchEvent(new CustomEvent('hb:deck'));
     if (returnFocus && returnFocus.focus && document.contains(returnFocus)) { try { returnFocus.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }
     returnFocus = null;
