@@ -147,6 +147,27 @@ await c.ev(`document.querySelector('.dk-next').click()`); await c.sleep(1200);
 t = await J(`({ pos: document.querySelector('.dk-count').textContent, off: document.querySelector('.dk-track').scrollLeft - document.querySelector('.dk-track').clientWidth })`);
 check('even if the browser stops the scroll partway, the card ends up exactly in place', t.pos === '2 / 22' && Math.abs(t.off) < 2, JSON.stringify(t));
 
+// Chrome on Android sometimes leaves a snapping track a little past (or short of) a card after a smooth scroll. Force that here by
+// turning the browser's own snapping off and parking the track off-centre, as the browser did on the emulator.
+const OFFSET = `(() => { const t = document.querySelector('.dk-track'), k = document.querySelectorAll('.dk-card')[%N%]; return Math.round((k.getBoundingClientRect().left - t.getBoundingClientRect().left) * 10) / 10; })()`;
+const PARK = (n, by) => `(() => { const t = document.querySelector('.dk-track'), k = document.querySelectorAll('.dk-card')[${n}]; t.style.scrollSnapType = 'none'; t.scrollLeft = k.getBoundingClientRect().left - t.getBoundingClientRect().left + t.scrollLeft + (${by}); })()`;
+await open();
+await openDeck();
+await c.sleep(500);
+await c.ev(PARK(1, 11.6)); await c.sleep(900);
+t = await J(OFFSET.replace('%N%', 1));
+check('a track left 11.6px past a card by the browser is put exactly on it once scrolling stops', Math.abs(t) <= 2 && (await pos()) === '2 / 22', String(t));
+await c.ev(PARK(2, -30)); await c.sleep(900);
+t = await J(OFFSET.replace('%N%', 2));
+check('and one left 30px short of a card is too', Math.abs(t) <= 2 && (await pos()) === '3 / 22', String(t));
+await c.ev(`document.querySelector('.hb-deck').dispatchEvent(new Event('touchstart')); 'ok'`);
+await c.ev(PARK(3, 15)); await c.sleep(900);
+t = await J(OFFSET.replace('%N%', 3));
+check('but while a finger is on the deck it is never moved from under it', Math.abs(t) > 10, String(t));
+await c.ev(`document.querySelector('.hb-deck').dispatchEvent(new Event('touchend')); 'ok'`); await c.sleep(1400);
+t = await J(OFFSET.replace('%N%', 3));
+check('and when the finger lifts, it settles onto the card', Math.abs(t) <= 2, String(t));
+
 // ---------- 4. long stories scroll inside the card ----------
 await open({ height: 600 });
 await openDeck();

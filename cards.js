@@ -19,7 +19,7 @@
   var canInert = 'inert' in HTMLElement.prototype;
 
   var deck = null, track = null, ui = {}, cards = [], idx = 0, shown = false;
-  var lastTouch = 0, returnFocus = null, scrollRaf = 0, settleT = 0, fixT = 0, syncRaf = 0;
+  var lastTouch = 0, downAt = 0, lastScrollAt = 0, goal = null, goalAt = 0, goalMs = 0, returnFocus = null, scrollRaf = 0, settleT = 0, fixT = 0, syncRaf = 0;
   var followObs = null, mirrorObs = null, bodyObs = null, playerRO = null, playerEl = null, deckW = 0;
 
   function mk(tag, cls, text) {
@@ -308,13 +308,17 @@
       if (i >= 0) goTo(i, true);
     });
     ['touchstart', 'pointerdown', 'wheel'].forEach(function (t) { deck.addEventListener(t, touched, { passive: true }); });
+    ['touchstart', 'pointerdown'].forEach(function (t) { deck.addEventListener(t, function () { downAt = Date.now(); }, { passive: true }); });
+    ['touchend', 'touchcancel', 'pointerup', 'pointercancel'].forEach(function (t) {
+      deck.addEventListener(t, function () { downAt = 0; setTimeout(align, 350); setTimeout(align, 900); }, { passive: true });
+    });
     deck.addEventListener('keydown', onKey);
     window.addEventListener('resize', onResize);
     document.addEventListener('hb:prefs', function () { if (shown) refresh(); });
     document.addEventListener('hb:hub', function () { if (shown) fitSoon(); });
   }
 
-  function touched() { lastTouch = Date.now(); }
+  function touched() { lastTouch = Date.now(); goal = null; }         // the reader has taken over: forget any move in progress
 
   function onKey(e) {
     touched();
@@ -332,7 +336,7 @@
   function onResize() {
     if (!shown || !track) return;
     if (window.requestAnimationFrame) requestAnimationFrame(function () {
-      if (shown && track.clientWidth !== deckW) { deckW = track.clientWidth; track.scrollLeft = idx * deckW; }
+      if (shown && track.clientWidth !== deckW) { deckW = track.clientWidth; track.scrollLeft = cardLeft(idx); }
       if (shown) fadeAll();
     });
   }
@@ -379,6 +383,7 @@
   }
 
   function onScroll() {
+    lastScrollAt = Date.now();
     if (scrollRaf) return;
     scrollRaf = requestAnimationFrame(function () {
       scrollRaf = 0;
@@ -386,24 +391,48 @@
       i = Math.max(0, Math.min(cards.length - 1, i));
       if (i !== idx) { idx = i; paint(); }
       clearTimeout(settleT);
-      settleT = setTimeout(function () { announce(); fadeAll(); }, 180);
+      settleT = setTimeout(function () { announce(); fadeAll(); align(); }, 200);
     });
   }
 
-  // Move to a card. Some WebViews end a smooth scroll early, so after a moment check it arrived and finish the job
-  // (never while the reader has a finger on the deck).
+  // Where a card sits in the track (measured, because cards are a fraction of a pixel wider than the screen on some phones).
+  function cardLeft(i) { return cards[i].el.getBoundingClientRect().left - track.getBoundingClientRect().left + track.scrollLeft; }
+  function isDown() { return !!downAt && Date.now() - downAt < 10000; }
+  // Chrome on Android sometimes ends a scroll on a snapping track a little past a card, or short of it, and leaves it
+  // there. Once scrolling has stopped, sit the track exactly on a card (never while a finger is on it or still moving).
+  function align() {
+    if (!shown || !track || !cards.length || isDown() || Date.now() - lastScrollAt < 120) return;
+    if (goal !== null && Date.now() - goalAt < goalMs) return;                  // a move we started is still expected to be running
+    var w = track.clientWidth || 1, i = Math.max(0, Math.min(cards.length - 1, Math.round(track.scrollLeft / w)));
+    var want = cardLeft(i);
+    if (Math.abs(track.scrollLeft - want) > 2) track.scrollLeft = want;
+  }
+  function alignTo(i) {
+    if (!shown || isDown() || Date.now() - lastScrollAt < 150 || Date.now() - lastTouch < 300) return;
+    var want = cardLeft(i);
+    if (Math.abs(track.scrollLeft - want) > 2) track.scrollLeft = want;
+  }
+
+  // Move to a card (smooth or instant), then make sure it arrived exactly.
   function goTo(i, smooth) {
     if (!track || !cards.length) return;
     i = Math.max(0, Math.min(cards.length - 1, i));
-    var animate = smooth && !reduceMotion;
+    var from = idx, animate = smooth && !reduceMotion && Math.abs(i - from) <= 2;   // a long jump (Home, End, a list item) is instant
     deckW = track.clientWidth;
-    track.scrollTo({ left: i * deckW, top: 0, behavior: animate ? 'smooth' : 'auto' });
+    track.scrollTo({ left: cardLeft(i), top: 0, behavior: animate ? 'smooth' : 'auto' });
     idx = i;
     paint();
+    goal = i;
+    goalAt = Date.now();
+    goalMs = animate ? 1100 : 100;
     clearTimeout(fixT);
-    fixT = setTimeout(function () {
-      if (shown && Date.now() - lastTouch > 500 && Math.abs(track.scrollLeft - i * track.clientWidth) > 4) track.scrollLeft = i * track.clientWidth;
-    }, animate ? 650 : 80);
+    var tries = 0;
+    (function check() {
+      fixT = setTimeout(function () {
+        if (Date.now() - lastScrollAt < 150 && ++tries < 5) return check();     // still moving (a slow phone): look again
+        if (goal === i) { alignTo(i); goal = null; }
+      }, goalMs + 100);
+    })();
   }
 
   // ---- Keeping the deck and the feed in step ----
@@ -503,6 +532,7 @@
     goTo(i, false);
     fadeAll();
     lastTouch = 0;
+    downAt = 0;
     setView('cards');
     startFollow();
     startFit();
