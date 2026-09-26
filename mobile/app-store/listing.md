@@ -9,7 +9,7 @@ App icon: 1024×1024, no alpha, already in `ios/App/App/Assets.xcassets`.
 | | |
 |---|---|
 | Bundle ID | `app.thehourbrief` |
-| Version / build | **1.0** / **1** (bump the build number for every upload; the daily reminder plugin is already in the project) |
+| Version / build | **1.1.2** / **1** (this is the first upload; bump the build number for every one after this) |
 | Minimum iOS | 15.0 · iPhone + iPad |
 | Encryption | `ITSAppUsesNonExemptEncryption = false` (standard HTTPS only) |
 | Privacy manifest | `ios/App/App/PrivacyInfo.xcprivacy` — no tracking, no collected data, no required-reason APIs |
