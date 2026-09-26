@@ -103,7 +103,7 @@ choice. Text is copied with `textContent`, never as HTML.
   Anyone who has used Cards is not asked.
 - **Web only:** no store release is needed; a Vercel deploy reaches every installed app on its next open. To switch the feature off, remove the switch in `viewSwitch()` in `mobile.js`.
 - **Test on a real Android WebView, not just headless Chrome** (see Emulator notes in the mobile docs): the deck bottom leaves room for the tab bar (and the mini player while listening, `body.hb-listening`).
-Tests: `node tools/browser-tests/cards.mjs` (73 checks, includes real touch swipes via `cdp.mjs` `swipe()`).
+Tests: `node tools/browser-tests/cards.mjs` (75 checks, includes real touch swipes via `cdp.mjs` `swipe()`).
 
 ## Daily quiz
 

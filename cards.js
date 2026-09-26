@@ -20,7 +20,7 @@
 
   var deck = null, track = null, ui = {}, cards = [], idx = 0, shown = false;
   var lastTouch = 0, returnFocus = null, scrollRaf = 0, settleT = 0, fixT = 0, syncRaf = 0;
-  var followObs = null, mirrorObs = null, deckW = 0;
+  var followObs = null, mirrorObs = null, bodyObs = null, playerRO = null, playerEl = null, deckW = 0;
 
   function mk(tag, cls, text) {
     var e = document.createElement(tag);
@@ -307,6 +307,7 @@
     deck.addEventListener('keydown', onKey);
     window.addEventListener('resize', onResize);
     document.addEventListener('hb:prefs', function () { if (shown) refresh(); });
+    document.addEventListener('hb:hub', function () { if (shown) fitSoon(); });
   }
 
   function touched() { lastTouch = Date.now(); }
@@ -454,6 +455,31 @@
     return lane ? indexOfLane(lane.id) : -1;
   }
 
+  // The mini player floats above the tab bar while Listen plays: leave exactly its height free, so it never covers the
+  // deck's buttons (measured, because its height changes with the title and the text size).
+  function fitPlayer() {
+    if (!deck) return;
+    var p = document.querySelector('.hb-player'), h = 0;
+    if (p && getComputedStyle(p).display !== 'none') h = p.getBoundingClientRect().height;
+    deck.style.setProperty('--dk-player', h ? Math.ceil(h) + 16 + 'px' : '0px');
+    if (p !== playerEl) {
+      if (playerRO) { playerRO.disconnect(); playerRO = null; }
+      playerEl = p;
+      if (p && window.ResizeObserver) { playerRO = new ResizeObserver(fitPlayer); playerRO.observe(p); }
+    }
+  }
+  function fitSoon() { fitPlayer(); setTimeout(function () { if (shown) fitPlayer(); }, 350); }
+  function startFit() {
+    fitPlayer();
+    if (bodyObs || !window.MutationObserver) return;
+    bodyObs = new MutationObserver(fitSoon);
+    bodyObs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  }
+  function stopFit() {
+    if (bodyObs) { bodyObs.disconnect(); bodyObs = null; }
+    if (playerRO) { playerRO.disconnect(); playerRO = null; playerEl = null; }
+  }
+
   // ---- Open and close ----
   function open(o) {
     o = o || {};
@@ -475,6 +501,7 @@
     lastTouch = 0;
     setView('cards');
     startFollow();
+    startFit();
     announce();
     var h = cards[idx].el.querySelector('.dk-title');
     if (h) { try { h.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }
@@ -491,6 +518,7 @@
     shown = false;
     document.documentElement.classList.remove('hb-deck-open');
     stopFollow();
+    stopFit();
     if (mirrorObs) mirrorObs.disconnect();
     if (!o.keep) setView('list');
     if (!o.noScroll && c) {

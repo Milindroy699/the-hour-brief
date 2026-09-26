@@ -606,9 +606,8 @@ html.hb-hub-open .hb-player { display: none; }
 
 html.hb-deck-open, html.hb-deck-open body { overflow: hidden; }
 html.hb-deck-open #mob-progress, html.hb-deck-open #mob-top { display: none; }
-.hb-deck { position: fixed; top: 0; left: 0; right: 0; bottom: var(--hb-tab-h); z-index: 9981; display: flex; flex-direction: column; background: var(--bg); color: var(--ink); font-family: var(--hb-sans); }
+.hb-deck { position: fixed; top: 0; left: 0; right: 0; bottom: calc(var(--hb-tab-h) + var(--dk-player, 0px)); z-index: 9981; display: flex; flex-direction: column; background: var(--bg); color: var(--ink); font-family: var(--hb-sans); }
 .hb-deck[hidden] { display: none; }
-body.hb-listening .hb-deck { bottom: calc(var(--hb-tab-h) + 88px); }
 .dk-top { flex: none; display: flex; align-items: center; gap: 8px; padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 8px; }
 .dk-sec { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .dk-sec-name { font-family: var(--hb-label); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--hb-green); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

@@ -273,9 +273,16 @@ for (const [w, h] of [[360, 740], [390, 844], [412, 915], [820, 1100]]) {
 }
 await open({ height: 700 });
 await openDeck();
-await c.ev(`document.body.classList.add('hb-listening'); 'ok'`); await c.sleep(300);
+await c.ev(`document.querySelector('.dk-next').click()`); await c.sleep(900);
+await c.ev(`(() => { const p = document.createElement('div'); p.className = 'hb-player'; p.style.height = '101px'; p.textContent = 'player'; document.body.appendChild(p); document.body.classList.add('hb-listening'); })()`); await c.sleep(700);
+t = await J(`(() => { const r = (s) => document.querySelector(s).getBoundingClientRect(); return { foot: Math.round(r('.dk-foot').bottom), player: Math.round(r('.hb-player').top), tab: Math.round(r('.tab-bar').top), acts: Math.round(r('.dk-card:not([inert]) .dk-actions').bottom) }; })()`);
+check('while listening, the deck stops above the mini player (measured, so it never covers the buttons)', t.foot <= t.player && t.acts <= t.player, JSON.stringify(t));
+await c.ev(`document.querySelector('.hb-player').style.height = '140px'; 'ok'`); await c.sleep(700);
+t = await J(`({ foot: Math.round(document.querySelector('.dk-foot').getBoundingClientRect().bottom), player: Math.round(document.querySelector('.hb-player').getBoundingClientRect().top) })`);
+check('and it keeps up if the player gets taller', t.foot <= t.player, JSON.stringify(t));
+await c.ev(`document.querySelector('.hb-player').remove(); document.body.classList.remove('hb-listening'); 'ok'`); await c.sleep(700);
 t = await J(`({ foot: Math.round(document.querySelector('.dk-foot').getBoundingClientRect().bottom), tab: Math.round(document.querySelector('.tab-bar').getBoundingClientRect().top) })`);
-check('while listening, the deck leaves room for the mini player above the tab bar', t.foot <= t.tab - 80, JSON.stringify(t));
+check('when playback stops, the deck takes the space back', t.foot >= t.tab - 4, JSON.stringify(t));
 await open({ size: 3, height: 780 });
 await openDeck();
 await c.ev(`document.querySelector('.dk-next').click()`); await c.sleep(900);
