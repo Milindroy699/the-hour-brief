@@ -134,7 +134,11 @@
       ol.appendChild(li);
     });
     b.scroll.appendChild(ol);
-    b.scroll.appendChild(mk('p', 'dk-hint', 'Swipe to start →'));
+    var start = btn('dk-hint', 'Swipe to start →');
+    start.addEventListener('click', function () { goTo(idx + 1, true); });
+    var bar = mk('div', 'dk-actions dk-startbar');       // pinned below the scrolling part, so it is always in reach
+    bar.appendChild(start);
+    b.face.appendChild(bar);
     return b.card;
   }
 
