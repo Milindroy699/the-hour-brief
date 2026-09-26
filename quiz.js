@@ -355,7 +355,12 @@
     live.setAttribute('aria-live', 'polite');
     card.appendChild(live);
     root.appendChild(card);
-    if (focus) qEl.focus({ preventScroll: true });
+    if (focus) {
+      // A new question renders much shorter than the answered one it replaced, so the page doesn't scroll on its
+      // own: without this the reader is left looking at whatever used to be below the old card.
+      card.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+      qEl.focus({ preventScroll: true });
+    }
   }
 
   function mark(btn, text) {
@@ -398,6 +403,8 @@
     next.addEventListener('click', function () { if (last) finish(); else showQuestion(i + 1, true); });
     actions.appendChild(next);
     live.appendChild(actions);
+    // Only scrolls if the new feedback pushed the "Next question" button off the bottom of the screen.
+    next.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest' });
     next.focus({ preventScroll: true });
     refreshStreak();
   }
@@ -411,7 +418,7 @@
       save(all);
       saved = res;
     }
-    showResult(practice ? res : saved, !practice, !practice);
+    showResult(practice ? res : saved, !practice, !practice, true);
     if (!practice) syncScores();
     refreshStreak();
   }
@@ -531,7 +538,7 @@
     return 'Tough one. Check the review below.';
   }
 
-  function showResult(res, official, fresh) {
+  function showResult(res, official, fresh, focus) {
     root.textContent = '';
     var card = el('div', 'quiz-card quiz-result');
     picks = res.a ? res.a.slice() : [];
@@ -604,6 +611,7 @@
       reviewBtn.textContent = review.hidden ? 'Review answers' : 'Hide answers';
     });
     root.appendChild(card);
+    if (focus) card.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });   // same reason as showQuestion: the score card is shorter than the question it replaced
 
     cardAssets();                                   // warm the share card's fonts and logo
     getEditions().then(function (dates) {

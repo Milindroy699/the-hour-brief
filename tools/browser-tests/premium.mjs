@@ -218,6 +218,35 @@ fs.writeFileSync(`${OUT}/p_score_card.png`, Buffer.from(b64, 'base64'));
 t = await J(`({ dim: window.__dim, text: window.__sh.text })`);
 check('the score picture is 1080x1080 and the message carries the link', eq(t.dim, [1080, 1080]) && /\/q\/\d{4}-\d{2}-\d{2}\/\d/.test(t.text), JSON.stringify(t));
 
+// ---------- 6b. moving between questions scrolls the new (shorter) card into view: the reported bug was having to
+// scroll back up manually to reach the next question, because it renders much shorter than the answered one it replaces ----------
+await open({ quiz: past, wait: 2200 });
+await scrollTo('#quiz .lane-head', 90); await c.sleep(300);
+await c.ev(`document.querySelectorAll('.quiz-opt')[0].click()`); await c.sleep(400);
+await c.ev(`document.querySelector('.quiz-feedback .quiz-btn').click()`);
+await c.sleep(900);   // the smooth scroll to settle
+t = await J(`({ count: document.querySelector('.quiz-count').textContent, top: document.querySelector('#quiz-q').getBoundingClientRect().top, active: document.activeElement && document.activeElement.id })`);
+check('moving to the next question scrolls it into view on its own (no manual scrolling needed), and keyboard focus follows it', t.count === 'Question 2 of 5' && t.top > -10 && t.top < 160 && t.active === 'quiz-q', JSON.stringify(t));
+await c.ev(`document.querySelectorAll('.quiz-opt')[0].click()`); await c.sleep(500);
+t = await J(`(() => { const b = document.querySelector('.quiz-feedback .quiz-btn'), r = b.getBoundingClientRect(); return { onscreen: r.top >= 0 && r.bottom <= innerHeight, top: Math.round(r.top) }; })()`);
+check('the "Next question" button is fully on screen right after answering, with no need to scroll down for it either', t.onscreen, JSON.stringify(t));
+// finish the quiz (advance through the remaining questions) and confirm the result card is scrolled into view too, not just question-to-question
+await c.ev(`document.querySelector('.quiz-feedback .quiz-btn').click()`); await c.sleep(200);          // -> Q3
+await c.ev(`document.querySelectorAll('.quiz-opt')[0].click()`); await c.sleep(200);
+await c.ev(`document.querySelector('.quiz-feedback .quiz-btn').click()`); await c.sleep(200);          // -> Q4
+await c.ev(`document.querySelectorAll('.quiz-opt')[0].click()`); await c.sleep(200);
+await c.ev(`document.querySelector('.quiz-feedback .quiz-btn').click()`); await c.sleep(200);          // -> Q5
+await c.ev(`document.querySelectorAll('.quiz-opt')[0].click()`); await c.sleep(400);
+await c.ev(`document.querySelector('.quiz-feedback .quiz-btn').click()`);                              // "See my score"
+await c.sleep(900);
+t = await J(`({ hasResult: !!document.querySelector('.quiz-result'), top: (document.querySelector('.quiz-result') || {}).getBoundingClientRect ? document.querySelector('.quiz-result').getBoundingClientRect().top : null })`);
+check('finishing the quiz scrolls the score card into view too', t.hasResult && t.top > -10 && t.top < 160, JSON.stringify(t));
+// but an already-completed quiz shown on page load must NOT auto-scroll: only a live "just answered" transition should
+await open({ quiz: { r: Object.assign({}, past.r, { [TODAY]: { s: 4, t: 5, a: [0, 0, 0, 0, 0] } }) }, wait: 2200 });
+t = await J(`({ scrollY, hasResult: !!document.querySelector('.quiz-result') })`);
+check('an already-answered quiz shown on page load stays where it loaded (only a fresh next/finish scrolls)', t.hasResult && t.scrollY === 0, JSON.stringify(t));
+
+
 // ---------- 7. dark mode, and a narrow phone ----------
 await open({ dark: true, quiz: past });
 t = await J(`({ body: getComputedStyle(document.body).backgroundColor, bar: getComputedStyle(document.querySelector('.masthead-band')).backgroundColor, tab: getComputedStyle(document.querySelector('.tab-bar')).backgroundColor, ink: getComputedStyle(document.body).color })`);

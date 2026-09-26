@@ -13,6 +13,7 @@
   border-radius: 12px;
   padding: 18px;
   max-width: 640px;
+  scroll-margin-top: 72px;   /* clears the sticky nav when quiz.js scrolls a new question or the result into view */
 }
 .quiz-friend {
   margin: 0 0 12px;
