@@ -227,9 +227,9 @@ await c.ev(`document.querySelector('.quiz-feedback .quiz-btn').click()`);
 await c.sleep(900);   // the smooth scroll to settle
 t = await J(`({ count: document.querySelector('.quiz-count').textContent, top: document.querySelector('#quiz-q').getBoundingClientRect().top, active: document.activeElement && document.activeElement.id })`);
 check('moving to the next question scrolls it into view on its own (no manual scrolling needed), and keyboard focus follows it', t.count === 'Question 2 of 5' && t.top > -10 && t.top < 160 && t.active === 'quiz-q', JSON.stringify(t));
-await c.ev(`document.querySelectorAll('.quiz-opt')[0].click()`); await c.sleep(500);
-t = await J(`(() => { const b = document.querySelector('.quiz-feedback .quiz-btn'), r = b.getBoundingClientRect(); return { onscreen: r.top >= 0 && r.bottom <= innerHeight, top: Math.round(r.top) }; })()`);
-check('the "Next question" button is fully on screen right after answering, with no need to scroll down for it either', t.onscreen, JSON.stringify(t));
+await c.ev(`document.querySelectorAll('.quiz-opt')[0].click()`); await c.sleep(1200);   // the smooth scroll to settle
+t = await J(`(() => { const b = document.querySelector('.quiz-feedback .quiz-btn'), r = b.getBoundingClientRect(), tb = document.querySelector('.tab-bar'), lim = tb && getComputedStyle(tb).display !== 'none' ? tb.getBoundingClientRect().top : innerHeight; return { onscreen: r.top >= 0 && r.bottom <= lim - 8, top: Math.round(r.top), bottom: Math.round(r.bottom), tabTop: Math.round(lim) }; })()`);
+check('the "Next question" button is fully visible right after answering: above the bottom tab bar, not hidden behind it', t.onscreen, JSON.stringify(t));
 // finish the quiz (advance through the remaining questions) and confirm the result card is scrolled into view too, not just question-to-question
 await c.ev(`document.querySelector('.quiz-feedback .quiz-btn').click()`); await c.sleep(200);          // -> Q3
 await c.ev(`document.querySelectorAll('.quiz-opt')[0].click()`); await c.sleep(200);
@@ -246,6 +246,31 @@ await open({ quiz: { r: Object.assign({}, past.r, { [TODAY]: { s: 4, t: 5, a: [0
 t = await J(`({ scrollY, hasResult: !!document.querySelector('.quiz-result') })`);
 check('an already-answered quiz shown on page load stays where it loaded (only a fresh next/finish scrolls)', t.hasResult && t.scrollY === 0, JSON.stringify(t));
 
+
+// ---------- 6c. the quiz chip takes you to the quiz, and a scroll that stops short (seen in Android WebViews) is finished ----------
+await open({ quiz: past, wait: 2200 });
+await c.ev(`document.querySelector('.quiz-chip').click()`); await c.sleep(1600);
+t = await J(`({ top: Math.round(document.getElementById('quiz').getBoundingClientRect().top), nav: Math.round(document.querySelector('.nav').getBoundingClientRect().bottom) })`);
+check('the quiz chip lands on the quiz section, just under the sticky chips', t.top >= 0 && t.top <= t.nav + 30, JSON.stringify(t));
+const STOP_SHORT = `Element.prototype.scrollIntoView = function () { const r = this.getBoundingClientRect(); window.scrollBy({ top: r.top * 0.4, behavior: 'auto' }); }`;
+await open({ quiz: past, wait: 2200 });
+await c.ev(`${STOP_SHORT}; 'ok'`);
+await c.ev(`document.querySelector('.quiz-chip').click()`); await c.sleep(1800);
+t = await J(`({ top: Math.round(document.getElementById('quiz').getBoundingClientRect().top), nav: Math.round(document.querySelector('.nav').getBoundingClientRect().bottom) })`);
+check('even if the browser stops the scroll partway, the chip still ends on the quiz', t.top >= 0 && t.top <= t.nav + 30, JSON.stringify(t));
+await scrollTo('#quiz .lane-head', 90); await c.sleep(300);
+await c.ev(`${STOP_SHORT}; document.querySelectorAll('.quiz-opt')[0].click()`); await c.sleep(1800);
+t = await J(`(() => { const b = document.querySelector('.quiz-feedback .quiz-btn'), r = b.getBoundingClientRect(), tb = document.querySelector('.tab-bar'); return { bottom: Math.round(r.bottom), tabTop: Math.round(tb.getBoundingClientRect().top), top: Math.round(r.top) }; })()`);
+check('even if the browser stops the scroll partway, "Next question" still ends up above the tab bar', t.top >= 0 && t.bottom <= t.tabTop - 8, JSON.stringify(t));
+await c.ev(`document.querySelector('.quiz-feedback .quiz-btn').click()`); await c.sleep(1800);
+t = await J(`({ count: document.querySelector('.quiz-count').textContent, top: Math.round(document.querySelector('.quiz-card').getBoundingClientRect().top), nav: Math.round(document.querySelector('.nav').getBoundingClientRect().bottom) })`);
+check('even if the browser stops the scroll partway, the next question ends up right under the sticky chips', t.count === 'Question 2 of 5' && t.top >= t.nav - 4 && t.top <= t.nav + 30, JSON.stringify(t));
+// a reader who scrolls by hand right after Next is left alone (the correction never fights a finger)
+await c.ev(`document.querySelectorAll('.quiz-opt')[0].click()`); await c.sleep(300);
+await c.ev(`document.querySelector('.quiz-feedback .quiz-btn').click()`); await c.sleep(150);
+await c.ev(`window.dispatchEvent(new Event('touchstart')); window.scrollTo(0, scrollY - 900); 'ok'`); await c.sleep(1800);
+t = await J(`({ top: Math.round(document.querySelector('.quiz-card').getBoundingClientRect().top) })`);
+check('a reader who scrolls by hand right after "Next question" is not pulled back', t.top > 300, JSON.stringify(t));
 
 // ---------- 7. dark mode, and a narrow phone ----------
 await open({ dark: true, quiz: past });

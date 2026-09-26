@@ -322,6 +322,25 @@
     return bar;
   }
 
+  // Moves the page to an element, then checks it got there: some Android WebViews end a smooth scroll early, and the
+  // layout can still be settling. Anything a reader does by hand (touch, wheel, keys) cancels the check.
+  function bringIntoView(target, where, smooth) {
+    var animate = smooth && !reduceMotion, done = false, evs = ['touchstart', 'wheel', 'keydown'];
+    function stop() { done = true; evs.forEach(function (e) { window.removeEventListener(e, stop); }); }
+    evs.forEach(function (e) { window.addEventListener(e, stop, { passive: true }); });
+    target.scrollIntoView({ behavior: animate ? 'smooth' : 'auto', block: where === 'top' ? 'start' : 'nearest' });
+    [animate ? 700 : 250, 1300].forEach(function (ms, n) {
+      setTimeout(function () {
+        if (done || !target.isConnected) return;
+        var cs = getComputedStyle(target), r = target.getBoundingClientRect(), off;
+        if (where === 'top') off = r.top - (parseFloat(cs.scrollMarginTop) || 0);
+        else { var lim = window.innerHeight - (parseFloat(cs.scrollMarginBottom) || 0); off = r.bottom > lim ? r.bottom - lim : 0; }
+        if (Math.abs(off) > 24) window.scrollBy({ top: off, behavior: 'auto' });
+        if (n) stop();
+      }, ms);
+    });
+  }
+
   function showQuestion(i, focus) {
     var q = questions[i];
     root.textContent = '';
@@ -358,7 +377,7 @@
     if (focus) {
       // A new question renders much shorter than the answered one it replaced, so the page doesn't scroll on its
       // own: without this the reader is left looking at whatever used to be below the old card.
-      card.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+      bringIntoView(card, 'top', true);
       qEl.focus({ preventScroll: true });
     }
   }
@@ -403,8 +422,8 @@
     next.addEventListener('click', function () { if (last) finish(); else showQuestion(i + 1, true); });
     actions.appendChild(next);
     live.appendChild(actions);
-    // Only scrolls if the new feedback pushed the "Next question" button off the bottom of the screen.
-    next.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest' });
+    // Only scrolls if the new feedback pushed the "Next question" button off the bottom (or behind the tab bar).
+    bringIntoView(next, 'bottom', true);
     next.focus({ preventScroll: true });
     refreshStreak();
   }
@@ -611,7 +630,7 @@
       reviewBtn.textContent = review.hidden ? 'Review answers' : 'Hide answers';
     });
     root.appendChild(card);
-    if (focus) card.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });   // same reason as showQuestion: the score card is shorter than the question it replaced
+    if (focus) bringIntoView(card, 'top', true);   // same reason as showQuestion: the score card is shorter than the question it replaced
 
     cardAssets();                                   // warm the share card's fonts and logo
     getEditions().then(function (dates) {
@@ -709,6 +728,12 @@
     if (!chip) {
       chip = el('a', 'quiz-chip');
       chip.href = '#quiz';
+      chip.addEventListener('click', function (e) {
+        var q = document.getElementById('quiz');
+        if (!q || q.hidden || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        e.preventDefault();
+        bringIntoView(q, 'top', false);
+      });
       var tools = document.querySelector('.reader-tools');
       if (tools && !tools.hidden) tools.insertBefore(chip, tools.firstChild);
       else nav.insertAdjacentElement('afterend', chip);

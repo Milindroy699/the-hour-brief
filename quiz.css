@@ -15,6 +15,7 @@
   max-width: 640px;
   scroll-margin-top: 72px;   /* clears the sticky nav when quiz.js scrolls a new question or the result into view */
 }
+.quiz-actions .quiz-btn { scroll-margin-bottom: calc(var(--hb-tab-h, 0px) + 20px); }   /* keep "Next question" above the bottom tab bar */
 .quiz-friend {
   margin: 0 0 12px;
   padding: 8px 12px;
