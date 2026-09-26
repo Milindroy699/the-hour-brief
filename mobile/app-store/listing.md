@@ -32,6 +32,8 @@ Checked from this Mac (2026-09-26): an unsigned Release archive for "Any iOS Dev
 
 ## App Store Connect fields
 
+**Listen, in one sentence (keep every text below saying this):** Listen plays a *recording* of the day's edition (about 6 minutes) in an AI-generated Indian-English voice, labelled "AI voice" in the player; if that day's recording is not ready yet, the phone's own text-to-speech reads it instead. The website's About and Privacy pages say the same.
+
 - **Name (14/30):** The Hour Brief
 - **Subtitle (28/30):** Daily AI, business & markets
 - **Primary category:** News · **Secondary:** Business
@@ -43,7 +45,7 @@ Checked from this Mac (2026-09-26): an unsigned Release archive for "Any iOS Dev
 - **Privacy Policy URL:** https://the-hour-brief.vercel.app/privacy.html
 - **Promotional text (129/170):** A fresh edition every morning: AI & tech, product & business, and the Indian and global markets. Free, no ads, no account needed.
 - **Keywords (94/100):** `news,digest,AI,tech,business,markets,stocks,sensex,nifty,startups,India,daily,briefing,finance`
-- **What's New (1.1.2):** A new look, and more ways to read. Swipe through the brief one story at a time, or keep scrolling. Choose which sections you see and in what order. A recorded AI voice reads each morning's edition. Plus a daily quiz, private friends leagues, and a daily reminder.
+- **What's New (1.1.2):** A new look, and more ways to read. Swipe through the brief one story at a time, or keep scrolling. Choose which sections you see and in what order. A recorded AI voice (labelled as AI) reads each morning's edition. Plus a daily quiz, private friends leagues, and a daily reminder.
 - **What's New (v1.0, for reference):** Welcome to The Hour Brief. A fresh edition every morning, built for one sitting: AI & tech, product & business, and the markets.
 
 **Description**
@@ -62,7 +64,7 @@ Made to be read, your way:
 • Every story has a short summary you can expand and a one-line takeaway
 • A five-question daily quiz on the edition, with streaks, badges and a shareable score (no account needed)
 • Friends leagues: start a private league, invite friends with a link and compare quiz scores every day (no sign-up, no typed names)
-• Listen to today's brief: a 7-minute read-aloud of the day's headlines and takeaways in an AI-generated Indian-English voice
+• Listen to today's brief: about six minutes of the day's headlines and takeaways, read aloud in an AI-generated Indian-English voice (recorded each morning; if it isn't ready yet, your phone reads it instead)
 • Every summary links to its original source
 • Clean layout with no ads, in light or dark mode
 • Share any edition with one tap, pull down to refresh, and see a banner when a newer edition is out
@@ -101,7 +103,7 @@ The Hour Brief is a free daily news digest. No login or demo account is needed; 
 
 Content: each edition is researched with AI from public reporting and market data. Every item is a short original summary with a one-line takeaway and a link to the original source (opens in an in-app browser). This is disclosed in the app's About text and on https://the-hour-brief.vercel.app/about.html. Market figures are informational only; there is no trading or financial service.
 
-The app is more than a website wrapper. Native features: a daily reminder (a local notification the reader schedules at a time they choose), a daily quiz with on-device streaks and badges, private friends leagues (invite by link; players get generated names, so there is no user-generated text), a swipe-card reading mode and personalised sections (readers choose which sections show and in what order), a native rating prompt after a streak, a "Listen to today's brief" read-aloud with a mini player (on-device text-to-speech), system share sheet for any edition or single story, haptic feedback, pull-to-refresh, in-app browser for sources, offline notice, a banner when a newer edition is published, and a native launch experience. Editions load from our server so readers get each new edition without waiting for an app update.
+The app is more than a website wrapper. Native features: a daily reminder (a local notification the reader schedules at a time they choose), a daily quiz with on-device streaks and badges, private friends leagues (invite by link; players get generated names, so there is no user-generated text), a swipe-card reading mode and personalised sections (readers choose which sections show and in what order), a native rating prompt after a streak, a "Listen to today's brief" read-aloud with a mini player (a recording of the day's edition in an AI-generated voice, labelled "AI voice" in the player and disclosed in the About text; the device's own text-to-speech is only a fallback if the recording is not ready yet), system share sheet for any edition or single story, haptic feedback, pull-to-refresh, in-app browser for sources, offline notice, a banner when a newer edition is published, and a native launch experience. Editions load from our server so readers get each new edition without waiting for an app update.
 
 User comments and account features from the website are intentionally hidden in the app; there is no user-generated content.
 
