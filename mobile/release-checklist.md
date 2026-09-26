@@ -32,13 +32,13 @@ Policy: News and Magazines (enforced 24 Sep): no easy-to-find contact page in th
 - Stale: the Play screenshots predate the quiz / Listen / contact line. Not a rejection reason, but worth refreshing.
 
 ## App Store (cannot be uploaded from this machine: no Apple signing identity yet)
-- Compiles (Release, simulator). Bundle id `app.thehourbrief`, deployment target 15.0, `ITSAppUsesNonExemptEncryption = false`,
-  `UIRequiredDeviceCapabilities = arm64`, 1024px icon without alpha, `PrivacyInfo.xcprivacy` (tracking off; User ID linked, app functionality).
-- Needed from you: Apple Developer enrolment / Team ID, signing in Xcode (Archive -> Distribute), build number bump for each upload,
-  App Privacy answers (see `app-store/listing.md`), and the App Review notes text in that file.
+- Verified 2026-09-26: an unsigned Release **archive for a real device (arm64)** builds cleanly; the archive contains version 1.1.2 (build 1), iOS 15.0+, iPhone + iPad, the new icon (1024, RGB, no alpha) and launch image, and privacy manifests for the app, Capacitor and Cordova. Bundle id `app.thehourbrief`, `ITSAppUsesNonExemptEncryption = false`.
+- Fixed while checking: the app privacy manifest declared no required-reason APIs although `@capacitor/filesystem` reads file timestamps (now declared, C617.1) and its data types disagreed with the App Privacy answers (now aligned); iPhone is locked to portrait (in landscape a swipe card's text area is about 90px); three unused old splash files removed.
+- No usage-description strings are needed (no camera, photos, location, microphone).
+- Needed from you: signing in Xcode (pick your Team), the App Store Connect app record, Archive -> Distribute, then the listing (`app-store/listing.md` has your steps in order, the field values and the review notes; add your phone number). Bump the build number for each upload.
 - Biggest risk stays Guideline 4.2 (web wrapper). Native features to point out to the reviewer: daily local-notification reminder, share
-  sheet, haptics, native rating prompt, on-device speech fallback, bundled offline page, quiz with streaks/badges, friends leagues.
-- Not tested on a real iPhone: the offline page (`errorPath`), Listen, the share-image flow.
+  sheet, haptics, native rating prompt, on-device speech fallback, bundled offline page, quiz with streaks/badges, friends leagues, swipe cards, personalised sections.
+- Not tested on a real iPhone: the offline page (`errorPath`), Listen (including with the phone's silent switch on, and whether it keeps playing when the screen locks: the app declares no background-audio mode, so expect it to stop), the share-image flow. TestFlight on your own iPhone is the way to cover these.
 
 ## Known open risks
 - The digest is AI-written and not human-reviewed each day (About says so plainly). Play's misinformation and News policies could

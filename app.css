@@ -654,5 +654,6 @@ html.hb-deck-open #mob-progress, html.hb-deck-open #mob-top { display: none; }
 .dk-bar { flex: 1; height: 5px; border-radius: 3px; background: rgba(var(--hb-ink-rgb), 0.11); overflow: hidden; }
 .dk-bar i { display: block; width: 0; height: 100%; border-radius: 3px; background: var(--hb-primary); transition: width 0.2s ease; }
 .dk-count { flex: none; min-width: 48px; text-align: center; font-size: 0.82rem; font-variant-numeric: tabular-nums; color: var(--ink-soft); }
+.dk-top, .dk-foot { width: 100%; max-width: 672px; margin: 0 auto; box-sizing: border-box; }
 .dk-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { .dk-bar i { transition: none; } }
