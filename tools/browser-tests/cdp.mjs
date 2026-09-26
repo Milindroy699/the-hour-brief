@@ -38,6 +38,11 @@ export async function launch(port = 9333) {
     },
     async preload(src) { const r = await send('Page.addScriptToEvaluateOnNewDocument', { source: src }); return r.result.identifier; },
     async unpreload(id) { await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: id }); },
+    // A real touch drag (compositor scroll, so scroll-snap and momentum apply). xDistance/yDistance follow the DevTools
+    // convention: a positive distance moves the finger to the right/down.
+    async swipe(x, y, xDistance, yDistance = 0, speed = 900) {
+      await send('Input.synthesizeScrollGesture', { x, y, xDistance, yDistance, gestureSourceType: 'touch', speed, preventFling: false });
+    },
     async shot(file) { const r = await send('Page.captureScreenshot', { format: 'png' }); fs.writeFileSync(file, Buffer.from(r.result.data, 'base64')); },
     sleep: ms => new Promise(r => setTimeout(r, ms)),
     close() { try { ws.close(); } catch (e) {} chrome.kill(); },

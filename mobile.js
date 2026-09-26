@@ -18,6 +18,8 @@
  *  - "Your sections": readers pick which sections show and in what order (menu > Sections; the apps
  *    offer it once, as a small card, on the second day they are opened). Stored on this device only.
  *  - "Listen to today's brief" (listen.js, loaded on demand where the device can speak).
+ *  - Swipe cards (cards.js, loaded on demand): the same stories one per screen, opt-in via the List | Cards switch,
+ *    the menu, or a one-time nudge. The scrolling feed stays the default and the source of truth.
  *
  * "Reader mode" = everywhere except the desktop site with ?classic=1: phones get /mobile.css from the page's own link,
  * wider screens get it injected (ensureReaderCss), and the wide-screen block in /app.css centres the column.
@@ -516,6 +518,8 @@
   var SLIDERS_SVG = '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" ' +
     'stroke-linejoin="round" aria-hidden="true"><path d="M4 6h9"/><path d="M17 6h3"/><circle cx="15" cy="6" r="2"/>' +
     '<path d="M4 12h3"/><path d="M11 12h9"/><circle cx="9" cy="12" r="2"/><path d="M4 18h9"/><path d="M17 18h3"/><circle cx="15" cy="18" r="2"/></svg>';
+  var CARDS_SVG = '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" ' +
+    'stroke-linejoin="round" aria-hidden="true"><rect x="6.5" y="4" width="11" height="16" rx="2"/><path d="M3 8v8"/><path d="M21 8v8"/></svg>';
   var prefs = null, laneBase = null, prefSig = null, lastNavKey = '';
 
   function idList(a) { return Array.isArray(a) ? a.filter(function (x) { return typeof x === 'string'; }) : []; }
@@ -590,7 +594,7 @@
   function openPrefs(returnTo) {
     if (!laneBase) return;
     var msg = null;
-    tipDone();
+    tipDone('sections');
     openSheet('Your sections', function (body) {
       body.appendChild(mk('p', '', 'Switch sections on or off and move them up or down. Changes apply straight away.'));
       var ul = mk('ul', 'rd-prefs');
@@ -657,55 +661,116 @@
     }, returnTo, 'Done');
   }
 
-  // Customising is offered in passing, not at the door: on the second day the app is opened, a small card asks once.
-  // Anyone who already has saved sections (including everyone who saw the old first-launch sheet) is never asked.
+  // ---- Swipe cards: a second way to read the same stories (cards.js, loaded on demand) ----
+  var VIEW_KEY = 'hb-view-v1', cardsLoad = 0, cardsQueue = [];
+  function cardsOk() { return reader() && (NATIVE || mq.matches) && isFeed(); }
+  function getView() { try { return localStorage.getItem(VIEW_KEY) === 'cards' ? 'cards' : 'list'; } catch (e) { return 'list'; } }
+  function deckOpen() { return !!(window.HBCards && window.HBCards.isOpen()); }
+  function withCards(fn) {
+    if (window.HBCards) { fn(window.HBCards); return; }
+    cardsQueue.push(fn);
+    if (cardsLoad) return;
+    cardsLoad = 1;
+    var sc = document.createElement('script');
+    sc.src = '/cards.js';
+    sc.onload = function () { var q = cardsQueue; cardsQueue = []; q.forEach(function (f) { if (window.HBCards) f(window.HBCards); }); };
+    sc.onerror = function () { cardsLoad = 0; cardsQueue = []; toast('Cards could not load. Check your connection.'); };
+    document.head.appendChild(sc);
+  }
+  function openCards(opts) { withCards(function (c) { if (!c.open(opts)) toast('Nothing to show as cards yet.'); }); }
+  function restoreView() {
+    if (!laneBase || !cardsOk() || getView() !== 'cards') return;
+    var id = '';
+    try { id = decodeURIComponent((location.hash || '').slice(1)); } catch (e) { /* ignore */ }
+    openCards(id ? { id: id } : undefined);
+  }
+  function viewSwitch() {
+    var nav = document.querySelector('.nav');
+    if (!nav) return;
+    var host = document.querySelector('.reader-tools');
+    var vs = document.querySelector('.view-switch');
+    if (!vs && cardsOk()) {
+      vs = mk('div', 'view-switch');
+      vs.setAttribute('role', 'group');
+      vs.setAttribute('aria-label', 'Reading view');
+      var inner = mk('div', 'vs-in');
+      var list = mk('button', '', 'List'), cards = mk('button', '', 'Cards');
+      list.type = cards.type = 'button';
+      list.setAttribute('aria-pressed', 'true');
+      cards.setAttribute('aria-pressed', 'false');
+      cards.addEventListener('click', function () { openCards(); });
+      inner.appendChild(list);
+      inner.appendChild(cards);
+      vs.appendChild(inner);
+    }
+    if (!vs) return;
+    if (host && vs.nextElementSibling !== host) host.insertAdjacentElement('beforebegin', vs);
+    else if (!vs.parentNode) nav.insertAdjacentElement('afterend', vs);
+    vs.hidden = !cardsOk();
+  }
+
+  // Customising and Cards are offered in passing, not at the door. The app counts the days it is opened; on the second
+  // day one small card asks about sections (only for people with no saved sections), and Cards gets its own card on a
+  // day without one. Each card is shown through the day it first appears, never again on a later day, and never with
+  // another card the same day. People who already use the feature are not asked.
   var TIP_KEY = 'hb-tip-v1';
   function tipState() {
     try {
       var o = JSON.parse(localStorage.getItem(TIP_KEY) || 'null');
-      if (o && typeof o === 'object') return { n: +o.n || 0, last: String(o.last || ''), done: !!o.done };
+      if (o && typeof o === 'object') return { n: +o.n || 0, last: String(o.last || ''), done: !!o.done, cardsDone: !!o.cardsDone, secOn: String(o.secOn || ''), cardsOn: String(o.cardsOn || '') };
     } catch (e) { /* none saved */ }
-    return { n: 0, last: '', done: false };
+    return { n: 0, last: '', done: false, cardsDone: false, secOn: '', cardsOn: '' };
   }
   function tipSave(st) { try { localStorage.setItem(TIP_KEY, JSON.stringify(st)); return true; } catch (e) { return false; } }
   function localDay() {
     var d = new Date();
     return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
   }
-  function tipDone() {
-    var el = document.querySelector('.hb-tip');
+  function tipDone(which) {
+    var el = document.querySelector('.hb-tip[data-tip="' + which + '"]');
     if (el) el.remove();
-    var st = tipState();
-    if (!st.done) { st.done = true; tipSave(st); }
+    var st = tipState(), key = which === 'cards' ? 'cardsDone' : 'done';
+    if (!st[key]) { st[key] = true; tipSave(st); }
   }
-  function maybeSuggest() {
-    if (!NATIVE || !laneBase || loadPrefs()) return;
-    var st = tipState(), today = localDay();
-    if (st.done) return;
-    if (st.last !== today) { st.n += 1; st.last = today; }
-    if (!tipSave(st)) return;                      // cannot remember the answer: do not ask every time
+  function tipCard(which, icon, title, body, goText, go) {
     var first = document.querySelector('section.lane');
-    if (st.n < 2 || location.hash || /[?&]utm_/.test(location.search) || choosable().length < 2 || !first || document.querySelector('.hb-tip')) return;
+    if (!first || document.querySelector('.hb-tip')) return false;
     var card = mk('aside', 'hb-tip');
-    card.setAttribute('aria-label', 'Personalise your brief');
+    card.setAttribute('data-tip', which);
+    card.setAttribute('aria-label', title);
     var ico = mk('span', 'hb-tip-ico');
-    ico.innerHTML = SLIDERS_SVG;
+    ico.innerHTML = icon;
     var text = mk('div', 'hb-tip-text');
-    text.appendChild(mk('strong', '', 'Make it yours'));
-    text.appendChild(mk('span', '', 'Choose which sections you see, and in what order.'));
+    text.appendChild(mk('strong', '', title));
+    text.appendChild(mk('span', '', body));
     var acts = mk('div', 'hb-tip-acts');
-    var go = mk('button', 'hb-tip-go', 'Choose');
-    go.type = 'button';
-    go.addEventListener('click', function () { openPrefs(null); });
+    var yes = mk('button', 'hb-tip-go', goText);
+    yes.type = 'button';
+    yes.addEventListener('click', go);
     var no = mk('button', 'hb-tip-no', 'Not now');
     no.type = 'button';
-    no.addEventListener('click', tipDone);
-    acts.appendChild(go);
+    no.addEventListener('click', function () { tipDone(which); });
+    acts.appendChild(yes);
     acts.appendChild(no);
     card.appendChild(ico);
     card.appendChild(text);
     card.appendChild(acts);
     first.parentNode.insertBefore(card, first);
+    return true;
+  }
+  function maybeSuggest() {
+    if (!NATIVE || !laneBase) return;
+    var st = tipState(), today = localDay();
+    if (st.last !== today) { st.n += 1; st.last = today; }
+    if (!tipSave(st)) return;                      // cannot remember the answer: do not ask every time
+    if (st.n < 2 || location.hash || /[?&]utm_/.test(location.search) || document.querySelector('.hb-tip') || deckOpen() || (cardsOk() && getView() === 'cards')) return;
+    if (!st.done && !loadPrefs() && choosable().length >= 2 && (!st.secOn || st.secOn === today)) {
+      if (tipCard('sections', SLIDERS_SVG, 'Make it yours', 'Choose which sections you see, and in what order.', 'Choose', function () { openPrefs(null); })) { st.secOn = today; tipSave(st); }
+      return;
+    }
+    if (!st.cardsDone && cardsOk() && st.secOn !== today && (!st.cardsOn || st.cardsOn === today)) {
+      if (tipCard('cards', CARDS_SVG, 'Try swipe cards', 'Read one story at a time, and swipe to the next.', 'Try', function () { openCards(); })) { st.cardsOn = today; tipSave(st); }
+    }
   }
 
   // ---- Tools row under the chips: hosts the quiz chip (and, in Listen, the listen card follows it) ----
@@ -834,6 +899,7 @@
         ul.appendChild(li);
       }
       if (laneBase) item('sections', SLIDERS_SVG, 'Sections', 'Show, hide and reorder', function () { openPrefs(returnTo); });
+      if (cardsOk()) item('cards', CARDS_SVG, 'Swipe cards', 'Read one story at a time', function () { closeSheet(); openCards(); });
       item('textsize', ICON.aa, 'Text size', SIZE_NAMES[getSize()], function () { openTextSize(returnTo); });
       if (document.getElementById('cap-remind')) item('reminder', ICON.bell, 'Daily reminder', 'A morning nudge on this device', function () { closeSheet(); document.getElementById('cap-remind').click(); });
       item('share', SHARE_SVG, 'Share this edition', 'Send today’s brief to a friend', function () { closeSheet(); shareEdition(); });
@@ -867,8 +933,12 @@
     var L = window.HBListen;
     if (name === 'audio') { if (L && L.openHub) L.openHub(); else toast('Audio is loading…'); return; }
     if (L && L.closeHub) L.closeHub();
-    if (name === 'today') window.scrollTo({ top: 0, behavior: 'smooth' });
-    else if (name === 'quiz') { var q = document.getElementById('quiz'); if (q) q.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
+    if (name === 'today') { if (deckOpen()) window.HBCards.goTo(0, true); else window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    else if (name === 'quiz') {
+      if (deckOpen()) window.HBCards.close({ keep: true, noScroll: true });
+      var q = document.getElementById('quiz');
+      if (q) q.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }
     setTimeout(syncTabs, 60);
   }
   function tabBar() {
@@ -889,6 +959,7 @@
       document.body.appendChild(bar);
       window.addEventListener('scroll', syncSoon, { passive: true });
       document.addEventListener('hb:hub', syncTabs);
+      document.addEventListener('hb:deck', function () { if (deckOpen()) tipDone('cards'); syncTabs(); });
     }
     bar.hidden = !reader();
     syncTabs();
@@ -909,7 +980,7 @@
     var q = document.getElementById('quiz'), qOk = !!(q && !q.hidden && !q.hasAttribute('data-pref-off'));
     var L = window.HBListen, hub = !!(L && L.hubOpen && L.hubOpen());
     var r = qOk ? q.getBoundingClientRect() : null;
-    var cur = hub ? 'audio' : (r && r.top < window.innerHeight * 0.5 && r.bottom > 90) ? 'quiz' : 'today';
+    var cur = hub ? 'audio' : deckOpen() ? 'today' : (r && r.top < window.innerHeight * 0.5 && r.bottom > 90) ? 'quiz' : 'today';
     bar.querySelectorAll('.tab').forEach(function (t) {
       var n = t.getAttribute('data-tab');
       if (n === cur) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
@@ -1006,6 +1077,7 @@
     storyButtons();
     siteLinks();
     readerTools();
+    viewSwitch();
     pauseCard();
     appBar();
     navChips();
@@ -1054,7 +1126,8 @@
       if (++tries < 40) setTimeout(wait, 100);
     })();
   }
-  function start() { apply(); openFromHash(); loadListen(); maybeSuggest(); openAudioFromUrl(); }
+  window.HBReader = { textSize: function () { openTextSize(null); } };      // for cards.js
+  function start() { apply(); openFromHash(); loadListen(); restoreView(); maybeSuggest(); openAudioFromUrl(); }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', start);
   } else {

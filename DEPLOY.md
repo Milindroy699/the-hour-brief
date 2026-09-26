@@ -78,12 +78,32 @@ the right size, `audio/mpeg` and range support. It costs nothing (no Sarvam) and
 
 `mobile.js` (reader mode only: phones and the apps) lets readers switch the sections (`section.lane`: AI, Business, Markets, Quiz) on or off
 and move them up or down, from the menu (top right) > Sections. Nothing is asked at first launch. On the second day the app is opened it shows one small "Make it yours"
-card above the first section (Choose / Not now; asked once, never on the website, never when opened from a shared link, never to anyone who
-already has saved sections). It is counted in `localStorage` key `hb-tip-v1` (`{n: days opened, last, done}`). The choice lives in `localStorage` key `hb-prefs-v1` (`{order:[ids], off:[ids]}`); nothing is sent anywhere.
+card above the first section (Choose / Not now; never on the website, never when opened from a shared link, never to anyone who
+already has saved sections; shown through the day it first appears and not again on a later day if ignored). Visits are counted in `localStorage` key
+`hb-tip-v1` (`{n: days opened, last, done, secOn, cardsOn, cardsDone}`). The choice lives in `localStorage` key `hb-prefs-v1` (`{order:[ids], off:[ids]}`); nothing is sent anywhere.
 Sections are moved and hidden in place (`data-pref-off` marks hidden ones), so ids, links and scripts keep working; unknown ids are ignored, so new
 sections just appear at the end. `listen.js` follows the choice: hidden sections are skipped and the recording jumps between the manifest's
 timings to play the reader's order (the recorded outro is dropped when the quiz is hidden). A shared story link into a hidden section still shows it for that visit.
 Tests: `node tools/browser-tests/prefs.mjs`.
+
+## Swipe cards (a second way to read)
+
+`cards.js` (fetched on demand by `mobile.js`, only in the apps and at phone width; never on the desktop website) builds a deck of cards from the
+edition already on the page: a section card (name, reading time, takeaway, numbered stories), one card per story (headline, the whole summary, takeaway,
+source), then the quiz card, in the reader's own section order with hidden sections left out. It is a fixed layer over the scrolling feed (same idea as
+the Audio hub), a horizontal `scroll-snap` track, so swipe, momentum and snapping are the browser's. Buttons (previous/next), the arrow keys, Home/End and Esc
+are the non-swipe alternatives. A tall story scrolls inside its card (a fade at the bottom says there is more); vote, save and share are pinned below it.
+The feed stays the source of truth: card buttons press the feed's own buttons and mirror their state, Listen's highlighted story (`.hb-listening`) turns
+the deck to it (unless the reader touched the deck in the last 4 seconds), and shared story links open the deck at that story when Cards is the reader's
+choice. Text is copied with `textContent`, never as HTML.
+
+- **Switch:** a `List | Cards` switch under the section chips, and "Swipe cards" in the menu. The choice is `localStorage` key `hb-view-v1` (`cards` | `list`; the list is
+  the default). The Quiz card and the Challenge tab leave the deck without changing that choice.
+- **Nudge:** on a later day (never the same day as the sections card) the apps show one "Try swipe cards" card above the first section (Try / Not now); state in `hb-tip-v1`.
+  Anyone who has used Cards is not asked.
+- **Web only:** no store release is needed; a Vercel deploy reaches every installed app on its next open. To switch the feature off, remove the switch in `viewSwitch()` in `mobile.js`.
+- **Test on a real Android WebView, not just headless Chrome** (see Emulator notes in the mobile docs): the deck bottom leaves room for the tab bar (and the mini player while listening, `body.hb-listening`).
+Tests: `node tools/browser-tests/cards.mjs` (73 checks, includes real touch swipes via `cdp.mjs` `swipe()`).
 
 ## Daily quiz
 

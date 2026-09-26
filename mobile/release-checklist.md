@@ -44,3 +44,5 @@ Policy: News and Magazines (enforced 24 Sep): no easy-to-find contact page in th
 - The digest is AI-written and not human-reviewed each day (About says so plainly). Play's misinformation and News policies could
   still be applied more strictly; every item cites a real source link, which is the main mitigation.
 - Daily audio recording is off until `AUDIO_ENABLED` is set (about ₹18/day); until then Listen uses the device voice.
+
+Swipe cards (`cards.js`, opt-in List | Cards switch, later nudge) are web-only like the rest of the reading UI: no new store build is needed. Before relying on a change to them, run it on the emulator's real WebView (`hourbrief_pixel`, release APK loads the live site) as well as `tools/browser-tests/cards.mjs`.

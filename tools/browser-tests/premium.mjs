@@ -337,7 +337,7 @@ await open({ native: true, prefs: { order: ['ai', 'biz', 'mkt', 'quiz'], off: []
 await c.ev(`(document.querySelector('.rd-sheet') && document.querySelector('.rd-sheet .rd-close').click(), 'ok')`); await c.sleep(300);
 await c.ev(`document.querySelector('.ab-menu').click()`); await waitFor(`!!document.querySelector('.rd-menu')`);
 t = await J(`[...document.querySelectorAll('.rd-item')].map((b) => b.dataset.act)`);
-check('in the apps the menu also offers the daily reminder and sharing (the existing native buttons are reused)', eq(t, ['sections', 'textsize', 'reminder', 'share', 'email']), JSON.stringify(t));
+check('in the apps the menu also offers the daily reminder and sharing (the existing native buttons are reused)', eq(t, ['sections', 'cards', 'textsize', 'reminder', 'share', 'email']), JSON.stringify(t));
 await c.ev(`document.querySelector('.rd-item[data-act=reminder]').click()`); await c.sleep(150);
 await c.ev(`document.querySelector('.ab-menu').click()`); await waitFor(`!!document.querySelector('.rd-menu')`);
 await c.ev(`document.querySelector('.rd-item[data-act=share]').click()`); await c.sleep(150);

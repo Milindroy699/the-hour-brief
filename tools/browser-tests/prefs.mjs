@@ -57,7 +57,7 @@ const shown = () => J(`[...document.querySelectorAll('section.lane')].filter(s =
 const pills = () => J(`[...document.querySelectorAll('.nav a:not(.nav-all)')].map(a => ({ t: a.textContent.trim(), hidden: getComputedStyle(a).display === 'none' }))`);
 const stored = () => J(`JSON.parse(localStorage.getItem('hb-prefs-v1') || 'null')`);
 const tipStored = () => J(`JSON.parse(localStorage.getItem('hb-tip-v1') || 'null')`);
-const hasTip = () => c.ev(`!!document.querySelector('.hb-tip')`);
+const hasTip = (which) => c.ev(`!!document.querySelector('.hb-tip${which ? `[data-tip="${which}"]` : ''}')`);
 const noSheet = () => c.ev(`!document.querySelector('.rd-sheet')`);
 const d0 = new Date(), TODAY = d0.getFullYear() + '-' + String(d0.getMonth() + 1).padStart(2, '0') + '-' + String(d0.getDate()).padStart(2, '0');
 const LONG_AGO = '2020-01-01';
@@ -128,7 +128,7 @@ await c.ev(`${sheet}.querySelector('.rd-close').click()`);
 // ---------- 8. the apps: nothing at the door; "Make it yours" is offered once, on the second day ----------
 await open({ native: true, wait: 600 }); await c.sleep(1800);
 check('native, first launch: no sheet and no card (nothing to decide before the first read)', (await noSheet()) && !(await hasTip()));
-check('and nothing is saved as a choice: the default order stays untouched, one visit is counted', (await stored()) === null && eq(await tipStored(), { n: 1, last: TODAY, done: false }) && eq(await order(), ['ai', 'biz', 'mkt', 'quiz']), JSON.stringify({ p: await stored(), t: await tipStored() }));
+check('and nothing is saved as a choice: the default order stays untouched, one visit is counted', (await stored()) === null && (await tipStored()).n === 1 && (await tipStored()).last === TODAY && (await tipStored()).done === false && eq(await order(), ['ai', 'biz', 'mkt', 'quiz']), JSON.stringify({ p: await stored(), t: await tipStored() }));
 await c.ev(`(location.reload(), 'ok')`); await c.sleep(1800);
 check('opening it again the same day: still no card, and the same day is not counted twice', !(await hasTip()) && (await tipStored()).n === 1, JSON.stringify(await tipStored()));
 
@@ -160,9 +160,9 @@ check('opened from a shared story link on the second day: not interrupted (the v
 await open({ native: true, tip: { n: 1, last: LONG_AGO, done: false }, wait: 600, query: '?utm_source=share' }); await c.sleep(1800);
 check('opened with tracking parameters (a share): not interrupted either', !(await hasTip()), JSON.stringify(await tipStored()));
 await open({ native: true, prefs: { order: [], off: [] }, tip: { n: 3, last: LONG_AGO, done: false }, wait: 600 }); await c.sleep(1800);
-check('anyone who already has saved sections (the old first-launch sheet stored the default) is never asked', !(await hasTip()) && (await noSheet()));
+check('anyone who already has saved sections (the old first-launch sheet stored the default) is never asked about sections', !(await hasTip('sections')) && (await noSheet()));
 await open({ native: true, prefs: { order: ['biz', 'ai', 'mkt', 'quiz'], off: [] }, tip: { n: 3, last: LONG_AGO, done: false }, wait: 600 }); await c.sleep(1800);
-check('a reader who already customised: no card, and the saved order applies', !(await hasTip()) && eq(await order(), ['biz', 'ai', 'mkt', 'quiz']), JSON.stringify(await order()));
+check('a reader who already customised: no sections card, and the saved order applies', !(await hasTip('sections')) && eq(await order(), ['biz', 'ai', 'mkt', 'quiz']), JSON.stringify(await order()));
 await open({ native: true, tip: { n: 1, last: LONG_AGO, done: false }, blockTip: true, wait: 600 }); await c.sleep(1800);
 check('if the answer cannot be remembered (storage blocked) it is not shown, rather than asking every time', !(await hasTip()));
 await open({ native: false, tip: { n: 5, last: LONG_AGO, done: false }, wait: 600 }); await c.sleep(1800);
