@@ -77,7 +77,7 @@
 
   var KEY = 'hb-listen-v1';
   var WPM = 165;                       // typical device voice at 1x
-  var RATES = [1, 1.25, 1.5, 1.75, 0.85];
+  var RATES = [0.85, 1, 1.25, 1.5, 1.75];       // sorted: the +/- buttons step through this list and stop at the ends
   var MAX_CHUNK = 190;                 // characters per utterance
   var ABBR = /\b(?:U\.S|U\.K|U\.N|E\.U|Inc|Corp|Ltd|Co|Mr|Mrs|Ms|Dr|St|vs|No|approx|est|Jr|Sr)\.$/i;
 
@@ -86,7 +86,7 @@
   // src: 'rec' = recorded audio, 'tts' = the device voice.  cues[mode][i] is the recording's timing for unit i.
   var S = { mode: 'quick', rate: 1, rates: { quick: 1, full: 1.25 }, units: {}, list: [], ui: 0, ci: 0, state: 'idle', gen: 0, started: false, timer: 0, dog: 0, cur: null,
     src: 'tts', manifest: null, date: '', cues: {}, until: {}, jump: {}, bad: {}, seekTo: null, seeking: false, edge: 0 };
-  var cta = null, liveEl = null, goEl = null, player = null, nowEl = null, laneEl = null, badgeEl = null, noteEl = null, playBtn = null, prevBtn = null, nextBtn = null, rateBtn = null;
+  var cta = null, liveEl = null, goEl = null, player = null, nowEl = null, laneEl = null, badgeEl = null, noteEl = null, playBtn = null, prevBtn = null, nextBtn = null, rateMinusBtn = null, rateValEl = null, ratePlusBtn = null;
   var audio = null;
   var lit = null;
 
@@ -516,13 +516,27 @@
   }
 
   // ---- UI ----
-  function cycleRate() {
-    S.rate = RATES[(RATES.indexOf(S.rate) + 1) % RATES.length];
+  // dir: -1 (slower) or +1 (faster). Clamps at the ends of RATES rather than wrapping, so each button's own
+  // disabled state shows when you have hit a limit.
+  function rateStep(dir) {
+    var i = RATES.indexOf(S.rate);
+    if (i < 0) i = RATES.indexOf(1);          // safety: an unrecognised stored rate falls back to normal speed
+    i = Math.max(0, Math.min(RATES.length - 1, i + dir));
+    S.rate = RATES[i];
     S.rates[S.mode] = S.rate;
     save();
     if (S.src === 'rec') { if (audio) { audio.playbackRate = S.rate; recEdge(); } }
     else if (S.state === 'playing') go();
     render();
+  }
+
+  function renderRateGroup(valEl, minusEl, plusEl) {
+    var label = String(S.rate).replace(/^0\./, '.') + '×';
+    valEl.textContent = label;
+    minusEl.disabled = S.rate <= RATES[0];
+    plusEl.disabled = S.rate >= RATES[RATES.length - 1];
+    minusEl.setAttribute('aria-label', 'Slower. Currently ' + label + '.');
+    plusEl.setAttribute('aria-label', 'Faster. Currently ' + label + '.');
   }
 
   function ensurePlayer() {
@@ -543,19 +557,27 @@
       prevBtn = btn('hb-pl-b hb-pl-prev', 'Previous story', I_PREV);
       playBtn = btn('hb-pl-b hb-pl-play', 'Pause', I_PAUSE);
       nextBtn = btn('hb-pl-b hb-pl-next', 'Next story', I_NEXT);
-      rateBtn = btn('hb-pl-b hb-pl-rate', 'Speed');
+      var rateGroup = mk('div', 'hb-pl-rate-group');
+      rateMinusBtn = btn('hb-pl-b hb-pl-rate-btn hb-pl-rate-minus', 'Slower', '−');
+      rateValEl = mk('span', 'hb-pl-rate-val');
+      rateValEl.setAttribute('aria-hidden', 'true');       // the two buttons' aria-labels already say the current speed
+      ratePlusBtn = btn('hb-pl-b hb-pl-rate-btn hb-pl-rate-plus', 'Faster', '+');
+      rateGroup.appendChild(rateMinusBtn);
+      rateGroup.appendChild(rateValEl);
+      rateGroup.appendChild(ratePlusBtn);
       var close = btn('hb-pl-b hb-pl-close', 'Stop listening and close the player', I_CLOSE);
       prevBtn.addEventListener('click', function () { skip(-1); });
       nextBtn.addEventListener('click', function () { skip(1); });
       playBtn.addEventListener('click', toggle);
-      rateBtn.addEventListener('click', cycleRate);
+      rateMinusBtn.addEventListener('click', function () { rateStep(-1); });
+      ratePlusBtn.addEventListener('click', function () { rateStep(1); });
       now.setAttribute('role', 'button');                       // tap the title area to open the full player
       now.tabIndex = 0;
       now.setAttribute('aria-label', 'Open the audio player');
       now.addEventListener('click', openHub);
       now.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openHub(); } });
       close.addEventListener('click', function () { stop(); var b = cta && cta.querySelector('button'); if (b) b.focus({ preventScroll: true }); });
-      [prevBtn, playBtn, nextBtn, rateBtn, close].forEach(function (b) { ctl.appendChild(b); });
+      [prevBtn, playBtn, nextBtn, rateGroup, close].forEach(function (b) { ctl.appendChild(b); });
       player.appendChild(now);
       player.appendChild(ctl);
       document.body.appendChild(player);
@@ -608,8 +630,7 @@
     playBtn.setAttribute('aria-label', playing ? 'Pause' : again ? 'Play again' : 'Play');
     prevBtn.disabled = S.state === 'done' || (S.ui === 0 && (S.src === 'rec' ? !audio || audio.currentTime - S.cues[S.mode][0].start <= 3 : S.ci === 0));
     nextBtn.disabled = S.state === 'done' || S.ui >= S.list.length - 1;
-    rateBtn.textContent = String(S.rate).replace(/^0\./, '.') + '×';
-    rateBtn.setAttribute('aria-label', 'Speed ' + S.rate + ' times. Tap to change.');
+    renderRateGroup(rateValEl, rateMinusBtn, ratePlusBtn);
   }
 
   function ensureCta() {
@@ -742,15 +763,23 @@
     prog.appendChild(bar);
     prog.appendChild(times);
     var ctl = mk('div', 'hub-ctl');
-    hubEl.rate = btn('hub-b hub-rate', 'Speed', '');
+    var hubRateGroup = mk('div', 'hub-rate-group');
+    hubEl.rateMinus = btn('hub-b hub-rate-btn hub-rate-minus', 'Slower', '−');
+    hubEl.rateVal = mk('span', 'hub-rate-val');
+    hubEl.rateVal.setAttribute('aria-hidden', 'true');
+    hubEl.ratePlus = btn('hub-b hub-rate-btn hub-rate-plus', 'Faster', '+');
+    hubRateGroup.appendChild(hubEl.rateMinus);
+    hubRateGroup.appendChild(hubEl.rateVal);
+    hubRateGroup.appendChild(hubEl.ratePlus);
     hubEl.prev = btn('hub-b hub-prev', 'Previous', I_PREV);
     hubEl.play = btn('hub-b hub-play', 'Play', I_PLAY);
     hubEl.next = btn('hub-b hub-next', 'Next', I_NEXT);
-    hubEl.rate.addEventListener('click', cycleRate);
+    hubEl.rateMinus.addEventListener('click', function () { rateStep(-1); });
+    hubEl.ratePlus.addEventListener('click', function () { rateStep(1); });
     hubEl.prev.addEventListener('click', function () { skip(-1); });
     hubEl.next.addEventListener('click', function () { skip(1); });
     hubEl.play.addEventListener('click', function () { if (S.state === 'idle') begin(S.mode); else toggle(); });
-    [hubEl.rate, hubEl.prev, hubEl.play, hubEl.next].forEach(function (b) { ctl.appendChild(b); });
+    [hubRateGroup, hubEl.prev, hubEl.play, hubEl.next].forEach(function (b) { ctl.appendChild(b); });
     var voice = mk('div', 'hub-voice');
     var mic = mk('span', 'hub-mic');
     mic.innerHTML = I_MIC;
@@ -855,8 +884,7 @@
     hubEl.play.disabled = !can || !stories;
     hubEl.prev.disabled = idle || S.state === 'done' || S.ui <= 0;
     hubEl.next.disabled = idle || S.state === 'done' || S.ui >= list.length - 1;
-    hubEl.rate.textContent = String(S.rate).replace(/^0\./, '.') + '×';
-    hubEl.rate.setAttribute('aria-label', 'Speed ' + S.rate + ' times. Tap to change.');
+    renderRateGroup(hubEl.rateVal, hubEl.rateMinus, hubEl.ratePlus);
     hubEl.msg.textContent = S.state === 'error' ? 'Audio isn’t available right now. Check your connection or your device’s text-to-speech settings.' : !can ? 'Audio isn’t available on this device yet.' : '';
     // chapter rows: done, current, upcoming
     var chs = chapters(), curK = -1;

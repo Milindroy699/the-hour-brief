@@ -432,7 +432,10 @@ html.hb-hub-open .hb-player { display: none; }
 .hub-b:active { transform: scale(0.94); }
 .hub-b:disabled { opacity: 0.32; cursor: default; }
 .hub-b:focus-visible, .hub-row:focus-visible { outline: 2px solid var(--hb-primary); outline-offset: 2px; }
-.hub-rate { padding: 0 16px; background: rgba(var(--hb-ink-rgb), 0.08); font-size: 0.9rem; }
+/* Speed: a bordered pill holding − / value / + so it reads as one control, same slot the old single button had. */
+.hub-rate-group { display: flex; align-items: center; gap: 2px; padding: 3px; border-radius: 24px; background: rgba(var(--hb-ink-rgb), 0.06); flex: none; }
+.hub-rate-btn { min-width: 40px; min-height: 40px; padding: 0; border-radius: 20px; font-size: 1.3rem; line-height: 1; }
+.hub-rate-val { min-width: 46px; padding: 0 2px; text-align: center; font-size: 0.92rem; font-weight: 700; }
 .hub-b svg { width: 26px; height: 26px; }
 .hub-play { width: 70px; height: 70px; border-radius: 50%; background: var(--hb-primary); color: #fff; box-shadow: 0 8px 20px rgba(var(--hb-primary-rgb), 0.38); }
 .hub-play svg { width: 30px; height: 30px; }

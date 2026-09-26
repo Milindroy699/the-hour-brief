@@ -113,8 +113,15 @@ check('tapping a chapter jumps the recording there: it becomes current, earlier 
 await c.shot(`${OUT}/p_hub.png`);
 await c.ev(`document.querySelector('.hub-play').click()`); await c.sleep(300);
 check('the big button pauses the recording', (await c.ev(`HBListen.state() === 'paused' && __audio.paused && document.querySelector('.hub-play').getAttribute('aria-label') === 'Play'`)) === true);
-await c.ev(`document.querySelector('.hub-rate').click()`); await c.sleep(200);
-check('the speed chip cycles (1× → 1.25×) and applies to the recording', (await c.ev(`document.querySelector('.hub-rate').textContent === '1.25×' && __audio.playbackRate === 1.25`)) === true);
+await c.ev(`document.querySelector('.hub-rate-plus').click()`); await c.sleep(200);
+check('the faster button steps up (1× → 1.25×) and applies to the recording', (await c.ev(`document.querySelector('.hub-rate-val').textContent === '1.25×' && __audio.playbackRate === 1.25`)) === true);
+await c.ev(`document.querySelector('.hub-rate-minus').click()`); await c.sleep(200); await c.ev(`document.querySelector('.hub-rate-minus').click()`); await c.sleep(200);
+check('the slower button steps down, going below 1× (1.25× → 1× → .85×), and stops there', (await c.ev(`document.querySelector('.hub-rate-val').textContent`)) === '.85×' && (await c.ev(`document.querySelector('.hub-rate-minus').disabled`)) === true && (await c.ev(`__audio.playbackRate`)) === 0.85);
+await c.ev(`document.querySelector('.hub-rate-minus').click()`); await c.sleep(150);
+check('the disabled slower button does not go past the bottom', (await c.ev(`document.querySelector('.hub-rate-val').textContent`)) === '.85×');
+for (let i = 0; i < 4; i++) await c.ev(`document.querySelector('.hub-rate-plus').click()`);
+await c.sleep(300);
+check('and the faster button reaches the top and disables itself there (1.75×, no wraparound)', (await c.ev(`document.querySelector('.hub-rate-val').textContent`)) === '1.75×' && (await c.ev(`document.querySelector('.hub-rate-plus').disabled`)) === true, await c.ev(`document.querySelector('.hub-rate-val').textContent`));
 await c.ev(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))`); await c.sleep(200);
 t = await J(`({ hidden: document.querySelector('.hb-hub').hidden, lock: document.documentElement.classList.contains('hb-hub-open'), tab: document.querySelector('.tab[aria-current]').dataset.tab, mini: getComputedStyle(document.querySelector('.hb-player')).display })`);
 check('Escape closes the hub: scrolling is unlocked, the Today tab is current, the mini player is back', t.hidden && !t.lock && t.tab === 'today' && t.mini !== 'none', JSON.stringify(t));
@@ -225,6 +232,11 @@ for (const w of [360, 412]) {
   await c.ev(`document.querySelector('.tab[data-tab=audio]').click()`); await waitFor(`!document.querySelector('.hb-hub').hidden`, 2000); await c.sleep(200);
   flow.push(await c.ev(`document.querySelector('.hb-hub').scrollWidth > innerWidth || document.querySelector('.hub-scroll').scrollWidth > document.querySelector('.hub-scroll').clientWidth`));
   await c.ev(`document.querySelector('.hub-close').click()`);
+  await c.ev(`document.querySelector('.listen-go') && document.querySelector('.listen-go').click()`); await c.sleep(1200);
+  const fit = await J(`(() => { const p = document.querySelector('.hb-player'), c = document.querySelector('.hb-pl-close'); if (!p || p.hidden) return null; const pr = p.getBoundingClientRect(), cr = c.getBoundingClientRect(); return { closeFullyOnscreen: cr.right <= innerWidth && cr.left >= 0, closeWithinPlayer: cr.right <= pr.right + 1 }; })()`);
+  check(w + "px: the mini player's row (transport + speed +/- + close) fits inside the player, nothing pushed off past its edge or the screen", fit && fit.closeFullyOnscreen && fit.closeWithinPlayer, JSON.stringify(fit));
+  await c.ev(`HBListen.stop()`);
+
   await scrollTo('#quiz', 90); await c.sleep(300);
   flow.push(await overflow());
   check(`${w}px wide: no sideways scrolling on the feed, the hub or the quiz`, flow.every((x) => x === false), JSON.stringify(flow));

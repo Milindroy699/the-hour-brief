@@ -79,9 +79,23 @@ check('a pause from the lock screen / headset is reflected in the player', (awai
 await c.ev(`__audio.play()`); await c.sleep(400);
 check('and so is a resume from the lock screen', (await c.ev(`HBListen.state()`)) === 'playing');
 const before = await c.ev(`__audio.currentTime`);
-await c.ev(`${pl('.hb-pl-rate')}.click()`); await c.sleep(400);
-t = await J(`({ label: ${pl('.hb-pl-rate')}.textContent, rate: __audio.playbackRate, time: __audio.currentTime, pitch: __audio.preservesPitch })`);
+await c.ev(`${pl('.hb-pl-rate-plus')}.click()`); await c.sleep(400);
+t = await J(`({ label: ${pl('.hb-pl-rate-val')}.textContent, rate: __audio.playbackRate, time: __audio.currentTime, pitch: __audio.preservesPitch })`);
 check('Speed change applies to the recording without restarting it, keeping the pitch', t.label === '1.25×' && t.rate === 1.25 && t.time >= before && t.pitch !== false, JSON.stringify(t) + ' before ' + before);
+t = await J(`({ minusDisabled: ${pl('.hb-pl-rate-minus')}.disabled, plusDisabled: ${pl('.hb-pl-rate-plus')}.disabled, minusLabel: ${pl('.hb-pl-rate-minus')}.getAttribute('aria-label'), plusLabel: ${pl('.hb-pl-rate-plus')}.getAttribute('aria-label') })`);
+check('at 1.25×, neither end button is disabled, and each names the current speed', !t.minusDisabled && !t.plusDisabled && t.minusLabel === 'Slower. Currently 1.25×.' && t.plusLabel === 'Faster. Currently 1.25×.', JSON.stringify(t));
+await c.ev(`${pl('.hb-pl-rate-minus')}.click()`); await c.sleep(300);
+check('the slower button steps back down (1.25× → 1×)', (await c.ev(`${pl('.hb-pl-rate-val')}.textContent`)) === '1×' && (await c.ev(`__audio.playbackRate`)) === 1);
+await c.ev(`${pl('.hb-pl-rate-minus')}.click()`); await c.sleep(300);
+check('and again to the slowest speed, where the slower button now disables itself (it does not wrap around)', (await c.ev(`${pl('.hb-pl-rate-val')}.textContent`)) === '.85×' && (await c.ev(`${pl('.hb-pl-rate-minus')}.disabled`)) === true && (await c.ev(`__audio.playbackRate`)) === 0.85);
+await c.ev(`${pl('.hb-pl-rate-minus')}.click()`); await c.sleep(200);
+check('tapping the disabled slower button again does nothing', (await c.ev(`${pl('.hb-pl-rate-val')}.textContent`)) === '.85×');
+for (let i = 0; i < 4; i++) { await c.ev(`${pl('.hb-pl-rate-plus')}.click()`); await c.sleep(250); }
+check('the faster button steps all the way up to the fastest speed and then disables itself', (await c.ev(`${pl('.hb-pl-rate-val')}.textContent`)) === '1.75×' && (await c.ev(`${pl('.hb-pl-rate-plus')}.disabled`)) === true && (await c.ev(`__audio.playbackRate`)) === 1.75);
+await c.ev(`${pl('.hb-pl-rate-minus')}.click()`); await c.sleep(300);
+check('back to 1.5×: stepping down from the top re-enables the faster button', (await c.ev(`${pl('.hb-pl-rate-val')}.textContent`)) === '1.5×' && (await c.ev(`${pl('.hb-pl-rate-plus')}.disabled`)) === false);
+await c.ev(`${pl('.hb-pl-rate-minus')}.click()`); await c.sleep(300);   // back to 1.25x: the rest of this run (and test 1b below) assumes Quick's remembered speed is 1.25x
+check('quick is back at 1.25× for the rest of this run', (await c.ev(`${pl('.hb-pl-rate-val')}.textContent`)) === '1.25×');
 await c.ev(`(__audio.currentTime = ${cues[2].start + 6}, 'ok')`); await c.sleep(700);
 await c.ev(`${pl('.hb-pl-prev')}.click()`); await c.sleep(700);
 t = await J(`({ hl: ${hlId}, time: __audio.currentTime })`);
@@ -107,13 +121,13 @@ const mins125 = Math.round(DUR / 60 / 1.25);      // Quick's speed was set to 1.
 check('with Full switched on: two lengths, Quick from the recording and Full on the device voice', t.n === 2 && t.quick.startsWith('Quick') && t.quick.includes(mins125 + ' min') && t.full.startsWith('Full') && /\d+ min/.test(t.full) && t.note === 'Quick is read by Neha, an AI voice. Full uses your device’s voice.', JSON.stringify(t));
 await c.ev(`window.__spoken.length = 0; window.__rates.length = 0; ${btn}.click()`); await c.sleep(900);
 await c.ev(`${fullBtn}.click()`); await c.sleep(900);
-t = await J(`({ src: HBListen.source(), st: HBListen.state(), badge: document.querySelector('.hb-pl-voice').textContent, rate: document.querySelector('.hb-pl-rate').textContent, rates: window.__rates.slice(-3), first: window.__spoken[0], recPaused: __audio.paused, recSrc: __audio.getAttribute('src') })`);
+t = await J(`({ src: HBListen.source(), st: HBListen.state(), badge: document.querySelector('.hb-pl-voice').textContent, rate: document.querySelector('.hb-pl-rate-val').textContent, rates: window.__rates.slice(-3), first: window.__spoken[0], recPaused: __audio.paused, recSrc: __audio.getAttribute('src') })`);
 check('Full plays in the device voice, starting at 1.25x, and the recording is stopped (never two sounds)', t.src === 'tts' && t.st === 'playing' && t.badge === 'Device voice' && t.rate === '1.25×' && t.rates.length > 0 && t.rates.every((r) => r === 1.25) && t.recPaused, JSON.stringify(t));
-await c.ev(`${pl('.hb-pl-rate')}.click()`); await c.sleep(300);
+await c.ev(`${pl('.hb-pl-rate-plus')}.click()`); await c.sleep(300);
 const saved = await J(`JSON.parse(localStorage.getItem('hb-listen-v1'))`);
 check('changing the Full speed is remembered for Full only (Quick keeps the 1.25x chosen earlier)', saved.rates.full === 1.5 && saved.rates.quick === 1.25, JSON.stringify(saved));
 await c.ev(`${btn}.click()`); await c.sleep(900);
-t = await J(`({ src: HBListen.source(), rate: document.querySelector('.hb-pl-rate').textContent, badge: document.querySelector('.hb-pl-voice').textContent, paused: __audio.paused, tts: (window.speechSynthesis.speaking) })`);
+t = await J(`({ src: HBListen.source(), rate: document.querySelector('.hb-pl-rate-val').textContent, badge: document.querySelector('.hb-pl-voice').textContent, paused: __audio.paused, tts: (window.speechSynthesis.speaking) })`);
 check('switching back to Quick returns to the recording at Quick\'s own speed, and the device voice stops', t.src === 'rec' && t.rate === '1.25×' && t.badge === 'AI voice · Neha' && !t.paused && !t.tts, JSON.stringify(t));
 await c.ev(`${pl('.hb-pl-close')}.click()`); await c.sleep(300);
 
