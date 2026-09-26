@@ -542,6 +542,13 @@
     return true;
   }
 
+  // An instant jump to an element. Not scrollIntoView({behavior:'instant'}): Chrome 113 (Android WebView) ignores that, eases
+  // instead (the page's CSS is smooth) and can stop short. scrollTo with 'instant' does jump.
+  function jumpTo(el) {
+    var margin = parseFloat(getComputedStyle(el).scrollMarginTop) || 0;
+    window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + window.pageYOffset - margin), left: 0, behavior: 'instant' });
+  }
+
   // keep: leave the reader's saved choice (Cards) alone, because this is only a trip to the quiz or similar.
   // to: an element to land the list on (default: what was being read). The jump is instant, made in the same moment the
   // deck goes, so the reader sees one change of screen, never the feed scrolling past.
@@ -557,7 +564,7 @@
     if (mirrorObs) mirrorObs.disconnect();
     if (!o.keep) setView('list');
     var target = o.to || (c && (c.kind === 'story' ? c.item : c.lane));
-    if (target && target.scrollIntoView) target.scrollIntoView({ block: 'start', behavior: 'instant' });   // the page's own CSS is smooth
+    if (target) jumpTo(target);
     document.dispatchEvent(new CustomEvent('hb:deck'));
     if (returnFocus && returnFocus.focus && document.contains(returnFocus)) { try { returnFocus.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }
     returnFocus = null;

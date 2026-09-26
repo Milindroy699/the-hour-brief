@@ -253,6 +253,22 @@ await c.ev(`HBCards.goTo(2, false)`); await c.sleep(400);
 await c.ev(`document.querySelector('#biz').setAttribute('data-pref-off', ''); document.querySelector('#biz').style.display = 'none'; document.dispatchEvent(new CustomEvent('hb:prefs')); 'ok'`); await c.sleep(500);
 check('changing the section choices while the deck is open rebuilds it without that section, and keeps your place', eq(await secOrder(), ['AI & Tech', 'Stock Market']) && (await c.ev(`document.querySelector('.dk-card:not([inert])').getAttribute('data-id')`)) === 'ai-2', JSON.stringify(await secOrder()));
 
+// Chrome 113 (the Android WebView) ignores scrollIntoView({behavior:'instant'}) and eases instead. Imitate that and check the deck
+// still hands over in one step (it must not rely on scrollIntoView for its instant jumps).
+await open();
+await openDeck();
+await c.ev(`HBCards.goTo(HBCards.count() - 1, false)`); await c.sleep(500);
+await c.ev(`Element.prototype.scrollIntoView = function () { window.scrollTo({ top: this.getBoundingClientRect().top + scrollY - 72, behavior: 'smooth' }); }; 'ok'`);
+t = await J(`(() => { document.querySelector('.dk-quiz .dk-cta').click(); const k = document.querySelector('#quiz .quiz-card').getBoundingClientRect(); return { deck: HBCards.isOpen(), cardTop: Math.round(k.top) }; })()`);
+check('on a Chrome that eases scrollIntoView, "Play the quiz" still lands on the question in one step', !t.deck && t.cardTop >= 60 && t.cardTop <= 110, JSON.stringify(t));
+await open();
+await openDeck();
+await c.ev(`HBCards.goTo(4, false)`); await c.sleep(500);
+const readingId = await c.ev(`document.querySelector('.dk-card:not([inert])').getAttribute('data-id')`);
+await c.ev(`Element.prototype.scrollIntoView = function () { window.scrollTo({ top: this.getBoundingClientRect().top + scrollY - 72, behavior: 'smooth' }); }; 'ok'`);
+t = await J(`(() => { document.querySelector('.dk-tolist').click(); const k = document.getElementById(${JSON.stringify(readingId)}).getBoundingClientRect(); return { deck: HBCards.isOpen(), top: Math.round(k.top) }; })()`);
+check('and going back to the list lands on the story you were reading in one step, too', !t.deck && t.top >= 40 && t.top <= 110, JSON.stringify(t));
+
 // ---------- 8. the nudge ----------
 const fresh = { n: 0, last: LONG_AGO, done: false, cardsDone: false, secOn: '', cardsOn: '' };
 await open({ tip: { ...fresh, n: 1 } });

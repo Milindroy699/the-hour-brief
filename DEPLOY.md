@@ -98,12 +98,12 @@ the deck to it (unless the reader touched the deck in the last 4 seconds), and s
 choice. Text is copied with `textContent`, never as HTML.
 
 - **Switch:** a `List | Cards` switch under the section chips, and "Swipe cards" in the menu. The choice is `localStorage` key `hb-view-v1` (`cards` | `list`; the list is
-  the default). The Quiz card and the Challenge tab leave the deck without changing that choice, and hand over instantly (the quiz card lands on the first question, the tab on the quiz section), so the feed never scrolls past.
+  the default). The Quiz card and the Challenge tab leave the deck without changing that choice, and hand over instantly (the quiz card lands on the first question, the tab on the quiz section), so the feed never scrolls past. The instant jumps use `window.scrollTo({top, behavior: 'instant'})`, not `scrollIntoView({behavior: 'instant'})`, which Chrome 113 (the Android WebView) ignores: it eases instead and can stop short.
 - **Nudge:** on a later day (never the same day as the sections card) the apps show one "Try swipe cards" card above the first section (Try / Not now); state in `hb-tip-v1`.
   Anyone who has used Cards is not asked.
 - **Web only:** no store release is needed; a Vercel deploy reaches every installed app on its next open. To switch the feature off, remove the switch in `viewSwitch()` in `mobile.js`.
 - **Test on a real Android WebView, not just headless Chrome** (see Emulator notes in the mobile docs): the deck bottom leaves room for the tab bar (and the mini player while listening, `body.hb-listening`).
-Tests: `node tools/browser-tests/cards.mjs` (82 checks, includes real touch swipes via `cdp.mjs` `swipe()`).
+Tests: `node tools/browser-tests/cards.mjs` (84 checks, includes real touch swipes via `cdp.mjs` `swipe()`).
 
 ## Daily quiz
 
