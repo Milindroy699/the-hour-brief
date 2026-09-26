@@ -36,7 +36,7 @@ const NO_TTS = `delete window.speechSynthesis; delete window.SpeechSynthesisUtte
 let ids = [];
 async function open({ tts, manifest: mf = 'ok', audio = 'ok', dark = false, width = 412, full = false }) {
   for (const id of ids) await c.unpreload(id);
-  ids = [await c.preload(hook(full)), await c.preload(tts ? FAKE_TTS : NO_TTS)];
+  ids = [await c.preload(hook(full)), await c.preload(tts ? FAKE_TTS : NO_TTS), await c.preload(`try { localStorage.setItem('hb-view-v1', 'list'); } catch (e) {}`)];   // these tests are about the list
   await fetch(`${B}/__ctl?manifest=${mf}&audio=${audio}`);
   await c.viewport(width, 915, width < 700, dark);
   await c.goto(B + '/', 900);

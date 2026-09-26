@@ -36,6 +36,19 @@
   }
   function setView(v) { try { localStorage.setItem(VIEW_KEY, v); } catch (e) { /* not remembered */ } }
   function cloneInto(to, from) { Array.prototype.forEach.call(from.childNodes, function (n) { to.appendChild(n.cloneNode(true)); }); }
+  function icon(paths, circles) {
+    var ns = 'http://www.w3.org/2000/svg', s = document.createElementNS(ns, 'svg');
+    s.setAttribute('viewBox', '0 0 24 24');
+    s.setAttribute('aria-hidden', 'true');
+    s.setAttribute('fill', 'none');
+    s.setAttribute('stroke', 'currentColor');
+    s.setAttribute('stroke-width', '2');
+    s.setAttribute('stroke-linecap', 'round');
+    s.setAttribute('stroke-linejoin', 'round');
+    paths.forEach(function (d) { var p = document.createElementNS(ns, 'path'); p.setAttribute('d', d); s.appendChild(p); });
+    (circles || []).forEach(function (c) { var e = document.createElementNS(ns, 'circle'); e.setAttribute('cx', c[0]); e.setAttribute('cy', c[1]); e.setAttribute('r', c[2]); s.appendChild(e); });
+    return s;
+  }
   function svg(path) {
     var s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     s.setAttribute('viewBox', '0 0 24 24');
@@ -262,10 +275,18 @@
     sec.appendChild(ui.secName);
     sec.appendChild(ui.secPos);
     top.appendChild(sec);
-    if (window.HBReader && window.HBReader.textSize) {
-      var aa = btn('dk-top-btn dk-size', 'Aa', 'Text size');
-      aa.addEventListener('click', function () { window.HBReader.textSize(); });
-      top.appendChild(aa);
+    var R = window.HBReader;                       // the app bar is under the deck, so Saved and the Menu (sections, text size, reminder, contact) live here too
+    if (R && R.saved) {
+      var sv = btn('dk-top-btn dk-ico dk-saved', '', 'Saved stories');
+      sv.appendChild(icon(['M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z']));
+      sv.addEventListener('click', function () { R.saved(); });
+      top.appendChild(sv);
+    }
+    if (R && R.menu) {
+      var mn = btn('dk-top-btn dk-ico dk-menu', '', 'Menu');
+      mn.appendChild(icon(['M4 6h9', 'M17 6h3', 'M4 12h3', 'M11 12h9', 'M4 18h9', 'M17 18h3'], [[15, 6, 2], [9, 12, 2], [15, 18, 2]]));
+      mn.addEventListener('click', function () { R.menu(); });
+      top.appendChild(mn);
     }
     ui.list = btn('dk-top-btn dk-tolist', 'List', 'Back to the scrolling list');
     ui.list.addEventListener('click', function () { close(); });
@@ -544,13 +565,14 @@
 
   // An instant jump to an element. Not scrollIntoView({behavior:'instant'}): Chrome 113 (Android WebView) ignores that, eases
   // instead (the page's CSS is smooth) and can stop short. scrollTo with 'instant' does jump.
-  function jumpTo(el) {
-    var margin = parseFloat(getComputedStyle(el).scrollMarginTop) || 0;
-    window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + window.pageYOffset - margin), left: 0, behavior: 'instant' });
+  function jumpTo(el, center) {
+    var r = el.getBoundingClientRect(), margin = parseFloat(getComputedStyle(el).scrollMarginTop) || 0;
+    var top = r.top + window.pageYOffset - (center ? Math.max(margin, (window.innerHeight - r.height) / 2) : margin);
+    window.scrollTo({ top: Math.max(0, top), left: 0, behavior: 'instant' });
   }
 
   // keep: leave the reader's saved choice (Cards) alone, because this is only a trip to the quiz or similar.
-  // to: an element to land the list on (default: what was being read). The jump is instant, made in the same moment the
+  // to: an element to land the list on (default: what was being read); center: put it mid-screen instead of at the top. The jump is instant, made in the same moment the
   // deck goes, so the reader sees one change of screen, never the feed scrolling past.
   function close(o) {
     o = o || {};
@@ -564,7 +586,7 @@
     if (mirrorObs) mirrorObs.disconnect();
     if (!o.keep) setView('list');
     var target = o.to || (c && (c.kind === 'story' ? c.item : c.lane));
-    if (target) jumpTo(target);
+    if (target) jumpTo(target, o.center);
     document.dispatchEvent(new CustomEvent('hb:deck'));
     if (returnFocus && returnFocus.focus && document.contains(returnFocus)) { try { returnFocus.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }
     returnFocus = null;

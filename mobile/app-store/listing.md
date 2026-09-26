@@ -1,7 +1,7 @@
 # App Store — release package (iOS v1.1.2)
 
 Screenshots (in git, upload from here), all light + dark, numbered in the order to upload:
-`mobile/app-store/screenshots/` iPhone 6.9-inch, 6 × 1320×2868 (feed, highlights, swipe cards, Audio, quiz, Your sections)
+`mobile/app-store/screenshots/` iPhone 6.9-inch, 6 × 1320×2868 (swipe cards, feed, highlights, Audio, quiz, Your sections)
 `mobile/app-store/screenshots-ipad/` iPad 13-inch, 6 × 2064×2752 (same six; needed because the app runs on iPad)
 Remake them any time from the live UI: `node tools/brand/screenshots.mjs --only app-store`.
 App icon: 1024×1024, RGB, no alpha (checked), already in `ios/App/App/Assets.xcassets`.
@@ -14,7 +14,7 @@ Checked from this Mac (2026-09-26): an unsigned Release archive for "Any iOS Dev
    - No usage-description strings are needed: the app uses no camera, photos, location, contacts or microphone. The daily reminder uses the system notification prompt, which has no Info.plist string.
 2. **App Store Connect** → Apps → **+** → New App: Platform iOS · Name `The Hour Brief` · Primary language English (U.S.) · Bundle ID `app.thehourbrief` (appears after step 1) · SKU `thehourbrief-ios` · Full access.
 3. **Archive and upload:** run destination *Any iOS Device (arm64)* → Product → Archive → Distribute App → App Store Connect → Upload. Processing takes 5–30 minutes; you get an email. **Every later upload needs a higher build number** (Build field in Xcode, currently 1).
-4. **TestFlight first** (recommended, and it is your real-device test, which I cannot do from here): add yourself as an internal tester (no review). Try: the launch screen and icon, the feed, List | Cards, Listen (recorded voice, with the phone's silent switch ON and OFF), the daily reminder prompt, share sheet, the quiz, airplane mode (the offline page). External testers need a short Beta App Review.
+4. **TestFlight first** (recommended, and it is your real-device test, which I cannot do from here): add yourself as an internal tester (no review). Try: the launch screen and icon, the swipe cards (they open first; the List button goes to the scrolling feed), the menu (top right of the cards), Listen (recorded voice, with the phone's silent switch ON and OFF), the daily reminder prompt, share sheet, the quiz, airplane mode (the offline page). External testers need a short Beta App Review.
 5. **Fill in the listing** (values below): screenshots, description, keywords, promo text, What's New, support/marketing/privacy URLs, App Privacy answers, age rating, category, price, App Review notes (add your phone number), then select the build and *Submit for Review*.
 - Paid apps agreements, banking and tax forms are not needed (free app, no in-app purchases).
 
@@ -45,7 +45,7 @@ Checked from this Mac (2026-09-26): an unsigned Release archive for "Any iOS Dev
 - **Privacy Policy URL:** https://the-hour-brief.vercel.app/privacy.html
 - **Promotional text (129/170):** A fresh edition every morning: AI & tech, product & business, and the Indian and global markets. Free, no ads, no account needed.
 - **Keywords (94/100):** `news,digest,AI,tech,business,markets,stocks,sensex,nifty,startups,India,daily,briefing,finance`
-- **What's New (1.1.2):** A new look, and more ways to read. Swipe through the brief one story at a time, or keep scrolling. Choose which sections you see and in what order. A recorded AI voice (labelled as AI) reads each morning's edition. Plus a daily quiz, private friends leagues, and a daily reminder.
+- **What's New (1.1.2):** A new look, and a new way to read: the brief now opens as swipe cards, one story at a time (switch to the full scrolling list any time). Choose which sections you see and in what order. A recorded AI voice (labelled as AI) reads each morning's edition. Plus a daily quiz, private friends leagues, and a daily reminder.
 - **What's New (v1.0, for reference):** Welcome to The Hour Brief. A fresh edition every morning, built for one sitting: AI & tech, product & business, and the markets.
 
 **Description**
@@ -59,7 +59,7 @@ Every edition covers three lanes:
 • Stock Market — how Indian and US markets closed, the day's movers, and one investing principle worth remembering
 
 Made to be read, your way:
-• Scroll the whole brief, or swipe through it one story at a time in card view
+• Swipe through the brief one story at a time, or switch to the full scrolling list
 • Choose which sections you see, and in what order
 • Every story has a short summary you can expand and a one-line takeaway
 • A five-question daily quiz on the edition, with streaks, badges and a shareable score (no account needed)

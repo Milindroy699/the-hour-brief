@@ -18,8 +18,9 @@
  *  - "Your sections": readers pick which sections show and in what order (menu > Sections; the apps
  *    offer it once, as a small card, on the second day they are opened). Stored on this device only.
  *  - "Listen to today's brief" (listen.js, loaded on demand where the device can speak).
- *  - Swipe cards (cards.js, loaded on demand): the same stories one per screen, opt-in via the List | Cards switch,
- *    the menu, or a one-time nudge. The scrolling feed stays the default and the source of truth.
+ *  - Swipe cards (cards.js, loaded on demand): the same stories one per screen. Cards is the default view on phones and
+ *    in the apps; the List | Cards switch, the menu and the deck's List button change it. The scrolling feed stays the
+ *    source of truth (and links that point into it, such as #quiz, ?join= and ?beat=, open the list).
  *
  * "Reader mode" = everywhere except the desktop site with ?classic=1: phones get /mobile.css from the page's own link,
  * wider screens get it injected (ensureReaderCss), and the wide-screen block in /app.css centres the column.
@@ -664,25 +665,46 @@
   // ---- Swipe cards: a second way to read the same stories (cards.js, loaded on demand) ----
   var VIEW_KEY = 'hb-view-v1', cardsLoad = 0, cardsQueue = [];
   function cardsOk() { return reader() && (NATIVE || mq.matches) && isFeed(); }
-  function getView() { try { return localStorage.getItem(VIEW_KEY) === 'cards' ? 'cards' : 'list'; } catch (e) { return 'list'; } }
+  function getView() { try { return localStorage.getItem(VIEW_KEY) === 'list' ? 'list' : 'cards'; } catch (e) { return 'cards'; } }   // Cards unless the reader chose List
   function deckOpen() { return !!(window.HBCards && window.HBCards.isOpen()); }
-  function withCards(fn) {
+  function withCards(fn, fail) {
     if (window.HBCards) { fn(window.HBCards); return; }
-    cardsQueue.push(fn);
+    cardsQueue.push({ ok: fn, fail: fail });
     if (cardsLoad) return;
     cardsLoad = 1;
     var sc = document.createElement('script');
     sc.src = '/cards.js';
-    sc.onload = function () { var q = cardsQueue; cardsQueue = []; q.forEach(function (f) { if (window.HBCards) f(window.HBCards); }); };
-    sc.onerror = function () { cardsLoad = 0; cardsQueue = []; toast('Cards could not load. Check your connection.'); };
+    sc.onload = function () { var q = cardsQueue; cardsQueue = []; q.forEach(function (e) { if (window.HBCards) e.ok(window.HBCards); else if (e.fail) e.fail(); }); };
+    sc.onerror = function () {
+      cardsLoad = 0;
+      var q = cardsQueue; cardsQueue = [];
+      var asked = false;
+      q.forEach(function (e) { if (e.fail) e.fail(); else asked = true; });
+      if (asked) toast('Cards could not load. Check your connection.');
+    };
     document.head.appendChild(sc);
   }
   function openCards(opts) { withCards(function (c) { if (!c.open(opts)) toast('Nothing to show as cards yet.'); }); }
-  function restoreView() {
-    if (!laneBase || !cardsOk() || getView() !== 'cards') return;
-    var id = '';
-    try { id = decodeURIComponent((location.hash || '').slice(1)); } catch (e) { /* ignore */ }
-    openCards(id ? { id: id } : undefined);
+
+  // What the page address asks for when Cards is the view: {} = just open, {id} = a shared story's card, null = stay on the list
+  // (#quiz and other sections, a league invite ?join=, a friend's score ?beat=: all of those land on something in the list).
+  function deckTarget() {
+    if (/[?&](join|beat)=/.test(location.search)) return null;
+    var h = '';
+    try { h = decodeURIComponent((location.hash || '').slice(1)); } catch (e) { /* ignore */ }
+    if (!h) return {};
+    var el = document.getElementById(h);
+    return el && el.classList.contains('item') ? { id: h } : null;
+  }
+  // While the deck is on its way (cards.js is fetched on demand) the page is hidden, so the list never flashes first.
+  var pendingT = 0;
+  function pendingOn() { if (document.body) { document.body.style.visibility = 'hidden'; pendingT = setTimeout(pendingOff, 4000); } }
+  function pendingOff() { clearTimeout(pendingT); if (document.body) document.body.style.visibility = ''; }
+  function restoreView(done) {
+    var t = laneBase && cardsOk() && getView() === 'cards' ? deckTarget() : null;
+    function end() { pendingOff(); if (done) done(); }
+    if (!t) { end(); return; }
+    withCards(function (c) { c.open(t.id ? t : undefined); end(); }, end);
   }
   function viewSwitch() {
     var nav = document.querySelector('.nav');
@@ -709,17 +731,16 @@
     vs.hidden = !cardsOk();
   }
 
-  // Customising and Cards are offered in passing, not at the door. The app counts the days it is opened; on the second
-  // day one small card asks about sections (only for people with no saved sections), and Cards gets its own card on a
-  // day without one. Each card is shown through the day it first appears, never again on a later day, and never with
-  // another card the same day. People who already use the feature are not asked.
+  // Customising is offered in passing, not at the door. The app counts the days it is opened; on the second day one small
+  // card asks about sections (only for people with no saved sections). It sits above the first section, or under the top
+  // bar of the deck when Cards is showing. It is shown through the day it first appears, never again on a later day.
   var TIP_KEY = 'hb-tip-v1';
   function tipState() {
     try {
       var o = JSON.parse(localStorage.getItem(TIP_KEY) || 'null');
-      if (o && typeof o === 'object') return { n: +o.n || 0, last: String(o.last || ''), done: !!o.done, cardsDone: !!o.cardsDone, secOn: String(o.secOn || ''), cardsOn: String(o.cardsOn || '') };
+      if (o && typeof o === 'object') return { n: +o.n || 0, last: String(o.last || ''), done: !!o.done, secOn: String(o.secOn || '') };
     } catch (e) { /* none saved */ }
-    return { n: 0, last: '', done: false, cardsDone: false, secOn: '', cardsOn: '' };
+    return { n: 0, last: '', done: false, secOn: '' };
   }
   function tipSave(st) { try { localStorage.setItem(TIP_KEY, JSON.stringify(st)); return true; } catch (e) { return false; } }
   function localDay() {
@@ -729,12 +750,13 @@
   function tipDone(which) {
     var el = document.querySelector('.hb-tip[data-tip="' + which + '"]');
     if (el) el.remove();
-    var st = tipState(), key = which === 'cards' ? 'cardsDone' : 'done';
-    if (!st[key]) { st[key] = true; tipSave(st); }
+    var st = tipState();
+    if (!st.done) { st.done = true; tipSave(st); }
   }
   function tipCard(which, icon, title, body, goText, go) {
+    var deck = deckOpen() ? document.querySelector('.hb-deck') : null;
     var first = document.querySelector('section.lane');
-    if (!first || document.querySelector('.hb-tip')) return false;
+    if ((!deck && !first) || document.querySelector('.hb-tip')) return false;
     var card = mk('aside', 'hb-tip');
     card.setAttribute('data-tip', which);
     card.setAttribute('aria-label', title);
@@ -755,7 +777,8 @@
     card.appendChild(ico);
     card.appendChild(text);
     card.appendChild(acts);
-    first.parentNode.insertBefore(card, first);
+    if (deck) deck.insertBefore(card, deck.querySelector('.dk-track'));
+    else first.parentNode.insertBefore(card, first);
     return true;
   }
   function maybeSuggest() {
@@ -763,13 +786,10 @@
     var st = tipState(), today = localDay();
     if (st.last !== today) { st.n += 1; st.last = today; }
     if (!tipSave(st)) return;                      // cannot remember the answer: do not ask every time
-    if (st.n < 2 || location.hash || /[?&]utm_/.test(location.search) || document.querySelector('.hb-tip') || deckOpen() || (cardsOk() && getView() === 'cards')) return;
+    if (st.n < 2 || location.hash || /[?&]utm_/.test(location.search) || document.querySelector('.hb-tip')) return;
     if (!st.done && !loadPrefs() && choosable().length >= 2 && (!st.secOn || st.secOn === today)) {
       if (tipCard('sections', SLIDERS_SVG, 'Make it yours', 'Choose which sections you see, and in what order.', 'Choose', function () { openPrefs(null); })) { st.secOn = today; tipSave(st); }
       return;
-    }
-    if (!st.cardsDone && cardsOk() && st.secOn !== today && (!st.cardsOn || st.cardsOn === today)) {
-      if (tipCard('cards', CARDS_SVG, 'Try swipe cards', 'Read one story at a time, and swipe to the next.', 'Try', function () { openCards(); })) { st.cardsOn = today; tipSave(st); }
     }
   }
 
@@ -899,12 +919,12 @@
         ul.appendChild(li);
       }
       if (laneBase) item('sections', SLIDERS_SVG, 'Sections', 'Show, hide and reorder', function () { openPrefs(returnTo); });
-      if (cardsOk()) item('cards', CARDS_SVG, 'Swipe cards', 'Read one story at a time', function () { closeSheet(); openCards(); });
+      if (cardsOk() && !deckOpen()) item('cards', CARDS_SVG, 'Swipe cards', 'Read one story at a time', function () { closeSheet(); openCards(); });
       item('textsize', ICON.aa, 'Text size', SIZE_NAMES[getSize()], function () { openTextSize(returnTo); });
       if (document.getElementById('cap-remind')) item('reminder', ICON.bell, 'Daily reminder', 'A morning nudge on this device', function () { closeSheet(); document.getElementById('cap-remind').click(); });
       item('share', SHARE_SVG, 'Share this edition', 'Send today’s brief to a friend', function () { closeSheet(); shareEdition(); });
       var sub = document.querySelector('.subscribe-box');
-      if (sub) item('email', ICON.mail, 'Get it by email', 'One email every morning', function () { closeSheet(); sub.scrollIntoView({ block: 'center', behavior: 'smooth' }); var i = sub.querySelector('input'); if (i) setTimeout(function () { try { i.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }, 500); });
+      if (sub) item('email', ICON.mail, 'Get it by email', 'One email every morning', function () { closeSheet(); if (deckOpen()) window.HBCards.close({ keep: true, to: sub, center: true }); else sub.scrollIntoView({ block: 'center', behavior: 'smooth' }); var i = sub.querySelector('input'); if (i) setTimeout(function () { try { i.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }, 500); });
       body.appendChild(ul);
       var foot = mk('div', 'rd-menu-foot');
       [['Contact us', '/contact.html'], ['About', '/about.html'], ['Privacy', '/privacy.html']].forEach(function (l, i) {
@@ -933,7 +953,11 @@
     var L = window.HBListen;
     if (name === 'audio') { if (L && L.openHub) L.openHub(); else toast('Audio is loading…'); return; }
     if (L && L.closeHub) L.closeHub();
-    if (name === 'today') { if (deckOpen()) window.HBCards.goTo(0, true); else window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    if (name === 'today') {
+      if (deckOpen()) window.HBCards.goTo(0, true);
+      else if (cardsOk() && getView() === 'cards') openCards();                    // back to the cards after a trip to the quiz
+      else window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
     else if (name === 'quiz') {
       var q = document.getElementById('quiz');
       if (deckOpen()) window.HBCards.close({ keep: true, to: q });                      // one instant change of screen, no sweep through the feed
@@ -959,7 +983,7 @@
       document.body.appendChild(bar);
       window.addEventListener('scroll', syncSoon, { passive: true });
       document.addEventListener('hb:hub', syncTabs);
-      document.addEventListener('hb:deck', function () { if (deckOpen()) tipDone('cards'); syncTabs(); });
+      document.addEventListener('hb:deck', syncTabs);
     }
     bar.hidden = !reader();
     syncTabs();
@@ -1126,8 +1150,16 @@
       if (++tries < 40) setTimeout(wait, 100);
     })();
   }
-  window.HBReader = { textSize: function () { openTextSize(null); } };      // for cards.js
-  function start() { apply(); openFromHash(); loadListen(); restoreView(); maybeSuggest(); openAudioFromUrl(); }
+  window.HBReader = {                                                          // for cards.js: what the app bar offers in the list
+    textSize: function () { openTextSize(null); },
+    menu: function () { openMenu(null); },
+    saved: function () { openSaved(null); }
+  };
+  function start() {
+    if (cardsOk() && getView() === 'cards' && deckTarget()) pendingOn();
+    apply(); openFromHash(); loadListen();
+    restoreView(function () { maybeSuggest(); openAudioFromUrl(); });
+  }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', start);
   } else {

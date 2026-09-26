@@ -1,6 +1,6 @@
-// Browser test for the swipe-card reading view (cards.js + the hooks in mobile.js): the List | Cards switch, the deck's
-// contents and order, real touch swipes, keyboard, tap forwarding (vote/save/share), Listen follow, deep links, the one-time
-// nudge, and layout on small phones. Nothing here spends Sarvam credit (no recording is used).
+// Browser test for the swipe-card reading view (cards.js + the hooks in mobile.js): Cards as the default view, the List | Cards switch, the deck's
+// contents and order, real touch swipes, keyboard, tap forwarding (vote/save/share), Listen follow, deep links, the sections hint,
+// the compact audio player, and layout on small phones. Tests open the LIST unless they say otherwise (view: 'default' = nothing stored). Nothing here spends Sarvam credit (no recording is used).
 //   node cards.mjs [screenshotDir]
 import fs from 'node:fs';
 import os from 'node:os';
@@ -20,22 +20,29 @@ const c = await launch(9381);
 const J = async (e) => JSON.parse(await c.ev(`JSON.stringify(${e})`));
 const waitFor = async (expr, ms = 4000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (await c.ev(expr)) return true; await c.sleep(60); } return false; };
 
+const FAKE_TTS = `(() => { const log = window.__spoken = []; let cur = null, t = null, sp = false; window.__ttsMs = 4000;
+  const synth = { get speaking() { return sp; }, pending: false,
+    speak(u) { cur = u; sp = true; log.push(u.text); setTimeout(() => { if (cur === u && u.onstart) u.onstart({}); }, 5); t = setTimeout(() => { if (cur === u) { sp = false; cur = null; u.onend && u.onend({}); } }, window.__ttsMs); },
+    cancel() { if (cur) { const u = cur; cur = null; clearTimeout(t); sp = false; setTimeout(() => u.onerror && u.onerror({ error: 'interrupted' }), 0); } }, pause() {}, resume() {}, getVoices() { return []; } };
+  Object.defineProperty(window, 'speechSynthesis', { value: synth, configurable: true });
+  window.SpeechSynthesisUtterance = function (x) { this.text = x; this.rate = 1; }; })();`;
 const NATIVE = `window.Capacitor = { isNativePlatform: () => true, Plugins: {} };`;
 const NO_AUDIO = `window.HB_AUDIO_BASE = ${JSON.stringify(B + '/__audio')}; delete window.speechSynthesis; delete window.SpeechSynthesisUtterance;`;
 const d0 = new Date(), TODAY = d0.getFullYear() + '-' + String(d0.getMonth() + 1).padStart(2, '0') + '-' + String(d0.getDate()).padStart(2, '0');
 const LONG_AGO = '2020-01-01';
-const QUIET = { n: 0, last: LONG_AGO, done: true, cardsDone: true };     // no nudge
+const QUIET = { n: 0, last: LONG_AGO, done: true };     // no hint
 let ids = [];
 
-async function open({ native = true, width = 390, height = 844, dark = false, prefs = null, tip = QUIET, view = null, size = null, hash = '', query = '', wait = 1800 } = {}) {
+async function open({ native = true, width = 390, height = 844, dark = false, prefs = null, tip = QUIET, view = 'list', size = null, hash = '', query = '', wait = 1800, tts = false, extra = '' } = {}) {
   for (const id of ids) await c.unpreload(id);
   ids = [];
-  const pre = [NO_AUDIO];
+  const pre = [tts ? `window.HB_AUDIO_BASE = ${JSON.stringify(B + '/__audio')}; ${FAKE_TTS}` : NO_AUDIO];
+  if (extra) pre.push(extra);
   if (native) pre.push(NATIVE);
   for (const p of pre) ids.push(await c.preload(p));
   await c.viewport(width, height, width < 700, dark);
   await c.goto(B + '/about.html', 200);
-  await c.ev(`localStorage.clear(); ${prefs ? `localStorage.setItem('hb-prefs-v1', ${JSON.stringify(JSON.stringify(prefs))});` : ''} ${tip ? `localStorage.setItem('hb-tip-v1', ${JSON.stringify(JSON.stringify(tip))});` : ''} ${view ? `localStorage.setItem('hb-view-v1', '${view}');` : ''} ${size != null ? `localStorage.setItem('hb-textsize', '${size}');` : ''} 'ok'`);
+  await c.ev(`localStorage.clear(); ${prefs ? `localStorage.setItem('hb-prefs-v1', ${JSON.stringify(JSON.stringify(prefs))});` : ''} ${tip ? `localStorage.setItem('hb-tip-v1', ${JSON.stringify(JSON.stringify(tip))});` : ''} ${view !== 'default' ? `localStorage.setItem('hb-view-v1', '${view}');` : ''} ${size != null ? `localStorage.setItem('hb-textsize', '${size}');` : ''} 'ok'`);
   await c.goto(B + '/' + query + hash, wait);
 }
 const cardsBtn = `document.querySelectorAll('.vs-in button')[1]`;
@@ -269,44 +276,112 @@ await c.ev(`Element.prototype.scrollIntoView = function () { window.scrollTo({ t
 t = await J(`(() => { document.querySelector('.dk-tolist').click(); const k = document.getElementById(${JSON.stringify(readingId)}).getBoundingClientRect(); return { deck: HBCards.isOpen(), top: Math.round(k.top) }; })()`);
 check('and going back to the list lands on the story you were reading in one step, too', !t.deck && t.top >= 40 && t.top <= 110, JSON.stringify(t));
 
-// ---------- 8. the nudge ----------
-const fresh = { n: 0, last: LONG_AGO, done: false, cardsDone: false, secOn: '', cardsOn: '' };
-await open({ tip: { ...fresh, n: 1 } });
-check('day 2, no saved sections: the sections card comes first, and only that one', (await hasTip('sections')) && !(await hasTip('cards')) && (await c.ev(`document.querySelectorAll('.hb-tip').length`)) === 1);
-await open({ tip: { ...fresh, n: 1, done: true, secOn: LONG_AGO } });
-t = await J(`({ card: !!document.querySelector('.hb-tip[data-tip=cards]'), title: (document.querySelector('.hb-tip strong') || {}).textContent, btns: [...document.querySelectorAll('.hb-tip button')].map((b) => b.textContent), before: document.querySelector('.hb-tip') && document.querySelector('.hb-tip').nextElementSibling.tagName })`);
-check('on a later day the Cards card appears ("Try swipe cards": Try / Not now), above the first section', t.card && t.title === 'Try swipe cards' && eq(t.btns, ['Try', 'Not now']) && t.before === 'SECTION', JSON.stringify(t));
-await c.shot(`${OUT}/cards_nudge.png`);
-await c.ev(`(location.reload(), 'ok')`); await c.sleep(1800);
-check('it is still there if you reopen the app the same day', (await hasTip('cards')) === true);
-await c.ev(`document.querySelector('.hb-tip-go').click()`); await c.sleep(1200);
-t = await J(`({ deck: HBCards.isOpen(), tip: !!document.querySelector('.hb-tip'), state: JSON.parse(localStorage.getItem('hb-tip-v1')), view: localStorage.getItem('hb-view-v1') })`);
-check('Try opens the deck, retires the card for good, and makes Cards the choice', t.deck && !t.tip && t.state.cardsDone === true && t.view === 'cards', JSON.stringify(t));
-await open({ tip: { ...fresh, n: 1, done: true, secOn: LONG_AGO } });
-await c.ev(`document.querySelector('.hb-tip-no').click()`); await c.sleep(200);
-const st1 = await tipState();
-await c.ev(`(() => { const o = JSON.parse(localStorage.getItem('hb-tip-v1')); o.last = '${LONG_AGO}'; o.cardsOn = '${LONG_AGO}'; localStorage.setItem('hb-tip-v1', JSON.stringify(o)); })()`);
-await c.ev(`(location.reload(), 'ok')`); await c.sleep(1800);
-check('Not now is final: not offered again on a later day', !(await hasTip()) && st1.cardsDone === true && (await view()) === null);
-await open({ tip: { ...fresh, n: 1, done: true, secOn: LONG_AGO, cardsOn: LONG_AGO } });
-check('a card that was shown on an earlier day and ignored does not come back', !(await hasTip()), JSON.stringify(await tipState()));
-await open({ tip: { ...fresh, n: 1, secOn: LONG_AGO } });
-check('the sections card is likewise shown through its first day only (ignoring it once is enough)', !(await hasTip('sections')), JSON.stringify(await tipState()));
-await open({ prefs: { order: [], off: [] }, tip: { ...fresh, n: 1 } });
-check('someone with saved sections (everyone before this update) gets the Cards card straight away instead', (await hasTip('cards')) && !(await hasTip('sections')));
-await open({ tip: { ...fresh, n: 1, done: true }, view: 'cards' });
-check('someone who already uses Cards is not offered them', !(await hasTip()));
-await open({ tip: { ...fresh, n: 1, done: true } });
+// ---------- 8. Cards is the default view ----------
+await open({ view: 'default', wait: 2600 });
+t = await J(`({ deck: !!window.HBCards && HBCards.isOpen(), first: document.querySelector('.dk-card:not([inert])') && document.querySelector('.dk-card:not([inert])').className, visible: document.body.style.visibility, view: localStorage.getItem('hb-view-v1'), tab: (document.querySelector('.tab[aria-current=page]') || {}).dataset.tab })`);
+check('with nothing stored (a new install, or anyone who has not chosen), the app opens on the swipe cards, starting with the first section card', t.deck && /dk-intro/.test(t.first) && t.view === 'cards' && t.tab === 'today', JSON.stringify(t));
+check('the page is shown again once the deck is up (nothing left hidden)', t.visible === '');
+await open({ view: 'default', native: false, wait: 2600 });
+check('the phone website opens on the cards too', (await c.ev(`!!window.HBCards && HBCards.isOpen()`)) === true);
+await open({ view: 'default', native: false, width: 1280, wait: 2000 });
+check('the desktop website is untouched: the normal page, no deck, nothing hidden', (await c.ev(`typeof window.HBCards === 'undefined' && document.body.style.visibility === ''`)) === true);
+await open({ view: 'default', wait: 2600 });
+await c.ev(`document.querySelector('.dk-tolist').click()`); await c.sleep(400);
+await c.ev(`(location.reload(), 'ok')`); await c.sleep(2400);
+check('choosing List is remembered: the next open is the list', !(await c.ev(`window.HBCards && HBCards.isOpen()`)) && (await view()) === 'list');
 await c.ev(`${cardsBtn}.click()`); await c.sleep(1200);
-check('opening Cards on your own also retires the card', (await tipState()).cardsDone === true && !(await hasTip()));
-await open({ tip: { ...fresh, n: 1, done: true }, hash: '#ai-2' });
-check('opened from a shared link: no card', !(await hasTip()));
-await open({ tip: { ...fresh, n: 1, done: true }, query: '?utm_source=share' });
-check('opened from a tracked share link: no card', !(await hasTip()));
-await open({ native: false, tip: { ...fresh, n: 5, done: true } });
-check('the website never shows it', !(await hasTip()) && eq(await tipState(), { ...fresh, n: 5, done: true }));
-await open({ tip: { ...fresh, n: 0 } });
-check('day 1 (a brand-new install): no card, one visit counted', !(await hasTip()) && (await tipState()).n === 1);
+check('and choosing Cards again is remembered too', (await view()) === 'cards');
+
+// links that point into the list open the list
+await open({ view: 'default', hash: '#quiz', wait: 2600 });
+t = await J(`({ deck: !!window.HBCards && HBCards.isOpen(), quizTop: Math.round(document.getElementById('quiz').getBoundingClientRect().top), visible: document.body.style.visibility })`);
+check('a link to #quiz opens the list on the quiz, not the deck', !t.deck && t.quizTop < 300 && t.visible === '', JSON.stringify(t));
+await open({ view: 'default', query: '?join=ABC123', wait: 2600 });
+check('a league invite (?join=) opens the list, where the join box is', !(await c.ev(`!!window.HBCards && HBCards.isOpen()`)));
+await open({ view: 'default', query: '?beat=3', hash: '#quiz', wait: 2600 });
+check('a friend\'s score link (?beat=) opens the list on the quiz', !(await c.ev(`!!window.HBCards && HBCards.isOpen()`)));
+await open({ view: 'default', hash: '#ai-2', wait: 2600 });
+check('a shared story link opens the deck on that story', (await c.ev(`HBCards.isOpen() && document.querySelector('.dk-card:not([inert])').getAttribute('data-id')`)) === 'ai-2');
+await open({ view: 'default', native: false, query: '?classic=1', width: 1280, wait: 2000 });
+check('?classic=1 on the website stays the old layout', (await c.ev(`typeof window.HBCards === 'undefined'`)) === true);
+
+// if cards.js cannot load (offline, blocked) the reader gets the list, not a blank page
+await open({ view: 'default', wait: 4800, extra: `(() => { const d = Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype, 'src'); Object.defineProperty(HTMLScriptElement.prototype, 'src', { configurable: true, get() { return d.get.call(this); }, set(v) { d.set.call(this, v === '/cards.js' ? '/no-such-cards.js' : v); } }); })();` });
+t = await J(`({ deck: !!window.HBCards, visible: document.body.style.visibility, listShown: getComputedStyle(document.querySelector('section.lane')).display !== 'none', toast: !!document.getElementById('mob-toast') && !document.getElementById('mob-toast').hidden })`);
+check('if the deck cannot load, the list appears (page not left hidden) and no error message is thrown at the reader', !t.deck && t.visible === '' && t.listShown && !t.toast, JSON.stringify(t));
+
+// ---------- 8b. the app bar is under the deck, so its actions are in the deck header ----------
+await open({ view: 'default', wait: 2600 });
+t = await J(`({ btns: [...document.querySelectorAll('.dk-top button')].map((b) => b.getAttribute('aria-label')), aa: !!document.querySelector('.dk-size') })`);
+check('the deck header offers Saved stories, the Menu and List', eq(t.btns, ['Saved stories', 'Menu', 'Back to the scrolling list']) && !t.aa, JSON.stringify(t));
+await c.ev(`document.querySelector('.dk-menu').click()`); await waitFor(`!!document.querySelector('.rd-menu')`);
+t = await J(`({ items: [...document.querySelectorAll('.rd-item')].map((b) => b.getAttribute('data-act')), foot: [...document.querySelectorAll('.rd-menu-foot a')].map((a) => a.textContent), deckStill: HBCards.isOpen() })`);
+check('the Menu opens over the deck with Sections, Text size, the reminder/share/email items and the Contact · About · Privacy links (no redundant "Swipe cards" item)', t.items.includes('sections') && t.items.includes('textsize') && t.items.includes('share') && !t.items.includes('cards') && eq(t.foot, ['Contact us', 'About', 'Privacy']) && t.deckStill, JSON.stringify(t));
+await c.ev(`document.querySelector('.rd-sheet .rd-close').click()`); await c.sleep(300);
+await c.ev(`document.querySelector('.dk-saved').click()`); await waitFor(`!!document.querySelector('.rd-sheet')`);
+check('Saved stories opens over the deck', (await c.ev(`document.querySelector('.rd-sheet h2').textContent`)) === 'Saved stories' && (await c.ev(`HBCards.isOpen()`)));
+await c.ev(`document.querySelector('.rd-sheet .rd-close').click()`); await c.sleep(300);
+await c.ev(`document.querySelector('.dk-menu').click()`); await waitFor(`!!document.querySelector('.rd-menu')`);
+t = await J(`(() => { const has = !!document.querySelector('.rd-item[data-act=email]'); if (has) document.querySelector('.rd-item[data-act=email]').click(); const box = document.querySelector('.subscribe-box').getBoundingClientRect(); return { has, deck: HBCards.isOpen(), top: Math.round(box.top), bottom: Math.round(box.bottom), tab: Math.round(document.querySelector('.tab-bar').getBoundingClientRect().top) }; })()`);
+check('"Get it by email" from the deck leaves the deck and shows the whole sign-up box on screen (above the tab bar)', t.has && !t.deck && t.top >= 60 && t.bottom <= t.tab, JSON.stringify(t));
+await open({ view: 'default', wait: 2600 });
+await c.ev(`document.querySelector('.dk-menu').click()`); await waitFor(`!!document.querySelector('.rd-menu')`);
+await c.ev(`document.querySelector('.rd-item[data-act=sections]').click()`); await waitFor(`!!document.querySelector('.rd-prefs')`);
+await c.ev(`document.querySelector('.rd-prefs li[data-id=biz] input').click()`); await c.sleep(600);
+await c.ev(`document.querySelector('.rd-sheet .rd-close').click()`); await c.sleep(400);
+check('changing sections from the deck rebuilds the deck without that section', eq(await secOrder(), ['AI & Tech', 'Stock Market']) && (await c.ev(`HBCards.isOpen()`)), JSON.stringify(await secOrder()));
+
+// the Today tab returns to the cards after a trip to the quiz
+await open({ view: 'default', wait: 2600 });
+await c.ev(`HBCards.goTo(HBCards.count() - 1, false)`); await c.sleep(500);
+await c.ev(`document.querySelector('.dk-quiz .dk-cta').click()`); await c.sleep(900);
+check('after "Play the quiz" you are on the list', !(await c.ev(`HBCards.isOpen()`)));
+await c.ev(`document.querySelector('.tab[data-tab=today]').click()`); await c.sleep(1200);
+check('the Today tab brings the cards back (Cards is still your choice)', (await c.ev(`HBCards.isOpen()`)) === true && (await view()) === 'cards');
+
+// ---------- 8c. the sections hint (a later day), now inside the deck ----------
+const fresh = { n: 0, last: LONG_AGO, done: false, secOn: '' };
+await open({ view: 'default', tip: { ...fresh, n: 1 }, wait: 2800 });
+t = await J(`(() => { const k = document.querySelector('.hb-deck > .hb-tip'); if (!k) return null; const r = k.getBoundingClientRect(), tr = document.querySelector('.dk-track').getBoundingClientRect(), top = document.querySelector('.dk-top').getBoundingClientRect(); return { tip: k.dataset.tip, title: k.querySelector('strong').textContent, btns: [...k.querySelectorAll('button')].map((b) => b.textContent), between: r.top >= top.bottom - 1 && r.bottom <= tr.top + 1, inside: r.left >= 0 && r.right <= innerWidth, cards: !!document.querySelector('.hb-tip[data-tip=cards]') }; })()`);
+check('day 2, Cards showing: the "Make it yours" hint sits inside the deck, under the top bar, with Choose / Not now', t && t.tip === 'sections' && t.title === 'Make it yours' && eq(t.btns, ['Choose', 'Not now']) && t.between && t.inside, JSON.stringify(t));
+check('there is no "Try swipe cards" hint any more (Cards is already the default)', !t.cards);
+await c.shot(`${OUT}/cards_sections_hint.png`);
+await c.ev(`document.querySelector('.hb-tip-go').click()`); await c.sleep(500);
+check('Choose opens Your sections over the deck, the hint goes, and the deck stays', (await c.ev(`document.querySelector('.rd-sheet h2').textContent`)) === 'Your sections' && !(await hasTip()) && (await c.ev(`HBCards.isOpen()`)));
+await open({ view: 'default', tip: { ...fresh, n: 1 }, wait: 2800 });
+await c.ev(`document.querySelector('.hb-tip-no').click()`); await c.sleep(300);
+check('Not now removes it and it does not return', !(await hasTip()) && (await tipState()).done === true);
+await open({ view: 'default', tip: { ...fresh, n: 1, secOn: LONG_AGO }, wait: 2800 });
+check('ignored on its first day, it is not shown again on a later day', !(await hasTip()), JSON.stringify(await tipState()));
+await open({ view: 'default', prefs: { order: [], off: [] }, tip: { ...fresh, n: 1 }, wait: 2800 });
+check('someone who already has saved sections is not asked', !(await hasTip()));
+await open({ view: 'default', tip: { ...fresh, n: 1 }, hash: '#ai-2', wait: 2800 });
+check('opened from a shared story link: no hint', !(await hasTip()));
+await open({ view: 'default', native: false, tip: { ...fresh, n: 5 }, wait: 2800 });
+check('the website never shows it (and nothing is counted there)', !(await hasTip()) && eq(await tipState(), { ...fresh, n: 5 }));
+await open({ view: 'default', tip: { ...fresh, n: 0 }, wait: 2800 });
+check('day 1 (a brand-new install): no hint, one visit counted', !(await hasTip()) && (await tipState()).n === 1);
+await open({ view: 'list', tip: { ...fresh, n: 1 } });
+check('with the List chosen, the hint still appears above the first section, as before', (await c.ev(`!!document.querySelector('.hb-tip[data-tip=sections]') && !document.querySelector('.hb-deck .hb-tip')`)) === true);
+
+// ---------- 8d. the audio player is minimised while cards are showing ----------
+await open({ tts: true, wait: 2200 });
+await c.ev(`HBListen.start('quick')`); await waitFor(`!!document.querySelector('.hb-player') && !document.querySelector('.hb-player').hidden`, 5000);
+await c.sleep(400);
+const P = `(() => { const p = document.querySelector('.hb-player'), r = p.getBoundingClientRect(), vis = (s) => { const e = p.querySelector(s); return !!e && getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().width > 0; }; return { h: Math.round(r.height), play: vis('.hb-pl-play'), close: vis('.hb-pl-close'), prev: vis('.hb-pl-prev'), next: vis('.hb-pl-next'), rate: vis('.hb-pl-rate-group'), lane: vis('.hb-pl-lane'), title: vis('.hb-pl-title'), inScreen: r.left >= 0 && r.right <= innerWidth }; })()`;
+t = await J(P);
+check('in the list the player is the full one (lane line, controls, speed)', t.h >= 90 && t.prev && t.next && t.rate && t.lane, JSON.stringify(t));
+await c.ev(`${cardsBtn}.click()`); await c.sleep(1200);
+t = await J(P);
+check('with the cards showing it shrinks to one slim row: what is playing, play/pause and close only', t.h <= 66 && t.play && t.close && t.title && !t.prev && !t.next && !t.rate && !t.lane && t.inScreen, JSON.stringify(t));
+t = await J(`({ foot: Math.round(document.querySelector('.dk-foot').getBoundingClientRect().bottom), player: Math.round(document.querySelector('.hb-player').getBoundingClientRect().top), acts: document.querySelector('.dk-card:not([inert]) .dk-actions') ? Math.round(document.querySelector('.dk-card:not([inert]) .dk-actions').getBoundingClientRect().bottom) : 0 })`);
+check('and the deck gets the room back: it ends just above the slim player', t.foot <= t.player && t.player - t.foot < 30, JSON.stringify(t));
+await c.shot(`${OUT}/cards_compact_player.png`);
+await c.ev(`document.querySelector('.hb-player .hb-pl-play').click()`); await c.sleep(400);
+check('play/pause still works from the slim row', (await c.ev(`HBListen.state()`)) === 'paused');
+await c.ev(`document.querySelector('.dk-tolist').click()`); await c.sleep(600);
+t = await J(P);
+check('back on the list the full player returns', t.h >= 90 && t.prev && t.rate, JSON.stringify(t));
 
 // ---------- 9. layout ----------
 for (const [w, h] of [[360, 740], [390, 844], [412, 915], [820, 1100]]) {

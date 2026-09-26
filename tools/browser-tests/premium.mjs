@@ -52,7 +52,7 @@ async function open({ path: p = '/', native = false, width = 390, dark = false, 
   await fetch(`${B}/__ctl?manifest=${manifestOk ? 'ok' : '404'}&audio=ok`);
   await c.viewport(width, 844, width < 700, dark);
   await c.goto(B + '/about.html', 200);
-  await c.ev(`localStorage.clear(); localStorage.setItem('hb-prefs-v1', ${JSON.stringify(JSON.stringify(prefs))}); ${quiz ? `localStorage.setItem('hb-quiz-v1', ${JSON.stringify(JSON.stringify(quiz))});` : ''} 'ok'`);
+  await c.ev(`localStorage.clear(); localStorage.setItem('hb-view-v1', 'list'); localStorage.setItem('hb-prefs-v1', ${JSON.stringify(JSON.stringify(prefs))}); ${quiz ? `localStorage.setItem('hb-quiz-v1', ${JSON.stringify(JSON.stringify(quiz))});` : ''} 'ok'`);
   await c.goto(B + p, wait);
   await c.ev(`document.documentElement.style.scrollBehavior = 'auto'; 'ok'`);
 }

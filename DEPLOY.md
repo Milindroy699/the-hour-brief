@@ -86,24 +86,29 @@ sections just appear at the end. `listen.js` follows the choice: hidden sections
 timings to play the reader's order (the recorded outro is dropped when the quiz is hidden). A shared story link into a hidden section still shows it for that visit.
 Tests: `node tools/browser-tests/prefs.mjs`.
 
-## Swipe cards (a second way to read)
+## Swipe cards (the default way to read on phones and in the apps)
 
 `cards.js` (fetched on demand by `mobile.js`, only in the apps and at phone width; never on the desktop website) builds a deck of cards from the
-edition already on the page: a section card (name, reading time, takeaway, numbered stories), one card per story (headline, the whole summary, takeaway,
-source), then the quiz card, in the reader's own section order with hidden sections left out. It is a fixed layer over the scrolling feed (same idea as
-the Audio hub), a horizontal `scroll-snap` track, so swipe, momentum and snapping are the browser's. Buttons (previous/next), the arrow keys, Home/End and Esc
-are the non-swipe alternatives. A tall story scrolls inside its card (a fade at the bottom says there is more); vote, save and share are pinned below it.
-The feed stays the source of truth: card buttons press the feed's own buttons and mirror their state, Listen's highlighted story (`.hb-listening`) turns
-the deck to it (unless the reader touched the deck in the last 4 seconds), and shared story links open the deck at that story when Cards is the reader's
-choice. Text is copied with `textContent`, never as HTML.
+edition already on the page: a section card (name, reading time, takeaway, numbered stories, a pinned "Swipe to start" button), one card per story (headline,
+the whole summary, takeaway, source), then the quiz card, in the reader's own section order with hidden sections left out. It is a fixed layer over the
+scrolling feed (same idea as the Audio hub), a horizontal `scroll-snap` track, so swipe, momentum and snapping are the browser's. Buttons (previous/next), the
+arrow keys, Home/End and Esc are the non-swipe alternatives. A tall story scrolls inside its card (a fade at the bottom says there is more); vote, save and
+share are pinned below it. The feed stays the source of truth: card buttons press the feed's own buttons and mirror their state, Listen's highlighted story
+(`.hb-listening`) turns the deck to it (unless the reader touched the deck in the last 4 seconds). Text is copied with `textContent`, never as HTML.
 
-- **Switch:** a `List | Cards` switch under the section chips, and "Swipe cards" in the menu. The choice is `localStorage` key `hb-view-v1` (`cards` | `list`; the list is
-  the default). The Quiz card and the Challenge tab leave the deck without changing that choice, and hand over instantly (the quiz card lands on the first question, the tab on the quiz section), so the feed never scrolls past. The instant jumps use `window.scrollTo({top, behavior: 'instant'})`, not `scrollIntoView({behavior: 'instant'})`, which Chrome 113 (the Android WebView) ignores: it eases instead and can stop short.
-- **Nudge:** on a later day (never the same day as the sections card) the apps show one "Try swipe cards" card above the first section (Try / Not now); state in `hb-tip-v1`.
-  Anyone who has used Cards is not asked.
-- **Web only:** no store release is needed; a Vercel deploy reaches every installed app on its next open. To switch the feature off, remove the switch in `viewSwitch()` in `mobile.js`.
-- **Test on a real Android WebView, not just headless Chrome** (see Emulator notes in the mobile docs): the deck bottom leaves room for the tab bar (and the mini player while listening, `body.hb-listening`).
-Tests: `node tools/browser-tests/cards.mjs` (84 checks, includes real touch swipes via `cdp.mjs` `swipe()`).
+- **Default:** **Cards** is the view unless the reader chose List (`localStorage` key `hb-view-v1`: `cards` | `list`; unset means cards). Tapping List in the deck
+  or the List side of the `List | Cards` switch (under the section chips) stores `list`; the Cards side or the menu item stores `cards`. The choice is
+  per device. To make the list the default again, change `getView()` in `mobile.js`.
+- **Links that point into the list open the list**, not the deck (`deckTarget()` in `mobile.js`): `#quiz` and other section anchors, a league invite `?join=`,
+  a friend's score `?beat=`. A shared story link (`#ai-2`, a saved story) opens the deck on that story's card. `?classic=1` (website only) is untouched.
+- **No flash of the list:** while `cards.js` loads at startup the page is hidden (`pendingOn/pendingOff`, 4 s safety); if it cannot load, the list shows and nothing is thrown at the reader.
+- **The app bar is under the deck**, so the deck's header carries **Saved stories** and the **Menu** (Sections, Text size, reminder, share, e-mail sign-up, and the Contact · About · Privacy links) plus **List**. "Get it by email" from the deck jumps to the sign-up box in the list.
+- **Tabs:** Today returns to the cards (when Cards is the view); Challenge and the quiz card's "Play the quiz" leave the deck **instantly**, onto the first question / the quiz section, with the feed never scrolling past, and do not change the saved choice. The instant jumps use `window.scrollTo({top, behavior: 'instant'})`, not `scrollIntoView({behavior: 'instant'})`, which Chrome 113 (the Android WebView) ignores: it eases instead and can stop short.
+- **Audio:** the mini player shrinks to one slim row (what is playing, play/pause, close) while the deck is showing (`html.hb-deck-open` rules in `app.css`); the deck measures whatever height the player has and leaves that room (`fitPlayer()`).
+- **Hint:** the one-time "Make it yours" (sections) hint, on the second day the app is opened, sits under the deck's top bar when Cards is showing (above the first section when the list is). There is no separate "try Cards" hint any more. State in `hb-tip-v1`.
+- **Web only:** no store release is needed; a Vercel deploy reaches every installed app on its next open.
+- **Test on a real Android WebView, not just headless Chrome** (see Emulator notes in the mobile docs).
+Tests: `node tools/browser-tests/cards.mjs` (104 checks, includes real touch swipes via `cdp.mjs` `swipe()`). The other suites (`premium`, `prefs`, `listen`) test the list, so they open with the List view stored.
 
 ## Daily quiz
 

@@ -4,7 +4,8 @@
 // -> mobile/play-store/screenshots/*.png         (1080x1920, Google Play phone size)
 //    mobile/app-store/screenshots/*.png          (1320x2868, App Store iPhone 6.9-inch)
 //    mobile/app-store/screenshots-ipad/*.png     (2064x2752, App Store iPad 13-inch; required because the app runs on iPad)
-// The App Store sets also show the swipe cards and the Your sections screen. The Audio screen uses a dry-run recording (tones)
+// The App Store sets also show the swipe cards (the app's default view, so the first shot) and the Your sections screen; the
+// list shots are taken with the List view chosen. The Audio screen uses a dry-run recording (tones)
 // only so the UI shows its "AI voice ready" state; no audio is played on screen.
 import fs from 'node:fs';
 import os from 'node:os';
@@ -30,7 +31,7 @@ const SETS = [
 const LATEST = /data-edition-date="(\d{4}-\d{2}-\d{2})"/.exec(fs.readFileSync(path.join(root, 'index.html'), 'utf8'))[1];
 const dayBefore = (n) => new Date(Date.parse(LATEST + 'T00:00:00Z') - n * 86400000).toISOString().slice(0, 10);
 const seed = { r: { [dayBefore(3)]: { s: 3, t: 5 }, [dayBefore(2)]: { s: 4, t: 5 }, [dayBefore(1)]: { s: 5, t: 5 } } };
-const QUIET = { n: 0, last: '2020-01-01', done: true, cardsDone: true };     // no "Make it yours" / "Try swipe cards" card in the shots
+const QUIET = { n: 0, last: '2020-01-01', done: true };     // no "Make it yours" hint in the shots
 const pre = `window.HB_AUDIO_BASE='${B}/__audio'; (() => { const A = window.Audio; window.Audio = function (...a) { const el = new A(...a); window.__audio = el; return el; }; window.Audio.prototype = A.prototype; })();
   window.Capacitor = { isNativePlatform: () => true, Plugins: {} };`;   // the app look
 
@@ -39,14 +40,14 @@ for (const set of SETS) {
   fs.mkdirSync(out, { recursive: true });
   if (set.full) for (const f of fs.readdirSync(out)) if (f.endsWith('.png')) fs.rmSync(path.join(out, f));    // no stale names from older runs
   const N = set.full
-    ? { feed: '01-feed', highlights: '02-highlights', cards: '03-cards', audio: '04-audio', quiz: '05-quiz', sections: '06-sections' }
+    ? { cards: '01-cards', feed: '02-feed', highlights: '03-highlights', audio: '04-audio', quiz: '05-quiz', sections: '06-sections' }   // Cards is the app's default view, so it leads
     : { feed: '01-feed', highlights: '02-highlights', audio: '03-audio', quiz: '04-quiz' };
   for (const dark of [false, true]) {
     const id = await c.preload(pre);
     await c.send('Emulation.setDeviceMetricsOverride', { width: set.w, height: set.h, deviceScaleFactor: set.dpr, mobile: true });
     await c.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: dark ? 'dark' : 'light' }] });
     await c.goto(B + '/about.html', 200);
-    await c.ev(`localStorage.clear(); localStorage.setItem('hb-tip-v1', ${JSON.stringify(JSON.stringify(QUIET))}); localStorage.setItem('hb-quiz-v1', ${JSON.stringify(JSON.stringify(seed))}); 'ok'`);
+    await c.ev(`localStorage.clear(); localStorage.setItem('hb-view-v1', 'list'); localStorage.setItem('hb-tip-v1', ${JSON.stringify(JSON.stringify(QUIET))}); localStorage.setItem('hb-quiz-v1', ${JSON.stringify(JSON.stringify(seed))}); 'ok'`);
     await c.goto(B + '/', 2500);
     await c.ev(`document.documentElement.style.scrollBehavior = 'auto'; document.fonts.ready.then(() => 'ok')`);
     const at = async (sel, off) => { await c.ev(`(window.scrollTo(0, Math.max(0, document.querySelector(${JSON.stringify(sel)}).getBoundingClientRect().top + scrollY - ${off})), 'ok')`); await c.sleep(500); };

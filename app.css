@@ -606,14 +606,18 @@ html.hb-hub-open .hb-player { display: none; }
 
 html.hb-deck-open, html.hb-deck-open body { overflow: hidden; }
 html.hb-deck-open #mob-progress, html.hb-deck-open #mob-top { display: none; }
-.hb-deck { position: fixed; top: 0; left: 0; right: 0; bottom: calc(var(--hb-tab-h) + var(--dk-player, 0px)); z-index: 9981; display: flex; flex-direction: column; background: var(--bg); color: var(--ink); font-family: var(--hb-sans); }
+.hb-deck { position: fixed; top: 0; left: 0; right: 0; bottom: var(--hb-tab-h); padding-bottom: var(--dk-player, 0px); box-sizing: border-box; z-index: 9981; display: flex; flex-direction: column; background: var(--bg); color: var(--ink); font-family: var(--hb-sans); }
+.hb-deck { visibility: visible; }
 .hb-deck[hidden] { display: none; }
+.hb-deck > .hb-tip { flex: none; box-sizing: border-box; width: calc(100% - 32px); max-width: 640px; margin: 0 auto 8px; }
 .dk-top { flex: none; display: flex; align-items: center; gap: 8px; padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 8px; }
 .dk-sec { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .dk-sec-name { font-family: var(--hb-label); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--hb-green); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dk-sec-pos { font-size: 0.8rem; color: var(--ink-soft); }
 .dk-top-btn { flex: none; min-height: 40px; padding: 0 16px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper); color: var(--ink); font-family: var(--hb-label); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.04em; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.dk-size { min-width: 44px; padding: 0 12px; }
+.dk-ico { width: 44px; min-height: 44px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+.dk-ico svg { width: 20px; height: 20px; }
+.dk-menu { background: var(--hb-primary); border-color: var(--hb-primary); color: #fff; }
 .dk-top-btn:focus-visible, .dk-nav:focus-visible, .dk-act:focus-visible, .dk-cta:focus-visible, .dk-go:focus-visible, .dk-hint:focus-visible, .dk-track:focus-visible { outline: 2px solid var(--hb-primary); outline-offset: 2px; }
 .dk-track { flex: 1; min-height: 0; display: flex; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
 .dk-track::-webkit-scrollbar { display: none; }
@@ -657,3 +661,13 @@ html.hb-deck-open #mob-progress, html.hb-deck-open #mob-top { display: none; }
 .dk-top, .dk-foot { width: 100%; max-width: 672px; margin: 0 auto; box-sizing: border-box; }
 .dk-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { .dk-bar i { transition: none; } }
+
+/* ---- The audio player, minimised while cards are showing: one slim row (play/pause, what is playing, close) ---- */
+html.hb-deck-open .hb-player { display: flex; align-items: center; gap: 8px; padding: 6px 8px 6px 14px; }
+html.hb-deck-open .hb-pl-now { flex: 1; min-width: 0; margin: 0; }
+html.hb-deck-open .hb-pl-top, html.hb-deck-open .hb-pl-prev, html.hb-deck-open .hb-pl-next, html.hb-deck-open .hb-pl-rate-group { display: none; }
+html.hb-deck-open .hb-pl-title { font-size: 0.86rem; -webkit-line-clamp: 1; }
+html.hb-deck-open .hb-pl-ctl { flex: none; gap: 2px; }
+html.hb-deck-open .hb-pl-play { min-width: 42px; min-height: 42px; border-radius: 21px; }
+html.hb-deck-open .hb-pl-play svg { width: 20px; height: 20px; }
+html.hb-deck-open .hb-pl-close { min-width: 40px; min-height: 40px; }

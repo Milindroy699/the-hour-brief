@@ -49,7 +49,7 @@ async function open({ prefs = null, tip = null, blockTip = false, native = false
   await fetch(`${B}/__ctl?manifest=${manifestOk ? 'ok' : '404'}&audio=ok`);
   await c.viewport(width, 915, width < 700, dark);
   await c.goto(B + '/about.html', 200);
-  await c.ev(`localStorage.clear(); ${prefs ? `localStorage.setItem('hb-prefs-v1', ${JSON.stringify(JSON.stringify(prefs))});` : ''} ${tip ? `localStorage.setItem('hb-tip-v1', ${JSON.stringify(JSON.stringify(tip))});` : ''} 'ok'`);
+  await c.ev(`localStorage.clear(); localStorage.setItem('hb-view-v1', 'list'); ${prefs ? `localStorage.setItem('hb-prefs-v1', ${JSON.stringify(JSON.stringify(prefs))});` : ''} ${tip ? `localStorage.setItem('hb-tip-v1', ${JSON.stringify(JSON.stringify(tip))});` : ''} 'ok'`);
   await c.goto(B + '/' + query + hash, wait);
 }
 const order = () => J(`[...document.querySelectorAll('section.lane')].map(s => s.id)`);
