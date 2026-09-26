@@ -15,8 +15,8 @@
  *    pages get a reading-progress bar and a back-to-top button.
  *  - The evergreen About paragraph gets a matching "More" toggle, and a "Contact us · About · Privacy" row leads the footer.
  *  - Save-for-later bookmarks and a text-size control (both stored on this device only).
- *  - "Your sections": readers pick which sections show and in what order (sliders button; the apps
- *    offer it once on first launch). Stored on this device only.
+ *  - "Your sections": readers pick which sections show and in what order (menu > Sections; the apps
+ *    offer it once, as a small card, on the second day they are opened). Stored on this device only.
  *  - "Listen to today's brief" (listen.js, loaded on demand where the device can speak).
  *
  * "Reader mode" = everywhere except the desktop site with ?classic=1: phones get /mobile.css from the page's own link,
@@ -587,13 +587,12 @@
   }
   function commitPrefs() { storePrefs(); applyPrefs(); syncSoon(); }
 
-  function openPrefs(returnTo, first) {
+  function openPrefs(returnTo) {
     if (!laneBase) return;
     var msg = null;
-    openSheet(first ? 'Make the brief yours' : 'Your sections', function (body) {
-      body.appendChild(mk('p', '', first
-        ? 'Choose what goes in your daily brief and in what order. You can change this any time from the menu at the top right.'
-        : 'Switch sections on or off and move them up or down. Changes apply straight away.'));
+    tipDone();
+    openSheet('Your sections', function (body) {
+      body.appendChild(mk('p', '', 'Switch sections on or off and move them up or down. Changes apply straight away.'));
       var ul = mk('ul', 'rd-prefs');
       msg = mk('p', 'rd-prefs-msg');
       msg.setAttribute('role', 'status');
@@ -655,16 +654,58 @@
         draw();
       });
       draw();
-    }, returnTo, first ? 'Start reading' : 'Done');
+    }, returnTo, 'Done');
   }
 
-  // First time in the app: offer the choice once (the website is never interrupted this way).
-  function maybeOnboard() {
-    if (!NATIVE || !laneBase || loadPrefs() || location.hash || /[?&]utm_/.test(location.search)) return;
-    if (choosable().length < 2) return;
-    prefs = { order: [], off: [] };
-    if (!storePrefs()) return;                     // cannot remember the answer: do not ask every time
-    setTimeout(function () { if (!sheetEl) openPrefs(null, true); }, 700);
+  // Customising is offered in passing, not at the door: on the second day the app is opened, a small card asks once.
+  // Anyone who already has saved sections (including everyone who saw the old first-launch sheet) is never asked.
+  var TIP_KEY = 'hb-tip-v1';
+  function tipState() {
+    try {
+      var o = JSON.parse(localStorage.getItem(TIP_KEY) || 'null');
+      if (o && typeof o === 'object') return { n: +o.n || 0, last: String(o.last || ''), done: !!o.done };
+    } catch (e) { /* none saved */ }
+    return { n: 0, last: '', done: false };
+  }
+  function tipSave(st) { try { localStorage.setItem(TIP_KEY, JSON.stringify(st)); return true; } catch (e) { return false; } }
+  function localDay() {
+    var d = new Date();
+    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+  }
+  function tipDone() {
+    var el = document.querySelector('.hb-tip');
+    if (el) el.remove();
+    var st = tipState();
+    if (!st.done) { st.done = true; tipSave(st); }
+  }
+  function maybeSuggest() {
+    if (!NATIVE || !laneBase || loadPrefs()) return;
+    var st = tipState(), today = localDay();
+    if (st.done) return;
+    if (st.last !== today) { st.n += 1; st.last = today; }
+    if (!tipSave(st)) return;                      // cannot remember the answer: do not ask every time
+    var first = document.querySelector('section.lane');
+    if (st.n < 2 || location.hash || /[?&]utm_/.test(location.search) || choosable().length < 2 || !first || document.querySelector('.hb-tip')) return;
+    var card = mk('aside', 'hb-tip');
+    card.setAttribute('aria-label', 'Personalise your brief');
+    var ico = mk('span', 'hb-tip-ico');
+    ico.innerHTML = SLIDERS_SVG;
+    var text = mk('div', 'hb-tip-text');
+    text.appendChild(mk('strong', '', 'Make it yours'));
+    text.appendChild(mk('span', '', 'Choose which sections you see, and in what order.'));
+    var acts = mk('div', 'hb-tip-acts');
+    var go = mk('button', 'hb-tip-go', 'Choose');
+    go.type = 'button';
+    go.addEventListener('click', function () { openPrefs(null); });
+    var no = mk('button', 'hb-tip-no', 'Not now');
+    no.type = 'button';
+    no.addEventListener('click', tipDone);
+    acts.appendChild(go);
+    acts.appendChild(no);
+    card.appendChild(ico);
+    card.appendChild(text);
+    card.appendChild(acts);
+    first.parentNode.insertBefore(card, first);
   }
 
   // ---- Tools row under the chips: hosts the quiz chip (and, in Listen, the listen card follows it) ----
@@ -1013,7 +1054,7 @@
       if (++tries < 40) setTimeout(wait, 100);
     })();
   }
-  function start() { apply(); openFromHash(); loadListen(); maybeOnboard(); openAudioFromUrl(); }
+  function start() { apply(); openFromHash(); loadListen(); maybeSuggest(); openAudioFromUrl(); }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', start);
   } else {

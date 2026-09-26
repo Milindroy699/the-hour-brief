@@ -77,8 +77,9 @@ the right size, `audio/mpeg` and range support. It costs nothing (no Sarvam) and
 ## Your sections (show / hide / reorder)
 
 `mobile.js` (reader mode only: phones and the apps) lets readers switch the sections (`section.lane`: AI, Business, Markets, Quiz) on or off
-and move them up or down, from the sliders button under the section pills. The apps also offer the sheet once on first launch (never on the
-website, never when opened from a shared link). The choice lives in `localStorage` key `hb-prefs-v1` (`{order:[ids], off:[ids]}`); nothing is sent anywhere.
+and move them up or down, from the menu (top right) > Sections. Nothing is asked at first launch. On the second day the app is opened it shows one small "Make it yours"
+card above the first section (Choose / Not now; asked once, never on the website, never when opened from a shared link, never to anyone who
+already has saved sections). It is counted in `localStorage` key `hb-tip-v1` (`{n: days opened, last, done}`). The choice lives in `localStorage` key `hb-prefs-v1` (`{order:[ids], off:[ids]}`); nothing is sent anywhere.
 Sections are moved and hidden in place (`data-pref-off` marks hidden ones), so ids, links and scripts keep working; unknown ids are ignored, so new
 sections just appear at the end. `listen.js` follows the choice: hidden sections are skipped and the recording jumps between the manifest's
 timings to play the reader's order (the recorded outro is dropped when the quiz is hidden). A shared story link into a hidden section still shows it for that visit.

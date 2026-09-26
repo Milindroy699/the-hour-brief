@@ -1,4 +1,4 @@
-// Browser test for "Your sections" (mobile.js): show/hide + reorder the sections, the first-launch sheet in the apps,
+// Browser test for "Your sections" (mobile.js): show/hide + reorder the sections, the "Make it yours" card on the second day in the apps,
 // deep links, desktop, the quiz link, and how Listen follows the choices (recording jumps + device voice).
 // The recording is a dry-run (tones) generated for the real latest edition. No Sarvam credit is used.
 //   node prefs.mjs [screenshotDir]
@@ -37,24 +37,30 @@ const FAKE_TTS = `(() => { const log = window.__spoken = []; let cur = null, t =
 
 let ids = [];
 // Fresh storage each time (optionally seeded), then the edition page.
-async function open({ prefs = null, native = false, width = 412, dark = false, hash = '', query = '', audio = false, tts = false, manifestOk = true, wait = 1300 } = {}) {
+async function open({ prefs = null, tip = null, blockTip = false, native = false, width = 412, dark = false, hash = '', query = '', audio = false, tts = false, manifestOk = true, wait = 1300 } = {}) {
   for (const id of ids) await c.unpreload(id);
   ids = [];
   const pre = [AUDIO_BASE];
   if (native) pre.push(NATIVE);
+  if (blockTip) pre.push(`(() => { const set = Storage.prototype.setItem; Storage.prototype.setItem = function (k, v) { if (k === 'hb-tip-v1') throw new Error('blocked'); return set.call(this, k, v); }; })();`);
   if (audio) pre.push(AUDIO_HOOK);
   pre.push(tts ? FAKE_TTS : `delete window.speechSynthesis; delete window.SpeechSynthesisUtterance;`);
   for (const p of pre) ids.push(await c.preload(p));
   await fetch(`${B}/__ctl?manifest=${manifestOk ? 'ok' : '404'}&audio=ok`);
   await c.viewport(width, 915, width < 700, dark);
   await c.goto(B + '/about.html', 200);
-  await c.ev(`localStorage.clear(); ${prefs ? `localStorage.setItem('hb-prefs-v1', ${JSON.stringify(JSON.stringify(prefs))});` : ''} 'ok'`);
+  await c.ev(`localStorage.clear(); ${prefs ? `localStorage.setItem('hb-prefs-v1', ${JSON.stringify(JSON.stringify(prefs))});` : ''} ${tip ? `localStorage.setItem('hb-tip-v1', ${JSON.stringify(JSON.stringify(tip))});` : ''} 'ok'`);
   await c.goto(B + '/' + query + hash, wait);
 }
 const order = () => J(`[...document.querySelectorAll('section.lane')].map(s => s.id)`);
 const shown = () => J(`[...document.querySelectorAll('section.lane')].filter(s => getComputedStyle(s).display !== 'none').map(s => s.id)`);
 const pills = () => J(`[...document.querySelectorAll('.nav a:not(.nav-all)')].map(a => ({ t: a.textContent.trim(), hidden: getComputedStyle(a).display === 'none' }))`);
 const stored = () => J(`JSON.parse(localStorage.getItem('hb-prefs-v1') || 'null')`);
+const tipStored = () => J(`JSON.parse(localStorage.getItem('hb-tip-v1') || 'null')`);
+const hasTip = () => c.ev(`!!document.querySelector('.hb-tip')`);
+const noSheet = () => c.ev(`!document.querySelector('.rd-sheet')`);
+const d0 = new Date(), TODAY = d0.getFullYear() + '-' + String(d0.getMonth() + 1).padStart(2, '0') + '-' + String(d0.getDate()).padStart(2, '0');
+const LONG_AGO = '2020-01-01';
 const sheet = `document.querySelector('.rd-sheet')`;
 const row = (id) => `document.querySelector('.rd-prefs li[data-id="${id}"]')`;
 const openSheet = async () => {                       // the menu (top right) -> Sections
@@ -119,20 +125,60 @@ await c.ev(`${sheet}.querySelector('.rd-reset').click()`); await c.sleep(250);
 check('Reset to default: original order, everything on', eq(await order(), ['ai', 'biz', 'mkt', 'quiz']) && eq(await shown(), ['ai', 'biz', 'mkt', 'quiz']) && (await c.ev(`[...document.querySelectorAll('.rd-prefs input')].every(i => i.checked)`)) && (await c.ev(`!document.body.classList.contains('hb-quiz-off')`)), JSON.stringify(await order()));
 await c.ev(`${sheet}.querySelector('.rd-close').click()`);
 
-// ---------- 8. first launch in the apps ----------
-await open({ native: true, wait: 600 });
-check('native, first launch: the sheet appears once, worded as a welcome, with a "Start reading" button', await waitFor(`!!document.querySelector('.rd-sheet')`, 3000) && (await c.ev(`${sheet}.querySelector('h2').textContent`)) === 'Make the brief yours' && (await c.ev(`${sheet}.querySelector('.rd-close').textContent`)) === 'Start reading');
-check('and the default answer is remembered straight away (a force-quit will not bring it back)', eq(await stored(), { order: [], off: [] }), JSON.stringify(await stored()));
-await c.shot(`${OUT}/prefs_first_run.png`);
-await c.ev(`document.querySelector('.rd-sheet .rd-close').click()`); await c.sleep(200);
-await c.ev(`(location.reload(), 'ok')`); await c.sleep(2200);
-check('Start reading closes it; it does not come back next launch', (await c.ev(`!document.querySelector('.rd-sheet')`)) === true);
-await open({ native: true, prefs: { order: ['biz', 'ai', 'mkt', 'quiz'], off: [] }, wait: 600 }); await c.sleep(1800);
-check('native with a saved choice: no sheet, and the saved order applies', (await c.ev(`!document.querySelector('.rd-sheet')`)) && eq(await order(), ['biz', 'ai', 'mkt', 'quiz']), JSON.stringify(await order()));
-await open({ native: true, hash: '#ai-2', wait: 600 }); await c.sleep(1800);
-check('native, opened from a shared story link: not interrupted by the sheet', (await c.ev(`!document.querySelector('.rd-sheet')`)) === true);
-await open({ native: true, query: '?utm_source=share', wait: 600 }); await c.sleep(1800);
-check('native, opened with tracking parameters (a share): not interrupted either', (await c.ev(`!document.querySelector('.rd-sheet')`)) === true);
+// ---------- 8. the apps: nothing at the door; "Make it yours" is offered once, on the second day ----------
+await open({ native: true, wait: 600 }); await c.sleep(1800);
+check('native, first launch: no sheet and no card (nothing to decide before the first read)', (await noSheet()) && !(await hasTip()));
+check('and nothing is saved as a choice: the default order stays untouched, one visit is counted', (await stored()) === null && eq(await tipStored(), { n: 1, last: TODAY, done: false }) && eq(await order(), ['ai', 'biz', 'mkt', 'quiz']), JSON.stringify({ p: await stored(), t: await tipStored() }));
+await c.ev(`(location.reload(), 'ok')`); await c.sleep(1800);
+check('opening it again the same day: still no card, and the same day is not counted twice', !(await hasTip()) && (await tipStored()).n === 1, JSON.stringify(await tipStored()));
+
+await open({ native: true, tip: { n: 1, last: LONG_AGO, done: false }, wait: 600 }); await c.sleep(1800);
+t = await J(`(() => { const k = document.querySelector('.hb-tip'); if (!k) return null; const r = k.getBoundingClientRect(), first = document.querySelector('section.lane'), bs = [...k.querySelectorAll('button')].map((b) => { const x = b.getBoundingClientRect(); return { t: b.textContent, h: Math.round(x.height), l: Math.round(x.left), r: Math.round(x.right) }; }); return { title: k.querySelector('strong').textContent, body: k.querySelector('.hb-tip-text span').textContent, l: Math.round(r.left), r: Math.round(r.right), w: innerWidth, before: k.nextElementSibling === first, bs, bg: getComputedStyle(k).backgroundColor, role: k.tagName, sheet: !!document.querySelector('.rd-sheet') }; })()`);
+check('native, second day: a small card appears (not a sheet), just above the first section', t && t.title === 'Make it yours' && t.before && !t.sheet && t.role === 'ASIDE', JSON.stringify(t));
+check('it says what it does in one line and offers Choose / Not now, both easy to tap and inside the screen', t && /which sections/.test(t.body) && eq(t.bs.map((b) => b.t), ['Choose', 'Not now']) && t.bs.every((b) => b.h >= 40 && b.l >= 0 && b.r <= t.w) && t.l >= 0 && t.r <= t.w, JSON.stringify(t));
+check('the card does not repeat itself if the same day is opened again', await (async () => { await c.ev(`(location.reload(), 'ok')`); await c.sleep(1800); return (await c.ev(`document.querySelectorAll('.hb-tip').length`)) === 1 && (await tipStored()).n === 2; })(), JSON.stringify(await tipStored()));
+await c.shot(`${OUT}/prefs_tip.png`);
+await c.ev(`document.querySelector('.hb-tip-go').click()`); await c.sleep(400);
+check('Choose opens Your sections (titled "Your sections", closes with Done) and the card goes away', (await c.ev(`${sheet}.querySelector('h2').textContent`)) === 'Your sections' && (await c.ev(`${sheet}.querySelector('.rd-close').textContent`)) === 'Done' && !(await hasTip()));
+await c.ev(`${sheet}.querySelector('.rd-close').click()`); await c.sleep(200);
+await c.ev(`(() => { const o = JSON.parse(localStorage.getItem('hb-tip-v1')); o.last = '${LONG_AGO}'; localStorage.setItem('hb-tip-v1', JSON.stringify(o)); return 'ok'; })()`);
+await c.ev(`(location.reload(), 'ok')`); await c.sleep(1800);
+check('after choosing, it never comes back on a later day', !(await hasTip()) && (await noSheet()) && (await tipStored()).done === true, JSON.stringify(await tipStored()));
+
+await open({ native: true, tip: { n: 4, last: LONG_AGO, done: false }, wait: 600 }); await c.sleep(1800);
+await c.ev(`document.querySelector('.hb-tip-no').click()`); await c.sleep(200);
+check('Not now removes the card, opens nothing, and leaves the sections as they were', !(await hasTip()) && (await noSheet()) && (await stored()) === null && eq(await order(), ['ai', 'biz', 'mkt', 'quiz']), JSON.stringify(await stored()));
+await c.ev(`(() => { const o = JSON.parse(localStorage.getItem('hb-tip-v1')); o.last = '${LONG_AGO}'; localStorage.setItem('hb-tip-v1', JSON.stringify(o)); return 'ok'; })()`);
+await c.ev(`(location.reload(), 'ok')`); await c.sleep(1800);
+check('and a "Not now" is final: not asked again on a later day either', !(await hasTip()) && (await tipStored()).done === true, JSON.stringify(await tipStored()));
+await c.ev(`document.querySelector('.ab-menu').click()`); await waitFor(`!!document.querySelector('.rd-menu')`);
+check('the menu still has Sections (Show, hide and reorder) for anyone who wants it any time', (await c.ev(`document.querySelector('.rd-item[data-act=sections]').textContent`)) === 'SectionsShow, hide and reorder');
+await c.ev(`document.querySelector('.rd-sheet .rd-close').click()`);
+
+await open({ native: true, tip: { n: 1, last: LONG_AGO, done: false }, wait: 600, hash: '#ai-2' }); await c.sleep(1800);
+check('opened from a shared story link on the second day: not interrupted (the visit still counts)', !(await hasTip()) && (await tipStored()).n === 2, JSON.stringify(await tipStored()));
+await open({ native: true, tip: { n: 1, last: LONG_AGO, done: false }, wait: 600, query: '?utm_source=share' }); await c.sleep(1800);
+check('opened with tracking parameters (a share): not interrupted either', !(await hasTip()), JSON.stringify(await tipStored()));
+await open({ native: true, prefs: { order: [], off: [] }, tip: { n: 3, last: LONG_AGO, done: false }, wait: 600 }); await c.sleep(1800);
+check('anyone who already has saved sections (the old first-launch sheet stored the default) is never asked', !(await hasTip()) && (await noSheet()));
+await open({ native: true, prefs: { order: ['biz', 'ai', 'mkt', 'quiz'], off: [] }, tip: { n: 3, last: LONG_AGO, done: false }, wait: 600 }); await c.sleep(1800);
+check('a reader who already customised: no card, and the saved order applies', !(await hasTip()) && eq(await order(), ['biz', 'ai', 'mkt', 'quiz']), JSON.stringify(await order()));
+await open({ native: true, tip: { n: 1, last: LONG_AGO, done: false }, blockTip: true, wait: 600 }); await c.sleep(1800);
+check('if the answer cannot be remembered (storage blocked) it is not shown, rather than asking every time', !(await hasTip()));
+await open({ native: false, tip: { n: 5, last: LONG_AGO, done: false }, wait: 600 }); await c.sleep(1800);
+check('the phone website is never interrupted this way, and nothing is counted there', !(await hasTip()) && eq(await tipStored(), { n: 5, last: LONG_AGO, done: false }), JSON.stringify(await tipStored()));
+await open({ native: false, tip: { n: 5, last: LONG_AGO, done: false }, width: 1280, wait: 600 }); await c.sleep(1800);
+check('the desktop website neither', !(await hasTip()) && (await tipStored()).n === 5);
+
+for (const w of [360, 412]) {
+  await open({ native: true, tip: { n: 1, last: LONG_AGO, done: false }, width: w, wait: 600 }); await c.sleep(1600);
+  t = await J(`(() => { const k = document.querySelector('.hb-tip'); if (!k) return null; const r = k.getBoundingClientRect(); return { l: Math.round(r.left), r: Math.round(r.right), h: Math.round(r.height), over: [...k.querySelectorAll('*')].filter((e) => e.getBoundingClientRect().right > k.getBoundingClientRect().right + 0.5).length, sw: document.documentElement.scrollWidth, w: innerWidth }; })()`);
+  check(`${w}px wide: the card fits inside the screen and nothing spills out of it`, t && t.l >= 0 && t.r <= t.w && t.over === 0 && t.sw <= t.w, JSON.stringify(t));
+}
+await open({ native: true, tip: { n: 1, last: LONG_AGO, done: false }, dark: true, wait: 600 }); await c.sleep(1600);
+t = await J(`(() => { const k = document.querySelector('.hb-tip'); return k && { bg: getComputedStyle(k).backgroundColor, ink: getComputedStyle(k.querySelector('strong')).color, go: getComputedStyle(k.querySelector('.hb-tip-go')).backgroundColor }; })()`);
+check('dark mode: the card is dark, its title readable, the button in the brand colour', t && /^rgb\(30, 27, 51\)$/.test(t.bg) && t.ink !== t.bg && /^rgb\(108, 83, 245\)$/.test(t.go), JSON.stringify(t));
+await c.shot(`${OUT}/prefs_tip_dark.png`);
 
 // ---------- 9. a shared story in a switched-off section still opens ----------
 await open({ prefs: { order: [], off: ['mkt'] }, hash: '#mkt-2', wait: 1500 });
