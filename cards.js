@@ -23,7 +23,7 @@
   var deck = null, track = null, ui = {}, cards = [], idx = 0, shown = false;
   var lastTouch = 0, downAt = 0, lastScrollAt = 0, goal = null, goalAt = 0, goalMs = 0, returnFocus = null, scrollRaf = 0, settleT = 0, fixT = 0, syncRaf = 0;
   var mirrorObs = null, deckW = 0, playIdx = -1, lastFollowId = null, fabEl = null, fabOpen = false, fabAuto = 0, listenRaf = 0;
-  var hasSwiped = false, idleT = 0, swipeHintEl = null, swipeHintT = 0;
+  var hasSwiped = false, idleT = 0, swipeHintEl = null, swipeHintT = 0, idxAtTouch = null;
 
   function mk(tag, cls, text) {
     var e = document.createElement(tag);
@@ -413,11 +413,7 @@
     track.setAttribute('aria-label', 'Swipe or use the arrow keys to move between cards');
     deck.appendChild(track);
 
-    var foot = ui.foot = mk('footer', 'dk-foot');
-    ui.prev = btn('dk-nav dk-prev', '', 'Previous card');
-    ui.prev.appendChild(svg('M15 5l-7 7 7 7'));
-    ui.next = btn('dk-nav dk-next', '', 'Next card');
-    ui.next.appendChild(svg('M9 5l7 7-7 7'));
+    var foot = ui.foot = mk('footer', 'dk-foot');       // just the progress bar now: full width, no buttons to share it with
     var bar = mk('div', 'dk-bar');
     ui.fill = mk('i');
     bar.appendChild(ui.fill);
@@ -425,12 +421,21 @@
     ui.live = mk('div', 'dk-live');
     ui.live.setAttribute('role', 'status');
     ui.live.setAttribute('aria-live', 'polite');
-    foot.appendChild(ui.prev);
     foot.appendChild(bar);
     foot.appendChild(ui.count);
-    foot.appendChild(ui.next);
     deck.appendChild(foot);
     deck.appendChild(ui.live);
+
+    // Small arrows overlaid on the card itself, at its edges, rather than a separate button bar: the card keeps the
+    // full width and height, and the arrows are a quiet, secondary way to move (see onManualNav/onSwiped below).
+    ui.edgenav = mk('div', 'dk-edgenav');
+    ui.prev = btn('dk-nav dk-prev', '', 'Previous card');
+    ui.prev.appendChild(svg('M15 5l-7 7 7 7'));
+    ui.next = btn('dk-nav dk-next', '', 'Next card');
+    ui.next.appendChild(svg('M9 5l7 7-7 7'));
+    ui.edgenav.appendChild(ui.prev);
+    ui.edgenav.appendChild(ui.next);
+    deck.appendChild(ui.edgenav);
     document.body.appendChild(deck);
     buildFab();
 
@@ -448,6 +453,16 @@
     ['touchend', 'touchcancel', 'pointerup', 'pointercancel'].forEach(function (t) {
       deck.addEventListener(t, function () { downAt = 0; setTimeout(align, 350); setTimeout(align, 900); }, { passive: true });
     });
+    // A second, independent way to notice a real swipe happened: compare which card was showing when the finger went
+    // down on the track against which one is showing shortly after it lifts. This does not depend on onScroll firing
+    // or on the goal/moving bookkeeping at all, so it still teaches the gesture even if a particular browser's scroll
+    // events behave differently than expected.
+    track.addEventListener('touchstart', function () { idxAtTouch = idx; }, { passive: true });
+    track.addEventListener('touchend', function () {
+      var started = idxAtTouch;
+      idxAtTouch = null;
+      setTimeout(function () { if (started !== null && idx !== started) onSwiped(); }, 500);
+    }, { passive: true });
     deck.addEventListener('keydown', onKey);
     window.addEventListener('resize', onResize);
     document.addEventListener('hb:prefs', function () { if (shown) refresh(); });
@@ -462,8 +477,8 @@
   // they fade back rather than sit there as clutter. A button or key press always brings them back, since that reader
   // is clearly relying on them. Either way, if nothing moves for a while they return on their own, in case whoever is
   // reading has gotten stuck.
-  function showNav() { if (ui.foot) ui.foot.classList.remove('dk-quiet'); }
-  function quietNav() { if (hasSwiped && ui.foot) ui.foot.classList.add('dk-quiet'); }
+  function showNav() { if (ui.edgenav) ui.edgenav.classList.remove('dk-quiet'); }
+  function quietNav() { if (hasSwiped && ui.edgenav) ui.edgenav.classList.add('dk-quiet'); }
   function armIdle() { clearTimeout(idleT); idleT = setTimeout(showNav, window.HB_CARD_IDLE_MS || 6000); }
   function onManualNav() { showNav(); armIdle(); }
   function onSwiped() {

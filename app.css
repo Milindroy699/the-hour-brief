@@ -652,19 +652,32 @@ html.hb-deck-open #mob-progress, html.hb-deck-open #mob-top { display: none; }
 .dk-act[aria-pressed="true"] svg { fill: currentColor; }
 .dk-act:disabled { opacity: 0.85; cursor: default; }
 .dk-foot { flex: none; display: flex; align-items: center; gap: 12px; padding: 4px 16px 12px; }
-.dk-nav { flex: none; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: var(--paper); color: var(--ink); cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.dk-nav svg { width: 20px; height: 20px; }
-.dk-nav:disabled { opacity: 0.35; cursor: default; }
-.dk-nav { transition: opacity 0.25s ease; }
-/* Swipe is the point: once the reader has done it once, the buttons fade back rather than sit there as clutter — a tap,
-   a key press, hovering/focusing, or just sitting on a card a while brings them straight back (cards.js quietNav/showNav). */
-.dk-foot.dk-quiet .dk-nav:not(:disabled) { opacity: 0.32; }
-.dk-foot.dk-quiet .dk-nav:not(:disabled):hover, .dk-foot.dk-quiet .dk-nav:not(:disabled):focus-visible { opacity: 1; }
-@media (prefers-reduced-motion: reduce) { .dk-nav { transition: none; } }
 .dk-bar { flex: 1; height: 5px; border-radius: 3px; background: rgba(var(--hb-ink-rgb), 0.11); overflow: hidden; }
 .dk-bar i { display: block; width: 0; height: 100%; border-radius: 3px; background: var(--hb-primary); transition: width 0.2s ease; }
 .dk-count { flex: none; min-width: 48px; text-align: center; font-size: 0.82rem; font-variant-numeric: tabular-nums; color: var(--ink-soft); }
 .dk-top, .dk-foot { width: 100%; max-width: 672px; margin: 0 auto; box-sizing: border-box; }
+
+/* ---- Prev/next: small arrows overlaid on the card's own edges, not a separate button bar ---- */
+/* Matches .dk-card > .dk-face's own box model exactly (16px card padding, then a 640px box centred inside that), so
+   the arrows land precisely on the face's real edges at any width, including the centred column on tablets/desktop. */
+.dk-edgenav { position: absolute; top: 0; left: 16px; right: 16px; bottom: 0; max-width: 640px; margin: 0 auto; z-index: 4; pointer-events: none; }
+.dk-nav {
+  position: absolute; top: 32%; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center;
+  padding: 0; border: 1px solid rgba(var(--hb-ink-rgb), 0.08); border-radius: 50%;
+  background: rgba(var(--hb-paper-rgb), 0.8); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  color: var(--ink); box-shadow: 0 2px 8px rgba(18, 19, 22, 0.12); cursor: pointer; pointer-events: auto;
+  opacity: 0.55; transition: opacity 0.25s ease; -webkit-tap-highlight-color: transparent;
+}
+.dk-prev { left: 10px; }
+.dk-next { right: 10px; }
+.dk-nav svg { width: 16px; height: 16px; }
+.dk-nav:disabled { opacity: 0.18; cursor: default; }
+.dk-nav:not(:disabled):hover, .dk-nav:not(:disabled):focus-visible { opacity: 1; }
+/* Swipe is the point: once the reader has done it once, the arrows fade further rather than sit there as clutter — a
+   tap, a key press, hovering/focusing, or just sitting on a card a while brings them back (cards.js quietNav/showNav). */
+.dk-edgenav.dk-quiet .dk-nav:not(:disabled) { opacity: 0.2; }
+.dk-edgenav.dk-quiet .dk-nav:not(:disabled):hover, .dk-edgenav.dk-quiet .dk-nav:not(:disabled):focus-visible { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .dk-nav { transition: none; } }
 
 /* ---- The one-time "swipe to continue" hint: shown once ever, on the first real card, until the reader swipes ---- */
 .dk-swipehint { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 5; display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px; background: rgba(var(--hb-ink-rgb), 0.88); color: var(--bg); font-family: var(--hb-label); font-size: 0.82rem; font-weight: 600; white-space: nowrap; box-shadow: 0 8px 20px rgba(18, 19, 22, 0.22); pointer-events: none; animation: dk-hint-in 0.3s ease; }

@@ -18,7 +18,7 @@ const check = (n, ok, x = '') => { ok ? pass++ : fail++; console.log((ok ? 'PASS
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const c = await launch(9381);
 const J = async (e) => JSON.parse(await c.ev(`JSON.stringify(${e})`));
-const waitFor = async (expr, ms = 4000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (await c.ev(expr)) return true; await c.sleep(60); } return false; };
+const waitFor = async (expr, ms = 4000) => { const t0 = Date.now(); const test = typeof expr === 'function' ? expr : () => c.ev(expr); while (Date.now() - t0 < ms) { if (await test()) return true; await c.sleep(60); } return false; };
 
 const FAKE_TTS = `(() => { const log = window.__spoken = []; let cur = null, t = null, sp = false; window.__ttsMs = 4000;
   const synth = { get speaking() { return sp; }, pending: false,
@@ -184,28 +184,32 @@ await c.ev(`document.querySelector('.hb-deck').dispatchEvent(new Event('touchend
 t = await J(OFFSET.replace('%N%', 4));
 check('and when the finger lifts, it settles onto the card', Math.abs(t) <= 2, String(t));
 
-// ---------- 3b. teaching the gesture: the arrows fade back once the reader has swiped, but a tap/key or sitting idle brings them back ----------
+// ---------- 3b. teaching the gesture: small arrows overlaid on the card, semi-transparent from the start, that fade
+// further back once the reader has swiped, but a tap/key or sitting idle brings them back to their normal strength ----------
+const quiet = () => c.ev(`document.querySelector('.dk-edgenav').classList.contains('dk-quiet')`);
+const navOpacity = () => c.ev(`Math.round(parseFloat(getComputedStyle(document.querySelector('.dk-prev')).opacity) * 100)`);
 await open();
 await openDeck();
-t = await J(`({ quiet: document.querySelector('.dk-foot').classList.contains('dk-quiet'), opacity: Math.round(parseFloat(getComputedStyle(document.querySelector('.dk-prev')).opacity) * 100) })`);
-check('the prev/next buttons start fully visible', !t.quiet && t.opacity === 100, JSON.stringify(t));
+t = await J(`(() => { const nav = document.querySelector('.dk-nav'), face = document.querySelector('.dk-card:not([inert]) .dk-face').getBoundingClientRect(), r = nav.getBoundingClientRect(); return { quiet: document.querySelector('.dk-edgenav').classList.contains('dk-quiet'), opacity: Math.round(parseFloat(getComputedStyle(nav).opacity) * 100), insideFoot: !!document.querySelector('.dk-foot .dk-nav'), overlaidOnCard: r.top >= face.top && r.bottom <= face.bottom }; })()`);
+check('the arrows sit semi-transparent from the start (not full strength, not fully hidden), overlaid on the card itself rather than in the footer', !t.quiet && t.opacity >= 40 && t.opacity <= 70 && !t.insideFoot && t.overlaidOnCard, JSON.stringify(t));
+check('the footer itself is now just the progress bar, full width', await c.ev(`!document.querySelector('.dk-foot .dk-nav') && document.querySelector('.dk-foot .dk-bar').getBoundingClientRect().width > 200`));
+const baseline = await navOpacity();
 await c.swipe(195, 420, -250, 0); await c.sleep(700);
-t = await J(`({ quiet: document.querySelector('.dk-foot').classList.contains('dk-quiet'), opacity: Math.round(parseFloat(getComputedStyle(document.querySelector('.dk-prev')).opacity) * 100) })`);
-check('after a real swipe they fade back — the reader has clearly found the gesture, no need for the buttons to shout', t.quiet && t.opacity < 60, JSON.stringify(t));
+t = await J(`({ quiet: document.querySelector('.dk-edgenav').classList.contains('dk-quiet'), opacity: Math.round(parseFloat(getComputedStyle(document.querySelector('.dk-prev')).opacity) * 100) })`);
+check('after a real swipe they fade further back — the reader has clearly found the gesture, no need for the arrows to keep shouting', t.quiet && t.opacity < baseline, JSON.stringify(t));
 await c.ev(`document.querySelector('.dk-next').click()`); await c.sleep(400);
-check("but tapping a button brings them straight back, since that reader is relying on it", !(await c.ev(`document.querySelector('.dk-foot').classList.contains('dk-quiet')`)));
+check("but tapping a button brings them straight back to normal, since that reader is relying on it", !(await quiet()));
 await c.swipe(195, 420, -250, 0); await c.sleep(700);
-check('swiping again quiets them once more', await c.ev(`document.querySelector('.dk-foot').classList.contains('dk-quiet')`));
+check('swiping again quiets them once more', await quiet());
 await c.ev(`document.querySelector('.dk-track').focus()`);
 await c.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'ArrowLeft', code: 'ArrowLeft', windowsVirtualKeyCode: 37 });
 await c.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'ArrowLeft', code: 'ArrowLeft', windowsVirtualKeyCode: 37 }); await c.sleep(400);
-check('and so does the left arrow key', !(await c.ev(`document.querySelector('.dk-foot').classList.contains('dk-quiet')`)));
-await open({ extra: `window.HB_CARD_IDLE_MS = 1200;` });
+check('and so does the left arrow key', !(await quiet()));
+await open({ extra: `window.HB_CARD_IDLE_MS = 600;` });
 await openDeck();
-await c.swipe(195, 420, -250, 0); await c.sleep(750);
-check('quiet right after swiping', await c.ev(`document.querySelector('.dk-foot').classList.contains('dk-quiet')`));
-await c.sleep(800);
-check('and back on their own a little while later, without the reader doing anything', !(await c.ev(`document.querySelector('.dk-foot').classList.contains('dk-quiet')`)));
+await c.swipe(195, 420, -250, 0);
+check('quiet right after swiping', await waitFor(quiet, 2000));
+check('and back to normal on their own a little while later, without the reader doing anything', await waitFor(async () => !(await quiet()), 2000));
 
 // ---------- 3c. the one-time "swipe to continue" hint (shown once ever, this device, on the first STORY card — the
 // cover and each section card already carry their own "swipe to start" prompt, so this one would be redundant there) ----------
@@ -573,8 +577,9 @@ for (const [w, h] of [[360, 740], [390, 844], [412, 915], [820, 1100]]) {
   await open({ width: w, height: h });
   await openDeck();
   await c.ev(`document.querySelector('.dk-next').click()`); await c.sleep(900);
-  t = await J(`(() => { const r = (s) => document.querySelector(s).getBoundingClientRect(), face = r('.dk-card:not([inert]) .dk-face'), tab = r('.tab-bar'), foot = r('.dk-foot'), acts = r('.dk-card:not([inert]) .dk-actions'), top = [...document.querySelectorAll('.dk-top button')].map((b) => { const x = b.getBoundingClientRect(); return { l: Math.round(x.left), r: Math.round(x.right), h: Math.round(x.height) }; }); return { faceL: Math.round(face.left), faceR: Math.round(face.right), w: innerWidth, sw: document.documentElement.scrollWidth, footBottom: Math.round(foot.bottom), tab: Math.round(tab.top), actsBottom: Math.round(acts.bottom), footTop: Math.round(foot.top), top, nav: [...document.querySelectorAll('.dk-nav')].map((b) => Math.round(b.getBoundingClientRect().height)), acts: [...document.querySelectorAll('.dk-card:not([inert]) .dk-act')].map((b) => { const x = b.getBoundingClientRect(); return { h: Math.round(x.height), l: Math.round(x.left), r: Math.round(x.right) }; }) }; })()`);
-  check(`${w}px wide: the card, its buttons and the controls all fit inside the screen and above the tab bar`, t.faceL >= 0 && t.faceR <= t.w && t.sw <= t.w && t.footBottom <= t.tab + 2 && t.actsBottom <= t.footTop && t.top.every((b) => b.l >= 0 && b.r <= t.w && b.h >= 40) && t.nav.every((x) => x >= 44) && t.acts.length === 4 && t.acts.every((b) => b.h >= 44 && b.l >= 0 && b.r <= t.w), JSON.stringify(t));
+  t = await J(`(() => { const r = (s) => document.querySelector(s).getBoundingClientRect(), face = r('.dk-card:not([inert]) .dk-face'), tab = r('.tab-bar'), foot = r('.dk-foot'), acts = r('.dk-card:not([inert]) .dk-actions'), top = [...document.querySelectorAll('.dk-top button')].map((b) => { const x = b.getBoundingClientRect(); return { l: Math.round(x.left), r: Math.round(x.right), h: Math.round(x.height) }; }); return { faceL: Math.round(face.left), faceR: Math.round(face.right), faceTop: Math.round(face.top), faceBottom: Math.round(face.bottom), w: innerWidth, sw: document.documentElement.scrollWidth, footBottom: Math.round(foot.bottom), tab: Math.round(tab.top), actsBottom: Math.round(acts.bottom), footTop: Math.round(foot.top), top, nav: [...document.querySelectorAll('.dk-nav')].map((b) => { const x = b.getBoundingClientRect(); return { h: Math.round(x.height), t: Math.round(x.top), bot: Math.round(x.bottom), l: Math.round(x.left), r: Math.round(x.right) }; }), acts: [...document.querySelectorAll('.dk-card:not([inert]) .dk-act')].map((b) => { const x = b.getBoundingClientRect(); return { h: Math.round(x.height), l: Math.round(x.left), r: Math.round(x.right) }; }) }; })()`);
+  check(`${w}px wide: the card, its buttons and the controls all fit inside the screen and above the tab bar`, t.faceL >= 0 && t.faceR <= t.w && t.sw <= t.w && t.footBottom <= t.tab + 2 && t.actsBottom <= t.footTop && t.top.every((b) => b.l >= 0 && b.r <= t.w && b.h >= 40) && t.acts.length === 4 && t.acts.every((b) => b.h >= 44 && b.l >= 0 && b.r <= t.w), JSON.stringify(t));
+  check(`${w}px wide: the small edge arrows sit fully on top of the card (not spilling past it or onto the footer)`, t.nav.every((n) => n.h === 34 && n.l >= t.faceL && n.r <= t.faceR && n.t >= t.faceTop && n.bot <= t.faceBottom), JSON.stringify(t));
 }
 await open({ size: 3, height: 780 });
 await openDeck();
