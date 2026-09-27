@@ -588,6 +588,7 @@
   }
 
   function render() {
+    document.dispatchEvent(new CustomEvent('hb:listen'));       // cards.js mirrors the state and follows the unit being read
     if (cta) {
       var on = S.state !== 'idle';
       cta.querySelectorAll('button[data-mode]').forEach(function (b) {
@@ -1021,5 +1022,5 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 
-  window.HBListen = { start: begin, stop: stop, state: function () { return S.state; }, source: function () { return S.src; }, openHub: openHub, closeHub: closeHub, hubOpen: function () { return hubShown; } };
+  window.HBListen = { start: begin, stop: stop, state: function () { return S.state; }, current: function () { var u = S.list && S.list[S.ui]; return u ? { id: u.id, kind: u.kind, title: u.title || '', lane: u.lane || '' } : null; }, source: function () { return S.src; }, openHub: openHub, closeHub: closeHub, hubOpen: function () { return hubShown; } };
 })();

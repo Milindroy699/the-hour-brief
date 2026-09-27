@@ -606,7 +606,7 @@ html.hb-hub-open .hb-player { display: none; }
 
 html.hb-deck-open, html.hb-deck-open body { overflow: hidden; }
 html.hb-deck-open #mob-progress, html.hb-deck-open #mob-top { display: none; }
-.hb-deck { position: fixed; top: 0; left: 0; right: 0; bottom: var(--hb-tab-h); padding-bottom: var(--dk-player, 0px); box-sizing: border-box; z-index: 9981; display: flex; flex-direction: column; background: var(--bg); color: var(--ink); font-family: var(--hb-sans); }
+.hb-deck { position: fixed; top: 0; left: 0; right: 0; bottom: var(--hb-tab-h); z-index: 9981; display: flex; flex-direction: column; background: var(--bg); color: var(--ink); font-family: var(--hb-sans); }
 .hb-deck { visibility: visible; }
 .hb-deck[hidden] { display: none; }
 .hb-deck > .hb-tip { flex: none; box-sizing: border-box; width: calc(100% - 32px); max-width: 640px; margin: 0 auto 8px; }
@@ -662,12 +662,63 @@ html.hb-deck-open #mob-progress, html.hb-deck-open #mob-top { display: none; }
 .dk-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { .dk-bar i { transition: none; } }
 
-/* ---- The audio player, minimised while cards are showing: one slim row (play/pause, what is playing, close) ---- */
-html.hb-deck-open .hb-player { display: flex; align-items: center; gap: 8px; padding: 6px 8px 6px 14px; }
-html.hb-deck-open .hb-pl-now { flex: 1; min-width: 0; margin: 0; }
-html.hb-deck-open .hb-pl-top, html.hb-deck-open .hb-pl-prev, html.hb-deck-open .hb-pl-next, html.hb-deck-open .hb-pl-rate-group { display: none; }
-html.hb-deck-open .hb-pl-title { font-size: 0.86rem; -webkit-line-clamp: 1; }
-html.hb-deck-open .hb-pl-ctl { flex: none; gap: 2px; }
-html.hb-deck-open .hb-pl-play { min-width: 42px; min-height: 42px; border-radius: 21px; }
-html.hb-deck-open .hb-pl-play svg { width: 20px; height: 20px; }
-html.hb-deck-open .hb-pl-close { min-width: 40px; min-height: 40px; }
+/* ---- Cover card: the top of the page, first in the deck ---- */
+.dk-wordmark { font-family: var(--hb-label); font-weight: 700; letter-spacing: -0.03em; font-size: 2rem; margin-bottom: 6px; }
+.dk-wordmark span { color: var(--hb-primary); }
+.dk-quote { margin: 4px 0 8px; padding: 16px 18px 16px 20px; border-left: 3px solid var(--hb-primary); border-radius: 2px 18px 18px 2px; background: var(--hb-lav); }
+.dk-quote-label { margin: 0 0 8px; font-family: var(--hb-label); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--hb-primary-2); }
+.dk-quote-text { margin: 0; font-family: var(--hb-serif); font-size: 1.28rem; line-height: 1.42; color: var(--ink); }
+.dk-quote-by { margin-top: 10px; font-size: 0.85rem; color: var(--ink-soft); }
+.dk-quote-by a { color: var(--ink-soft); }
+.dk-intro-p { margin: 20px 0 10px; font-size: 1rem; line-height: 1.62; color: var(--ink); }
+.dk-free { margin: 0 0 4px; font-size: 0.86rem; line-height: 1.55; color: var(--ink-faint); }
+.dk-tile { display: flex; align-items: center; gap: 12px; box-sizing: border-box; width: 100%; margin: 12px 0 0; padding: 14px 14px 14px 16px; border-radius: 18px; background: var(--hb-stone); color: var(--ink); text-align: left; }
+.dk-tile[hidden] { display: none; }
+.dk-quizt { cursor: pointer; background: var(--hb-lav); border: 1px solid rgba(var(--hb-primary-rgb), 0.12); }
+.dk-tile-ic { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: rgba(var(--hb-primary-rgb), 0.14); color: var(--hb-primary-2); }
+.dk-tile-ic svg { width: 20px; height: 20px; }
+.dk-tile-tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.dk-tile-tx strong { font-size: 0.95rem; font-weight: 650; line-height: 1.3; }
+.dk-tile-tx small { font-size: 0.8rem; line-height: 1.3; color: var(--ink-soft); }
+.dk-tile-tx small:empty { display: none; }
+.dk-tile-go { flex: none; width: 46px; height: 46px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 50%; background: var(--hb-primary); color: #fff; cursor: pointer; }
+.dk-tile-go svg { width: 22px; height: 22px; }
+.dk-tile-link { flex: none; font-family: var(--hb-label); font-size: 0.82rem; font-weight: 700; color: var(--hb-primary-2); white-space: nowrap; }
+
+/* ---- What Listen is reading is marked on its card ---- */
+.dk-card.dk-playing .dk-face { box-shadow: 0 10px 30px rgba(18, 19, 22, 0.07), inset 0 4px 0 var(--hb-primary); }
+
+/* ---- Audio in the deck: a round floating button that opens into a small player (the page's own mini player is hidden meanwhile) ---- */
+html.hb-deck-open .hb-player { display: none; }
+.dk-fab { position: absolute; z-index: 4; right: max(16px, calc((100% - 640px) / 2 + 12px)); bottom: 96px; display: flex; flex-direction: column; align-items: flex-end; }
+.dk-fab [hidden], .dk-fab[hidden] { display: none !important; }
+.dk-fab-ball { position: relative; width: 56px; height: 56px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 50%; background: var(--hb-primary); color: #fff; box-shadow: 0 8px 22px rgba(var(--hb-primary-rgb), 0.4); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.dk-fab-ball svg { width: 26px; height: 26px; }
+.dk-fab-ball:focus-visible, .dk-fp-b:focus-visible, .dk-fp-r:focus-visible, .dk-fp-goto:focus-visible { outline: 2px solid var(--hb-primary); outline-offset: 3px; }
+.dk-eq { display: none; align-items: flex-end; gap: 3px; height: 20px; }
+.dk-eq i { display: block; width: 4px; height: 100%; border-radius: 2px; background: #fff; transform-origin: bottom; animation: dk-eq 0.9s ease-in-out infinite; }
+.dk-eq i:nth-child(2) { animation-delay: 0.22s; }
+.dk-eq i:nth-child(3) { animation-delay: 0.44s; }
+@keyframes dk-eq { 0%, 100% { transform: scaleY(0.3); } 50% { transform: scaleY(1); } }
+.dk-fab.playing .dk-fab-ball svg { display: none; }
+.dk-fab.playing .dk-eq { display: flex; }
+.dk-fab.playing .dk-fab-ball::after { content: ''; position: absolute; inset: -5px; border-radius: 50%; border: 2px solid rgba(var(--hb-primary-rgb), 0.45); animation: dk-ring 1.8s ease-out infinite; }
+@keyframes dk-ring { from { transform: scale(0.92); opacity: 1; } to { transform: scale(1.22); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .dk-eq i, .dk-fab.playing .dk-fab-ball::after { animation: none; } .dk-eq i { transform: scaleY(0.7); } }
+.dk-fab-panel { box-sizing: border-box; width: min(340px, calc(100vw - 32px)); padding: 12px 12px 12px 16px; display: flex; flex-direction: column; gap: 4px; border: 1px solid var(--line); border-radius: 26px; background: var(--paper); box-shadow: 0 16px 40px rgba(18, 19, 22, 0.24); }
+.dk-fp-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.dk-fp-lane { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--hb-label); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--hb-primary-2); }
+.dk-fp-title { margin: 0; font-size: 0.95rem; font-weight: 650; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--ink); }
+.dk-fp-sub { margin: 0; font-size: 0.78rem; color: var(--ink-faint); }
+.dk-fp-ctl { display: flex; align-items: center; gap: 2px; margin-top: 4px; }
+.dk-fp-b { flex: none; min-width: 42px; min-height: 42px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--ink); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.dk-fp-b svg { width: 22px; height: 22px; }
+.dk-fp-b:disabled { opacity: 0.35; cursor: default; }
+.dk-fp-collapse { min-width: 36px; min-height: 36px; color: var(--ink-soft); }
+.dk-fp-play { min-width: 52px; min-height: 52px; background: var(--hb-primary); color: #fff; }
+.dk-fp-stop { margin-left: auto; color: var(--ink-faint); }
+.dk-fp-rate { display: inline-flex; align-items: center; margin-left: 6px; padding: 1px; border: 1px solid var(--line); border-radius: 17px; }
+.dk-fp-r { min-width: 30px; min-height: 30px; padding: 0; border: 0; border-radius: 15px; background: transparent; color: var(--ink); font-size: 1rem; line-height: 1; cursor: pointer; }
+.dk-fp-rv { min-width: 30px; text-align: center; font-size: 0.78rem; font-weight: 700; color: var(--ink-soft); }
+.dk-fp-goto { align-self: flex-start; margin-top: 6px; min-height: 34px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--hb-lav); color: var(--hb-primary-2); font-family: var(--hb-label); font-size: 0.74rem; font-weight: 700; letter-spacing: 0.04em; cursor: pointer; }
+.hb-deck.dk-has-fab .dk-scroll { padding-bottom: 82px; }        /* text can scroll clear of the round button */

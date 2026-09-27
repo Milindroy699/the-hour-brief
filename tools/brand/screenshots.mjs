@@ -4,7 +4,7 @@
 // -> mobile/play-store/screenshots/*.png         (1080x1920, Google Play phone size)
 //    mobile/app-store/screenshots/*.png          (1320x2868, App Store iPhone 6.9-inch)
 //    mobile/app-store/screenshots-ipad/*.png     (2064x2752, App Store iPad 13-inch; required because the app runs on iPad)
-// The App Store sets also show the swipe cards (the app's default view, so the first shot) and the Your sections screen; the
+// The App Store sets also show the swipe cards (the app's default view: the cover card first, then a story) and the Your sections screen; the
 // list shots are taken with the List view chosen. The Audio screen uses a dry-run recording (tones)
 // only so the UI shows its "AI voice ready" state; no audio is played on screen.
 import fs from 'node:fs';
@@ -40,7 +40,7 @@ for (const set of SETS) {
   fs.mkdirSync(out, { recursive: true });
   if (set.full) for (const f of fs.readdirSync(out)) if (f.endsWith('.png')) fs.rmSync(path.join(out, f));    // no stale names from older runs
   const N = set.full
-    ? { cards: '01-cards', feed: '02-feed', highlights: '03-highlights', audio: '04-audio', quiz: '05-quiz', sections: '06-sections' }   // Cards is the app's default view, so it leads
+    ? { cover: '01-cover', cards: '02-cards', feed: '03-feed', highlights: '04-highlights', audio: '05-audio', quiz: '06-quiz', sections: '07-sections' }   // Cards is the app's default view, so it leads
     : { feed: '01-feed', highlights: '02-highlights', audio: '03-audio', quiz: '04-quiz' };
   for (const dark of [false, true]) {
     const id = await c.preload(pre);
@@ -55,9 +55,10 @@ for (const set of SETS) {
     await c.ev(`window.scrollTo(0, 0); 'ok'`); await c.sleep(400);
     await c.shot(path.join(out, `${N.feed}${tag}.png`));
     await at('#ai .lane-head', 70); await c.shot(path.join(out, `${N.highlights}${tag}.png`));
-    if (set.full) {                                            // the swipe cards: the first story of the first section
+    if (set.full) {                                            // the swipe cards: the cover (the top of the page), then the first story
       await c.ev(`window.scrollTo(0, 0); document.querySelectorAll('.vs-in button')[1].click()`); await c.sleep(1500);
-      await c.ev(`HBCards.goTo(1, false)`); await c.sleep(700);
+      await c.shot(path.join(out, `${N.cover}${tag}.png`));
+      await c.ev(`HBCards.goTo(2, false)`); await c.sleep(700);
       await c.shot(path.join(out, `${N.cards}${tag}.png`));
       await c.ev(`HBCards.close({ keep: true })`); await c.sleep(400);
     }

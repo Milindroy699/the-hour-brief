@@ -1,8 +1,8 @@
 # App Store — release package (iOS v1.1.2)
 
 Screenshots (in git, upload from here), all light + dark, numbered in the order to upload:
-`mobile/app-store/screenshots/` iPhone 6.9-inch, 6 × 1320×2868 (swipe cards, feed, highlights, Audio, quiz, Your sections)
-`mobile/app-store/screenshots-ipad/` iPad 13-inch, 6 × 2064×2752 (same six; needed because the app runs on iPad)
+`mobile/app-store/screenshots/` iPhone 6.9-inch, 7 × 1320×2868 (cover, swipe cards, feed, highlights, Audio, quiz, Your sections)
+`mobile/app-store/screenshots-ipad/` iPad 13-inch, 7 × 2064×2752 (same seven; needed because the app runs on iPad)
 Remake them any time from the live UI: `node tools/brand/screenshots.mjs --only app-store`.
 App icon: 1024×1024, RGB, no alpha (checked), already in `ios/App/App/Assets.xcassets`.
 
@@ -45,7 +45,7 @@ Checked from this Mac (2026-09-26): an unsigned Release archive for "Any iOS Dev
 - **Privacy Policy URL:** https://the-hour-brief.vercel.app/privacy.html
 - **Promotional text (129/170):** A fresh edition every morning: AI & tech, product & business, and the Indian and global markets. Free, no ads, no account needed.
 - **Keywords (94/100):** `news,digest,AI,tech,business,markets,stocks,sensex,nifty,startups,India,daily,briefing,finance`
-- **What's New (1.1.2):** A new look, and a new way to read: the brief now opens as swipe cards, one story at a time (switch to the full scrolling list any time). Choose which sections you see and in what order. A recorded AI voice (labelled as AI) reads each morning's edition. Plus a daily quiz, private friends leagues, and a daily reminder.
+- **What's New (1.1.2):** A new look, and a new way to read: the brief now opens as swipe cards, one story at a time (switch to the full scrolling list any time). Choose which sections you see and in what order. A recorded AI voice (labelled as AI) reads each morning's edition, with a floating audio button and the cards turning to each story as it is read. Plus a daily quiz, private friends leagues, and a daily reminder.
 - **What's New (v1.0, for reference):** Welcome to The Hour Brief. A fresh edition every morning, built for one sitting: AI & tech, product & business, and the markets.
 
 **Description**
@@ -59,7 +59,8 @@ Every edition covers three lanes:
 • Stock Market — how Indian and US markets closed, the day's movers, and one investing principle worth remembering
 
 Made to be read, your way:
-• Swipe through the brief one story at a time, or switch to the full scrolling list
+• Opens with the day's quote and intro, then swipe through the brief one story at a time, or switch to the full scrolling list
+• A floating audio button follows along as the brief is read to you, turning to each story
 • Choose which sections you see, and in what order
 • Every story has a short summary you can expand and a one-line takeaway
 • A five-question daily quiz on the edition, with streaks, badges and a shareable score (no account needed)

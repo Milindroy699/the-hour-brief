@@ -89,13 +89,16 @@ Tests: `node tools/browser-tests/prefs.mjs`.
 ## Swipe cards (the default way to read on phones and in the apps)
 
 `cards.js` (fetched on demand by `mobile.js`, only in the apps and at phone width; never on the desktop website) builds a deck of cards from the
-edition already on the page: a section card (name, reading time, takeaway, numbered stories, a pinned "Swipe to start" button), one card per story (headline,
-the whole summary, takeaway, source), then the quiz card, in the reader's own section order with hidden sections left out. It is a fixed layer over the
-scrolling feed (same idea as the Audio hub), a horizontal `scroll-snap` track, so swipe, momentum and snapping are the browser's. Buttons (previous/next), the
-arrow keys, Home/End and Esc are the non-swipe alternatives. A tall story scrolls inside its card (a fade at the bottom says there is more); vote, save and
-share are pinned below it. The feed stays the source of truth: card buttons press the feed's own buttons and mirror their state, Listen's highlighted story
-(`.hb-listening`) turns the deck to it (unless the reader touched the deck in the last 4 seconds). Text is copied with `textContent`, never as HTML.
+edition already on the page: a **cover card**, then for each section a section card (name, reading time, takeaway, numbered stories, a pinned "Swipe to start"
+button) and one card per story (headline, the whole summary, takeaway, source), then the quiz card, in the reader's own section order with hidden sections left out.
+It is a fixed layer over the scrolling feed (same idea as the Audio hub), a horizontal `scroll-snap` track, so swipe, momentum and snapping are the browser's.
+Buttons (previous/next), the arrow keys, Home/End and Esc are the non-swipe alternatives. A tall story scrolls inside its card (a fade at the bottom says there
+is more); vote, save and share are pinned below it. The feed stays the source of truth: card buttons press the feed's own buttons and mirror their state.
+Text is copied with `textContent`, never as HTML.
 
+- **The cover card** is the top of the page, so nothing the list opens with is lost: the edition line, "The Hour Brief" and its tagline, the day's quote with its
+  author and source link, a **Listen to today's brief** tile (minutes, voice, a play/pause button), a **Today's quiz** tile (the quiz chip's title and status, tap to go to the first
+  question), then the about paragraph and the free-to-read line. "Start reading →" is pinned below. The two tiles follow Listen and the quiz chip, which are built a moment after the page, and are hidden when there is no audio / the quiz is off.
 - **Default:** **Cards** is the view unless the reader chose List (`localStorage` key `hb-view-v1`: `cards` | `list`; unset means cards). Tapping List in the deck
   or the List side of the `List | Cards` switch (under the section chips) stores `list`; the Cards side or the menu item stores `cards`. The choice is
   per device. To make the list the default again, change `getView()` in `mobile.js`.
@@ -103,12 +106,13 @@ share are pinned below it. The feed stays the source of truth: card buttons pres
   a friend's score `?beat=`. A shared story link (`#ai-2`, a saved story) opens the deck on that story's card. `?classic=1` (website only) is untouched.
 - **No flash of the list:** while `cards.js` loads at startup the page is hidden (`pendingOn/pendingOff`, 4 s safety); if it cannot load, the list shows and nothing is thrown at the reader.
 - **The app bar is under the deck**, so the deck's header carries **Saved stories** and the **Menu** (Sections, Text size, reminder, share, e-mail sign-up, and the Contact · About · Privacy links) plus **List**. "Get it by email" from the deck jumps to the sign-up box in the list.
-- **Tabs:** Today returns to the cards (when Cards is the view); Challenge and the quiz card's "Play the quiz" leave the deck **instantly**, onto the first question / the quiz section, with the feed never scrolling past, and do not change the saved choice. The instant jumps use `window.scrollTo({top, behavior: 'instant'})`, not `scrollIntoView({behavior: 'instant'})`, which Chrome 113 (the Android WebView) ignores: it eases instead and can stop short.
-- **Audio:** the mini player shrinks to one slim row (what is playing, play/pause, close) while the deck is showing (`html.hb-deck-open` rules in `app.css`); the deck measures whatever height the player has and leaves that room (`fitPlayer()`).
-- **Hint:** the one-time "Make it yours" (sections) hint, on the second day the app is opened, sits under the deck's top bar when Cards is showing (above the first section when the list is). There is no separate "try Cards" hint any more. State in `hb-tip-v1`.
+- **Tabs:** Today returns to the cards (to the cover); Challenge and the quiz card's / tile's "Play the quiz" leave the deck **instantly**, onto the first question / the quiz section, with the feed never scrolling past, and do not change the saved choice. The instant jumps use `window.scrollTo({top, behavior: 'instant'})`, not `scrollIntoView({behavior: 'instant'})`, which Chrome 113 (the Android WebView) ignores: it eases instead and can stop short.
+- **Audio is a round floating button** (`.dk-fab`, right side, above the card's pinned buttons; text can scroll clear of it). Tap it and it opens into a small player (what is playing, previous / play-pause / next, speed, stop, "Show what's playing"); the arrow collapses it. While playing the button pulses with sound bars. It only forwards clicks to Listen's own player and start button (`.hb-pl-*`, `.listen-go`), which stay in the page, so Listen, the Audio screen and the button cannot disagree. The page's mini player is hidden while the deck shows; the button steps aside while the full Audio screen is open, and is absent when the device has no audio.
+- **The deck follows Listen** (like the list's auto-scroll): `listen.js` fires `hb:listen` on every state change and exposes `HBListen.current()`; `onListen()` in `cards.js` turns the deck to the card that holds the part being read: the cover for the introduction, a section card for a section, a story card for a story, the quiz card for the closing lines. The card being read has a purple edge. It never fights the reader: no following for 4 seconds after they touch the deck, and none while paused. Opening the deck while something plays starts on that card.
+- **Hint:** the one-time "Make it yours" (sections) hint, on the second day the app is opened, sits under the deck's top bar when Cards is showing (above the first section when the list is). State in `hb-tip-v1`.
 - **Web only:** no store release is needed; a Vercel deploy reaches every installed app on its next open.
 - **Test on a real Android WebView, not just headless Chrome** (see Emulator notes in the mobile docs).
-Tests: `node tools/browser-tests/cards.mjs` (104 checks, includes real touch swipes via `cdp.mjs` `swipe()`). The other suites (`premium`, `prefs`, `listen`) test the list, so they open with the List view stored.
+Tests: `node tools/browser-tests/cards.mjs` (128 checks, includes real touch swipes via `cdp.mjs` `swipe()`, and real Listen with a fake voice for the follow tests). The other suites (`premium`, `prefs`, `listen`) test the list, so they open with the List view stored.
 
 ## Daily quiz
 

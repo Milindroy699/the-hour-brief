@@ -6,9 +6,11 @@
  * votes, saves and shared links are untouched. Text is copied with textContent only, never as HTML (the two small
  * icons are cloned from the feed's own buttons).
  *
- * Deck: section intro card, then one card per story, in the reader's own section order (hidden sections skipped),
- * with the quiz where the reader put it and a closing card if the quiz is not last. A horizontal scroll-snap track,
- * so swiping, momentum and snapping are the browser's own.
+ * Deck: a cover card (the top of the page: edition, the quote, the intro, the audio version, the quiz), then for each
+ * section an intro card and one card per story, in the reader's own section order (hidden sections skipped), with the quiz
+ * where the reader put it and a closing card if the quiz is not last. A horizontal scroll-snap track, so swiping,
+ * momentum and snapping are the browser's own. Audio is a floating round button that opens into a small player; the
+ * deck turns to whatever Listen is reading.
  */
 (function () {
   'use strict';
@@ -20,7 +22,7 @@
 
   var deck = null, track = null, ui = {}, cards = [], idx = 0, shown = false;
   var lastTouch = 0, downAt = 0, lastScrollAt = 0, goal = null, goalAt = 0, goalMs = 0, returnFocus = null, scrollRaf = 0, settleT = 0, fixT = 0, syncRaf = 0;
-  var followObs = null, mirrorObs = null, bodyObs = null, playerRO = null, playerEl = null, deckW = 0;
+  var mirrorObs = null, deckW = 0, playIdx = -1, lastFollowId = null, fabEl = null, fabOpen = false, fabAuto = 0, listenRaf = 0;
 
   function mk(tag, cls, text) {
     var e = document.createElement(tag);
@@ -85,7 +87,7 @@
   }
 
   function collect() {
-    var out = [], lanes = [];
+    var out = [{ kind: 'cover', name: 'The Hour Brief' }], lanes = [];
     document.querySelectorAll('section.lane[id]').forEach(function (l) { if (laneShown(l)) lanes.push(l); });
     var secTotal = lanes.filter(function (l) { return l.id !== 'quiz' && l.querySelector('.item[data-story-id]'); }).length, sec = 0;
     lanes.forEach(function (lane) {
@@ -97,7 +99,7 @@
       out.push({ kind: 'intro', lane: lane, name: name, items: items, sec: sec, secTotal: secTotal });
       items.forEach(function (it, i) { out.push({ kind: 'story', lane: lane, name: name, item: it, n: i + 1, of: items.length }); });
     });
-    if (!out.length || out[out.length - 1].kind !== 'quiz') out.push({ kind: 'end', name: 'The Hour Brief' });
+    if (out[out.length - 1].kind !== 'quiz') out.push({ kind: 'end', name: 'The Hour Brief' });
     return out;
   }
 
@@ -121,6 +123,118 @@
     var h = mk(tag, cls, text);
     h.tabIndex = -1;
     return h;
+  }
+
+  // The top of the page, as the first card: what the list opens with (edition, the quote, the intro, the audio version, the quiz).
+  function editionLine() {
+    var ed = document.querySelector('.edition');
+    if (!ed) return '';
+    var parts = ed.innerHTML.split(/<br\s*\/?>/i).map(function (x) { return x.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim(); }).filter(Boolean);
+    if (parts.length > 1) parts[1] = parts[1].replace(/\s+\d{4}$/, '');
+    return parts.join(' · ');
+  }
+  var HEADPHONES = ['M4 15v-3a8 8 0 0 1 16 0v3', 'M4 15h3v5H5a1 1 0 0 1-1-1v-4z', 'M20 15h-3v5h2a1 1 0 0 0 1-1v-4z'];
+  function tile(cls, iconEl, title) {
+    var t = mk('div', 'dk-tile ' + cls);
+    var ic = mk('span', 'dk-tile-ic');
+    ic.appendChild(iconEl);
+    var tx = mk('div', 'dk-tile-tx');
+    tx.appendChild(mk('strong', '', title));
+    tx.appendChild(mk('small'));
+    t.appendChild(ic);
+    t.appendChild(tx);
+    return t;
+  }
+
+  function buildCover(c) {
+    var b = face('cover', 'Introduction: today’s brief');
+    var line = editionLine();
+    c.line = line;
+    b.scroll.appendChild(mk('p', 'dk-kick', line || 'Today'));
+    var h = heading('h2', 'dk-title dk-title-lg dk-wordmark');
+    h.appendChild(document.createTextNode('The Hour '));
+    h.appendChild(mk('span', '', 'Brief'));
+    b.scroll.appendChild(h);
+    var tag = document.querySelector('.tagline');
+    if (tag) b.scroll.appendChild(mk('p', 'dk-metaline', plain(tag)));
+    var qt = document.querySelector('.pause-text');
+    if (qt) {
+      var fig = mk('figure', 'dk-quote');
+      var lab = document.querySelector('.pause-label');
+      fig.appendChild(mk('p', 'dk-quote-label', lab ? plain(lab) : 'Before the news'));
+      fig.appendChild(mk('blockquote', 'dk-quote-text', plain(qt)));
+      var at = document.querySelector('.pause-attr');
+      if (at) {
+        var cap = mk('figcaption', 'dk-quote-by'), link = at.querySelector('a');
+        cap.appendChild(document.createTextNode(plain(at).replace(link ? plain(link) : '', '').trim() + (link ? ' ' : '')));
+        if (link && /^https?:/i.test(link.href)) {
+          var a = mk('a', '', plain(link));
+          a.href = link.href;
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+          cap.appendChild(a);
+        }
+        fig.appendChild(cap);
+      }
+      b.scroll.appendChild(fig);
+    }
+    var lt = tile('dk-listen', icon(HEADPHONES), 'Listen to today’s brief');      // shown once Listen is ready (it loads a moment after the page)
+    lt.hidden = true;
+    var go = btn('dk-tile-go');
+    go.addEventListener('click', function () { var g = document.querySelector('.listen-go'); if (g) g.click(); });
+    lt.appendChild(go);
+    c.listen = { el: lt, go: go };
+    b.scroll.appendChild(lt);
+
+    var qtile = tile('dk-quizt', icon(['M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z', 'M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z']), 'Today’s quiz');
+    qtile.hidden = true;
+    var qgo = mk('span', 'dk-tile-link');
+    qtile.appendChild(qgo);
+    qtile.setAttribute('role', 'button');
+    qtile.tabIndex = 0;
+    function toQuiz() { close({ keep: true, to: document.querySelector('#quiz .quiz-card') || document.getElementById('quiz') }); }
+    qtile.addEventListener('click', toQuiz);
+    qtile.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toQuiz(); } });
+    c.quiz = { el: qtile, link: qgo };
+    b.scroll.appendChild(qtile);
+
+    var about = document.querySelector('.about > p');
+    if (about) b.scroll.appendChild(mk('p', 'dk-intro-p', plain(about)));
+    var free = document.querySelector('.about .free-line');
+    if (free) b.scroll.appendChild(mk('p', 'dk-free', plain(free)));
+
+    var start = btn('dk-hint', 'Start reading →');
+    start.addEventListener('click', function () { goTo(1, true); });
+    var bar = mk('div', 'dk-actions dk-startbar');
+    bar.appendChild(start);
+    b.face.appendChild(bar);
+    return b.card;
+  }
+
+  // The cover's audio and quiz tiles follow Listen and the quiz chip, which are built a moment after the page.
+  function syncCover() {
+    var c = cards[0];
+    if (!c || c.kind !== 'cover' || !c.listen) return;
+    var cta = document.querySelector('.listen-cta'), g = document.querySelector('.listen-go'), L = window.HBListen;
+    var ok = !!(cta && !cta.hidden && g);
+    c.listen.el.hidden = !ok;
+    if (ok) {
+      var m = cta.querySelector('.listen-cta-btn[data-mode=quick] .hb-cta-min') || cta.querySelector('.listen-cta-btn .hb-cta-min');
+      c.listen.el.querySelector('small').textContent = m ? m.textContent.trim() : '';
+      c.listen.go.textContent = '';
+      cloneInto(c.listen.go, g);
+      c.listen.go.setAttribute('aria-label', g.getAttribute('aria-label') || 'Play today’s brief');
+      c.listen.el.classList.toggle('playing', !!L && L.state && L.state() === 'playing');
+    }
+    var chip = document.querySelector('.quiz-chip'), qs = document.getElementById('quiz');
+    if (chip && (getComputedStyle(chip).display === 'none' || !qs || qs.hidden || qs.hasAttribute('data-pref-off'))) chip = null;      // the quiz is off (or has nothing today)
+    c.quiz.el.hidden = !chip;
+    if (chip) {
+      var t = chip.querySelector('.qc-title'), sub = chip.querySelector('.qc-sub'), go = chip.querySelector('.qc-go');
+      c.quiz.el.querySelector('strong').textContent = t ? t.textContent.trim() : 'Today’s quiz';
+      c.quiz.el.querySelector('small').textContent = sub ? sub.textContent.trim() : '';
+      c.quiz.link.textContent = go ? go.textContent.trim() : 'Play →';
+    }
   }
 
   function buildIntro(c) {
@@ -317,6 +431,7 @@
     deck.appendChild(foot);
     deck.appendChild(ui.live);
     document.body.appendChild(deck);
+    buildFab();
 
     ui.prev.addEventListener('click', function () { goTo(idx - 1, true); });
     ui.next.addEventListener('click', function () { goTo(idx + 1, true); });
@@ -335,14 +450,15 @@
     deck.addEventListener('keydown', onKey);
     window.addEventListener('resize', onResize);
     document.addEventListener('hb:prefs', function () { if (shown) refresh(); });
-    document.addEventListener('hb:hub', function () { if (shown) fitSoon(); });
+    document.addEventListener('hb:hub', function () { if (shown) syncFab(); });
+    document.addEventListener('hb:listen', function () { if (shown) onListenSoon(); });
   }
 
   function touched() { lastTouch = Date.now(); goal = null; }         // the reader has taken over: forget any move in progress
 
   function onKey(e) {
     touched();
-    if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+    if (e.key === 'Escape') { e.preventDefault(); if (fabOpen) setFab(false); else close(); return; }
     if (e.altKey || e.ctrlKey || e.metaKey) return;
     var k = e.key;
     if (k === 'ArrowRight') goTo(idx + 1, true);
@@ -357,7 +473,7 @@
     if (!shown || !track) return;
     if (window.requestAnimationFrame) requestAnimationFrame(function () {
       if (shown && track.clientWidth !== deckW) { deckW = track.clientWidth; track.scrollLeft = cardLeft(idx); }
-      if (shown) fadeAll();
+      if (shown) { fadeAll(); positionFab(); }
     });
   }
 
@@ -374,17 +490,19 @@
     cards = collect();
     track.textContent = '';
     cards.forEach(function (c) {
-      c.el = c.kind === 'intro' ? buildIntro(c) : c.kind === 'story' ? buildStory(c) : c.kind === 'quiz' ? buildQuiz(c) : buildEnd();
+      c.el = c.kind === 'cover' ? buildCover(c) : c.kind === 'intro' ? buildIntro(c) : c.kind === 'story' ? buildStory(c) : c.kind === 'quiz' ? buildQuiz(c) : buildEnd();
       track.appendChild(c.el);
     });
     watchMirror();
+    syncCover();
+    markPlaying();
   }
 
   function paint() {
     var c = cards[idx];
     if (!c) return;
     ui.secName.textContent = c.kind === 'story' || c.kind === 'intro' ? c.name : c.kind === 'quiz' ? 'Quiz' : 'The Hour Brief';
-    ui.secPos.textContent = c.kind === 'story' ? 'Story ' + c.n + ' of ' + c.of : c.kind === 'intro' ? 'Section ' + c.sec + ' of ' + c.secTotal : c.kind === 'quiz' ? 'Test what stuck' : 'All caught up';
+    ui.secPos.textContent = c.kind === 'story' ? 'Story ' + c.n + ' of ' + c.of : c.kind === 'intro' ? 'Section ' + c.sec + ' of ' + c.secTotal : c.kind === 'quiz' ? 'Test what stuck' : c.kind === 'cover' ? (c.line || 'Today’s brief') : 'All caught up';
     ui.count.textContent = (idx + 1) + ' / ' + cards.length;
     ui.fill.style.width = cards.length > 1 ? Math.round(idx / (cards.length - 1) * 100) + '%' : '100%';
     ui.prev.disabled = idx <= 0;
@@ -393,6 +511,7 @@
       if (canInert) x.el.inert = i !== idx;
       else x.el.setAttribute('aria-hidden', String(i !== idx));
     });
+    syncFab();
   }
 
   function announce() {
@@ -409,7 +528,10 @@
       scrollRaf = 0;
       var w = track.clientWidth || 1, i = Math.round(track.scrollLeft / w);
       i = Math.max(0, Math.min(cards.length - 1, i));
-      if (i !== idx) { idx = i; paint(); }
+      // While a move we started is still animating, the scroll position is between the old card and the new one: keep the
+      // target as the current card (otherwise the header and markers flicker back to the old card for the first half).
+      var moving = goal !== null && Date.now() - goalAt < goalMs;
+      if (i !== idx && !moving) { idx = i; paint(); }
       clearTimeout(settleT);
       settleT = setTimeout(function () { announce(); fadeAll(); align(); }, 200);
     });
@@ -470,28 +592,6 @@
     });
   }
 
-  // Listen marks the story being read with .hb-listening: turn to it, unless the reader has just touched the deck.
-  function follow(t) {
-    if (Date.now() - lastTouch < 4000) return;
-    var item = t.closest && t.closest('.item[data-story-id]'), i = -1;
-    if (item) i = indexOfStory(item.getAttribute('data-story-id'));
-    else if (t.classList.contains('lane-head')) { var lane = t.closest('section.lane'); if (lane) i = indexOfLane(lane.id); }
-    if (i >= 0 && i !== idx) goTo(i, true);
-  }
-  function startFollow() {
-    stopFollow();
-    var first = document.querySelector('section.lane');
-    if (!first || !window.MutationObserver) return;
-    followObs = new MutationObserver(function (ms) {
-      for (var k = 0; k < ms.length; k++) {
-        var t = ms[k].target;
-        if (t.classList && t.classList.contains('hb-listening')) { follow(t); break; }
-      }
-    });
-    followObs.observe(first.parentNode, { subtree: true, attributes: true, attributeFilter: ['class'] });
-  }
-  function stopFollow() { if (followObs) { followObs.disconnect(); followObs = null; } }
-
   function refresh() {
     var cur = cards[idx], id = cur && cur.kind === 'story' ? cur.item.getAttribute('data-story-id') : null;
     render();
@@ -500,38 +600,158 @@
     fadeAll();
   }
 
-  function litIndex() {
-    var lit = document.querySelector('.item.hb-listening[data-story-id], .lane-head.hb-listening');
-    if (!lit) return -1;
-    if (lit.classList.contains('item')) return indexOfStory(lit.getAttribute('data-story-id'));
-    var lane = lit.closest('section.lane');
-    return lane ? indexOfLane(lane.id) : -1;
+  // ---- Audio: a round floating button that opens into a small player, and the deck follows what Listen is reading ----
+  // Everything is forwarded to Listen's own player and start button (they stay in the page, hidden while the deck shows), so
+  // Listen, the Audio screen and this button can never disagree.
+  function textOf(root, sel) { var e = root.querySelector(sel); return e ? e.textContent.trim() : ''; }
+  function livePlayer() { var p = document.querySelector('.hb-player'); return p && !p.hidden ? p : null; }
+  function hubOpen() { var L = window.HBListen; return !!(L && L.hubOpen && L.hubOpen()); }
+  function click(root, sel) { var e = root && root.querySelector(sel); if (e && !e.disabled) e.click(); }
+
+  function buildFab() {
+    fabEl = mk('div', 'dk-fab');
+    fabEl.hidden = true;
+    ui.ball = btn('dk-fab-ball', '', 'Audio: open the player');
+    ui.ball.setAttribute('aria-expanded', 'false');
+    ui.ball.appendChild(icon(HEADPHONES));
+    var eq = mk('span', 'dk-eq');
+    eq.setAttribute('aria-hidden', 'true');
+    for (var k = 0; k < 3; k++) eq.appendChild(mk('i'));
+    ui.ball.appendChild(eq);
+    ui.ball.addEventListener('click', function () { setFab(true); });
+
+    ui.panel = mk('div', 'dk-fab-panel');
+    ui.panel.hidden = true;
+    ui.panel.setAttribute('role', 'group');
+    ui.panel.setAttribute('aria-label', 'Audio player');
+    var head = mk('div', 'dk-fp-head');
+    ui.fLane = mk('span', 'dk-fp-lane');
+    var col = btn('dk-fp-b dk-fp-collapse', '', 'Collapse the audio player');
+    col.appendChild(icon(['M6 9l6 6 6-6']));
+    col.addEventListener('click', function () { setFab(false); ui.ball.focus({ preventScroll: true }); });
+    head.appendChild(ui.fLane);
+    head.appendChild(col);
+    ui.fTitle = mk('p', 'dk-fp-title');
+    ui.fSub = mk('p', 'dk-fp-sub');
+    var ctl = mk('div', 'dk-fp-ctl');
+    ui.fPrev = btn('dk-fp-b', '', 'Previous story');
+    ui.fPrev.addEventListener('click', function () { click(livePlayer(), '.hb-pl-prev'); });
+    ui.fPlay = btn('dk-fp-b dk-fp-play', '', 'Play');
+    ui.fPlay.addEventListener('click', function () {
+      var p = livePlayer();
+      if (p) { click(p, '.hb-pl-play'); return; }
+      var g = document.querySelector('.listen-go');
+      if (g) g.click();
+      clearTimeout(fabAuto);
+      fabAuto = setTimeout(function () { if (fabOpen) setFab(false); }, 1500);     // started from the idle panel: get out of the way of the cards
+    });
+    ui.fNext = btn('dk-fp-b', '', 'Next story');
+    ui.fNext.addEventListener('click', function () { click(livePlayer(), '.hb-pl-next'); });
+    ui.fRate = mk('div', 'dk-fp-rate');
+    var slower = btn('dk-fp-r', '−', 'Slower');
+    slower.addEventListener('click', function () { click(livePlayer(), '.hb-pl-rate-minus'); });
+    ui.fRateVal = mk('span', 'dk-fp-rv');
+    var faster = btn('dk-fp-r', '+', 'Faster');
+    faster.addEventListener('click', function () { click(livePlayer(), '.hb-pl-rate-plus'); });
+    ui.fRate.appendChild(slower);
+    ui.fRate.appendChild(ui.fRateVal);
+    ui.fRate.appendChild(faster);
+    ui.fStop = btn('dk-fp-b dk-fp-stop', '', 'Stop listening and close the player');
+    ui.fStop.addEventListener('click', function () { click(livePlayer(), '.hb-pl-close'); setFab(false); });
+    [ui.fPrev, ui.fPlay, ui.fNext, ui.fRate, ui.fStop].forEach(function (e) { ctl.appendChild(e); });
+    ui.fGoto = btn('dk-fp-goto', 'Show what’s playing');
+    ui.fGoto.addEventListener('click', function () { if (playIdx >= 0) goTo(playIdx, true); });
+    [head, ui.fTitle, ui.fSub, ctl, ui.fGoto].forEach(function (e) { ui.panel.appendChild(e); });
+    fabEl.appendChild(ui.ball);
+    fabEl.appendChild(ui.panel);
+    // What a finger does here is about audio, not about the cards: it must not pause the deck following, or nudge its scrolling.
+    ['touchstart', 'touchend', 'touchcancel', 'pointerdown', 'pointerup', 'pointercancel', 'wheel'].forEach(function (t) { fabEl.addEventListener(t, function (e) { e.stopPropagation(); }, { passive: true }); });
+    fabEl.addEventListener('keydown', function (e) {
+      e.stopPropagation();
+      if (e.key === 'Escape' && fabOpen) { e.preventDefault(); setFab(false); ui.ball.focus({ preventScroll: true }); }
+    });
+    deck.appendChild(fabEl);
   }
 
-  // The mini player floats above the tab bar while Listen plays: leave exactly its height free, so it never covers the
-  // deck's buttons (measured, because its height changes with the title and the text size).
-  function fitPlayer() {
-    if (!deck) return;
-    var p = document.querySelector('.hb-player'), h = 0;
-    if (p && getComputedStyle(p).display !== 'none') h = p.getBoundingClientRect().height;
-    deck.style.setProperty('--dk-player', h ? Math.ceil(h) + 16 + 'px' : '0px');
-    if (p !== playerEl) {
-      if (playerRO) { playerRO.disconnect(); playerRO = null; }
-      playerEl = p;
-      if (p && window.ResizeObserver) { playerRO = new ResizeObserver(fitPlayer); playerRO.observe(p); }
+  function setFab(open) {
+    fabOpen = !!open;
+    clearTimeout(fabAuto);
+    syncFab();
+    if (fabOpen) { try { ui.fPlay.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }
+  }
+
+  // The button sits above the card's pinned buttons, at the right, so it never covers Like / Share / the footer.
+  function positionFab() {
+    if (!deck || !fabEl || fabEl.hidden || !track) return;
+    var d = deck.getBoundingClientRect(), t = track.getBoundingClientRect(), c = cards[idx], acts = c && c.el.querySelector('.dk-actions');
+    fabEl.style.bottom = Math.round((d.bottom - t.bottom) + 10 + (acts ? acts.getBoundingClientRect().height : 0) + 12) + 'px';
+  }
+
+  function syncFab() {
+    if (!fabEl) return;
+    var cta = document.querySelector('.listen-cta'), p = livePlayer();
+    var off = !shown || !(p || (cta && !cta.hidden)) || hubOpen();
+    fabEl.hidden = off;
+    deck.classList.toggle('dk-has-fab', !off);
+    if (off) return;
+    var L = window.HBListen, playing = !!L && L.state && L.state() === 'playing';
+    fabEl.classList.toggle('playing', playing);
+    ui.ball.hidden = fabOpen;
+    ui.panel.hidden = !fabOpen;
+    ui.ball.setAttribute('aria-label', playing ? 'Audio: playing. Open the player' : 'Audio: open the player');
+    ui.ball.setAttribute('aria-expanded', String(fabOpen));
+    if (fabOpen) {
+      var live = !!p, m = cta && cta.querySelector('.listen-cta-btn .hb-cta-min');
+      ui.fLane.textContent = live ? textOf(p, '.hb-pl-lane') : 'Audio';
+      ui.fTitle.textContent = live ? textOf(p, '.hb-pl-title') : 'Listen to today’s brief';
+      ui.fSub.textContent = live ? textOf(p, '.hb-pl-voice') : (m ? m.textContent.trim() : '');
+      ui.fSub.hidden = !ui.fSub.textContent;
+      [ui.fPrev, ui.fNext, ui.fRate, ui.fStop].forEach(function (e) { e.hidden = !live; });
+      var src = live ? p.querySelector('.hb-pl-play') : document.querySelector('.listen-go');
+      if (src) { ui.fPlay.textContent = ''; cloneInto(ui.fPlay, src); ui.fPlay.setAttribute('aria-label', src.getAttribute('aria-label') || 'Play'); }
+      if (live) {
+        [[ui.fPrev, '.hb-pl-prev'], [ui.fNext, '.hb-pl-next'], [ui.fStop, '.hb-pl-close']].forEach(function (x) {
+          var s2 = p.querySelector(x[1]);
+          if (s2 && !x[0].firstChild) cloneInto(x[0], s2);
+          if (s2) x[0].disabled = s2.disabled;
+        });
+        ui.fRateVal.textContent = textOf(p, '.hb-pl-rate-val');
+      }
+      ui.fGoto.hidden = !(live && playIdx >= 0 && playIdx !== idx);
     }
+    positionFab();
   }
-  function fitSoon() { fitPlayer(); setTimeout(function () { if (shown) fitPlayer(); }, 350); }
-  function startFit() {
-    fitPlayer();
-    if (bodyObs || !window.MutationObserver) return;
-    bodyObs = new MutationObserver(fitSoon);
-    bodyObs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+  // Which card holds the part Listen is reading: its introduction is the cover, a section its section card, a story its card,
+  // and its closing lines the quiz card (or the last one).
+  function unitIndex(cur) {
+    var id = cur && cur.id || '';
+    if (id === 'intro') return 0;
+    if (id.indexOf('lane:') === 0) return indexOfLane(id.slice(5));
+    if (id.indexOf('story:') === 0) return indexOfStory(id.slice(6));
+    if (id === 'outro') { for (var i = 0; i < cards.length; i++) if (cards[i].kind === 'quiz') return i; return cards.length - 1; }
+    return -1;
   }
-  function stopFit() {
-    if (bodyObs) { bodyObs.disconnect(); bodyObs = null; }
-    if (playerRO) { playerRO.disconnect(); playerRO = null; playerEl = null; }
+  function markPlaying() { cards.forEach(function (c, i) { if (c.el) c.el.classList.toggle('dk-playing', i === playIdx); }); }
+  function listenNow() {
+    var L = window.HBListen, st = L && L.state && L.state(), cur = L && L.current && L.current();
+    return { live: st === 'playing' || st === 'paused', cur: cur };
   }
+  // Runs whenever Listen changes state or moves to the next part: mirrors it here, and turns the deck to what is being read
+  // (unless the reader has just been swiping, so it never fights a finger).
+  function onListen() {
+    if (!shown) return;
+    syncCover();
+    var n = listenNow(), i = n.live ? unitIndex(n.cur) : -1;
+    if (i !== playIdx) { playIdx = i; markPlaying(); }
+    syncFab();
+    if (!n.live) { lastFollowId = null; return; }
+    if (!n.cur || n.cur.id === lastFollowId) return;
+    lastFollowId = n.cur.id;
+    if (i < 0 || i === idx || Date.now() - lastTouch < 4000) return;
+    goTo(i, true);
+  }
+  function onListenSoon() { if (listenRaf) return; listenRaf = requestAnimationFrame(function () { listenRaf = 0; onListen(); }); }
 
   // ---- Open and close ----
   function open(o) {
@@ -546,7 +766,9 @@
     document.documentElement.classList.add('hb-deck-open');
     var i = -1;
     if (o.id) { i = indexOfStory(o.id); if (i < 0) i = indexOfLane(o.id); }
-    if (i < 0) i = litIndex();
+    var now = listenNow();
+    if (now.live && now.cur) lastFollowId = now.cur.id;              // opening mid-play: start on it, then follow the NEXT part
+    if (i < 0 && now.live) i = unitIndex(now.cur);
     if (i < 0) i = 0;
     deckW = track.clientWidth;
     goTo(i, false);
@@ -554,8 +776,9 @@
     lastTouch = 0;
     downAt = 0;
     setView('cards');
-    startFollow();
-    startFit();
+    playIdx = -1;
+    fabOpen = false;
+    onListen();
     announce();
     var h = cards[idx].el.querySelector('.dk-title');
     if (h) { try { h.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }
@@ -581,8 +804,12 @@
     deck.hidden = true;
     shown = false;
     document.documentElement.classList.remove('hb-deck-open');
-    stopFollow();
-    stopFit();
+    fabOpen = false;
+    clearTimeout(fabAuto);
+    playIdx = -1;
+    lastFollowId = null;
+    if (fabEl) fabEl.hidden = true;
+    deck.classList.remove('dk-has-fab');
     if (mirrorObs) mirrorObs.disconnect();
     if (!o.keep) setView('list');
     var target = o.to || (c && (c.kind === 'story' ? c.item : c.lane));
