@@ -23,6 +23,7 @@
   var deck = null, track = null, ui = {}, cards = [], idx = 0, shown = false;
   var lastTouch = 0, downAt = 0, lastScrollAt = 0, goal = null, goalAt = 0, goalMs = 0, returnFocus = null, scrollRaf = 0, settleT = 0, fixT = 0, syncRaf = 0;
   var mirrorObs = null, deckW = 0, playIdx = -1, lastFollowId = null, fabEl = null, fabOpen = false, fabAuto = 0, listenRaf = 0;
+  var hasSwiped = false, idleT = 0, swipeHintEl = null, swipeHintT = 0;
 
   function mk(tag, cls, text) {
     var e = document.createElement(tag);
@@ -412,7 +413,7 @@
     track.setAttribute('aria-label', 'Swipe or use the arrow keys to move between cards');
     deck.appendChild(track);
 
-    var foot = mk('footer', 'dk-foot');
+    var foot = ui.foot = mk('footer', 'dk-foot');
     ui.prev = btn('dk-nav dk-prev', '', 'Previous card');
     ui.prev.appendChild(svg('M15 5l-7 7 7 7'));
     ui.next = btn('dk-nav dk-next', '', 'Next card');
@@ -433,8 +434,8 @@
     document.body.appendChild(deck);
     buildFab();
 
-    ui.prev.addEventListener('click', function () { goTo(idx - 1, true); });
-    ui.next.addEventListener('click', function () { goTo(idx + 1, true); });
+    ui.prev.addEventListener('click', function () { onManualNav(); goTo(idx - 1, true); });
+    ui.next.addEventListener('click', function () { onManualNav(); goTo(idx + 1, true); });
     track.addEventListener('scroll', onScroll, { passive: true });
     track.addEventListener('click', function (e) {
       var g = e.target.closest && e.target.closest('[data-goto]');
@@ -456,17 +457,57 @@
 
   function touched() { lastTouch = Date.now(); goal = null; }         // the reader has taken over: forget any move in progress
 
+  // Swipe is the point of this view, so the prev/next buttons are trained wheels: full and visible until the reader
+  // demonstrably swipes once (idx changing from the track's own scroll, not from goTo — see onScroll), at which point
+  // they fade back rather than sit there as clutter. A button or key press always brings them back, since that reader
+  // is clearly relying on them. Either way, if nothing moves for a while they return on their own, in case whoever is
+  // reading has gotten stuck.
+  function showNav() { if (ui.foot) ui.foot.classList.remove('dk-quiet'); }
+  function quietNav() { if (hasSwiped && ui.foot) ui.foot.classList.add('dk-quiet'); }
+  function armIdle() { clearTimeout(idleT); idleT = setTimeout(showNav, window.HB_CARD_IDLE_MS || 6000); }
+  function onManualNav() { showNav(); armIdle(); }
+  function onSwiped() {
+    hasSwiped = true;
+    quietNav();
+    armIdle();
+    dismissSwipeHint();
+  }
+
+  var SWIPE_HINT_KEY = 'hb-swipe-hint-v1';
+  function swipeHintSeen() { try { return !!localStorage.getItem(SWIPE_HINT_KEY); } catch (e) { return true; } }   // can't remember it: don't keep showing it
+  function dismissSwipeHint() {
+    clearTimeout(swipeHintT);
+    if (swipeHintEl) { swipeHintEl.remove(); swipeHintEl = null; }
+  }
+  function maybeShowSwipeHint() {
+    // The cover and each section card already carry their own "swipe to start" prompt; this one is for the first
+    // story card, which has none, so it is keyed to the card kind rather than a fixed index.
+    var c = cards[idx];
+    if (!shown || swipeHintEl || hasSwiped || !c || c.kind !== 'story' || swipeHintSeen()) return;
+    try { localStorage.setItem(SWIPE_HINT_KEY, '1'); } catch (e) { /* shown once is enough either way */ }
+    swipeHintEl = mk('div', 'dk-swipehint');
+    swipeHintEl.setAttribute('role', 'status');
+    var ic = mk('span', 'dk-swipehint-ic');
+    ic.appendChild(svg('M15 5l-7 7 7 7'));
+    swipeHintEl.appendChild(ic);
+    swipeHintEl.appendChild(mk('span', '', 'Swipe to continue'));
+    deck.appendChild(swipeHintEl);
+    swipeHintT = setTimeout(dismissSwipeHint, 4000);
+  }
+
   function onKey(e) {
     touched();
     if (e.key === 'Escape') { e.preventDefault(); if (fabOpen) setFab(false); else close(); return; }
     if (e.altKey || e.ctrlKey || e.metaKey) return;
-    var k = e.key;
-    if (k === 'ArrowRight') goTo(idx + 1, true);
-    else if (k === 'ArrowLeft') goTo(idx - 1, true);
-    else if (k === 'Home') goTo(0, true);
-    else if (k === 'End') goTo(cards.length - 1, true);
+    var k = e.key, i = null;
+    if (k === 'ArrowRight') i = idx + 1;
+    else if (k === 'ArrowLeft') i = idx - 1;
+    else if (k === 'Home') i = 0;
+    else if (k === 'End') i = cards.length - 1;
     else return;
     e.preventDefault();
+    onManualNav();
+    goTo(i, true);
   }
 
   function onResize() {
@@ -512,6 +553,7 @@
       else x.el.setAttribute('aria-hidden', String(i !== idx));
     });
     syncFab();
+    maybeShowSwipeHint();
   }
 
   function announce() {
@@ -531,7 +573,7 @@
       // While a move we started is still animating, the scroll position is between the old card and the new one: keep the
       // target as the current card (otherwise the header and markers flicker back to the old card for the first half).
       var moving = goal !== null && Date.now() - goalAt < goalMs;
-      if (i !== idx && !moving) { idx = i; paint(); }
+      if (i !== idx && !moving) { idx = i; paint(); onSwiped(); }
       clearTimeout(settleT);
       settleT = setTimeout(function () { announce(); fadeAll(); align(); }, 200);
     });
@@ -780,6 +822,7 @@
     fabOpen = false;
     onListen();
     announce();
+    armIdle();
     var h = cards[idx].el.querySelector('.dk-title');
     if (h) { try { h.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }
     document.dispatchEvent(new CustomEvent('hb:deck'));
@@ -806,6 +849,8 @@
     document.documentElement.classList.remove('hb-deck-open');
     fabOpen = false;
     clearTimeout(fabAuto);
+    clearTimeout(idleT);
+    dismissSwipeHint();
     playIdx = -1;
     lastFollowId = null;
     if (fabEl) fabEl.hidden = true;

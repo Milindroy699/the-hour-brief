@@ -37,7 +37,7 @@ const TOTAL = STORIES + 3 + 2;
 const QUIET = { n: 0, last: LONG_AGO, done: true };     // no hint
 let ids = [];
 
-async function open({ native = true, width = 390, height = 844, dark = false, prefs = null, tip = QUIET, view = 'list', size = null, hash = '', query = '', wait = 1800, tts = false, extra = '' } = {}) {
+async function open({ native = true, width = 390, height = 844, dark = false, prefs = null, tip = QUIET, view = 'list', size = null, hash = '', query = '', wait = 1800, tts = false, extra = '', hint = true } = {}) {
   for (const id of ids) await c.unpreload(id);
   ids = [];
   const pre = [tts ? `window.HB_AUDIO_BASE = ${JSON.stringify(B + '/__audio')}; ${FAKE_TTS}` : NO_AUDIO];
@@ -46,7 +46,7 @@ async function open({ native = true, width = 390, height = 844, dark = false, pr
   for (const p of pre) ids.push(await c.preload(p));
   await c.viewport(width, height, width < 700, dark);
   await c.goto(B + '/about.html', 200);
-  await c.ev(`localStorage.clear(); ${prefs ? `localStorage.setItem('hb-prefs-v1', ${JSON.stringify(JSON.stringify(prefs))});` : ''} ${tip ? `localStorage.setItem('hb-tip-v1', ${JSON.stringify(JSON.stringify(tip))});` : ''} ${view !== 'default' ? `localStorage.setItem('hb-view-v1', '${view}');` : ''} ${size != null ? `localStorage.setItem('hb-textsize', '${size}');` : ''} 'ok'`);
+  await c.ev(`localStorage.clear(); ${prefs ? `localStorage.setItem('hb-prefs-v1', ${JSON.stringify(JSON.stringify(prefs))});` : ''} ${tip ? `localStorage.setItem('hb-tip-v1', ${JSON.stringify(JSON.stringify(tip))});` : ''} ${view !== 'default' ? `localStorage.setItem('hb-view-v1', '${view}');` : ''} ${size != null ? `localStorage.setItem('hb-textsize', '${size}');` : ''} ${hint ? `localStorage.setItem('hb-swipe-hint-v1', '1');` : ''} 'ok'`);
   await c.goto(B + '/' + query + hash, wait);
 }
 const cardsBtn = `document.querySelectorAll('.vs-in button')[1]`;
@@ -183,6 +183,64 @@ check('but while a finger is on the deck it is never moved from under it', Math.
 await c.ev(`document.querySelector('.hb-deck').dispatchEvent(new Event('touchend')); 'ok'`); await c.sleep(1400);
 t = await J(OFFSET.replace('%N%', 4));
 check('and when the finger lifts, it settles onto the card', Math.abs(t) <= 2, String(t));
+
+// ---------- 3b. teaching the gesture: the arrows fade back once the reader has swiped, but a tap/key or sitting idle brings them back ----------
+await open();
+await openDeck();
+t = await J(`({ quiet: document.querySelector('.dk-foot').classList.contains('dk-quiet'), opacity: Math.round(parseFloat(getComputedStyle(document.querySelector('.dk-prev')).opacity) * 100) })`);
+check('the prev/next buttons start fully visible', !t.quiet && t.opacity === 100, JSON.stringify(t));
+await c.swipe(195, 420, -250, 0); await c.sleep(700);
+t = await J(`({ quiet: document.querySelector('.dk-foot').classList.contains('dk-quiet'), opacity: Math.round(parseFloat(getComputedStyle(document.querySelector('.dk-prev')).opacity) * 100) })`);
+check('after a real swipe they fade back — the reader has clearly found the gesture, no need for the buttons to shout', t.quiet && t.opacity < 60, JSON.stringify(t));
+await c.ev(`document.querySelector('.dk-next').click()`); await c.sleep(400);
+check("but tapping a button brings them straight back, since that reader is relying on it", !(await c.ev(`document.querySelector('.dk-foot').classList.contains('dk-quiet')`)));
+await c.swipe(195, 420, -250, 0); await c.sleep(700);
+check('swiping again quiets them once more', await c.ev(`document.querySelector('.dk-foot').classList.contains('dk-quiet')`));
+await c.ev(`document.querySelector('.dk-track').focus()`);
+await c.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'ArrowLeft', code: 'ArrowLeft', windowsVirtualKeyCode: 37 });
+await c.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'ArrowLeft', code: 'ArrowLeft', windowsVirtualKeyCode: 37 }); await c.sleep(400);
+check('and so does the left arrow key', !(await c.ev(`document.querySelector('.dk-foot').classList.contains('dk-quiet')`)));
+await open({ extra: `window.HB_CARD_IDLE_MS = 1200;` });
+await openDeck();
+await c.swipe(195, 420, -250, 0); await c.sleep(750);
+check('quiet right after swiping', await c.ev(`document.querySelector('.dk-foot').classList.contains('dk-quiet')`));
+await c.sleep(800);
+check('and back on their own a little while later, without the reader doing anything', !(await c.ev(`document.querySelector('.dk-foot').classList.contains('dk-quiet')`)));
+
+// ---------- 3c. the one-time "swipe to continue" hint (shown once ever, this device, on the first STORY card — the
+// cover and each section card already carry their own "swipe to start" prompt, so this one would be redundant there) ----------
+await open({ hint: false });
+await openDeck({ cover: true });
+check('nothing on the cover card — it already has its own "Start reading" prompt', !(await c.ev(`!!document.querySelector('.dk-swipehint')`)));
+await c.ev(`document.querySelector('.dk-next').click()`); await c.sleep(600);
+check('nor on the section card that follows it — it has its own "Swipe to start" too', !(await c.ev(`!!document.querySelector('.dk-swipehint')`)));
+await c.ev(`document.querySelector('.dk-next').click()`); await c.sleep(600);
+t = await J(`(() => { const h = document.querySelector('.dk-swipehint'); if (!h) return null; const r = h.getBoundingClientRect(); const face = document.querySelector('.dk-card:not([inert]) .dk-face').getBoundingClientRect(); return { text: h.textContent, l: Math.round(r.left), r: Math.round(r.right), t: Math.round(r.top), w: innerWidth, clearOfFace: r.top < face.top || r.bottom < face.bottom, seen: localStorage.getItem('hb-swipe-hint-v1') }; })()`);
+check('landing on the first story card (nothing else on it teaches the gesture), a fresh device sees a one-time "Swipe to continue" hint, fully inside the screen and clear of the card content', t && /Swipe to continue/.test(t.text) && t.l >= 0 && t.r <= t.w && t.t > 0, JSON.stringify(t));
+check('and it is remembered so it is never shown again on this device', t && t.seen === '1', JSON.stringify(t));
+await c.shot(`${OUT}/cards_swipe_hint.png`);
+await c.swipe(195, 420, -250, 0); await c.sleep(700);
+check('it goes away the moment the reader actually swipes', !(await c.ev(`!!document.querySelector('.dk-swipehint')`)));
+await c.ev(`HBCards.goTo(2, false)`); await c.sleep(400);
+check('and does not come back later in the same session, now that it has been seen', !(await c.ev(`!!document.querySelector('.dk-swipehint')`)));
+await c.ev(`HBCards.close({ keep: true })`); await c.sleep(300);
+await c.ev(`${cardsBtn}.click()`); await c.sleep(1400);
+await c.ev(`HBCards.goTo(2, false)`); await c.sleep(400);
+check('nor on a later visit — remembered on this device', !(await c.ev(`!!document.querySelector('.dk-swipehint')`)));
+
+// it sits dead-centre, right where a swipe naturally starts, so it must never be able to catch the touch meant for the card
+await open({ hint: false });
+await openDeck({ cover: true });
+await c.ev(`document.querySelector('.dk-next').click()`); await c.sleep(300);
+await c.ev(`document.querySelector('.dk-next').click()`); await c.sleep(600);
+check('it never blocks the swipe it is teaching (pointer-events: none, so a touch on it reaches the card underneath)', await c.ev(`getComputedStyle(document.querySelector('.dk-swipehint')).pointerEvents`) === 'none');
+const beforeSwipe = await pos();
+await c.swipe(195, 420, -250, 0); await c.sleep(700);
+check('swiping across it moves to the next card and dismisses it, exactly as swiping anywhere else would', (await pos()) !== beforeSwipe && !(await c.ev(`!!document.querySelector('.dk-swipehint')`)), JSON.stringify({ before: beforeSwipe, after: await pos() }));
+
+await open();     // the default: hint already marked seen, so it must never show up in any of the other tests in this file
+await openDeck();
+check("with hb-swipe-hint-v1 pre-seeded (the default for every other test here), the hint never appears — it must not add noise to unrelated tests", !(await c.ev(`!!document.querySelector('.dk-swipehint')`)));
 
 // ---------- 4. long stories scroll inside the card ----------
 await open({ height: 600 });
