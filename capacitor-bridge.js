@@ -42,6 +42,7 @@
         'padding-top:env(safe-area-inset-top,0px);}' +
       '#cap-newedition .cap-ne-go{flex:1;background:none;border:0;color:#fff;font:inherit;' +
         'font-size:.9rem;font-weight:600;text-align:left;padding:12px 14px;cursor:pointer;}' +
+      '#cap-newedition .cap-ne-go small{display:block;font-weight:400;font-size:.78rem;opacity:.85;margin-top:1px;}' +
       '#cap-newedition .cap-ne-x{flex:0 0 auto;background:none;border:0;color:#fff;font-size:1.3rem;' +
         'line-height:1;min-width:44px;min-height:44px;cursor:pointer;}' +
       '#cap-offline{position:fixed;left:0;right:0;bottom:0;z-index:9996;display:flex;align-items:center;' +
@@ -360,7 +361,12 @@
     }
   })();
 
-  // ---- "New edition available" ----
+  // ---- New edition: opened automatically, but never mid-something ----
+  // The app checks for a newer edition on resume and every 10 minutes. The moment it is safe to do so without pulling
+  // the reader away from what they are doing, it switches to it on its own — no tap needed. "Safe" means: at rest near
+  // the top of the page, the swipe-card deck (if open) still on its cover, no audio playing or paused, and the quiz (if
+  // any questions are answered) not left half-finished. Otherwise it keeps checking quietly and switches once idle.
+  // Dismissing the notice (the ×) cancels this for that edition, same as before.
   (function newEditionWatch() {
     var path = location.pathname.replace(/index\.html$/, '');
     if (path !== '/') return;
@@ -370,20 +376,39 @@
     if (!current) return;
 
     var dismissKey = function (d) { return 'hb-newedition-dismissed-' + d; };
-    var banner = null;
+    var banner = null, pending = null, applying = false, retryTimer = 0;
+    var RETRY_MS = window.HB_RETRY_MS || 20000;
 
-    function check() {
-      fetch('/editions.json', { cache: 'no-store' })
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (data) {
-          var eds = data && data.editions;
-          if (!eds || !eds.length) return;
-          var latest = eds[eds.length - 1];
-          if (!latest || !latest.date || latest.date <= current) return;
-          try { if (localStorage.getItem(dismissKey(latest.date))) return; } catch (e) {}
-          show(latest);
-        })
-        .catch(function () {});
+    // Would switching editions right now pull the reader away from something? Checked fresh each time, since it changes
+    // as they scroll, finish the quiz, or stop listening.
+    function busy() {
+      var y = (document.scrollingElement || document.documentElement).scrollTop;
+      if (y > 40) return true;
+      if (document.documentElement.classList.contains('hb-deck-open')) {
+        var C = window.HBCards;
+        if (!C || typeof C.index !== 'function' || C.index() > 0) return true;
+      }
+      var L = window.HBListen, st = L && L.state && L.state();
+      if (st === 'playing' || st === 'paused') return true;
+      var dots = document.querySelectorAll('.quiz-dot').length;
+      var done = document.querySelectorAll('.quiz-dot.ok, .quiz-dot.no').length;
+      if (dots && done > 0 && done < dots) return true;
+      return false;
+    }
+
+    function apply() {
+      if (applying) return;
+      applying = true;
+      clearTimeout(retryTimer);
+      if (banner) { banner.remove(); banner = null; }
+      location.href = '/';
+    }
+
+    function attempt() {
+      clearTimeout(retryTimer);
+      if (!pending || applying) return;
+      if (!busy()) { apply(); return; }
+      retryTimer = setTimeout(attempt, RETRY_MS);
     }
 
     function show(latest) {
@@ -394,8 +419,9 @@
       var go = document.createElement('button');
       go.type = 'button';
       go.className = 'cap-ne-go';
-      go.textContent = 'New edition available — tap to refresh';
-      go.addEventListener('click', function () { location.href = '/'; });
+      go.textContent = 'New edition ready';
+      go.appendChild(document.createElement('small')).textContent = 'Opens automatically — tap to switch now';
+      go.addEventListener('click', apply);
       var x = document.createElement('button');
       x.type = 'button';
       x.className = 'cap-ne-x';
@@ -403,11 +429,31 @@
       x.innerHTML = '&times;';
       x.addEventListener('click', function () {
         try { localStorage.setItem(dismissKey(latest.date), '1'); } catch (e) {}
+        clearTimeout(retryTimer);
+        pending = null;
         if (banner) { banner.remove(); banner = null; }
       });
       banner.appendChild(go);
       banner.appendChild(x);
       document.body.appendChild(banner);
+    }
+
+    function check() {
+      if (applying) return;
+      fetch('/editions.json', { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          var eds = data && data.editions;
+          if (!eds || !eds.length) return;
+          var latest = eds[eds.length - 1];
+          if (!latest || !latest.date || latest.date <= current) return;
+          try { if (localStorage.getItem(dismissKey(latest.date))) return; } catch (e) {}
+          pending = latest;
+          if (!busy()) { apply(); return; }      // the common case: nothing in the way, so switch straight away
+          show(latest);
+          attempt();
+        })
+        .catch(function () {});
     }
 
     check();

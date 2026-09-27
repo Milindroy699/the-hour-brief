@@ -114,6 +114,23 @@ Text is copied with `textContent`, never as HTML.
 - **Test on a real Android WebView, not just headless Chrome** (see Emulator notes in the mobile docs).
 Tests: `node tools/browser-tests/cards.mjs` (128 checks, includes real touch swipes via `cdp.mjs` `swipe()`, and real Listen with a fake voice for the follow tests). The other suites (`premium`, `prefs`, `listen`) test the list, so they open with the List view stored.
 
+## Reload, and the next edition, without friction (`capacitor-bridge.js`, native apps only)
+
+Every page sets `history.scrollRestoration = 'manual'` in an inline `<head>` script (the very first thing in `<head>`, before
+anything else, since it has to run before the browser's own scroll-restoration kicks in). Without it, a browser restores
+whatever the reader had last scrolled to on that page; with it, a reload (pull-to-refresh, or the auto-open below) lands at
+the top, as it should for a page whose content changes every day. This is on every page (`index.html`, `about.html`,
+`contact.html`, `privacy.html`, `archive/index.html`), not just the app.
+
+The "new edition" watcher (checks `/editions.json` on resume and every 10 minutes) opens the new edition automatically once
+it is safe to do so, instead of making the reader tap a banner: at rest near the top of the page, the swipe-card deck (if
+open) still on its cover, no audio playing or paused, and the quiz (if any questions are answered) not left half-finished.
+The common case (the reader just opened the app, nothing going on yet) switches straight away, with no banner at all. If it
+isn't safe, a small banner ("New edition ready — opens automatically") appears; tapping it switches right away regardless,
+and the × dismisses it for that edition (remembered per date, same as before). Otherwise it keeps checking quietly (every
+`HB_RETRY_MS`, default 20s) and switches the moment the reader is free. None of this runs outside the native apps.
+Tests: `node tools/browser-tests/bridge.mjs` (24 checks).
+
 ## Daily quiz
 
 - `reader.css` holds the reusable reader components (section highlights, story share/save, tools row, sheets). `mobile.css` imports it on phones and `mobile.js` injects it in the native apps at any width; the desktop website never loads it.

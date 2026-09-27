@@ -30,7 +30,7 @@ Welcome to The Hour Brief for Android.
 
 • A fresh edition every morning: AI & tech, product & business, and the Indian and global markets
 • Built for one sitting: every story has a short summary you can expand and a one-line takeaway
-• Share any edition, pull down to refresh, and see a banner when a newer edition is out
+• Share any edition, pull down to refresh any time, and the next edition opens on its own once it's ready
 • Follows your phone's light or dark theme
 </en-US>
 ```
@@ -62,7 +62,7 @@ Made to be read, not scrolled:
 • Listen to today's brief: about six minutes of the day's headlines and takeaways, read aloud in an AI-generated Indian-English voice (recorded each morning; if it isn't ready yet, your phone reads it instead)
 • Every summary links back to its original source
 • Clean layout, no ads, and it follows your phone's light or dark theme
-• Share any edition with one tap, pull down to refresh, and see a banner when a newer edition is out
+• Share any edition with one tap, pull down to refresh any time, and the next edition opens on its own once it's ready
 • Browse the archive of past editions
 
 How it's made: editions are researched with AI from public reporting, newsletters and market data, and every item links to its source. It is not independently fact-checked, so check the source before relying on anything. Nothing here is investment advice.

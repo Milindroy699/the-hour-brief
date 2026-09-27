@@ -824,7 +824,8 @@
     close: close,
     isOpen: function () { return shown; },
     goTo: function (i, smooth) { goTo(i, smooth !== false); },
-    count: function () { return cards.length; }
+    count: function () { return cards.length; },
+    index: function () { return idx; }      // for capacitor-bridge.js: safe to switch editions only while still on the cover
   };
   document.dispatchEvent(new CustomEvent('hb:cards-ready'));
 })();
