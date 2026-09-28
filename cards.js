@@ -204,7 +204,7 @@
     var free = document.querySelector('.about .free-line');
     if (free) b.scroll.appendChild(mk('p', 'dk-free', plain(free)));
 
-    var start = btn('dk-hint', 'Start reading →');
+    var start = btn('dk-hint', 'See today’s stories');
     start.addEventListener('click', function () { goTo(1, true); });
     var bar = mk('div', 'dk-actions dk-startbar');
     bar.appendChild(start);
@@ -262,7 +262,7 @@
       ol.appendChild(li);
     });
     b.scroll.appendChild(ol);
-    var start = btn('dk-hint', 'Swipe to start →');
+    var start = btn('dk-hint', 'Swipe to start');
     start.addEventListener('click', function () { goTo(idx + 1, true); });
     var bar = mk('div', 'dk-actions dk-startbar');       // pinned below the scrolling part, so it is always in reach
     bar.appendChild(start);

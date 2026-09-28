@@ -777,8 +777,30 @@
     card.appendChild(ico);
     card.appendChild(text);
     card.appendChild(acts);
-    if (deck) deck.insertBefore(card, deck.querySelector('.dk-track'));
-    else first.parentNode.insertBefore(card, first);
+    if (deck) {
+      // Floats over the top of the card instead of squeezing it — a brief, dismissible nudge, not a fixture. It fades itself
+      // out on its own (timer, or the moment the reader actually starts swiping/scrolling) so it never sits between the
+      // reader and the story; a real "Not now" is the only thing that marks it done for good.
+      card.classList.add('hb-tip-float');
+      var top = deck.querySelector('.dk-top');
+      deck.insertBefore(card, deck.querySelector('.dk-track'));
+      if (top) card.style.top = (top.getBoundingClientRect().height + 8) + 'px';
+      var floatGone = false;
+      var fadeFloat = function () {
+        if (floatGone || !card.isConnected) return;
+        floatGone = true;
+        card.classList.add('dk-tip-out');
+        setTimeout(function () { if (card.isConnected) card.remove(); }, 320);
+      };
+      var floatT = setTimeout(fadeFloat, window.HB_TIP_FADE_MS || 6000);
+      var track = deck.querySelector('.dk-track');
+      var onFirstTouch = function () { clearTimeout(floatT); fadeFloat(); };
+      if (track) track.addEventListener('touchstart', onFirstTouch, { passive: true, once: true });
+      yes.addEventListener('click', function () { clearTimeout(floatT); });
+      no.addEventListener('click', function () { clearTimeout(floatT); });
+    } else {
+      first.parentNode.insertBefore(card, first);
+    }
     return true;
   }
   function maybeSuggest() {

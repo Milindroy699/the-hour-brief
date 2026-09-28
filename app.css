@@ -609,7 +609,13 @@ html.hb-deck-open #mob-progress, html.hb-deck-open #mob-top { display: none; }
 .hb-deck { position: fixed; top: 0; left: 0; right: 0; bottom: var(--hb-tab-h); z-index: 9981; display: flex; flex-direction: column; background: var(--bg); color: var(--ink); font-family: var(--hb-sans); }
 .hb-deck { visibility: visible; }
 .hb-deck[hidden] { display: none; }
-.hb-deck > .hb-tip { flex: none; box-sizing: border-box; width: calc(100% - 32px); max-width: 640px; margin: 0 auto 8px; }
+/* Inside the deck this floats over the top of the card instead of pushing it down — reading space stays full-height, and the
+   card fades itself out on its own (see cards.js), so it never lingers over the content. */
+.hb-deck > .hb-tip.hb-tip-float { position: absolute; left: 16px; right: 16px; max-width: 640px; margin: 0 auto; box-sizing: border-box; z-index: 6; box-shadow: 0 10px 28px rgba(18, 19, 22, 0.18); animation: dkTipIn 0.3s ease; }
+.hb-deck > .hb-tip.hb-tip-float.dk-tip-out { animation: dkTipOut 0.3s ease forwards; }
+@keyframes dkTipIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+@keyframes dkTipOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(-8px); } }
+@media (prefers-reduced-motion: reduce) { .hb-deck > .hb-tip.hb-tip-float { animation: none; } .hb-deck > .hb-tip.hb-tip-float.dk-tip-out { animation: none; opacity: 0; } }
 .dk-top { flex: none; display: flex; align-items: center; gap: 8px; padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 8px; }
 .dk-sec { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .dk-sec-name { font-family: var(--hb-label); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--hb-green); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
