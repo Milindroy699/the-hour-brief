@@ -1,4 +1,4 @@
-# Release checklist (last verified 2026-09-25)
+# Release checklist (last verified 2026-09-29)
 
 ## Android bundle
 `mobile/dist/the-hour-brief-1.1.2-vc6.aab` (versionCode 6; Play already had a version code 5 from an earlier upload attempt, and version codes can never be reused, so vc5 is superseded, as is vc4).
@@ -31,14 +31,15 @@ Policy: News and Magazines (enforced 24 Sep): no easy-to-find contact page in th
   rating prompt uses Play's in-app review API, privacy policy + About disclose the AI authorship and the AI voice.
 - Stale: the Play screenshots predate the quiz / Listen / contact line. Not a rejection reason, but worth refreshing.
 
-## App Store (cannot be uploaded from this machine: no Apple signing identity yet)
-- Verified 2026-09-26: an unsigned Release **archive for a real device (arm64)** builds cleanly; the archive contains version 1.1.2 (build 1), iOS 15.0+, iPhone + iPad, the new icon (1024, RGB, no alpha) and launch image, and privacy manifests for the app, Capacitor and Cordova. Bundle id `app.thehourbrief`, `ITSAppUsesNonExemptEncryption = false`.
-- Fixed while checking: the app privacy manifest declared no required-reason APIs although `@capacitor/filesystem` reads file timestamps (now declared, C617.1) and its data types disagreed with the App Privacy answers (now aligned); iPhone is locked to portrait (in landscape a swipe card's text area is about 90px); three unused old splash files removed.
+## App Store
+- **2026-09-29: the developer account is active, and the whole archive→sign→export pipeline now works from the command line on this machine** (no Xcode GUI needed for this part): `DEVELOPMENT_TEAM = PUXF34ZNNT` is set in the project (your own Xcode edit), Xcode is signed into `milindroy101292@gmail.com`, and a real `xcodebuild archive` + `-exportArchive -exportOptionsPlist (method: app-store-connect)` both succeeded end to end — Xcode auto-registered the `app.thehourbrief` App ID and used a **Cloud Managed Apple Distribution** certificate (no local .p12 to manage, valid to 29 Sep 2027) to produce a properly signed `App.ipa`. That was a throwaway validation build/export (deleted after, not uploaded).
+- Also added this session: `AVAudioSession` set to `.playback` in `AppDelegate.swift`, to go with the `UIBackgroundModes: audio` key you'd already added to Info.plist — without both, Listen stops the moment the screen locks or the app backgrounds even though the entitlement is declared. Needs a real-device check (TestFlight): silent switch on and off, screen lock during playback.
+- Verified 2026-09-26 (still true): version 1.1.2 (build 1), iOS 15.0+, iPhone + iPad, the new icon (1024, RGB, no alpha) and launch image, privacy manifests for the app, Capacitor and Cordova. Bundle id `app.thehourbrief`, `ITSAppUsesNonExemptEncryption = false`. Privacy manifest declares the file-timestamp API (C617.1) used by `@capacitor/filesystem`; iPhone is locked to portrait (in landscape a swipe card's text area is about 90px).
 - No usage-description strings are needed (no camera, photos, location, microphone).
-- Needed from you: signing in Xcode (pick your Team), the App Store Connect app record, Archive -> Distribute, then the listing (`app-store/listing.md` has your steps in order, the field values and the review notes; add your phone number). Bump the build number for each upload.
+- **Left for you:** the App Store Connect **app record** (Apps → + → New App — a website step, no CLI path for this one) if not already created; then either let me run archive → export → upload from here, or do Archive → Distribute in Xcode yourself (both now work) — your call. After that: TestFlight on your own iPhone first, then the listing (`app-store/listing.md` has the steps, field values and review notes; add your phone number), select the build, submit. Bump the build number for each upload after the first.
 - Biggest risk stays Guideline 4.2 (web wrapper). Native features to point out to the reviewer: daily local-notification reminder, share
   sheet, haptics, native rating prompt, on-device speech fallback, bundled offline page, quiz with streaks/badges, friends leagues, swipe cards, personalised sections.
-- Not tested on a real iPhone: the offline page (`errorPath`), Listen (including with the phone's silent switch on, and whether it keeps playing when the screen locks: the app declares no background-audio mode, so expect it to stop), the share-image flow. TestFlight on your own iPhone is the way to cover these.
+- Not tested on a real iPhone yet: the offline page (`errorPath`), Listen with the background-audio fix above, the share-image flow. TestFlight on your own iPhone is the way to cover these.
 
 ## Known open risks
 - The digest is AI-written and not human-reviewed each day (About says so plainly). Play's misinformation and News policies could

@@ -1,5 +1,6 @@
 import UIKit
 import Capacitor
+import AVFoundation
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -8,6 +9,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
+        // Listen plays through an <audio> element in the WKWebView; without this, playback stops the moment the
+        // screen locks or the app backgrounds, even with the "audio" Background Mode declared in Info.plist.
+        // .playback keeps it going with the silent switch on, and respects the same switch's OFF state for audio cues.
+        do {
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [])
+            try AVAudioSession.sharedInstance().setActive(true)
+        } catch {
+            print("AVAudioSession setup failed: \(error)")
+        }
         return true
     }
 
