@@ -3,6 +3,7 @@
 //   node tools/brand/screenshots.mjs --only app-store   only the App Store sets (leaves the Play files alone)
 // -> mobile/play-store/screenshots/*.png         (1080x1920, Google Play phone size)
 //    mobile/app-store/screenshots/*.png          (1320x2868, App Store iPhone 6.9-inch)
+//    mobile/app-store/screenshots-6.5in/*.png    (1242x2688, App Store iPhone 6.5-inch)
 //    mobile/app-store/screenshots-ipad/*.png     (2064x2752, App Store iPad 13-inch; required because the app runs on iPad)
 // The App Store sets also show the swipe cards (the app's default view: the cover card first, then a story) and the Your sections screen; the
 // list shots are taken with the List view chosen. The Audio screen uses a dry-run recording (tones)
@@ -25,6 +26,7 @@ const ONLY = process.argv.includes('--only') ? process.argv[process.argv.indexOf
 const SETS = [
   { dir: 'mobile/play-store/screenshots', w: 412, h: 732 * 1, dpr: 1080 / 412, full: false },        // 1080 x 1919
   { dir: 'mobile/app-store/screenshots', w: 440, h: 956, dpr: 3, full: true },                      // 1320 x 2868 (iPhone 6.9-inch)
+  { dir: 'mobile/app-store/screenshots-6.5in', w: 414, h: 896, dpr: 3, full: true },                // 1242 x 2688 (iPhone 6.5-inch — what App Store Connect asked for on this app's first version)
   { dir: 'mobile/app-store/screenshots-ipad', w: 1032, h: 1376, dpr: 2, full: true },               // 2064 x 2752 (iPad 13-inch)
 ].filter((x) => !ONLY || x.dir.includes(ONLY));
 // The three editions before the latest were played, so the quiz shows a streak (dates follow the latest edition).
