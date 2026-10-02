@@ -5,7 +5,14 @@
   <link href="https://the-hour-brief.vercel.app/feed.xml" rel="self"/>
   <link href="https://the-hour-brief.vercel.app/"/>
   <id>https://the-hour-brief.vercel.app/</id>
-  <updated>2026-10-01T02:55:00Z</updated>
+  <updated>2026-10-02T02:55:00Z</updated>
+  <entry>
+    <title>Edition 047 — 2 October 2026</title>
+    <link href="https://the-hour-brief.vercel.app/archive/2026-10-02.html"/>
+    <id>https://the-hour-brief.vercel.app/archive/2026-10-02.html</id>
+    <updated>2026-10-02T02:55:00Z</updated>
+    <summary type="text">AI &amp; Tech: Anthropic targets a November IPO at close to a $2 trillion valuation as Broadcom offers to lend it up to $42 billion to lease its own chips, even as OpenAI seeks $30 billion in bridge financing at a $1.4 trillion valuation to put off going public, Google ships its most powerful model yet in Gemini 4 Argon, AMD pays $8.2 billion for Fei-Fei Li's World Labs to push into physical AI, and a New York Times investigation finds Meta's "experimental" AI data centers have cut its tax bill by $3.9 billion. Product &amp; Business: Moneyview lists at a roughly 62% premium on its NSE and BSE debut as Accenture's earnings beat sends its stock up 22% in its best day ever, even as Nike warns of fresh layoffs inside a new restructuring plan that also expands its India technology hub, Seeds Fincap raises ₹100 crore from the Michael &amp; Susan Dell Foundation, Bessemer Venture Partners adds a new India partner, a Jaipur healthtech startup's ₹4 crore seed round aims at 100,000 autism screenings, and Reliance keeps Jio Platforms' record IPO on track for a Navratri-to-Diwali listing window. Stock Market: Nifty and Sensex confirm their eighth straight weekly decline — now officially the longest losing streak since 2001 — as Bajaj Auto and Maruti Suzuki slide on a weak festive-season sales mix, even as Brent crude jumps past $102 on a third US aircraft carrier heading to the Middle East, GIFT Nifty signals another negative Friday open, DIIs keep absorbing FII selling, and Wall Street ekes out modest gains ahead of Friday's US jobs report.</summary>
+  </entry>
   <entry>
     <title>Edition 046 — 1 October 2026</title>
     <link href="https://the-hour-brief.vercel.app/archive/2026-10-01.html"/>
@@ -208,12 +215,5 @@
     <id>https://the-hour-brief.vercel.app/archive/2026-09-02.html</id>
     <updated>2026-09-02T02:55:00Z</updated>
     <summary type="text">AI &amp; Tech: The Pentagon's custom ChatGPT and Grok rollout tops 1.7 million users and Anthropic locks in a $35 billion Nvidia-backed compute deal with Lambda, as the FTC and 22 states sue Amazon over an alleged $20 billion advertiser overcharge scheme, while Berlin confirms Rhysida ransomware stole city data weeks before its state election, the EU commits €387.8 million to an AMD-powered supercomputer in Finland, and Meta's $18 billion child-safety settlement leans on AI to guess who's underage. Product &amp; Business: India's Unacademy completes its edtech unwind, selling to rival upGrad for $200 million — a 94% haircut from its $3.4 billion peak — as Vodafone Idea recruits Shah Rukh Khan for a rebrand push and Amazon Now plots a 300-city quick-commerce expansion, while Tata Elxsi partners with Sarla Aviation on India's first indigenous air taxi, and fresh funding lands for battery-swapping network Yuma Energy and EV-charger maker Zenergize. Stock Market: Adani group stocks rebound up to 4.6% a day after MSCI's rebalancing collided with India's new closing auction to wipe $15 billion off the group, as ITC jumps on an AI-services push into Happiest Minds and Hy-Tech Engineers' IPO surges 48% on debut, even as fresh US strikes on Iran send oil and Treasury yields higher and Wall Street falls for a second straight session on surging Fed rate-hike odds.</summary>
-  </entry>
-  <entry>
-    <title>Edition 017 — 1 September 2026</title>
-    <link href="https://the-hour-brief.vercel.app/archive/2026-09-01.html"/>
-    <id>https://the-hour-brief.vercel.app/archive/2026-09-01.html</id>
-    <updated>2026-09-01T02:55:00Z</updated>
-    <summary type="text">AI &amp; Tech: Anthropic reportedly preps an IPO that could match SpaceX's record $86.2 billion raise as OpenAI co-founder Greg Brockman bankrolls a $50 million campaign defending AI data centers ahead of the midterms, while infostealer malware is caught hijacking Claude accounts without a password, OpenAI quietly buys up tens of thousands of Mac minis to train its next computer-using agents, and Brussels designates ChatGPT a regulated "search engine" under its toughest digital-safety rules. Product &amp; Business: HDFC Bank stuns investors as CEO Sashidhar Jagdishan declines a fresh term and will exit on October 26, just as Apple's John Ternus formally succeeds Tim Cook as CEO and Nvidia commits $3.5 billion to MediaTek to lock down a custom-AI-chip ally, while Aon agrees to pay KKR $17 billion for USI Insurance, State Street closes its stake in Groww's asset-management arm, and Purple Style Labs' ₹680 crore IPO draws a tepid opening day. Stock Market: MSCI's index rejig collides with India's new closing-auction mechanism to wipe roughly $15 billion off Adani Group stocks, dragging Sensex and Nifty into a second straight loss as fresh US-Iran clashes send Brent crude above $90, even as gold-fintech Augmont Enterprises pops 22% on debut and Wall Street closes out a winning August on a cautious note.</summary>
   </entry>
 </feed>
