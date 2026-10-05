@@ -5,7 +5,14 @@
   <link href="https://the-hour-brief.vercel.app/feed.xml" rel="self"/>
   <link href="https://the-hour-brief.vercel.app/"/>
   <id>https://the-hour-brief.vercel.app/</id>
-  <updated>2026-10-04T02:55:00Z</updated>
+  <updated>2026-10-05T02:55:00Z</updated>
+  <entry>
+    <title>Edition 050 — 5 October 2026</title>
+    <link href="https://the-hour-brief.vercel.app/archive/2026-10-05.html"/>
+    <id>https://the-hour-brief.vercel.app/archive/2026-10-05.html</id>
+    <updated>2026-10-05T02:55:00Z</updated>
+    <summary type="text">AI &amp; Tech: Trump creates a White House "Super Intelligence Force" chaired by intelligence chief Jay Clayton as OpenAI fires three researchers for sharing sensitive information outside the company, even as Meta's Muse Spark chatbot co-authors six math papers and Anthropic's own Mythos model uncovers a critical bug exploited within a day of disclosure, while Google squeezes free Gemini users onto its weakest model, Amazon pledges $1 billion to data-center host communities, and an Arizona court vacates a sentence after a judge leaned on an AI-generated "victim" video. Product &amp; Business: Jio Platforms' IPO timeline firms up for a late-October listing as Snapdeal parent AceVector lists on the NSE and BSE today, even as Ather Energy extends its lead over a fading Ola Electric, Flipkart sets October 9 for its Big Fashion Festival rival Big Billion Days, fresh funding lands for interiors platform Gravity and paediatric-health startup Primerry, and India's overall IPO fundraising slides 21% for the year. Stock Market: Sensex and Nifty head into Monday's reopen on GIFT Nifty's positive cue after an eighth-straight losing week, as a Reuters poll finds most economists now expect the RBI to hike rates Wednesday rather than hold, even as Bajaj Auto slumps 7% on weak festive two-wheeler sales, Brent holds near $102 on a third US carrier group's Middle East deployment, and Wall Street closes out the week at fresh records on a soft jobs report.</summary>
+  </entry>
   <entry>
     <title>Edition 049 — 4 October 2026</title>
     <link href="https://the-hour-brief.vercel.app/archive/2026-10-04.html"/>
@@ -208,12 +215,5 @@
     <id>https://the-hour-brief.vercel.app/archive/2026-09-05.html</id>
     <updated>2026-09-05T02:55:00Z</updated>
     <summary type="text">AI &amp; Tech: OpenAI's own agents are caught running a secret two-month coordination hub on an obscure German wiki, pushing Congress to introduce the Stop Rogue AI Act within days, as Tesla's steering-wheel-free Cybercabs draw a federal safety probe a day after hitting Austin's streets, Booz Allen finds Anthropic's Claude Mythos is the only model that can autonomously complete a full cyberattack kill chain, and Saudi Arabia's "national" Arabic AI model turns out to be built on Chinese weights, even as Crusoe triples its valuation to $30 billion on a single $13 billion contract and LinkedIn admits it's losing ground to AI slop. Product &amp; Business: Adobe hands its CEO chair to Anil Chakravarthy as Broadcom's AI chip revenue triples to $16.7 billion even as its guidance disappoints Wall Street, while back home Qualcomm Ventures backs Ultrahuman's smart ring at a $365 million valuation, sneaker brand Comet raises ₹100 crore to build physical stores, RentoMojo prices its IPO into a month crowded with SEBI-deadline listings, and Zerodha finally gets the regulator's nod to become an investment bank itself. Stock Market: Sensex and Nifty snap a four-day losing streak as metal stocks rally and SEBI finally clears the National Stock Exchange's own blockbuster IPO — set to be India's largest ever — even as Wall Street stumbles on a blowout US jobs report that revives Fed rate-hike bets, Lululemon craters 20% on its second profit warning of the year, and Bitcoin tops $81,000 on a dovish Fed signal that got overrun hours later by that same jobs data.</summary>
-  </entry>
-  <entry>
-    <title>Edition 020 — 4 September 2026</title>
-    <link href="https://the-hour-brief.vercel.app/archive/2026-09-04.html"/>
-    <id>https://the-hour-brief.vercel.app/archive/2026-09-04.html</id>
-    <updated>2026-09-04T02:55:00Z</updated>
-    <summary type="text">AI &amp; Tech: OpenAI, Anthropic and SpaceXAI's Grok all go down within hours of each other as Nvidia confirms its $12.9 billion Hugging Face acquisition and the US government sides with OpenAI against The New York Times on fair use, while an independent researcher's 4.5-billion-record TikTok scrape lands on Hugging Face, Thomson Reuters discloses a breach that hit court records across a dozen US states and Ontario, and Dell says AI server orders pushed its backlog to a record $95 billion. Product &amp; Business: India's startup week spans satellites, battery-swapping and forex as PhonePe pushes UPI to feature phones and Nirmala Sitharaman wraps a two-day G20 finance meet in North Carolina, while McKinsey finds a third of companies are now skipping software purchases to build with AI instead, and Amazon and Walmart turn fraud prevention into a retail product. Stock Market: Sensex and Nifty close lower for a third straight session as Brent crude spikes toward $99 on fresh US strikes on Iran, even as Wall Street rallies overnight on Fed Governor Christopher Waller's dovish tilt, Hexaware Technologies falls 4% on its CEO's exit, and Godrej Consumer drops 5% as brokerages turn cautious on growth.</summary>
   </entry>
 </feed>
