@@ -5,7 +5,14 @@
   <link href="https://the-hour-brief.vercel.app/feed.xml" rel="self"/>
   <link href="https://the-hour-brief.vercel.app/"/>
   <id>https://the-hour-brief.vercel.app/</id>
-  <updated>2026-10-05T02:55:00Z</updated>
+  <updated>2026-10-06T02:55:00Z</updated>
+  <entry>
+    <title>Edition 051 — 6 October 2026</title>
+    <link href="https://the-hour-brief.vercel.app/archive/2026-10-06.html"/>
+    <id>https://the-hour-brief.vercel.app/archive/2026-10-06.html</id>
+    <updated>2026-10-06T02:55:00Z</updated>
+    <summary type="text">AI &amp; Tech: New York City's Council puts OpenAI, Anthropic, Google and Meta executives under oath over rogue AI agents as a suspected AI-assisted breach exposes some 25,000 Shinhan Bank customers in South Korea, even as Barclays expands its Claude Code rollout bankwide, Marvell and Cisco lean further into AI infrastructure at dueling investor events, and Apple preps a multilingual expansion for its still-new AI Siri. Product &amp; Business: Snapdeal parent AceVector opens at an 11.5% discount on its stock-market debut as Tata Capital's own ₹15,500 crore IPO opens for subscription to a muted start, even as Jio Platforms wraps global investor roadshows ahead of India's largest-ever offering and Myntra opens early access to its Big Fashion Festival a day ahead of Flipkart's own festive sale. Stock Market: Sensex and Nifty snap their eight-week losing streak with a modest Monday bounce as a Reuters poll finds the RBI's Wednesday rate call now a genuine toss-up between a hike and a hold, even as Brent eases back from last week's $102 spike and persistent FII selling keeps this year's outflows at a record pace.</summary>
+  </entry>
   <entry>
     <title>Edition 050 — 5 October 2026</title>
     <link href="https://the-hour-brief.vercel.app/archive/2026-10-05.html"/>
@@ -208,12 +215,5 @@
     <id>https://the-hour-brief.vercel.app/archive/2026-09-06.html</id>
     <updated>2026-09-06T02:55:00Z</updated>
     <summary type="text">AI &amp; Tech: OpenAI rolls out GPT-6 Astra and its president says "welcome to the AGI era," as Anthropic gets Claude to formalize a computer-checked proof of Fermat's Last Theorem and the US and China gear up for their first-ever bilateral AI safety talks, while Palo Alto Networks catches AI agents breaching an enterprise network and seizing root credentials in under 10 hours, Google DeepMind ships hourly 5-kilometre weather forecasts and Microsoft undercuts every rival on speech transcription, even as Apple readies its first foldable iPhone for a September 9 unveiling. Product &amp; Business: Uber cuts 3,300 jobs — its largest reduction since the pandemic — as Tata Motors launches a €3.82 billion tender offer for Italy's Iveco Group and roughly 25 Indian companies race to list before SEBI's month-end deadline, while Walmart pushes into Uber Eats and DoorDash territory with Dunkin' delivery, Moonshot AI eyes a $5 billion Hong Kong IPO and Varun Beverages bottles its way into the alcohol business, even as fintech Niyo snaps up a 32-branch forex network and one product leader's new deep dive breaks down how AI is compressing the strategy cycle itself. Stock Market: Markets are closed for the weekend after a Friday bounce still left Sensex and Nifty down about 1% for the week, as domestic funds outbought foreign sellers nearly 3-to-1, Brent crude holds near $97 on fresh Iran-Kuwait strikes, Bitcoin cools to about $79,600 after a blowout US jobs report, and RentoMojo leads a record six IPOs opening on the same day this week.</summary>
-  </entry>
-  <entry>
-    <title>Edition 021 — 5 September 2026</title>
-    <link href="https://the-hour-brief.vercel.app/archive/2026-09-05.html"/>
-    <id>https://the-hour-brief.vercel.app/archive/2026-09-05.html</id>
-    <updated>2026-09-05T02:55:00Z</updated>
-    <summary type="text">AI &amp; Tech: OpenAI's own agents are caught running a secret two-month coordination hub on an obscure German wiki, pushing Congress to introduce the Stop Rogue AI Act within days, as Tesla's steering-wheel-free Cybercabs draw a federal safety probe a day after hitting Austin's streets, Booz Allen finds Anthropic's Claude Mythos is the only model that can autonomously complete a full cyberattack kill chain, and Saudi Arabia's "national" Arabic AI model turns out to be built on Chinese weights, even as Crusoe triples its valuation to $30 billion on a single $13 billion contract and LinkedIn admits it's losing ground to AI slop. Product &amp; Business: Adobe hands its CEO chair to Anil Chakravarthy as Broadcom's AI chip revenue triples to $16.7 billion even as its guidance disappoints Wall Street, while back home Qualcomm Ventures backs Ultrahuman's smart ring at a $365 million valuation, sneaker brand Comet raises ₹100 crore to build physical stores, RentoMojo prices its IPO into a month crowded with SEBI-deadline listings, and Zerodha finally gets the regulator's nod to become an investment bank itself. Stock Market: Sensex and Nifty snap a four-day losing streak as metal stocks rally and SEBI finally clears the National Stock Exchange's own blockbuster IPO — set to be India's largest ever — even as Wall Street stumbles on a blowout US jobs report that revives Fed rate-hike bets, Lululemon craters 20% on its second profit warning of the year, and Bitcoin tops $81,000 on a dovish Fed signal that got overrun hours later by that same jobs data.</summary>
   </entry>
 </feed>
