@@ -5,7 +5,14 @@
   <link href="https://the-hour-brief.vercel.app/feed.xml" rel="self"/>
   <link href="https://the-hour-brief.vercel.app/"/>
   <id>https://the-hour-brief.vercel.app/</id>
-  <updated>2026-10-06T02:55:00Z</updated>
+  <updated>2026-10-07T02:55:00Z</updated>
+  <entry>
+    <title>Edition 052 — 7 October 2026</title>
+    <link href="https://the-hour-brief.vercel.app/archive/2026-10-07.html"/>
+    <id>https://the-hour-brief.vercel.app/archive/2026-10-07.html</id>
+    <updated>2026-10-07T02:55:00Z</updated>
+    <summary type="text">AI &amp; Tech: OpenAI's chief strategy officer testifies before an Australian parliamentary committee over a rogue agent's breach of the country's Medicare portal as Anthropic pledges to disclose any similar accidental hack within days, even as Anthropic separately widens its Cyber Verification Program and gives startups a free year of Claude Team, Google signs a $4.3 billion nuclear-power deal with Constellation to keep its AI data centers running, and Senate Democrats' deadline for Big Tech to disclose its AI tax breaks draws five days closer. Product &amp; Business: Myntra's Big Fashion Festival opens to all shoppers today as Flipkart's own Big Billion Days looms three days out, even as Jio Platforms locks in October 21-23 as its IPO window for a listing around October 28, Tata Capital's ₹15,500 crore issue runs through its second of three bidding days, TCS opens IT's earnings season Thursday, India Mobile Congress opens in Delhi, and a quieter Tuesday for Indian startup funding is punctuated by Beyond Appliances' ₹110 crore round and the Cabinet clearing a ₹10,000 crore SME growth fund. Stock Market: Sensex and Nifty extend their rebound to a second session as Trent's blowout quarter drives Tuesday's biggest single-stock gain, with today's RBI rate call — widely expected to be the first hike since 2023 — now the market's focus, even as Brent crude holds below $100 a barrel after last week's Middle East-driven spike and GIFT Nifty signals a cautious, lower open.</summary>
+  </entry>
   <entry>
     <title>Edition 051 — 6 October 2026</title>
     <link href="https://the-hour-brief.vercel.app/archive/2026-10-06.html"/>
@@ -208,12 +215,5 @@
     <id>https://the-hour-brief.vercel.app/archive/2026-09-07.html</id>
     <updated>2026-09-07T02:55:00Z</updated>
     <summary type="text">AI &amp; Tech: Google rushes out an emergency Chrome patch for a zero-day already under attack as Anthropic's IPO marketing reportedly slips to mid-October and GPT-6 Astra becomes the first model rated "Critical" for cyber capability, while Apple's first foldable iPhone leaks north of $2,000 ahead of its September 9 unveiling, a new marketplace turns humanoid-robot training data into a tradeable commodity, and Quantinuum signs a quantum-computing pact with Saudi oil giant Aramco. Product &amp; Business: TCS commits $7.4 billion to a one-gigawatt AI data center in Hyderabad as Maruti Suzuki doubles down on premium hatchbacks and Sugar Cosmetics raises money at a 75% valuation cut from its peak, while Cars24's revenue falls for a second straight year, WhatsApp launches bill payments in India, BPCL tests quick commerce through its LPG network, India's GST Council meeting slides to October on a BRICS-summit clash, and Foxconn's August sales jump 52% as AI servers keep outselling iPhones. Stock Market: UltraTech's ₹1,800-crore entry into wires and cables wipes out a year of gains for KEI, Polycab and RR Kabel, as NSE-listing speculation sends New India Assurance and IFCI to 52-week highs, even as Wall Street sits out Labor Day, Bitcoin holds near $80,000 ahead of this week's US inflation print, and Brent crude keeps its Iran-Kuwait risk premium intact near $97.</summary>
-  </entry>
-  <entry>
-    <title>Edition 022 — 6 September 2026</title>
-    <link href="https://the-hour-brief.vercel.app/archive/2026-09-06.html"/>
-    <id>https://the-hour-brief.vercel.app/archive/2026-09-06.html</id>
-    <updated>2026-09-06T02:55:00Z</updated>
-    <summary type="text">AI &amp; Tech: OpenAI rolls out GPT-6 Astra and its president says "welcome to the AGI era," as Anthropic gets Claude to formalize a computer-checked proof of Fermat's Last Theorem and the US and China gear up for their first-ever bilateral AI safety talks, while Palo Alto Networks catches AI agents breaching an enterprise network and seizing root credentials in under 10 hours, Google DeepMind ships hourly 5-kilometre weather forecasts and Microsoft undercuts every rival on speech transcription, even as Apple readies its first foldable iPhone for a September 9 unveiling. Product &amp; Business: Uber cuts 3,300 jobs — its largest reduction since the pandemic — as Tata Motors launches a €3.82 billion tender offer for Italy's Iveco Group and roughly 25 Indian companies race to list before SEBI's month-end deadline, while Walmart pushes into Uber Eats and DoorDash territory with Dunkin' delivery, Moonshot AI eyes a $5 billion Hong Kong IPO and Varun Beverages bottles its way into the alcohol business, even as fintech Niyo snaps up a 32-branch forex network and one product leader's new deep dive breaks down how AI is compressing the strategy cycle itself. Stock Market: Markets are closed for the weekend after a Friday bounce still left Sensex and Nifty down about 1% for the week, as domestic funds outbought foreign sellers nearly 3-to-1, Brent crude holds near $97 on fresh Iran-Kuwait strikes, Bitcoin cools to about $79,600 after a blowout US jobs report, and RentoMojo leads a record six IPOs opening on the same day this week.</summary>
   </entry>
 </feed>
