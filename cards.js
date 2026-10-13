@@ -403,9 +403,8 @@
       mn.addEventListener('click', function () { R.menu(); });
       top.appendChild(mn);
     }
-    ui.list = btn('dk-top-btn dk-tolist', 'List', 'Back to the scrolling list');
-    ui.list.addEventListener('click', function () { close(); });
-    top.appendChild(ui.list);
+    // No separate "List" button here any more — the one List | Cards switch (mobile.js, fixed above the tab bar) is
+    // reachable the whole time the deck is open, so this header does not need its own way back.
     deck.appendChild(top);
 
     track = mk('div', 'dk-track');

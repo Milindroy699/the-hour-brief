@@ -103,13 +103,20 @@ Text is copied with `textContent`, never as HTML.
   question), then the about paragraph and the free-to-read line. "See today's stories" is pinned below — worded to name the destination (the reader is leaving
   the cover for the first section, a card-level jump) rather than "Start reading", which read as "there's more of this same card" and led a reader to expect
   scrolling further within the quote, not a swipe to a new card. The two tiles follow Listen and the quiz chip, which are built a moment after the page, and are hidden when there is no audio / the quiz is off.
-- **Default:** **Cards** is the view unless the reader chose List (`localStorage` key `hb-view-v1`: `cards` | `list`; unset means cards). Tapping List in the deck
-  or the List side of the `List | Cards` switch (under the section chips) stores `list`; the Cards side or the menu item stores `cards`. The choice is
-  per device. To make the list the default again, change `getView()` in `mobile.js`.
+- **Default:** **Cards** is the view unless the reader chose List (`localStorage` key `hb-view-v1`: `cards` | `list`; unset means cards). One `List | Cards`
+  switch (`viewSwitch()` in `mobile.js`) does the switching — fixed, centred, just above the tab bar, the same control in the same place whichever view is
+  showing (2026-09-29: moved off the old in-flow pill under the section chips, which replaced the deck's own separate "List" header button — one place to
+  switch, not two depending on where you already are; fallback user feedback: the two different spots made it hard to find). It sits above the deck
+  (z-index 9982, between the deck's 9981 and the Audio hub's 9983) so it stays usable over the cards but disappears under the hub or any sheet without
+  needing its own per-overlay checks. `html.hb-switch-on` (toggled whenever it is actually showing) reserves its own `--hb-switch-h` band above the tab
+  bar — in `.page`'s bottom padding, the mini player, the scroll-top button and toast, and the deck's own `bottom` offset — so none of those collide with
+  it. Tapping List closes the deck if it is open (`HBCards.close()`); tapping Cards opens it (`openCards()`); the pressed state follows `hb:deck`, the
+  same event cards.js already fires on every open and close, so it never drifts out of sync. The menu item ("Swipe cards") still opens Cards too.
+  The choice is per device. To make the list the default again, change `getView()` in `mobile.js`.
 - **Links that point into the list open the list**, not the deck (`deckTarget()` in `mobile.js`): `#quiz` and other section anchors, a league invite `?join=`,
   a friend's score `?beat=`. A shared story link (`#ai-2`, a saved story) opens the deck on that story's card. `?classic=1` (website only) is untouched.
 - **No flash of the list:** while `cards.js` loads at startup the page is hidden (`pendingOn/pendingOff`, 4 s safety); if it cannot load, the list shows and nothing is thrown at the reader.
-- **The app bar is under the deck**, so the deck's header carries **Saved stories** and the **Menu** (Sections, Text size, reminder, share, e-mail sign-up, and the Contact · About · Privacy links) plus **List**. "Get it by email" from the deck jumps to the sign-up box in the list.
+- **The app bar is under the deck**, so the deck's header carries **Saved stories** and the **Menu** (Sections, Text size, reminder, share, e-mail sign-up, and the Contact · About · Privacy links); the List | Cards switch above the tab bar is the way back to the list. "Get it by email" from the deck jumps to the sign-up box in the list.
 - **Tabs:** Today returns to the cards (to the cover); Challenge and the quiz card's / tile's "Play the quiz" leave the deck **instantly**, onto the first question / the quiz section, with the feed never scrolling past, and do not change the saved choice. The instant jumps use `window.scrollTo({top, behavior: 'instant'})`, not `scrollIntoView({behavior: 'instant'})`, which Chrome 113 (the Android WebView) ignores: it eases instead and can stop short.
 - **Audio is a round floating button** (`.dk-fab`, right side, above the card's pinned buttons; text can scroll clear of it). Tap it and it opens into a small player (what is playing, previous / play-pause / next, speed, stop, "Show what's playing"); the arrow collapses it. While playing the button pulses with sound bars. It only forwards clicks to Listen's own player and start button (`.hb-pl-*`, `.listen-go`), which stay in the page, so Listen, the Audio screen and the button cannot disagree. The page's mini player is hidden while the deck shows; the button steps aside while the full Audio screen is open, and is absent when the device has no audio.
 - **The deck follows Listen** (like the list's auto-scroll): `listen.js` fires `hb:listen` on every state change and exposes `HBListen.current()`; `onListen()` in `cards.js` turns the deck to the card that holds the part being read: the cover for the introduction, a section card for a section, a story card for a story, the quiz card for the closing lines. The card being read has a purple edge. It never fights the reader: no following for 4 seconds after they touch the deck, and none while paused. Opening the deck while something plays starts on that card.
@@ -117,10 +124,14 @@ Text is copied with `textContent`, never as HTML.
 - **Hint:** the one-time "Make it yours" (sections) hint, on the second day the app is opened, sits above the first section when the list is showing (unchanged, part of the normal document flow, costs no space it isn't given). When Cards is showing, it instead **floats** over the top of the current card (`.hb-tip-float`, `position: absolute`, anchored just under the deck's top bar) rather than sitting in the flex flow and squeezing the card down — reading space stays full height at all times. It fades itself out on its own after `HB_TIP_FADE_MS` (default 6s), or the moment the reader's first real touch lands on the track, whichever comes first — neither counts as a "no", so it gets another chance on the next visit; only an explicit "Not now" (or choosing sections) marks it done for good. State in `hb-tip-v1`.
 - **Web only:** no store release is needed; a Vercel deploy reaches every installed app on its next open.
 - **Test on a real Android WebView, not just headless Chrome** (see Emulator notes in the mobile docs).
-Tests: `node tools/browser-tests/cards.mjs` (154 checks, includes real touch swipes via `cdp.mjs` `swipe()`, and real Listen with a fake voice for the follow tests). The other suites (`premium`, `prefs`, `listen`, `bridge`) test the list, so they open with the List view stored.
+Tests: `node tools/browser-tests/cards.mjs` (159 checks, includes real touch swipes via `cdp.mjs` `swipe()`, and real Listen with a fake voice for the follow tests). The other suites (`premium`, `prefs`, `listen`, `bridge`) test the list, so they open with the List view stored — and now also exercise the switch, since `html.hb-switch-on` is active there too.
 A known flake, present before this session and not caused by it: 3 of the checks around tapping/swiping straight to a section's first story (near
 the top of the suite) occasionally land one card further in than expected — reproduces on unmodified code too, so it looks like a timing quirk of
 the synthesized CDP touch gesture rather than the app; worth a closer look, but not from this pass.
+Two more known flakes, found the same way (confirmed on unmodified code via `git stash`), in the other suites: `premium.mjs`'s "even if the browser
+stops the scroll partway, 'Next question' still ends up above the tab bar" (off by ~5px past the tab bar on some runs), and `listen.mjs`'s "click
+starts the recording... and it advances" (the recording's `currentTime` sometimes has not reached the 0.8s the check wants yet). Neither is caused
+by the switch redesign below; both reproduce identically on pristine code.
 
 ## Reload, and the next edition, without friction (`capacitor-bridge.js`, native apps only)
 

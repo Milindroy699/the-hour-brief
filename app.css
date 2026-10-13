@@ -43,6 +43,7 @@
   --hb-sans: "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
   --hb-label: "Space Grotesk", "Inter", -apple-system, system-ui, sans-serif;
   --hb-tab-h: calc(66px + env(safe-area-inset-bottom, 0px));
+  --hb-switch-h: 54px;  /* the List | Cards switch's own reserved band, just above the tab bar, when it is showing */
 
   --bg: #faf9fd;
   --paper: #ffffff;
@@ -387,6 +388,16 @@ footer.colophon { border-top-color: var(--line); }
 body.hb-listening { padding-bottom: calc(var(--hb-tab-h) + 130px); }
 body.hb-listening #mob-top { bottom: calc(var(--hb-tab-h) + 138px); }
 body.hb-listening #mob-toast { bottom: calc(var(--hb-tab-h) + 150px); }
+/* The List | Cards switch floats just above the tab bar and is the same control, in the same place, whichever view is
+   showing — so while it is on screen everything else that already sits near the tab bar reserves room for it too,
+   rather than it overlapping the deck's own footer or the mini player. */
+html.hb-switch-on .page { padding-bottom: calc(var(--hb-tab-h) + var(--hb-switch-h) + 32px); }
+html.hb-switch-on #mob-top { bottom: calc(var(--hb-tab-h) + var(--hb-switch-h) + 14px); }
+html.hb-switch-on #mob-toast { bottom: calc(var(--hb-tab-h) + var(--hb-switch-h) + 16px); }
+html.hb-switch-on .hb-player { bottom: calc(var(--hb-tab-h) + var(--hb-switch-h) + 8px); }
+html.hb-switch-on body.hb-listening { padding-bottom: calc(var(--hb-tab-h) + var(--hb-switch-h) + 130px); }
+html.hb-switch-on body.hb-listening #mob-top { bottom: calc(var(--hb-tab-h) + var(--hb-switch-h) + 138px); }
+html.hb-switch-on body.hb-listening #mob-toast { bottom: calc(var(--hb-tab-h) + var(--hb-switch-h) + 150px); }
 .hb-pl-lane { font-family: var(--hb-label); color: var(--hb-primary-2); }
 .hb-pl-play { background: var(--hb-primary); }
 .hb-pl-title { font-weight: 650; }
@@ -419,6 +430,7 @@ body.hb-listening #mob-toast { bottom: calc(var(--hb-tab-h) + 150px); }
 /* ---- Audio hub: the full-screen player (opened from the Audio tab or the mini player) ---- */
 html.hb-hub-open, html.hb-hub-open body { overflow: hidden; }
 html.hb-hub-open .hb-player { display: none; }
+html.hb-hub-open .view-switch { display: none; }   /* not a reading-mode decision while browsing Audio */
 .hb-hub { position: fixed; top: 0; left: 0; right: 0; bottom: var(--hb-tab-h); z-index: 9983; display: flex; flex-direction: column; background: var(--bg); color: var(--ink); font-family: var(--hb-sans); }
 .hb-hub[hidden] { display: none; }
 .hub-top { flex: none; display: flex; align-items: center; gap: 12px; padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 10px; background: var(--paper); border-bottom: 1px solid var(--line); box-shadow: 0 2px 8px rgba(18, 19, 22, 0.04); }
@@ -597,9 +609,14 @@ html.hb-hub-open .hb-player { display: none; }
 .hub-eps { margin-bottom: 8px; }
 
 /* ---- Swipe cards (cards.js): the same stories, one per screen ---- */
-.view-switch { display: flex; justify-content: flex-end; margin: 0 0 10px; }
+/* One switch, fixed and centred just above the tab bar, the same control in the same place whether List or Cards is
+   showing (not two different controls in two different spots depending on the view). Sits above the deck (z-index
+   9981) so it stays usable there, but below the Audio hub (9983) and any sheet, which cover it naturally — switching
+   reading mode makes no sense mid-hub or mid-sheet, so it simply disappears under them rather than needing its own
+   open/closed checks for every one of those. */
+.view-switch { position: fixed; left: 0; right: 0; bottom: calc(var(--hb-tab-h) + 10px); z-index: 9982; display: flex; justify-content: center; pointer-events: none; }
 .view-switch[hidden] { display: none; }
-.vs-in { display: inline-flex; padding: 3px; border-radius: 999px; background: var(--hb-stone); }
+.vs-in { pointer-events: auto; display: inline-flex; padding: 3px; border-radius: 999px; background: rgba(var(--hb-paper-rgb), 0.97); border: 1px solid var(--line); box-shadow: 0 8px 22px rgba(18, 19, 22, 0.16); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
 .vs-in button { min-height: 38px; padding: 0 18px; border: 0; border-radius: 999px; background: transparent; color: var(--ink-soft); font-family: var(--hb-label); font-size: 0.74rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .vs-in button[aria-pressed="true"] { background: var(--hb-primary); color: #fff; }
 .vs-in button:focus-visible { outline: 2px solid var(--hb-primary); outline-offset: 2px; }
@@ -608,6 +625,7 @@ html.hb-deck-open, html.hb-deck-open body { overflow: hidden; }
 html.hb-deck-open #mob-progress, html.hb-deck-open #mob-top { display: none; }
 .hb-deck { position: fixed; top: 0; left: 0; right: 0; bottom: var(--hb-tab-h); z-index: 9981; display: flex; flex-direction: column; background: var(--bg); color: var(--ink); font-family: var(--hb-sans); }
 .hb-deck { visibility: visible; }
+html.hb-switch-on .hb-deck { bottom: calc(var(--hb-tab-h) + var(--hb-switch-h)); }   /* leaves the switch its own band, clear of the deck's own footer */
 .hb-deck[hidden] { display: none; }
 /* Inside the deck this floats over the top of the card instead of pushing it down — reading space stays full-height, and the
    card fades itself out on its own (see cards.js), so it never lingers over the content. */

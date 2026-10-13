@@ -706,29 +706,39 @@
     if (!t) { end(); return; }
     withCards(function (c) { c.open(t.id ? t : undefined); end(); }, end);
   }
+  // One switch, fixed just above the tab bar, built once and reused whichever view is showing — not two different
+  // controls in two different places (the old in-flow pill under the chips, and a separate "List" button in the
+  // deck's own header) depending on where the reader already is. Visibility and the pressed state both follow
+  // hb:deck, the same event cards.js already fires on every open/close.
   function viewSwitch() {
-    var nav = document.querySelector('.nav');
-    if (!nav) return;
-    var host = document.querySelector('.reader-tools');
     var vs = document.querySelector('.view-switch');
     if (!vs && cardsOk()) {
       vs = mk('div', 'view-switch');
+      vs.hidden = true;                      // set true before it is visible even for a frame, syncViewSwitch() below decides
       vs.setAttribute('role', 'group');
       vs.setAttribute('aria-label', 'Reading view');
       var inner = mk('div', 'vs-in');
       var list = mk('button', '', 'List'), cards = mk('button', '', 'Cards');
       list.type = cards.type = 'button';
-      list.setAttribute('aria-pressed', 'true');
-      cards.setAttribute('aria-pressed', 'false');
+      list.addEventListener('click', function () { if (deckOpen()) window.HBCards.close(); });
       cards.addEventListener('click', function () { openCards(); });
       inner.appendChild(list);
       inner.appendChild(cards);
       vs.appendChild(inner);
+      document.body.appendChild(vs);
+      document.addEventListener('hb:deck', syncViewSwitch);
     }
     if (!vs) return;
-    if (host && vs.nextElementSibling !== host) host.insertAdjacentElement('beforebegin', vs);
-    else if (!vs.parentNode) nav.insertAdjacentElement('afterend', vs);
     vs.hidden = !cardsOk();
+    document.documentElement.classList.toggle('hb-switch-on', !vs.hidden);
+    syncViewSwitch();
+  }
+  function syncViewSwitch() {
+    var vs = document.querySelector('.view-switch');
+    if (!vs || vs.hidden) return;
+    var on = deckOpen(), btns = vs.querySelectorAll('button');
+    btns[0].setAttribute('aria-pressed', String(!on));
+    btns[1].setAttribute('aria-pressed', String(on));
   }
 
   // Customising is offered in passing, not at the door. The app counts the days it is opened; on the second day one small
