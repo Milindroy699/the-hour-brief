@@ -67,13 +67,20 @@ const view = () => c.ev(`localStorage.getItem('hb-view-v1')`);
 
 // ---------- 1. the switch, and where cards exist ----------
 await open();
-let t = await J(`(() => { const vs = document.querySelector('.view-switch'), r = vs.getBoundingClientRect(), cs = getComputedStyle(vs), tab = document.querySelector('.tab-bar').getBoundingClientRect(); return { has: typeof window.HBCards, shown: !vs.hidden, btns: [...document.querySelectorAll('.vs-in button')].map((b) => b.textContent + ':' + b.getAttribute('aria-pressed')), fixed: cs.position, aboveTab: r.bottom <= tab.top, centred: Math.abs((r.left + r.right) / 2 - innerWidth / 2) < 2, switchOn: document.documentElement.classList.contains('hb-switch-on'), top: Math.round(r.top), left: Math.round(r.left) }; })()`);
+let t = await J(`(() => { const vs = document.querySelector('.view-switch'), r = vs.getBoundingClientRect(), cs = getComputedStyle(vs), tab = document.querySelector('.tab-bar').getBoundingClientRect(), pr = document.querySelector('.vs-in').getBoundingClientRect(); return { has: typeof window.HBCards, shown: !vs.hidden, btns: [...document.querySelectorAll('.vs-in button')].map((b) => b.textContent + ':' + b.getAttribute('aria-pressed')), fixed: cs.position, aboveTab: r.bottom <= tab.top + 1, centred: Math.abs((pr.left + pr.right) / 2 - innerWidth / 2) < 2, switchOn: document.documentElement.classList.contains('hb-switch-on'), top: Math.round(pr.top), centreX: Math.round((pr.left + pr.right) / 2) }; })()`);
 check('the app shows one List | Cards switch, fixed and centred just above the tab bar, List selected', t.shown && eq(t.btns, ['List:true', 'Cards:false']) && t.fixed === 'fixed' && t.aboveTab && t.centred && t.switchOn, JSON.stringify(t));
 check('cards.js is not loaded until someone asks for Cards (nothing extra on the normal list)', t.has === 'undefined', JSON.stringify(t));
-const listPos = { top: t.top, left: t.left };
+const listPos = { top: t.top, centreX: t.centreX };
 await openDeck({ cover: true });
-t = await J(`(() => { const r = document.querySelector('.view-switch').getBoundingClientRect(); return { btns: [...document.querySelectorAll('.vs-in button')].map((b) => b.getAttribute('aria-pressed')), top: Math.round(r.top), left: Math.round(r.left) }; })()`);
-check('opening Cards is pressed now, and the switch has not moved a pixel — the exact same control, the exact same spot it was in on the list', eq(t.btns, ['false', 'true']) && t.top === listPos.top && t.left === listPos.left, JSON.stringify({ t, listPos }));
+t = await J(`(() => { const pr = document.querySelector('.vs-in').getBoundingClientRect(); return { btns: [...document.querySelectorAll('.vs-in button')].map((b) => b.getAttribute('aria-pressed')), top: Math.round(pr.top), centreX: Math.round((pr.left + pr.right) / 2) }; })()`);
+check('opening Cards is pressed now, still the exact same control, still horizontally centred — it rides down slightly as the bar shrinks and pulls in underneath it', eq(t.btns, ['false', 'true']) && Math.abs(t.centreX - listPos.centreX) <= 2 && t.top > listPos.top, JSON.stringify({ t, listPos }));
+await c.sleep(400);   // the shrink is an animated transition (0.22s); let it finish before measuring
+t = await J(`(() => { const barH = Math.round(document.querySelector('.tab-bar').getBoundingClientRect().height), lb = document.querySelector('.tab-lb'); return { shrunk: document.documentElement.classList.contains('hb-deck-open'), lbCollapsed: getComputedStyle(lb).maxHeight === '0px', barH }; })()`);
+check('Cards open: the tab bar’s own labels collapse and the bar itself gets noticeably shorter — the card actually gets that space back, not just a gap', t.shrunk && t.lbCollapsed && t.barH < 55, JSON.stringify(t));
+await c.ev(`document.querySelectorAll('.vs-in button')[0].click()`); await c.sleep(700);
+t = await J(`(() => { const lb = document.querySelector('.tab-lb'); return { lbBack: getComputedStyle(lb).maxHeight !== '0px', barH: Math.round(document.querySelector('.tab-bar').getBoundingClientRect().height) }; })()`);
+check('back on List: the full-size bar returns (labels back, taller again)', t.lbBack && t.barH >= 60, JSON.stringify(t));
+await c.ev(`document.querySelectorAll('.vs-in button')[1].click()`); await c.sleep(900);
 await c.ev(`document.querySelectorAll('.vs-in button')[0].click()`); await c.sleep(500);
 check('List, clicked from the switch while Cards was open, closes the deck (the deck’s own header has no separate List button any more)', (await c.ev(`!HBCards.isOpen() && !document.querySelector('.dk-tolist')`)) === true);
 check('and List is pressed again, back on the switch', eq(await J(`[...document.querySelectorAll('.vs-in button')].map((b) => b.getAttribute('aria-pressed'))`), ['true', 'false']));
@@ -107,11 +114,12 @@ await c.shot(`${OUT}/cards_intro.png`);
 t = await J(`(() => { const h = document.querySelector('.dk-intro .dk-hint'), r = h.getBoundingClientRect(); return { tag: h.tagName, text: h.textContent, h: Math.round(r.height), l: Math.round(r.left), r: Math.round(r.right), w: innerWidth, bottom: Math.round(r.bottom), tab: Math.round(document.querySelector('.tab-bar').getBoundingClientRect().top), inScroll: !!h.closest('.dk-scroll') }; })()`);
 check('"Swipe to start" on a section card is a real button, pinned in view (no scrolling to find it), easy to tap and inside the screen', t.tag === 'BUTTON' && t.text === 'Swipe to start' && t.h >= 44 && t.l >= 0 && t.r <= t.w && t.bottom <= t.tab && !t.inScroll, JSON.stringify(t));
 await c.ev(`document.querySelector('.dk-intro .dk-hint').click()`); await c.sleep(900);
-t = await J(`({ pos: document.querySelector('.dk-count').textContent, sec: document.querySelector('.dk-sec-pos').textContent, id: document.querySelector('.dk-card:not([inert])').getAttribute('data-id') })`);
-check('tapping it swipes to the first story of that section, just as a swipe would', t.pos === `3 / ${TOTAL}` && t.sec === 'Story 1 of 7' && t.id === 'ai-1', JSON.stringify(t));
+const curKick = `document.querySelector('.dk-card:not([inert]) .dk-kick').textContent`;
+t = await J(`({ pos: document.querySelector('.dk-count').textContent, sec: ${curKick}, id: document.querySelector('.dk-card:not([inert])').getAttribute('data-id') })`);
+check('tapping it swipes to the first story of that section, just as a swipe would', t.pos === `3 / ${TOTAL}` && t.sec === 'AI & Tech · Story 1 of 7' && t.id === 'ai-1', JSON.stringify(t));
 await c.ev(`HBCards.goTo(1, false)`); await c.sleep(500);
 await c.ev(`document.querySelectorAll('.dk-intro .dk-go')[1].click()`); await c.sleep(900);
-check('tapping a story in that list jumps to it', (await c.ev(`document.querySelector('.dk-sec-pos').textContent`)) === 'Story 2 of 7' && (await pos()) === `4 / ${TOTAL}`, await pos());
+check('tapping a story in that list jumps to it', (await c.ev(curKick)) === 'AI & Tech · Story 2 of 7' && (await pos()) === `4 / ${TOTAL}`, await pos());
 t = await J(`(() => { const card = document.querySelectorAll('.dk-story')[1], it = document.querySelector('#ai-2'); const paras = [...it.querySelectorAll('.story-body > p')].map((p) => p.textContent.replace(/\\s+/g, ' ').trim()); const tk = it.querySelector('.takeaway').cloneNode(true); tk.querySelector('.takeaway-label').remove(); return { h: card.querySelector('.dk-title').textContent === it.querySelector('h3').textContent.trim(), body: JSON.stringify([...card.querySelectorAll('.dk-body p')].map((p) => p.textContent)) === JSON.stringify(paras), clampedInFeed: it.classList.contains('is-collapsed'), take: card.querySelector('.dk-take').textContent.replace('Takeaway', '').trim() === tk.textContent.trim(), src: card.querySelector('.dk-src a').href === it.querySelector('.src a').href, ext: card.querySelector('.dk-src a').target + '/' + card.querySelector('.dk-src a').rel }; })()`);
 check('a story card has the headline, the whole summary (unclamped), the takeaway and the source link, copied from the feed', t.h && t.body && t.take && t.src && t.ext === '_blank/noopener noreferrer', JSON.stringify(t));
 await c.shot(`${OUT}/cards_story.png`);
@@ -139,8 +147,8 @@ check('with the quiz switched off there is no quiz card, and the deck ends with 
 await open();
 await openDeck();
 await c.swipe(195, 420, -250, 0); await c.sleep(800);
-t = await J(`({ pos: document.querySelector('.dk-count').textContent, sl: Math.round(document.querySelector('.dk-track').scrollLeft), w: document.querySelector('.dk-track').clientWidth, sec: document.querySelector('.dk-sec-pos').textContent })`);
-check('a real swipe to the left moves to the next card, snapped exactly to it', t.pos === `3 / ${TOTAL}` && t.sl === 2 * t.w && t.sec === 'Story 1 of 7', JSON.stringify(t));
+t = await J(`({ pos: document.querySelector('.dk-count').textContent, sl: Math.round(document.querySelector('.dk-track').scrollLeft), w: document.querySelector('.dk-track').clientWidth, sec: ${curKick} })`);
+check('a real swipe to the left moves to the next card, snapped exactly to it', t.pos === `3 / ${TOTAL}` && t.sl === 2 * t.w && t.sec === 'AI & Tech · Story 1 of 7', JSON.stringify(t));
 await c.swipe(195, 420, 250, 0); await c.sleep(800);
 check('a swipe to the right goes back', (await pos()) === `2 / ${TOTAL}`);
 await c.swipe(195, 420, -60, 0, 300); await c.sleep(800);
@@ -437,26 +445,24 @@ await open({ view: 'default', wait: 4800, extra: `(() => { const d = Object.getO
 t = await J(`({ deck: !!window.HBCards, visible: document.body.style.visibility, listShown: getComputedStyle(document.querySelector('section.lane')).display !== 'none', toast: !!document.getElementById('mob-toast') && !document.getElementById('mob-toast').hidden })`);
 check('if the deck cannot load, the list appears (page not left hidden) and no error message is thrown at the reader', !t.deck && t.visible === '' && t.listShown && !t.toast, JSON.stringify(t));
 
-// ---------- 8b. the app bar is under the deck, so its actions are in the deck header ----------
+// ---------- 8b. no header in the deck any more — Saved and the Menu are a List away, not duplicated in Cards ----------
 await open({ view: 'default', wait: 2600 });
-t = await J(`({ btns: [...document.querySelectorAll('.dk-top button')].map((b) => b.getAttribute('aria-label')), aa: !!document.querySelector('.dk-size'), noListBtn: !document.querySelector('.dk-tolist') })`);
-check('the deck header offers Saved stories and the Menu — no separate List button, the switch above the tab bar is the one way back', eq(t.btns, ['Saved stories', 'Menu']) && !t.aa && t.noListBtn, JSON.stringify(t));
-await c.ev(`document.querySelector('.dk-menu').click()`); await waitFor(`!!document.querySelector('.rd-menu')`);
-t = await J(`({ items: [...document.querySelectorAll('.rd-item')].map((b) => b.getAttribute('data-act')), foot: [...document.querySelectorAll('.rd-menu-foot a')].map((a) => a.textContent), deckStill: HBCards.isOpen() })`);
-check('the Menu opens over the deck with Sections, Text size, the reminder/share/email items and the Contact · About · Privacy links (no redundant "Swipe cards" item)', t.items.includes('sections') && t.items.includes('textsize') && t.items.includes('share') && !t.items.includes('cards') && eq(t.foot, ['Contact us', 'About', 'Privacy']) && t.deckStill, JSON.stringify(t));
-await c.ev(`document.querySelector('.rd-sheet .rd-close').click()`); await c.sleep(300);
-await c.ev(`document.querySelector('.dk-saved').click()`); await waitFor(`!!document.querySelector('.rd-sheet')`);
-check('Saved stories opens over the deck', (await c.ev(`document.querySelector('.rd-sheet h2').textContent`)) === 'Saved stories' && (await c.ev(`HBCards.isOpen()`)));
-await c.ev(`document.querySelector('.rd-sheet .rd-close').click()`); await c.sleep(300);
-await c.ev(`document.querySelector('.dk-menu').click()`); await waitFor(`!!document.querySelector('.rd-menu')`);
-t = await J(`(() => { const has = !!document.querySelector('.rd-item[data-act=email]'); if (has) document.querySelector('.rd-item[data-act=email]').click(); const box = document.querySelector('.subscribe-box').getBoundingClientRect(); return { has, deck: HBCards.isOpen(), top: Math.round(box.top), bottom: Math.round(box.bottom), tab: Math.round(document.querySelector('.tab-bar').getBoundingClientRect().top) }; })()`);
-check('"Get it by email" from the deck leaves the deck and shows the whole sign-up box on screen (above the tab bar)', t.has && !t.deck && t.top >= 60 && t.bottom <= t.tab, JSON.stringify(t));
-await open({ view: 'default', wait: 2600 });
-await c.ev(`document.querySelector('.dk-menu').click()`); await waitFor(`!!document.querySelector('.rd-menu')`);
+t = await J(`({ top: !document.querySelector('.dk-top'), kick: document.querySelector('.dk-card:not([inert]) .dk-kick').textContent, noListBtn: !document.querySelector('.dk-tolist') })`);
+check('the deck has no header bar at all — the card names its own section, and the switch above the tab bar is the one way back to List', t.top && t.kick && t.noListBtn, JSON.stringify(t));
+await c.ev(`document.querySelectorAll('.vs-in button')[0].click()`); await c.sleep(500);     // List, from the switch
+await c.ev(`document.querySelector('.ab-menu').click()`); await waitFor(`!!document.querySelector('.rd-menu')`);
+t = await J(`({ items: [...document.querySelectorAll('.rd-item')].map((b) => b.getAttribute('data-act')), foot: [...document.querySelectorAll('.rd-menu-foot a')].map((a) => a.textContent) })`);
+// "Swipe cards" legitimately shows up here now — reached from List after switching away from Cards, so it is once
+// again a real way back in, not the redundant entry it would be from inside the deck's own (now-removed) menu.
+check('Menu, reached from List after switching, has Sections, Text size, Swipe cards, the reminder/share/email items and the Contact · About · Privacy links', t.items.includes('sections') && t.items.includes('textsize') && t.items.includes('share') && t.items.includes('cards') && eq(t.foot, ['Contact us', 'About', 'Privacy']), JSON.stringify(t));
 await c.ev(`document.querySelector('.rd-item[data-act=sections]').click()`); await waitFor(`!!document.querySelector('.rd-prefs')`);
 await c.ev(`document.querySelector('.rd-prefs li[data-id=biz] input').click()`); await c.sleep(600);
 await c.ev(`document.querySelector('.rd-sheet .rd-close').click()`); await c.sleep(400);
-check('changing sections from the deck rebuilds the deck without that section', eq(await secOrder(), ['AI & Tech', 'Stock Market']) && (await c.ev(`HBCards.isOpen()`)), JSON.stringify(await secOrder()));
+await c.ev(`document.querySelectorAll('.vs-in button')[1].click()`); await c.sleep(900);     // back to Cards, from the switch
+check('changing sections from List, then switching to Cards, shows the deck rebuilt without that section', eq(await secOrder(), ['AI & Tech', 'Stock Market']) && (await c.ev(`HBCards.isOpen()`)), JSON.stringify(await secOrder()));
+await c.ev(`document.querySelector('.ab-menu').click()`); await waitFor(`!!document.querySelector('.rd-menu')`);
+t = await J(`(() => { const has = !!document.querySelector('.rd-item[data-act=email]'); if (has) document.querySelector('.rd-item[data-act=email]').click(); const box = document.querySelector('.subscribe-box').getBoundingClientRect(); return { has, top: Math.round(box.top), bottom: Math.round(box.bottom), tab: Math.round(document.querySelector('.tab-bar').getBoundingClientRect().top) }; })()`);
+check('"Get it by email" from List shows the whole sign-up box on screen (above the tab bar)', t.has && t.top >= 60 && t.bottom <= t.tab, JSON.stringify(t));
 
 // the Today tab returns to the cards after a trip to the quiz
 await open({ view: 'default', wait: 2600 });
@@ -469,8 +475,8 @@ check('the Today tab brings the cards back (Cards is still your choice)', (await
 // ---------- 8c. the sections hint (a later day), now inside the deck ----------
 const fresh = { n: 0, last: LONG_AGO, done: false, secOn: '' };
 await open({ view: 'default', tip: { ...fresh, n: 1 }, wait: 2800 });
-t = await J(`(() => { const k = document.querySelector('.hb-deck > .hb-tip'); if (!k) return null; const r = k.getBoundingClientRect(), tr = document.querySelector('.dk-track').getBoundingClientRect(), top = document.querySelector('.dk-top').getBoundingClientRect(); return { tip: k.dataset.tip, title: k.querySelector('strong').textContent, btns: [...k.querySelectorAll('button')].map((b) => b.textContent), float: k.classList.contains('hb-tip-float'), noSpaceTaken: Math.abs(tr.top - top.bottom) < 1, overlaysTop: r.top > top.bottom - 1 && r.top < tr.top + 40, inside: r.left >= 0 && r.right <= innerWidth, cards: !!document.querySelector('.hb-tip[data-tip=cards]') }; })()`);
-check('day 2, Cards showing: the "Make it yours" hint floats over the top of the card (not squeezing it) with Choose / Not now', t && t.tip === 'sections' && t.title === 'Make it yours' && eq(t.btns, ['Choose', 'Not now']) && t.float && t.noSpaceTaken && t.overlaysTop && t.inside, JSON.stringify(t));
+t = await J(`(() => { const k = document.querySelector('.hb-deck > .hb-tip'); if (!k) return null; const r = k.getBoundingClientRect(), tr = document.querySelector('.dk-track').getBoundingClientRect(); return { tip: k.dataset.tip, title: k.querySelector('strong').textContent, btns: [...k.querySelectorAll('button')].map((b) => b.textContent), float: k.classList.contains('hb-tip-float'), noSpaceTaken: tr.top === 0, nearTop: r.top >= 0 && r.top < 80, inside: r.left >= 0 && r.right <= innerWidth, cards: !!document.querySelector('.hb-tip[data-tip=cards]') }; })()`);
+check('day 2, Cards showing: the "Make it yours" hint floats near the top of the card (not squeezing it, no header left to measure) with Choose / Not now', t && t.tip === 'sections' && t.title === 'Make it yours' && eq(t.btns, ['Choose', 'Not now']) && t.float && t.noSpaceTaken && t.nearTop && t.inside, JSON.stringify(t));
 check('there is no "Try swipe cards" hint any more (Cards is already the default)', !t.cards);
 await c.shot(`${OUT}/cards_sections_hint.png`);
 await c.ev(`document.querySelector('.hb-tip-go').click()`); await c.sleep(500);
@@ -505,12 +511,17 @@ await c.sleep(400);
 // The quote's attribution (.pause-attr) is only in the page's markup on days the generator has someone to credit — cards.js
 // already builds .dk-quote-by only when it is there (see buildCover in cards.js), so the test follows the same condition
 // rather than assuming today's edition has one.
-t = await J(`(() => { const k = document.querySelector('.dk-cover'), q = (s) => k.querySelector(s), top = (s) => Math.round(q(s).getBoundingClientRect().top), ed = document.querySelector('.edition'), parts = ed.innerHTML.split('<br>').map((x) => x.replace(/<[^>]*>/g, '').trim()), pa = document.querySelector('.pause-attr'), pl = pa && pa.querySelector('a'), by = q('.dk-quote-by'), bl = by && by.querySelector('a'); return { first: k === document.querySelector('.dk-card'), kick: q('.dk-kick').textContent, edition: parts[0], word: q('.dk-wordmark').textContent, tag: q('.dk-metaline').textContent === document.querySelector('.tagline').textContent.trim(), label: q('.dk-quote-label').textContent, quote: q('.dk-quote-text').textContent === document.querySelector('.pause-text').textContent.trim(), hasAttr: !!pa, byMatchesAttr: !!pa === !!by, byText: by ? by.textContent : null, link: pl ? !!bl && bl.getAttribute('href') === pl.getAttribute('href') && bl.target + '/' + bl.rel === '_blank/noopener noreferrer' : !bl, intro: q('.dk-intro-p').textContent.startsWith('The Hour Brief is a daily read'), free: !!q('.dk-free'), pos: [top('.dk-quote'), top('.dk-listen'), top('.dk-quizt'), top('.dk-intro-p')], start: q('.dk-hint').textContent, startInScroll: !!q('.dk-hint').closest('.dk-scroll'), sec: document.querySelector('.dk-sec-name').textContent, sub: document.querySelector('.dk-sec-pos').textContent }; })()`);
+t = await J(`(() => { const k = document.querySelector('.dk-cover'), q = (s) => k.querySelector(s), top = (s) => Math.round(q(s).getBoundingClientRect().top), ed = document.querySelector('.edition'), parts = ed.innerHTML.split('<br>').map((x) => x.replace(/<[^>]*>/g, '').trim()), pa = document.querySelector('.pause-attr'), pl = pa && pa.querySelector('a'), by = q('.dk-quote-by'), bl = by && by.querySelector('a'); return { first: k === document.querySelector('.dk-card'), kick: q('.dk-kick').textContent, edition: parts[0], word: q('.dk-wordmark').textContent, tag: q('.dk-metaline').textContent === document.querySelector('.tagline').textContent.trim(), label: q('.dk-quote-label').textContent, quote: q('.dk-quote-text').textContent === document.querySelector('.pause-text').textContent.trim(), hasAttr: !!pa, byMatchesAttr: !!pa === !!by, byText: by ? by.textContent : null, link: pl ? !!bl && bl.getAttribute('href') === pl.getAttribute('href') && bl.target + '/' + bl.rel === '_blank/noopener noreferrer' : !bl, intro: q('.dk-intro-p').textContent.startsWith('The Hour Brief is a daily read'), free: !!q('.dk-free'), pos: [top('.dk-quote'), top('.dk-listen'), top('.dk-quizt'), top('.dk-intro-p')], start: q('.dk-hint').textContent, startInScroll: !!q('.dk-hint').closest('.dk-scroll') }; })()`);
 check('the first card is the top of the page: edition line, "The Hour Brief", the tagline, the quote (with its author and source link, when the day\'s edition credits one) and the intro paragraph', t.first && t.kick.includes(t.edition) && t.word === 'The Hour Brief' && t.tag && t.label === 'Before the news' && t.quote && t.byMatchesAttr && t.link && t.intro && t.free, JSON.stringify(t));
 // Order only, not a fixed pixel cutoff: how far down the quiz tile sits depends on how long today's quote is (some days'
 // are a short line, others a full paragraph), so a hardcoded "< 620" breaks on a long-quote day without the app being wrong.
 check('the Listen and quiz tiles come straight after the quote, before the long intro', t.pos[0] < t.pos[1] && t.pos[1] < t.pos[2] && t.pos[2] < t.pos[3], JSON.stringify(t.pos));
-check('a "See today’s stories" button is pinned below, and the header names the edition', t.start === 'See today’s stories' && !t.startInScroll && t.sec === 'The Hour Brief' && t.sub.includes(t.edition), JSON.stringify(t));
+check('a "See today’s stories" button is pinned below', t.start === 'See today’s stories' && !t.startInScroll, JSON.stringify(t));
+// Checks the clamp is actually applied (content-independent: works whether today's quote is long or short), not that
+// today specifically overflows it — a short-quote day would make an "it visibly overflows" assertion flaky for no
+// real reason, the same trap the attribution check fell into earlier.
+t = await J(`(() => { const q = document.querySelector('.dk-quote-text'); return { fullTextStillThere: q.textContent === document.querySelector('.pause-text').textContent.trim(), lines: getComputedStyle(q).webkitLineClamp, overflowHidden: getComputedStyle(q).overflow === 'hidden' }; })()`);
+check('the quote is set to clamp at 4 lines (so a long one does not push the rest of the cover far down), full text stays in the DOM either way', t.lines === '4' && t.overflowHidden && t.fullTextStillThere, JSON.stringify(t));
 t = await J(`(() => { const l = document.querySelector('.dk-listen'), q = document.querySelector('.dk-quizt'); return { listen: !l.hidden, lt: l.querySelector('strong').textContent, ls: l.querySelector('small').textContent, lbtn: l.querySelector('.dk-tile-go').getAttribute('aria-label'), quiz: !q.hidden, qt: q.querySelector('strong').textContent, qs: q.querySelector('small').textContent, ql: q.querySelector('.dk-tile-link').textContent, qrole: q.getAttribute('role') }; })()`);
 check('the Listen tile says what it is and how long ("Listen to today\'s brief", minutes and voice) with a play button, and the quiz tile carries the quiz chip\'s title, subtitle and "Play →"', t.listen && t.lt === 'Listen to today’s brief' && /min/.test(t.ls) && /Play/.test(t.lbtn) && t.quiz && /quiz/i.test(t.qt) && t.qs.length > 0 && /Play|Review/.test(t.ql) && t.qrole === 'button', JSON.stringify(t));
 await c.shot(`${OUT}/cards_cover.png`);
@@ -519,7 +530,7 @@ t = await J(`({ st: HBListen.state(), tile: document.querySelector('.dk-listen')
 check('the Listen tile\'s button starts the brief, and turns into Pause', t.st === 'playing' && t.tile && /Pause/.test(t.btn), JSON.stringify(t));
 await c.ev(`HBListen.stop()`);
 await c.ev(`document.querySelector('.dk-cover .dk-hint').click()`); await c.sleep(900);
-check('"Start reading" moves on to the first section', (await pos()) === `2 / ${TOTAL}` && (await c.ev(`document.querySelector('.dk-sec-pos').textContent`)) === 'Section 1 of 3');
+check('"Start reading" moves on to the first section', (await pos()) === `2 / ${TOTAL}` && (await c.ev(curKick)) === 'Section 1 of 3');
 await c.ev(`HBCards.goTo(0, false)`); await c.sleep(400);
 t = await J(`(() => { document.querySelector('.dk-quizt').click(); const k = document.querySelector('#quiz .quiz-card').getBoundingClientRect(); return { deck: HBCards.isOpen(), cardTop: Math.round(k.top), view: localStorage.getItem('hb-view-v1') }; })()`);
 check('the quiz tile takes you straight to the first question (one step), and Cards stays your choice', !t.deck && t.cardTop >= 60 && t.cardTop <= 110 && t.view === 'cards', JSON.stringify(t));
@@ -600,8 +611,8 @@ for (const [w, h] of [[360, 740], [390, 844], [412, 915], [820, 1100]]) {
   await open({ width: w, height: h });
   await openDeck();
   await c.ev(`document.querySelector('.dk-next').click()`); await c.sleep(900);
-  t = await J(`(() => { const r = (s) => document.querySelector(s).getBoundingClientRect(), face = r('.dk-card:not([inert]) .dk-face'), tab = r('.tab-bar'), foot = r('.dk-foot'), acts = r('.dk-card:not([inert]) .dk-actions'), top = [...document.querySelectorAll('.dk-top button')].map((b) => { const x = b.getBoundingClientRect(); return { l: Math.round(x.left), r: Math.round(x.right), h: Math.round(x.height) }; }); return { faceL: Math.round(face.left), faceR: Math.round(face.right), faceTop: Math.round(face.top), faceBottom: Math.round(face.bottom), w: innerWidth, sw: document.documentElement.scrollWidth, footBottom: Math.round(foot.bottom), tab: Math.round(tab.top), actsBottom: Math.round(acts.bottom), footTop: Math.round(foot.top), top, nav: [...document.querySelectorAll('.dk-nav')].map((b) => { const x = b.getBoundingClientRect(); return { h: Math.round(x.height), t: Math.round(x.top), bot: Math.round(x.bottom), l: Math.round(x.left), r: Math.round(x.right) }; }), acts: [...document.querySelectorAll('.dk-card:not([inert]) .dk-act')].map((b) => { const x = b.getBoundingClientRect(); return { h: Math.round(x.height), l: Math.round(x.left), r: Math.round(x.right) }; }) }; })()`);
-  check(`${w}px wide: the card, its buttons and the controls all fit inside the screen and above the tab bar`, t.faceL >= 0 && t.faceR <= t.w && t.sw <= t.w && t.footBottom <= t.tab + 2 && t.actsBottom <= t.footTop && t.top.every((b) => b.l >= 0 && b.r <= t.w && b.h >= 40) && t.acts.length === 4 && t.acts.every((b) => b.h >= 44 && b.l >= 0 && b.r <= t.w), JSON.stringify(t));
+  t = await J(`(() => { const r = (s) => document.querySelector(s).getBoundingClientRect(), face = r('.dk-card:not([inert]) .dk-face'), tab = r('.tab-bar'), foot = r('.dk-foot'), acts = r('.dk-card:not([inert]) .dk-actions'); return { faceL: Math.round(face.left), faceR: Math.round(face.right), faceTop: Math.round(face.top), faceBottom: Math.round(face.bottom), w: innerWidth, sw: document.documentElement.scrollWidth, footBottom: Math.round(foot.bottom), tab: Math.round(tab.top), actsBottom: Math.round(acts.bottom), footTop: Math.round(foot.top), nav: [...document.querySelectorAll('.dk-nav')].map((b) => { const x = b.getBoundingClientRect(); return { h: Math.round(x.height), t: Math.round(x.top), bot: Math.round(x.bottom), l: Math.round(x.left), r: Math.round(x.right) }; }), acts: [...document.querySelectorAll('.dk-card:not([inert]) .dk-act')].map((b) => { const x = b.getBoundingClientRect(); return { h: Math.round(x.height), l: Math.round(x.left), r: Math.round(x.right) }; }) }; })()`);
+  check(`${w}px wide: the card, its buttons and the controls all fit inside the screen and above the tab bar`, t.faceL >= 0 && t.faceR <= t.w && t.sw <= t.w && t.footBottom <= t.tab + 2 && t.actsBottom <= t.footTop && t.acts.length === 4 && t.acts.every((b) => b.h >= 44 && b.l >= 0 && b.r <= t.w), JSON.stringify(t));
   check(`${w}px wide: the small edge arrows sit fully on top of the card (not spilling past it or onto the footer)`, t.nav.every((n) => n.h === 34 && n.l >= t.faceL && n.r <= t.faceR && n.t >= t.faceTop && n.bot <= t.faceBottom), JSON.stringify(t));
 }
 await open({ size: 3, height: 780 });

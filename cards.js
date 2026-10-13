@@ -317,6 +317,7 @@
     var headline = h3 ? h3.textContent.trim() : '';
     var b = face('story', 'Story ' + c.n + ' of ' + c.of + ' in ' + c.name);
     b.card.setAttribute('data-id', it.getAttribute('data-story-id'));
+    b.scroll.appendChild(mk('p', 'dk-kick', c.name + ' · Story ' + c.n + ' of ' + c.of));   // now the only place a story names its section, with the header gone
     b.scroll.appendChild(heading('h3', 'dk-title', headline));
     var paras = it.querySelectorAll('.story-body > p');
     if (!paras.length) paras = it.querySelectorAll(':scope > div > p:not(.takeaway)');
@@ -383,29 +384,10 @@
     deck.setAttribute('aria-roledescription', 'carousel');
     deck.setAttribute('aria-label', 'Today’s stories, one card at a time');
 
-    var top = mk('header', 'dk-top');
-    var sec = mk('div', 'dk-sec');
-    ui.secName = mk('span', 'dk-sec-name');
-    ui.secPos = mk('span', 'dk-sec-pos');
-    sec.appendChild(ui.secName);
-    sec.appendChild(ui.secPos);
-    top.appendChild(sec);
-    var R = window.HBReader;                       // the app bar is under the deck, so Saved and the Menu (sections, text size, reminder, contact) live here too
-    if (R && R.saved) {
-      var sv = btn('dk-top-btn dk-ico dk-saved', '', 'Saved stories');
-      sv.appendChild(icon(['M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z']));
-      sv.addEventListener('click', function () { R.saved(); });
-      top.appendChild(sv);
-    }
-    if (R && R.menu) {
-      var mn = btn('dk-top-btn dk-ico dk-menu', '', 'Menu');
-      mn.appendChild(icon(['M4 6h9', 'M17 6h3', 'M4 12h3', 'M11 12h9', 'M4 18h9', 'M17 18h3'], [[15, 6, 2], [9, 12, 2], [15, 18, 2]]));
-      mn.addEventListener('click', function () { R.menu(); });
-      top.appendChild(mn);
-    }
-    // No separate "List" button here any more — the one List | Cards switch (mobile.js, fixed above the tab bar) is
-    // reachable the whole time the deck is open, so this header does not need its own way back.
-    deck.appendChild(top);
+    // No header bar any more — every card already names its own section (the cover and each section intro have their
+    // own kicker; story cards get one below), and Saved / Menu moved to being reachable from List (one tap away via
+    // the switch), not duplicated up here. The point is to give the card itself as much of the screen as possible;
+    // see .dk-track's own top padding below for the safe-area clearance this bar used to provide.
 
     track = mk('div', 'dk-track');
     track.tabIndex = 0;
@@ -556,8 +538,6 @@
   function paint() {
     var c = cards[idx];
     if (!c) return;
-    ui.secName.textContent = c.kind === 'story' || c.kind === 'intro' ? c.name : c.kind === 'quiz' ? 'Quiz' : 'The Hour Brief';
-    ui.secPos.textContent = c.kind === 'story' ? 'Story ' + c.n + ' of ' + c.of : c.kind === 'intro' ? 'Section ' + c.sec + ' of ' + c.secTotal : c.kind === 'quiz' ? 'Test what stuck' : c.kind === 'cover' ? (c.line || 'Today’s brief') : 'All caught up';
     ui.count.textContent = (idx + 1) + ' / ' + cards.length;
     ui.fill.style.width = cards.length > 1 ? Math.round(idx / (cards.length - 1) * 100) + '%' : '100%';
     ui.prev.disabled = idx <= 0;

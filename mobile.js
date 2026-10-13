@@ -792,9 +792,7 @@
       // out on its own (timer, or the moment the reader actually starts swiping/scrolling) so it never sits between the
       // reader and the story; a real "Not now" is the only thing that marks it done for good.
       card.classList.add('hb-tip-float');
-      var top = deck.querySelector('.dk-top');
-      deck.insertBefore(card, deck.querySelector('.dk-track'));
-      if (top) card.style.top = (top.getBoundingClientRect().height + 8) + 'px';
+      deck.insertBefore(card, deck.querySelector('.dk-track'));   // the deck has no header any more to measure, so the top offset is a plain CSS default (see .hb-tip-float)
       var floatGone = false;
       var fadeFloat = function () {
         if (floatGone || !card.isConnected) return;
@@ -1182,11 +1180,6 @@
       if (++tries < 40) setTimeout(wait, 100);
     })();
   }
-  window.HBReader = {                                                          // for cards.js: what the app bar offers in the list
-    textSize: function () { openTextSize(null); },
-    menu: function () { openMenu(null); },
-    saved: function () { openSaved(null); }
-  };
   function start() {
     if (cardsOk() && getView() === 'cards' && deckTarget()) pendingOn();
     apply(); openFromHash(); loadListen();

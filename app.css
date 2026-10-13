@@ -43,7 +43,7 @@
   --hb-sans: "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
   --hb-label: "Space Grotesk", "Inter", -apple-system, system-ui, sans-serif;
   --hb-tab-h: calc(66px + env(safe-area-inset-bottom, 0px));
-  --hb-switch-h: 54px;  /* the List | Cards switch's own reserved band, just above the tab bar, when it is showing */
+  --hb-switch-h: 40px;  /* the List | Cards switch's own reserved band, just above the tab bar, when it is showing (it sits flush against the tab bar, so this is just the switch's own rendered height, no extra gap) */
 
   --bg: #faf9fd;
   --paper: #ffffff;
@@ -613,13 +613,32 @@ html.hb-hub-open .view-switch { display: none; }   /* not a reading-mode decisio
    showing (not two different controls in two different spots depending on the view). Sits above the deck (z-index
    9981) so it stays usable there, but below the Audio hub (9983) and any sheet, which cover it naturally — switching
    reading mode makes no sense mid-hub or mid-sheet, so it simply disappears under them rather than needing its own
-   open/closed checks for every one of those. */
-.view-switch { position: fixed; left: 0; right: 0; bottom: calc(var(--hb-tab-h) + 10px); z-index: 9982; display: flex; justify-content: center; pointer-events: none; }
+   open/closed checks for every one of those.
+   It sits flush against the tab bar (no gap, rounded only on top, sharing the same background/blur) rather than
+   floating as its own separate pill above it — one continuous bottom surface, split only by the tab bar's own top
+   border, not two stacked bars. */
+.view-switch { position: fixed; left: 0; right: 0; bottom: var(--hb-tab-h); z-index: 9982; display: flex; justify-content: center; pointer-events: none; }
 .view-switch[hidden] { display: none; }
-.vs-in { pointer-events: auto; display: inline-flex; padding: 3px; border-radius: 999px; background: rgba(var(--hb-paper-rgb), 0.97); border: 1px solid var(--line); box-shadow: 0 8px 22px rgba(18, 19, 22, 0.16); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
-.vs-in button { min-height: 38px; padding: 0 18px; border: 0; border-radius: 999px; background: transparent; color: var(--ink-soft); font-family: var(--hb-label); font-size: 0.74rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.vs-in { pointer-events: auto; display: inline-flex; padding: 3px; border-radius: 18px 18px 0 0; background: rgba(var(--hb-paper-rgb), 0.94); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.vs-in button { min-height: 34px; padding: 0 16px; border: 0; border-radius: 999px; background: transparent; color: var(--ink-soft); font-family: var(--hb-label); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .vs-in button[aria-pressed="true"] { background: var(--hb-primary); color: #fff; }
 .vs-in button:focus-visible { outline: 2px solid var(--hb-primary); outline-offset: 2px; }
+/* While Cards is the active, top-most view (not just behind the Audio hub), the combined bar shrinks AND pulls in
+   from the screen edges into one floating rounded capsule — labels fade out, icons and padding tighten, and the
+   reserved band above it shrinks to match, so the deck actually reclaims that height rather than leaving a gap.
+   Scoped with :not(.hb-hub-open) so opening the hub from inside the deck (it does not close the deck underneath)
+   gets the hub's normal, full-width, un-shrunk bar. */
+.tab-bar, .tab-ic { transition: width 0.22s ease, height 0.22s ease, left 0.22s ease, right 0.22s ease, border-radius 0.22s ease; }
+.tab { transition: min-height 0.22s ease; }
+.tab-lb { display: block; max-height: 13px; opacity: 1; overflow: hidden; transition: max-height 0.22s ease, opacity 0.15s ease, margin-top 0.22s ease; }
+.vs-in { transition: border-radius 0.22s ease; }
+html.hb-deck-open:not(.hb-hub-open) { --hb-tab-h: calc(50px + env(safe-area-inset-bottom, 0px)); }
+html.hb-deck-open:not(.hb-hub-open) .tab-bar { left: 16px; right: 16px; border-radius: 0 0 20px 20px; padding-top: 2px; box-shadow: 0 10px 26px rgba(18, 19, 22, 0.16); }
+html.hb-deck-open:not(.hb-hub-open) .tab { min-height: 42px; }
+html.hb-deck-open:not(.hb-hub-open) .tab-ic { width: 46px; height: 28px; }
+html.hb-deck-open:not(.hb-hub-open) .tab-lb { max-height: 0; opacity: 0; margin-top: 0; }
+html.hb-deck-open:not(.hb-hub-open) .view-switch { left: 16px; right: 16px; transition: left 0.22s ease, right 0.22s ease; }
+html.hb-deck-open:not(.hb-hub-open) .vs-in { width: 100%; justify-content: center; border-radius: 20px 20px 0 0; }
 
 html.hb-deck-open, html.hb-deck-open body { overflow: hidden; }
 html.hb-deck-open #mob-progress, html.hb-deck-open #mob-top { display: none; }
@@ -629,21 +648,15 @@ html.hb-switch-on .hb-deck { bottom: calc(var(--hb-tab-h) + var(--hb-switch-h));
 .hb-deck[hidden] { display: none; }
 /* Inside the deck this floats over the top of the card instead of pushing it down — reading space stays full-height, and the
    card fades itself out on its own (see cards.js), so it never lingers over the content. */
-.hb-deck > .hb-tip.hb-tip-float { position: absolute; left: 16px; right: 16px; max-width: 640px; margin: 0 auto; box-sizing: border-box; z-index: 6; box-shadow: 0 10px 28px rgba(18, 19, 22, 0.18); animation: dkTipIn 0.3s ease; }
+.hb-deck > .hb-tip.hb-tip-float { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 16px); left: 16px; right: 16px; max-width: 640px; margin: 0 auto; box-sizing: border-box; z-index: 6; box-shadow: 0 10px 28px rgba(18, 19, 22, 0.18); animation: dkTipIn 0.3s ease; }
 .hb-deck > .hb-tip.hb-tip-float.dk-tip-out { animation: dkTipOut 0.3s ease forwards; }
 @keyframes dkTipIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
 @keyframes dkTipOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(-8px); } }
 @media (prefers-reduced-motion: reduce) { .hb-deck > .hb-tip.hb-tip-float { animation: none; } .hb-deck > .hb-tip.hb-tip-float.dk-tip-out { animation: none; opacity: 0; } }
-.dk-top { flex: none; display: flex; align-items: center; gap: 8px; padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 8px; }
-.dk-sec { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-.dk-sec-name { font-family: var(--hb-label); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--hb-green); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dk-sec-pos { font-size: 0.8rem; color: var(--ink-soft); }
-.dk-top-btn { flex: none; min-height: 40px; padding: 0 16px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper); color: var(--ink); font-family: var(--hb-label); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.04em; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.dk-ico { width: 44px; min-height: 44px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
-.dk-ico svg { width: 20px; height: 20px; }
-.dk-menu { background: var(--hb-primary); border-color: var(--hb-primary); color: #fff; }
-.dk-top-btn:focus-visible, .dk-nav:focus-visible, .dk-act:focus-visible, .dk-cta:focus-visible, .dk-go:focus-visible, .dk-hint:focus-visible, .dk-track:focus-visible { outline: 2px solid var(--hb-primary); outline-offset: 2px; }
-.dk-track { flex: 1; min-height: 0; display: flex; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+/* No header bar any more — every card carries its own .dk-kick (section/position), and this top strip's job was only
+   ever to also provide the safe-area-inset-top clearance, which the track below now does directly. */
+.dk-nav:focus-visible, .dk-act:focus-visible, .dk-cta:focus-visible, .dk-go:focus-visible, .dk-hint:focus-visible, .dk-track:focus-visible { outline: 2px solid var(--hb-primary); outline-offset: 2px; }
+.dk-track { flex: 1; min-height: 0; display: flex; padding-top: env(safe-area-inset-top, 0px); overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
 .dk-track::-webkit-scrollbar { display: none; }
 .dk-card { flex: 0 0 100%; min-width: 0; height: 100%; box-sizing: border-box; padding: 4px 16px 10px; scroll-snap-align: center; scroll-snap-stop: always; display: flex; }
 .dk-face { flex: 1; min-height: 0; display: flex; flex-direction: column; box-sizing: border-box; width: 100%; max-width: 640px; margin: 0 auto; background: var(--paper); border: 1px solid var(--line); border-radius: 26px; overflow: hidden; box-shadow: 0 10px 30px rgba(18, 19, 22, 0.07); }
@@ -679,7 +692,7 @@ html.hb-switch-on .hb-deck { bottom: calc(var(--hb-tab-h) + var(--hb-switch-h));
 .dk-bar { flex: 1; height: 5px; border-radius: 3px; background: rgba(var(--hb-ink-rgb), 0.11); overflow: hidden; }
 .dk-bar i { display: block; width: 0; height: 100%; border-radius: 3px; background: var(--hb-primary); transition: width 0.2s ease; }
 .dk-count { flex: none; min-width: 48px; text-align: center; font-size: 0.82rem; font-variant-numeric: tabular-nums; color: var(--ink-soft); }
-.dk-top, .dk-foot { width: 100%; max-width: 672px; margin: 0 auto; box-sizing: border-box; }
+.dk-foot { width: 100%; max-width: 672px; margin: 0 auto; box-sizing: border-box; }
 
 /* ---- Prev/next: small arrows overlaid on the card's own edges, not a separate button bar ---- */
 /* Matches .dk-card > .dk-face's own box model exactly (16px card padding, then a 640px box centred inside that), so
@@ -718,7 +731,10 @@ html.hb-switch-on .hb-deck { bottom: calc(var(--hb-tab-h) + var(--hb-switch-h));
 .dk-wordmark span { color: var(--hb-primary); }
 .dk-quote { margin: 4px 0 8px; padding: 16px 18px 16px 20px; border-left: 3px solid var(--hb-primary); border-radius: 2px 18px 18px 2px; background: var(--hb-lav); }
 .dk-quote-label { margin: 0 0 8px; font-family: var(--hb-label); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--hb-primary-2); }
-.dk-quote-text { margin: 0; font-family: var(--hb-serif); font-size: 1.28rem; line-height: 1.42; color: var(--ink); }
+/* Clamped: some days' quotes are a single line, others a full paragraph — without a cap the longer ones push the
+   Listen tile, the quiz tile and "See today's stories" well down the card, meaning a lot of scrolling before the
+   cover is done. The source link and attribution right below it are unaffected. */
+.dk-quote-text { margin: 0; font-family: var(--hb-serif); font-size: 1.28rem; line-height: 1.42; color: var(--ink); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden; }
 .dk-quote-by { margin-top: 10px; font-size: 0.85rem; color: var(--ink-soft); }
 .dk-quote-by a { color: var(--ink-soft); }
 .dk-intro-p { margin: 20px 0 10px; font-size: 1rem; line-height: 1.62; color: var(--ink); }

@@ -116,7 +116,7 @@ Text is copied with `textContent`, never as HTML.
 - **Links that point into the list open the list**, not the deck (`deckTarget()` in `mobile.js`): `#quiz` and other section anchors, a league invite `?join=`,
   a friend's score `?beat=`. A shared story link (`#ai-2`, a saved story) opens the deck on that story's card. `?classic=1` (website only) is untouched.
 - **No flash of the list:** while `cards.js` loads at startup the page is hidden (`pendingOn/pendingOff`, 4 s safety); if it cannot load, the list shows and nothing is thrown at the reader.
-- **The app bar is under the deck**, so the deck's header carries **Saved stories** and the **Menu** (Sections, Text size, reminder, share, e-mail sign-up, and the Contact · About · Privacy links); the List | Cards switch above the tab bar is the way back to the list. "Get it by email" from the deck jumps to the sign-up box in the list.
+- **No header bar in the deck** (removed 2026-10-14, see "Reading for maximum screen space" below) — the app bar's Saved and Menu (Sections, Text size, reminder, share, e-mail sign-up, Contact · About · Privacy) are reached by switching to List, not duplicated above the cards. "Get it by email" from List jumps to the sign-up box there.
 - **Tabs:** Today returns to the cards (to the cover); Challenge and the quiz card's / tile's "Play the quiz" leave the deck **instantly**, onto the first question / the quiz section, with the feed never scrolling past, and do not change the saved choice. The instant jumps use `window.scrollTo({top, behavior: 'instant'})`, not `scrollIntoView({behavior: 'instant'})`, which Chrome 113 (the Android WebView) ignores: it eases instead and can stop short.
 - **Audio is a round floating button** (`.dk-fab`, right side, above the card's pinned buttons; text can scroll clear of it). Tap it and it opens into a small player (what is playing, previous / play-pause / next, speed, stop, "Show what's playing"); the arrow collapses it. While playing the button pulses with sound bars. It only forwards clicks to Listen's own player and start button (`.hb-pl-*`, `.listen-go`), which stay in the page, so Listen, the Audio screen and the button cannot disagree. The page's mini player is hidden while the deck shows; the button steps aside while the full Audio screen is open, and is absent when the device has no audio.
 - **The deck follows Listen** (like the list's auto-scroll): `listen.js` fires `hb:listen` on every state change and exposes `HBListen.current()`; `onListen()` in `cards.js` turns the deck to the card that holds the part being read: the cover for the introduction, a section card for a section, a story card for a story, the quiz card for the closing lines. The card being read has a purple edge. It never fights the reader: no following for 4 seconds after they touch the deck, and none while paused. Opening the deck while something plays starts on that card.
@@ -124,7 +124,7 @@ Text is copied with `textContent`, never as HTML.
 - **Hint:** the one-time "Make it yours" (sections) hint, on the second day the app is opened, sits above the first section when the list is showing (unchanged, part of the normal document flow, costs no space it isn't given). When Cards is showing, it instead **floats** over the top of the current card (`.hb-tip-float`, `position: absolute`, anchored just under the deck's top bar) rather than sitting in the flex flow and squeezing the card down — reading space stays full height at all times. It fades itself out on its own after `HB_TIP_FADE_MS` (default 6s), or the moment the reader's first real touch lands on the track, whichever comes first — neither counts as a "no", so it gets another chance on the next visit; only an explicit "Not now" (or choosing sections) marks it done for good. State in `hb-tip-v1`.
 - **Web only:** no store release is needed; a Vercel deploy reaches every installed app on its next open.
 - **Test on a real Android WebView, not just headless Chrome** (see Emulator notes in the mobile docs).
-Tests: `node tools/browser-tests/cards.mjs` (159 checks, includes real touch swipes via `cdp.mjs` `swipe()`, and real Listen with a fake voice for the follow tests). The other suites (`premium`, `prefs`, `listen`, `bridge`) test the list, so they open with the List view stored — and now also exercise the switch, since `html.hb-switch-on` is active there too.
+Tests: `node tools/browser-tests/cards.mjs` (161 checks, includes real touch swipes via `cdp.mjs` `swipe()`, and real Listen with a fake voice for the follow tests). The other suites (`premium`, `prefs`, `listen`, `bridge`) test the list, so they open with the List view stored — and now also exercise the switch, since `html.hb-switch-on` is active there too.
 A known flake, present before this session and not caused by it: 3 of the checks around tapping/swiping straight to a section's first story (near
 the top of the suite) occasionally land one card further in than expected — reproduces on unmodified code too, so it looks like a timing quirk of
 the synthesized CDP touch gesture rather than the app; worth a closer look, but not from this pass.
@@ -132,6 +132,37 @@ Two more known flakes, found the same way (confirmed on unmodified code via `git
 stops the scroll partway, 'Next question' still ends up above the tab bar" (off by ~5px past the tab bar on some runs), and `listen.mjs`'s "click
 starts the recording... and it advances" (the recording's `currentTime` sometimes has not reached the 0.8s the check wants yet). Neither is caused
 by the switch redesign below; both reproduce identically on pristine code.
+
+### Reading for maximum screen space (2026-10-14)
+
+Three changes, all aimed the same way: give the card itself as much of the screen as possible.
+
+- **No header bar in the deck any more.** It only ever showed a section name/position and Saved/Menu buttons — all three
+  were already duplicated (every card kind has its own `.dk-kick`: the cover's edition line, each section intro's
+  "Section N of M", a quiz's "Challenge", the closing card's "That's the brief" — story cards gained one too,
+  `SectionName · Story N of M`, right above the headline) or reachable in one tap via the switch (Saved/Menu live in
+  List only now). Removing it frees the whole top of the card for content, not just a sliver. The safe-area-inset-top
+  clearance it used to provide moved to `.dk-track`'s own top padding. The "Make it yours" floating hint (which used
+  to measure the header's height to position itself) now just uses a fixed `top` offset — there is nothing left to
+  measure.
+- **The cover's quote (`.dk-quote-text`) is clamped to 4 lines** (`-webkit-line-clamp`). Some days' quotes are one
+  line, others a full paragraph (today's, edition 58, is the long kind) — unclamped, a long one pushes the Listen
+  tile, the quiz tile and "See today's stories" well down the card. The full text stays in the DOM (`textContent` is
+  unaffected, only the visual rendering clamps), just not all shown.
+- **One floating bar instead of two.** The List | Cards switch now sits flush against the tab bar (zero gap, rounded
+  only on top, same background/blur) rather than floating above it with a gap — one continuous surface, not two
+  stacked pills. While Cards is the active, top-most view (`html.hb-deck-open`, scoped `:not(.hb-hub-open)` since
+  opening the Audio hub from inside the deck does not close the deck underneath it, and the hub should keep its
+  normal full-size bar), the whole combined bar shrinks into a floating rounded capsule pulled in 16px from the
+  screen edges — tab labels fade out (icons only), padding and icon size tighten, and `--hb-tab-h` itself drops from
+  66px to 50px so the deck's own bottom edge moves down to match: the card gets that space back, not just a gap
+  above a shorter bar. Everything animates (`transition`, ~0.22s) rather than snapping. Inspired by a reference the
+  user shared from another app ("Mind Echo"), whose bottom bar does the same icon-only collapse.
+  Verified against the project's own local files via the Android emulator's real Chrome pointed at a local static
+  server (not the live site, so nothing untested reached production) before this shipped — see "Emulator Chrome for
+  page-level debugging" below for the attach pattern; this redesign used it directly (`ws://127.0.0.1:9222/devtools/page/<id>`
+  rather than `android-chrome.mjs`'s `attach()`, since multiple stale tabs from earlier sessions made its
+  first-page-found default pick the wrong target — look up the right target id from `http://127.0.0.1:9222/json` first).
 
 ## Reload, and the next edition, without friction (`capacitor-bridge.js`, native apps only)
 
