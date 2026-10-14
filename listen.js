@@ -748,7 +748,6 @@
     top.appendChild(logo);
     top.appendChild(brand);
     top.appendChild(acts);
-    if (HC) HC.refreshSaved();
 
     var sc = mk('div', 'hub-scroll');
     var st = mk('div', 'hub-status');
@@ -833,6 +832,10 @@
     hub.appendChild(top);
     hub.appendChild(sc);
     document.body.appendChild(hub);
+    // Only now is the saved button actually in the document — calling this earlier, while top/acts was still a
+    // detached subtree, left its just-built .rd-count permanently blank (querySelectorAll('.reader-saved') in
+    // refreshSaved() searches the live document, which didn't contain it yet).
+    if (HC) HC.refreshSaved();
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && hubShown) closeHub(); });
   }
   function buildChapters() {

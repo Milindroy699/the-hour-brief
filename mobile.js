@@ -955,11 +955,14 @@
     top.appendChild(logo);
     top.appendChild(brand);
     top.appendChild(acts);
-    refreshSaved();
     quizScroll = mk('div', 'hub-scroll');
     quizOv.appendChild(top);
     quizOv.appendChild(quizScroll);
     document.body.appendChild(quizOv);
+    // Only now is the saved button actually in the document — calling this earlier, while top/acts was still a
+    // detached subtree, left its just-built .rd-count permanently blank (querySelectorAll('.reader-saved') in
+    // refreshSaved() searches the live document, which didn't contain it yet).
+    refreshSaved();
   }
   function openQuizPage() {
     buildQuizPage();
