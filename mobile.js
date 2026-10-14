@@ -719,6 +719,14 @@
       vs.appendChild(inner);
       document.body.appendChild(vs);
       document.addEventListener('hb:deck', syncViewSwitch);
+      // Re-measure on every one of these, not just once at build time: a single requestAnimationFrame right after
+      // first building the switch has proven fragile in the past (the original version of this exact bug) — web
+      // fonts swapping in after that first paint, or the deck opening before layout has fully settled on a real
+      // device, can each leave --hb-switch-h a few pixels short of reality, opening a gap onto the list behind the
+      // deck. Cheap and idempotent, so measuring more often than strictly needed costs nothing.
+      document.addEventListener('hb:deck', measureSwitchH);
+      window.addEventListener('resize', measureSwitchH);
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(measureSwitchH);
     }
     if (!vs) return;
     vs.hidden = !cardsOk();
@@ -730,7 +738,11 @@
     var vs = document.querySelector('.view-switch');
     if (!vs) return;
     var h = vs.getBoundingClientRect().height;
-    if (h > 0) document.documentElement.style.setProperty('--hb-switch-h', Math.ceil(h) + 'px');
+    // +2px of slack on top of the real measurement: this exact bug (the deck's reserved bottom space ending up a
+    // few pixels short of the switch's real rendered height, opening a gap the list shows through) has recurred
+    // more than once this project — a slightly too-tall reservation is invisible; a slightly too-short one is a
+    // real, visible bug, so the rounding should err generously, not just up to the nearest pixel.
+    if (h > 0) document.documentElement.style.setProperty('--hb-switch-h', (Math.ceil(h) + 2) + 'px');
   }
   function syncViewSwitch() {
     var vs = document.querySelector('.view-switch');

@@ -417,6 +417,19 @@ real-device feedback.**
 `cards.mjs` is 163 checks (net down from 166 — the deck-floating-hint tests it replaced were more numerous than
 what replaced them); `premium.mjs` is 82. `prefs.mjs`/`listen.mjs` unaffected: 55/55 and 48/48.
 
+**Same day, once more: a real-device-only report of list content ("ALL · AI & Tech · ...") showing through below the
+deck, next to the switch — the same symptom as the original gap bug from earlier today, reopened.** A screenshot of
+the actual gap this time, not a stale capture. Tried to reproduce it locally first (fresh load straight into Cards,
+the cover card, measuring `.hb-deck`'s bottom against `.view-switch`'s top): a clean 0px gap, every time — could not
+confirm the exact cause from this machine. Hardened `measureSwitchH()` anyway, since the real fragility was visible
+by inspection regardless of reproducing it: it only ever ran once, via a single `requestAnimationFrame` right after
+first building the switch, with no re-check if web fonts finished loading afterward or if the deck opened before
+layout had fully settled on a real device — either could plausibly leave `--hb-switch-h` a few pixels short.
+`viewSwitch()` now also re-measures on `hb:deck` (every open/close), `resize`, and `document.fonts.ready`; the
+measurement itself now adds a 2px safety buffer on top of `Math.ceil()`, erring toward reserving slightly too much
+space (invisible) rather than slightly too little (a real, visible bug) — reasonable given this exact failure mode
+has now recurred more than once. Not a confirmed fix; asked the user to re-check on their device.
+
 ## Reload, and the next edition, without friction (`capacitor-bridge.js`, native apps only)
 
 Every page sets `history.scrollRestoration = 'manual'` in an inline `<head>` script (the very first thing in `<head>`, before
