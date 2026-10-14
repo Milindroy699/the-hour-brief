@@ -6,9 +6,7 @@
  * Everything here is independent of the page's own inline <script> (votes, comments, scrollspy). The reading skin
  * ("reader mode") runs on phones, in the apps at any width and on the desktop website; ?classic=1 opts out on desktop.
  *
- *  - Stories keep their natural order (headline, summary, takeaway). On phones
- *    the summary is clamped to a few lines with a "Read more" toggle right under
- *    it — shown only when text is actually clipped.
+ *  - Stories keep their natural order (headline, summary, takeaway) and show in full — no "Read more" clamp.
  *  - Each section leads with a numbered highlights list (jump links) and its
  *    takeaway; the long digest sentence sits behind a toggle.
  *  - Every story has a Share button (headline + link to that story), and long
@@ -44,53 +42,25 @@
     document.head.appendChild(l);
   }
 
+  // Every story shows in full, no "Read more" toggle — the .story-body wrapper stays (cards.js reads it to build
+  // story cards), it just never gets the clamp class applied to it any more.
   function collapsibleStories() {
     document.querySelectorAll('.item').forEach(function (item) {
       var inner = item.querySelector(':scope > div');
-      if (!inner) return;
+      if (!inner || item.dataset.collapseReady) return;
 
-      if (!item.dataset.collapseReady) {
-        var bodyParas = Array.prototype.filter.call(inner.children, function (el) {
-          return el.tagName === 'P' && !el.classList.contains('takeaway');
-        });
-        if (!bodyParas.length) { item.dataset.collapseReady = 'none'; return; }
+      var bodyParas = Array.prototype.filter.call(inner.children, function (el) {
+        return el.tagName === 'P' && !el.classList.contains('takeaway');
+      });
+      if (!bodyParas.length) { item.dataset.collapseReady = 'none'; return; }
 
-        // Wrap the summary paragraphs so the clamp and toggle target one unit.
-        // Nothing is reordered, so desktop (which never loads mobile.css) is
-        // untouched.
-        var wrap = document.createElement('div');
-        wrap.className = 'story-body';
-        wrap.id = 'sb-' + (item.dataset.storyId || Math.random().toString(36).slice(2));
-        inner.insertBefore(wrap, bodyParas[0]);
-        bodyParas.forEach(function (p) { wrap.appendChild(p); });
-
-        var btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'story-more';
-        btn.setAttribute('aria-controls', wrap.id);
-        btn.textContent = 'Read more';
-        btn.addEventListener('click', function () {
-          var collapsed = item.classList.toggle('is-collapsed');
-          btn.setAttribute('aria-expanded', String(!collapsed));
-          btn.textContent = collapsed ? 'Read more' : 'Show less';
-        });
-        inner.insertBefore(btn, wrap.nextSibling);
-        item.dataset.collapseReady = 'yes';
-      }
-      if (item.dataset.collapseReady !== 'yes') return;
-
-      var toggle = item.querySelector(':scope > div > .story-more');
-      if (reader()) {
-        item.classList.add('is-collapsed');
-        if (toggle) {
-          toggle.hidden = false;
-          toggle.setAttribute('aria-expanded', 'false');
-          toggle.textContent = 'Read more';
-        }
-      } else {
-        item.classList.remove('is-collapsed');
-        if (toggle) toggle.hidden = true;
-      }
+      // Nothing is reordered, so desktop (which never loads mobile.css) is untouched.
+      var wrap = document.createElement('div');
+      wrap.className = 'story-body';
+      wrap.id = 'sb-' + (item.dataset.storyId || Math.random().toString(36).slice(2));
+      inner.insertBefore(wrap, bodyParas[0]);
+      bodyParas.forEach(function (p) { wrap.appendChild(p); });
+      item.dataset.collapseReady = 'yes';
     });
   }
 
@@ -143,15 +113,9 @@
     if (!reader()) about.classList.remove('is-expanded');
   }
 
-  // Show a toggle only where the clamp really hides something.
+  // Show the section digest toggle only where its own clamp really hides something.
   function measureClamps() {
     if (!reader()) return;
-    document.querySelectorAll('.item.is-collapsed').forEach(function (item) {
-      var toggle = item.querySelector(':scope > div > .story-more');
-      var paras = item.querySelectorAll('.story-body > p');
-      if (!toggle || !paras.length) return;
-      toggle.hidden = !(paras.length > 1 || paras[0].scrollHeight > paras[0].clientHeight + 1);
-    });
     document.querySelectorAll('.lane-head:not(.is-expanded)').forEach(function (head) {
       var h2 = head.querySelector('h2');
       var btn = head.querySelector('.lane-more');
@@ -1164,10 +1128,6 @@
     if (!it || !it.classList.contains('item')) return;
     var lane = it.closest('section.lane');      // someone sent this story: show it even if its section is switched off here
     if (lane && lane.hasAttribute('data-pref-off')) { lane.style.display = ''; lane.removeAttribute('data-pref-off'); }
-    if (it.classList.contains('is-collapsed')) {
-      var b = it.querySelector(':scope > div > .story-more');
-      if (b && !b.hidden) b.click();
-    }
     it.scrollIntoView({ block: 'start' });
     it.classList.add('deeplinked');
   }

@@ -355,7 +355,6 @@ section.lane { margin-bottom: 40px; }
 .item h3 { font-size: 1.14rem; font-weight: 650; line-height: 1.36; letter-spacing: -0.012em; color: var(--ink); }
 .item p { font-size: 0.97rem; line-height: 1.62; color: var(--ink-soft); }
 .item .takeaway { font-size: 0.9rem; margin-top: 12px; }
-.story-more { color: var(--hb-primary-2); font-weight: 600; }
 .item .src a { color: var(--ink-soft); }
 .vote-btn, .story-share, .story-save { border-color: var(--line); background: var(--paper); box-shadow: none; }
 .story-save[aria-pressed="true"] { color: var(--hb-primary-2); border-color: var(--hb-primary); }

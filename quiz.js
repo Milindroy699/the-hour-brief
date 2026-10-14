@@ -85,10 +85,6 @@
     if (!it) return;
     if (window.HBQuizPage && window.HBQuizPage.isOpen && window.HBQuizPage.isOpen()) window.HBQuizPage.close();   // the story lives in the normal page, which the dedicated quiz page (mobile.js) replaces while it's open
 
-    if (it.classList.contains('is-collapsed')) {
-      var more = it.querySelector(':scope > div > .story-more');
-      if (more && !more.hidden) more.click();
-    }
     it.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
     it.classList.remove('deeplinked');
     void it.offsetWidth;
