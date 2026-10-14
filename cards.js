@@ -100,7 +100,7 @@
       out.push({ kind: 'intro', lane: lane, name: name, items: items, sec: sec, secTotal: secTotal });
       items.forEach(function (it, i) { out.push({ kind: 'story', lane: lane, name: name, item: it, n: i + 1, of: items.length }); });
     });
-    if (out[out.length - 1].kind !== 'quiz') out.push({ kind: 'end', name: 'The Hour Brief' });
+    out.push({ kind: 'end', name: 'The Hour Brief' });   // always last now: the Listen and quiz tiles live here, not on the cover, so this card is never optional
     return out;
   }
 
@@ -179,26 +179,6 @@
       }
       b.scroll.appendChild(fig);
     }
-    var lt = tile('dk-listen', icon(HEADPHONES), 'Listen to today’s brief');      // shown once Listen is ready (it loads a moment after the page)
-    lt.hidden = true;
-    var go = btn('dk-tile-go');
-    go.addEventListener('click', function () { var g = document.querySelector('.listen-go'); if (g) g.click(); });
-    lt.appendChild(go);
-    c.listen = { el: lt, go: go };
-    b.scroll.appendChild(lt);
-
-    var qtile = tile('dk-quizt', icon(['M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z', 'M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z']), 'Today’s quiz');
-    qtile.hidden = true;
-    var qgo = mk('span', 'dk-tile-link');
-    qtile.appendChild(qgo);
-    qtile.setAttribute('role', 'button');
-    qtile.tabIndex = 0;
-    function toQuiz() { close({ keep: true, to: document.querySelector('#quiz .quiz-card') || document.getElementById('quiz') }); }
-    qtile.addEventListener('click', toQuiz);
-    qtile.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toQuiz(); } });
-    c.quiz = { el: qtile, link: qgo };
-    b.scroll.appendChild(qtile);
-
     var about = document.querySelector('.about > p');
     if (about) b.scroll.appendChild(mk('p', 'dk-intro-p', plain(about)));
     var free = document.querySelector('.about .free-line');
@@ -212,10 +192,10 @@
     return b.card;
   }
 
-  // The cover's audio and quiz tiles follow Listen and the quiz chip, which are built a moment after the page.
-  function syncCover() {
-    var c = cards[0];
-    if (!c || c.kind !== 'cover' || !c.listen) return;
+  // The closing card's audio and quiz tiles follow Listen and the quiz chip, which are built a moment after the page.
+  function syncClosing() {
+    var c = cards[cards.length - 1];
+    if (!c || c.kind !== 'end' || !c.listen) return;
     var cta = document.querySelector('.listen-cta'), g = document.querySelector('.listen-go'), L = window.HBListen;
     var ok = !!(cta && !cta.hidden && g);
     c.listen.el.hidden = !ok;
@@ -364,14 +344,37 @@
     return b.card;
   }
 
-  function buildEnd() {
+  // The closing card: always the last one in the deck now (see collect()), so it is where the Listen and quiz tiles
+  // live, not up on the cover — the cover is just "before the news" now, this is the "now that you've read it" card.
+  function buildEnd(c) {
     var b = face('end', 'The end of today’s brief');
     b.scroll.appendChild(mk('p', 'dk-kick', 'That’s the brief'));
     b.scroll.appendChild(heading('h2', 'dk-title dk-title-lg', 'You’re all caught up'));
-    b.scroll.appendChild(mk('p', 'dk-body-lg', 'That is everything for today. See you tomorrow.'));
-    var go = btn('dk-cta', 'Back to the list');
-    go.addEventListener('click', function () { close(); });
-    b.scroll.appendChild(go);
+    b.scroll.appendChild(mk('p', 'dk-body-lg', 'That is everything for today. Try the quiz, or listen back to the brief.'));
+
+    var lt = tile('dk-listen', icon(HEADPHONES), 'Listen to today’s brief');      // shown once Listen is ready (it loads a moment after the page)
+    lt.hidden = true;
+    var go = btn('dk-tile-go');
+    go.addEventListener('click', function () { var g = document.querySelector('.listen-go'); if (g) g.click(); });
+    lt.appendChild(go);
+    c.listen = { el: lt, go: go };
+    b.scroll.appendChild(lt);
+
+    var qtile = tile('dk-quizt', icon(['M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z', 'M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z']), 'Today’s quiz');
+    qtile.hidden = true;
+    var qgo = mk('span', 'dk-tile-link');
+    qtile.appendChild(qgo);
+    qtile.setAttribute('role', 'button');
+    qtile.tabIndex = 0;
+    function toQuiz() { close({ keep: true, to: document.querySelector('#quiz .quiz-card') || document.getElementById('quiz') }); }
+    qtile.addEventListener('click', toQuiz);
+    qtile.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toQuiz(); } });
+    c.quiz = { el: qtile, link: qgo };
+    b.scroll.appendChild(qtile);
+
+    var back = btn('dk-cta', 'Back to the list');
+    back.addEventListener('click', function () { close(); });
+    b.scroll.appendChild(back);
     return b.card;
   }
 
@@ -527,11 +530,11 @@
     cards = collect();
     track.textContent = '';
     cards.forEach(function (c) {
-      c.el = c.kind === 'cover' ? buildCover(c) : c.kind === 'intro' ? buildIntro(c) : c.kind === 'story' ? buildStory(c) : c.kind === 'quiz' ? buildQuiz(c) : buildEnd();
+      c.el = c.kind === 'cover' ? buildCover(c) : c.kind === 'intro' ? buildIntro(c) : c.kind === 'story' ? buildStory(c) : c.kind === 'quiz' ? buildQuiz(c) : buildEnd(c);
       track.appendChild(c.el);
     });
     watchMirror();
-    syncCover();
+    syncClosing();
     markPlaying();
   }
 
@@ -777,7 +780,7 @@
   // (unless the reader has just been swiping, so it never fights a finger).
   function onListen() {
     if (!shown) return;
-    syncCover();
+    syncClosing();
     var n = listenNow(), i = n.live ? unitIndex(n.cur) : -1;
     if (i !== playIdx) { playIdx = i; markPlaying(); }
     syncFab();

@@ -30,10 +30,11 @@ const NATIVE = `window.Capacitor = { isNativePlatform: () => true, Plugins: {} }
 const NO_AUDIO = `window.HB_AUDIO_BASE = ${JSON.stringify(B + '/__audio')}; delete window.speechSynthesis; delete window.SpeechSynthesisUtterance;`;
 const d0 = new Date(), TODAY = d0.getFullYear() + '-' + String(d0.getMonth() + 1).padStart(2, '0') + '-' + String(d0.getDate()).padStart(2, '0');
 const LONG_AGO = '2020-01-01';
-// The cards in the deck: the cover, then for each section its card and its stories, then the quiz (so it follows the latest edition).
+// The cards in the deck: the cover, then for each section its card and its stories, then the quiz, then the closing
+// card — always, now, regardless of where the quiz falls (so it follows the latest edition).
 const HTML = fs.readFileSync(path.resolve(import.meta.dirname, '../../index.html'), 'utf8');
 const STORIES = (HTML.match(/class="item" data-story-id="/g) || []).length;
-const TOTAL = STORIES + 3 + 2;
+const TOTAL = STORIES + 3 + 3;
 const QUIET = { n: 0, last: LONG_AGO, done: true };     // no hint
 let ids = [];
 
@@ -106,7 +107,7 @@ await open();
 check('tapping Cards opens the deck over the feed and remembers the choice', await openDeck() && (await view()) === 'cards' && (await c.ev(`document.documentElement.classList.contains('hb-deck-open') && getComputedStyle(document.documentElement).overflow === 'hidden'`)));
 const k = await kinds();
 const feedAll = await feedIds(['ai', 'biz', 'mkt']);
-check('the deck is the cover, then a section card and its stories for each section, then the quiz', k[0] === 'cover' && k[1] === 'intro' && k.filter((x) => x === 'cover').length === 1 && k[k.length - 1] === 'quiz' && k.filter((x) => x === 'intro').length === 3 && k.filter((x) => x === 'story').length === feedAll.length && !k.includes('end'), JSON.stringify(k));
+check('the deck is the cover, then a section card and its stories for each section, then the quiz, then the closing card', k[0] === 'cover' && k[1] === 'intro' && k.filter((x) => x === 'cover').length === 1 && k[k.length - 2] === 'quiz' && k[k.length - 1] === 'end' && k.filter((x) => x === 'intro').length === 3 && k.filter((x) => x === 'story').length === feedAll.length, JSON.stringify(k));
 check('the stories come in the feed\'s own order', eq(await storyIds(), feedAll));
 t = await J(`(() => { const lane = document.querySelector('#ai'), card = document.querySelector('.dk-intro'); const lt = lane.querySelector('.lane-takeaway').cloneNode(true); lt.querySelector('.takeaway-label').remove(); return { title: card.querySelector('.dk-title').textContent, tag: lane.querySelector('.lane-tag').childNodes[0].textContent.trim(), meta: card.querySelector('.dk-metaline').textContent, take: card.querySelector('.dk-take').textContent.replace('Takeaway', '').trim(), want: lt.textContent.trim(), n: card.querySelectorAll('.dk-go').length, items: lane.querySelectorAll('.item[data-story-id]').length, kick: card.querySelector('.dk-kick').textContent }; })()`);
 check('a section card shows its name, reading time and story count, its takeaway and a numbered list of its stories', t.title === t.tag && /min read · \d+ stories/.test(t.meta) && t.take === t.want && t.n === t.items && t.kick === 'Section 1 of 3', JSON.stringify(t));
@@ -133,7 +134,7 @@ check('markup in a headline is shown as text and never runs', t.imgs === 0 && t.
 // order follows the reader's own choices
 await open({ prefs: { order: ['mkt', 'ai', 'biz', 'quiz'], off: ['biz'] } });
 await openDeck();
-check('the reader\'s section order and hidden sections carry over (Stock Market first, Product & Business left out)', eq(await secOrder(), ['Stock Market', 'AI & Tech']) && eq(await storyIds(), await feedIds(['mkt', 'ai'])) && (await kinds()).slice(-1)[0] === 'quiz', JSON.stringify(await secOrder()));
+check('the reader\'s section order and hidden sections carry over (Stock Market first, Product & Business left out)', eq(await secOrder(), ['Stock Market', 'AI & Tech']) && eq(await storyIds(), await feedIds(['mkt', 'ai'])) && eq((await kinds()).slice(-2), ['quiz', 'end']), JSON.stringify(await secOrder()));
 await open({ prefs: { order: ['quiz', 'ai', 'biz', 'mkt'], off: [] } });
 await openDeck();
 t = await kinds();
@@ -162,7 +163,7 @@ await c.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'ArrowRight', cod
 check('the right arrow key moves on', (await pos()) === `4 / ${TOTAL}`);
 await c.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'End', code: 'End', windowsVirtualKeyCode: 35 }); await c.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'End', code: 'End', windowsVirtualKeyCode: 35 }); await c.sleep(1000);
 t = await J(`({ pos: document.querySelector('.dk-count').textContent, next: document.querySelector('.dk-next').disabled, kind: document.querySelector('.dk-card:not([inert])').className })`);
-check('End goes to the last card (the quiz), where Next is disabled', t.pos === `${TOTAL} / ${TOTAL}` && t.next && /dk-quiz/.test(t.kind), JSON.stringify(t));
+check('End goes to the last card (the closing card), where Next is disabled', t.pos === `${TOTAL} / ${TOTAL}` && t.next && /dk-end/.test(t.kind), JSON.stringify(t));
 await c.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Home', code: 'Home', windowsVirtualKeyCode: 36 }); await c.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Home', code: 'Home', windowsVirtualKeyCode: 36 }); await c.sleep(1000);
 check('Home returns to the start (the cover), where Previous is disabled', (await pos()) === `1 / ${TOTAL}` && (await c.ev(`document.querySelector('.dk-prev').disabled`)) === true);
 t = await J(`(() => { const all = [...document.querySelectorAll('.dk-card')]; return { inert: all.filter((x) => x.inert).length, n: all.length }; })()`);
@@ -511,35 +512,40 @@ await c.sleep(400);
 // The quote's attribution (.pause-attr) is only in the page's markup on days the generator has someone to credit — cards.js
 // already builds .dk-quote-by only when it is there (see buildCover in cards.js), so the test follows the same condition
 // rather than assuming today's edition has one.
-t = await J(`(() => { const k = document.querySelector('.dk-cover'), q = (s) => k.querySelector(s), top = (s) => Math.round(q(s).getBoundingClientRect().top), ed = document.querySelector('.edition'), parts = ed.innerHTML.split('<br>').map((x) => x.replace(/<[^>]*>/g, '').trim()), pa = document.querySelector('.pause-attr'), pl = pa && pa.querySelector('a'), by = q('.dk-quote-by'), bl = by && by.querySelector('a'); return { first: k === document.querySelector('.dk-card'), kick: q('.dk-kick').textContent, edition: parts[0], word: q('.dk-wordmark').textContent, tag: q('.dk-metaline').textContent === document.querySelector('.tagline').textContent.trim(), label: q('.dk-quote-label').textContent, quote: q('.dk-quote-text').textContent === document.querySelector('.pause-text').textContent.trim(), hasAttr: !!pa, byMatchesAttr: !!pa === !!by, byText: by ? by.textContent : null, link: pl ? !!bl && bl.getAttribute('href') === pl.getAttribute('href') && bl.target + '/' + bl.rel === '_blank/noopener noreferrer' : !bl, intro: q('.dk-intro-p').textContent.startsWith('The Hour Brief is a daily read'), free: !!q('.dk-free'), pos: [top('.dk-quote'), top('.dk-listen'), top('.dk-quizt'), top('.dk-intro-p')], start: q('.dk-hint').textContent, startInScroll: !!q('.dk-hint').closest('.dk-scroll') }; })()`);
-check('the first card is the top of the page: edition line, "The Hour Brief", the tagline, the quote (with its author and source link, when the day\'s edition credits one) and the intro paragraph', t.first && t.kick.includes(t.edition) && t.word === 'The Hour Brief' && t.tag && t.label === 'Before the news' && t.quote && t.byMatchesAttr && t.link && t.intro && t.free, JSON.stringify(t));
-// Order only, not a fixed pixel cutoff: how far down the quiz tile sits depends on how long today's quote is (some days'
-// are a short line, others a full paragraph), so a hardcoded "< 620" breaks on a long-quote day without the app being wrong.
-check('the Listen and quiz tiles come straight after the quote, before the long intro', t.pos[0] < t.pos[1] && t.pos[1] < t.pos[2] && t.pos[2] < t.pos[3], JSON.stringify(t.pos));
+t = await J(`(() => { const k = document.querySelector('.dk-cover'), q = (s) => k.querySelector(s), top = (s) => Math.round(q(s).getBoundingClientRect().top), ed = document.querySelector('.edition'), parts = ed.innerHTML.split('<br>').map((x) => x.replace(/<[^>]*>/g, '').trim()), pa = document.querySelector('.pause-attr'), pl = pa && pa.querySelector('a'), by = q('.dk-quote-by'), bl = by && by.querySelector('a'); return { first: k === document.querySelector('.dk-card'), kick: q('.dk-kick').textContent, edition: parts[0], word: q('.dk-wordmark').textContent, tag: q('.dk-metaline').textContent === document.querySelector('.tagline').textContent.trim(), label: q('.dk-quote-label').textContent, quote: q('.dk-quote-text').textContent === document.querySelector('.pause-text').textContent.trim(), hasAttr: !!pa, byMatchesAttr: !!pa === !!by, byText: by ? by.textContent : null, link: pl ? !!bl && bl.getAttribute('href') === pl.getAttribute('href') && bl.target + '/' + bl.rel === '_blank/noopener noreferrer' : !bl, intro: q('.dk-intro-p').textContent.startsWith('The Hour Brief is a daily read'), free: !!q('.dk-free'), pos: [top('.dk-quote'), top('.dk-intro-p')], noTiles: !q('.dk-listen') && !q('.dk-quizt'), start: q('.dk-hint').textContent, startInScroll: !!q('.dk-hint').closest('.dk-scroll') }; })()`);
+check('the first card is the top of the page: edition line, "The Hour Brief", the tagline, the quote (with its author and source link, when the day\'s edition credits one) and the intro paragraph — no Listen/quiz tiles here, those live on the closing card now', t.first && t.kick.includes(t.edition) && t.word === 'The Hour Brief' && t.tag && t.label === 'Before the news' && t.quote && t.byMatchesAttr && t.link && t.intro && t.free && t.noTiles, JSON.stringify(t));
+check('the quote comes before the long intro paragraph', t.pos[0] < t.pos[1], JSON.stringify(t.pos));
 check('a "See today’s stories" button is pinned below', t.start === 'See today’s stories' && !t.startInScroll, JSON.stringify(t));
 // Checks the clamp is actually applied (content-independent: works whether today's quote is long or short), not that
 // today specifically overflows it — a short-quote day would make an "it visibly overflows" assertion flaky for no
 // real reason, the same trap the attribution check fell into earlier.
 t = await J(`(() => { const q = document.querySelector('.dk-quote-text'); return { fullTextStillThere: q.textContent === document.querySelector('.pause-text').textContent.trim(), lines: getComputedStyle(q).webkitLineClamp, overflowHidden: getComputedStyle(q).overflow === 'hidden' }; })()`);
 check('the quote is set to clamp at 4 lines (so a long one does not push the rest of the cover far down), full text stays in the DOM either way', t.lines === '4' && t.overflowHidden && t.fullTextStillThere, JSON.stringify(t));
+await c.shot(`${OUT}/cards_cover.png`);
+await c.ev(`document.querySelector('.dk-cover .dk-hint').click()`); await c.sleep(900);
+check('"Start reading" moves on to the first section', (await pos()) === `2 / ${TOTAL}` && (await c.ev(curKick)) === 'Section 1 of 3');
+
+// ---------- 8d2. the closing card: Listen and quiz tiles live here now, always the deck's last card ----------
+await c.ev(`HBCards.goTo(HBCards.count() - 1, false)`); await c.sleep(500);
+t = await J(`(() => { const cs = document.querySelectorAll('.dk-card'); return { isLastKind: cs[cs.length - 1].classList.contains('dk-end'), kick: document.querySelector('.dk-end .dk-kick').textContent }; })()`);
+check('the closing card is always the deck\'s last card', t.isLastKind && t.kick === 'That’s the brief', JSON.stringify(t));
 t = await J(`(() => { const l = document.querySelector('.dk-listen'), q = document.querySelector('.dk-quizt'); return { listen: !l.hidden, lt: l.querySelector('strong').textContent, ls: l.querySelector('small').textContent, lbtn: l.querySelector('.dk-tile-go').getAttribute('aria-label'), quiz: !q.hidden, qt: q.querySelector('strong').textContent, qs: q.querySelector('small').textContent, ql: q.querySelector('.dk-tile-link').textContent, qrole: q.getAttribute('role') }; })()`);
 check('the Listen tile says what it is and how long ("Listen to today\'s brief", minutes and voice) with a play button, and the quiz tile carries the quiz chip\'s title, subtitle and "Play →"', t.listen && t.lt === 'Listen to today’s brief' && /min/.test(t.ls) && /Play/.test(t.lbtn) && t.quiz && /quiz/i.test(t.qt) && t.qs.length > 0 && /Play|Review/.test(t.ql) && t.qrole === 'button', JSON.stringify(t));
-await c.shot(`${OUT}/cards_cover.png`);
+await c.shot(`${OUT}/cards_end.png`);
 await c.ev(`document.querySelector('.dk-listen .dk-tile-go').click()`); await waitFor(`HBListen.state() === 'playing'`, 4000); await c.sleep(300);
 t = await J(`({ st: HBListen.state(), tile: document.querySelector('.dk-listen').classList.contains('playing'), btn: document.querySelector('.dk-listen .dk-tile-go').getAttribute('aria-label') })`);
 check('the Listen tile\'s button starts the brief, and turns into Pause', t.st === 'playing' && t.tile && /Pause/.test(t.btn), JSON.stringify(t));
 await c.ev(`HBListen.stop()`);
-await c.ev(`document.querySelector('.dk-cover .dk-hint').click()`); await c.sleep(900);
-check('"Start reading" moves on to the first section', (await pos()) === `2 / ${TOTAL}` && (await c.ev(curKick)) === 'Section 1 of 3');
-await c.ev(`HBCards.goTo(0, false)`); await c.sleep(400);
 t = await J(`(() => { document.querySelector('.dk-quizt').click(); const k = document.querySelector('#quiz .quiz-card').getBoundingClientRect(); return { deck: HBCards.isOpen(), cardTop: Math.round(k.top), view: localStorage.getItem('hb-view-v1') }; })()`);
 check('the quiz tile takes you straight to the first question (one step), and Cards stays your choice', !t.deck && t.cardTop >= 60 && t.cardTop <= 110 && t.view === 'cards', JSON.stringify(t));
 await open();
-await openDeck({ cover: true });
-check('with no audio on the device, the cover has no Listen tile (and the quiz tile is still there)', (await c.ev(`document.querySelector('.dk-listen').hidden && !document.querySelector('.dk-quizt').hidden`)) === true);
+await openDeck();
+await c.ev(`HBCards.goTo(HBCards.count() - 1, false)`); await c.sleep(400);
+check('with no audio on the device, the closing card has no Listen tile (and the quiz tile is still there)', (await c.ev(`document.querySelector('.dk-listen').hidden && !document.querySelector('.dk-quizt').hidden`)) === true);
 await open({ tts: true, prefs: { order: [], off: ['quiz'] } });
-await openDeck({ cover: true });
-check('with the quiz switched off, the cover has no quiz tile', (await c.ev(`document.querySelector('.dk-quizt').hidden`)) === true);
+await openDeck();
+await c.ev(`HBCards.goTo(HBCards.count() - 1, false)`); await c.sleep(400);
+check('with the quiz switched off, the closing card has no quiz tile', (await c.ev(`document.querySelector('.dk-quizt').hidden`)) === true);
 await open({ tts: true, dark: true });
 await openDeck({ cover: true });
 await c.shot(`${OUT}/cards_cover_dark.png`);

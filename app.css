@@ -619,7 +619,7 @@ html.hb-hub-open .view-switch { display: none; }   /* not a reading-mode decisio
    border, not two stacked bars. */
 .view-switch { position: fixed; left: 0; right: 0; bottom: var(--hb-tab-h); z-index: 9982; display: flex; justify-content: center; pointer-events: none; }
 .view-switch[hidden] { display: none; }
-.vs-in { pointer-events: auto; display: inline-flex; padding: 3px; border-radius: 18px 18px 0 0; background: rgba(var(--hb-paper-rgb), 0.94); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.vs-in { pointer-events: auto; display: inline-flex; padding: 3px; border-radius: 18px 18px 0 0; background: rgba(var(--hb-paper-rgb), 0.94); border: 1px solid var(--line); border-bottom: 0; box-shadow: 0 -4px 14px rgba(18, 19, 22, 0.08); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
 .vs-in button { min-height: 34px; padding: 0 16px; border: 0; border-radius: 999px; background: transparent; color: var(--ink-soft); font-family: var(--hb-label); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .vs-in button[aria-pressed="true"] { background: var(--hb-primary); color: #fff; }
 .vs-in button:focus-visible { outline: 2px solid var(--hb-primary); outline-offset: 2px; }
@@ -644,7 +644,12 @@ html.hb-deck-open, html.hb-deck-open body { overflow: hidden; }
 html.hb-deck-open #mob-progress, html.hb-deck-open #mob-top { display: none; }
 .hb-deck { position: fixed; top: 0; left: 0; right: 0; bottom: var(--hb-tab-h); z-index: 9981; display: flex; flex-direction: column; background: var(--bg); color: var(--ink); font-family: var(--hb-sans); }
 .hb-deck { visibility: visible; }
-html.hb-switch-on .hb-deck { bottom: calc(var(--hb-tab-h) + var(--hb-switch-h)); }   /* leaves the switch its own band, clear of the deck's own footer */
+/* The deck's own reserved space must track the SAME class that shrinks the bar stack above it (html.hb-deck-open),
+   not a separately-toggled html.hb-switch-on — two different classes supposedly agreeing on one number is exactly how
+   a gap opened up on a real device (deck reserved one amount, the switch sat at another), showing the list underneath
+   through the gap. The deck is only ever visible while hb-deck-open is set anyway, so gating on it directly, with no
+   second class in the loop, is also just the more correct rule on its own. */
+html.hb-deck-open:not(.hb-hub-open) .hb-deck { bottom: calc(var(--hb-tab-h) + var(--hb-switch-h)); }
 .hb-deck[hidden] { display: none; }
 /* Inside the deck this floats over the top of the card instead of pushing it down — reading space stays full-height, and the
    card fades itself out on its own (see cards.js), so it never lingers over the content. */
@@ -691,7 +696,7 @@ html.hb-switch-on .hb-deck { bottom: calc(var(--hb-tab-h) + var(--hb-switch-h));
 .dk-foot { flex: none; display: flex; align-items: center; gap: 12px; padding: 4px 16px 12px; }
 .dk-bar { flex: 1; height: 5px; border-radius: 3px; background: rgba(var(--hb-ink-rgb), 0.11); overflow: hidden; }
 .dk-bar i { display: block; width: 0; height: 100%; border-radius: 3px; background: var(--hb-primary); transition: width 0.2s ease; }
-.dk-count { flex: none; min-width: 48px; text-align: center; font-size: 0.82rem; font-variant-numeric: tabular-nums; color: var(--ink-soft); }
+.dk-count { display: none; }   /* the "N / total" readout read as clutter; the progress bar alone says enough. Stays in the DOM (cards.js still keeps it current) since it's a handy, stable hook for tests to read the current position from. */
 .dk-foot { width: 100%; max-width: 672px; margin: 0 auto; box-sizing: border-box; }
 
 /* ---- Prev/next: small arrows overlaid on the card's own edges, not a separate button bar ---- */

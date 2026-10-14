@@ -732,6 +732,13 @@
     vs.hidden = !cardsOk();
     document.documentElement.classList.toggle('hb-switch-on', !vs.hidden);
     syncViewSwitch();
+    if (!vs.hidden) requestAnimationFrame(measureSwitchH);   // --hb-switch-h is an estimate; this corrects it to what actually rendered, so the deck's reserved space can never fall short of the real bar and open a gap onto the list underneath
+  }
+  function measureSwitchH() {
+    var inner = document.querySelector('.vs-in');
+    if (!inner) return;
+    var h = inner.getBoundingClientRect().height;
+    if (h > 0) document.documentElement.style.setProperty('--hb-switch-h', Math.ceil(h) + 'px');
   }
   function syncViewSwitch() {
     var vs = document.querySelector('.view-switch');

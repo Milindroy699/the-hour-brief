@@ -124,7 +124,7 @@ Text is copied with `textContent`, never as HTML.
 - **Hint:** the one-time "Make it yours" (sections) hint, on the second day the app is opened, sits above the first section when the list is showing (unchanged, part of the normal document flow, costs no space it isn't given). When Cards is showing, it instead **floats** over the top of the current card (`.hb-tip-float`, `position: absolute`, anchored just under the deck's top bar) rather than sitting in the flex flow and squeezing the card down — reading space stays full height at all times. It fades itself out on its own after `HB_TIP_FADE_MS` (default 6s), or the moment the reader's first real touch lands on the track, whichever comes first — neither counts as a "no", so it gets another chance on the next visit; only an explicit "Not now" (or choosing sections) marks it done for good. State in `hb-tip-v1`.
 - **Web only:** no store release is needed; a Vercel deploy reaches every installed app on its next open.
 - **Test on a real Android WebView, not just headless Chrome** (see Emulator notes in the mobile docs).
-Tests: `node tools/browser-tests/cards.mjs` (161 checks, includes real touch swipes via `cdp.mjs` `swipe()`, and real Listen with a fake voice for the follow tests). The other suites (`premium`, `prefs`, `listen`, `bridge`) test the list, so they open with the List view stored — and now also exercise the switch, since `html.hb-switch-on` is active there too.
+Tests: `node tools/browser-tests/cards.mjs` (162 checks, includes real touch swipes via `cdp.mjs` `swipe()`, and real Listen with a fake voice for the follow tests). The other suites (`premium`, `prefs`, `listen`, `bridge`) test the list, so they open with the List view stored — and now also exercise the switch, since `html.hb-switch-on` is active there too.
 A known flake, present before this session and not caused by it: 3 of the checks around tapping/swiping straight to a section's first story (near
 the top of the suite) occasionally land one card further in than expected — reproduces on unmodified code too, so it looks like a timing quirk of
 the synthesized CDP touch gesture rather than the app; worth a closer look, but not from this pass.
@@ -163,6 +163,28 @@ Three changes, all aimed the same way: give the card itself as much of the scree
   page-level debugging" below for the attach pattern; this redesign used it directly (`ws://127.0.0.1:9222/devtools/page/<id>`
   rather than `android-chrome.mjs`'s `attach()`, since multiple stale tabs from earlier sessions made its
   first-page-found default pick the wrong target — look up the right target id from `http://127.0.0.1:9222/json` first).
+
+**Real-device bug found and fixed the same day:** on a real phone, the switch sat with a visible gap above the tab
+bar — list content showed through the gap, since neither the deck's background nor the switch's own background
+covered that strip. Cause: `.hb-deck`'s reserved bottom space was gated on `html.hb-switch-on` (set by `viewSwitch()`
+in `mobile.js`) while the bar-stack shrink was gated on a *different* class, `html.hb-deck-open` (set by `cards.js`'s
+own `open()`/`close()`) — two independently-toggled classes supposedly agreeing on one number. Fixed by gating the
+deck's reserved space on `html.hb-deck-open:not(.hb-hub-open)` directly, the same class the shrink itself uses, so
+there is only ever one class in the loop, not two that can disagree. Also hardened against the next version of the
+same problem: `--hb-switch-h` was a hand-estimated constant (the switch's padding + button height on this Mac's
+rendering), which a real device's own font/DPI rendering is never guaranteed to match exactly — `viewSwitch()` now
+measures `.vs-in`'s actual rendered height after every time it becomes visible and corrects `--hb-switch-h` to that
+real number (`document.documentElement.style.setProperty(...)`), so the reserved space can no longer fall short of
+reality, on this device or any other.
+
+**Also that day:** the "N / total" readout in the footer (`.dk-count`) is hidden — felt like clutter once the progress
+bar alone already says enough; it stays in the DOM (cards.js keeps it current) since several tests read the current
+position from it. The switch pill gained a border and a stronger shadow (`.vs-in`) for better contrast against the
+page behind it, which had been blending into a near-white background. And the cover/closing split moved further:
+the Listen and quiz tiles are off the cover entirely now (it is just the quote, the intro paragraph and "See today's
+stories") and live on the closing card instead, which is now *always* the deck's last card regardless of where the
+reader has the quiz section — previously it was only added when the quiz wasn't already last. `cards.mjs` is 162
+checks.
 
 ## Reload, and the next edition, without friction (`capacitor-bridge.js`, native apps only)
 
