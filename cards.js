@@ -147,17 +147,13 @@
     return t;
   }
 
+  // The cover is "before the news" now, not an introduction to the publication — a returning reader does not need The
+  // Hour Brief explained to them every morning. Just the edition line (dating it), the quote, and the way in.
   function buildCover(c) {
     var b = face('cover', 'Introduction: today’s brief');
     var line = editionLine();
     c.line = line;
     b.scroll.appendChild(mk('p', 'dk-kick', line || 'Today'));
-    var h = heading('h2', 'dk-title dk-title-lg dk-wordmark');
-    h.appendChild(document.createTextNode('The Hour '));
-    h.appendChild(mk('span', '', 'Brief'));
-    b.scroll.appendChild(h);
-    var tag = document.querySelector('.tagline');
-    if (tag) b.scroll.appendChild(mk('p', 'dk-metaline', plain(tag)));
     var qt = document.querySelector('.pause-text');
     if (qt) {
       var fig = mk('figure', 'dk-quote');
@@ -179,11 +175,6 @@
       }
       b.scroll.appendChild(fig);
     }
-    var about = document.querySelector('.about > p');
-    if (about) b.scroll.appendChild(mk('p', 'dk-intro-p', plain(about)));
-    var free = document.querySelector('.about .free-line');
-    if (free) b.scroll.appendChild(mk('p', 'dk-free', plain(free)));
-
     var start = btn('dk-hint', 'See today’s stories');
     start.addEventListener('click', function () { goTo(1, true); });
     var bar = mk('div', 'dk-actions dk-startbar');
@@ -399,8 +390,27 @@
 
     var foot = ui.foot = mk('footer', 'dk-foot');       // just the progress bar now: full width, no buttons to share it with
     var bar = mk('div', 'dk-bar');
+    bar.setAttribute('aria-hidden', 'true');   // a pointer-only shortcut; the track itself already has full keyboard support (arrow keys, Home, End) and the real position announcements
     ui.fill = mk('i');
     bar.appendChild(ui.fill);
+    // The progress bar doubles as a scrubber: tap or drag anywhere along it to jump straight to that card.
+    var scrubbing = false;
+    function barIndexAt(clientX) {
+      var r = bar.getBoundingClientRect();
+      var frac = r.width > 0 ? (clientX - r.left) / r.width : 0;
+      return Math.round(Math.max(0, Math.min(1, frac)) * (cards.length - 1));
+    }
+    bar.addEventListener('pointerdown', function (e) {
+      if (cards.length < 2) return;
+      scrubbing = true;
+      onManualNav();
+      try { bar.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+      goTo(barIndexAt(e.clientX), false);
+    });
+    bar.addEventListener('pointermove', function (e) { if (scrubbing) goTo(barIndexAt(e.clientX), false); });
+    var endScrub = function () { scrubbing = false; };
+    bar.addEventListener('pointerup', endScrub);
+    bar.addEventListener('pointercancel', endScrub);
     ui.count = mk('span', 'dk-count');
     ui.live = mk('div', 'dk-live');
     ui.live.setAttribute('role', 'status');
@@ -524,6 +534,17 @@
   function indexOfLane(id) {
     for (var i = 0; i < cards.length; i++) if (cards[i].kind === 'intro' && cards[i].lane.id === id) return i;
     return -1;
+  }
+  // The story the reader has reached in the list, so reopening Cards resumes there instead of restarting at the
+  // cover every time — close() already scrolls the list to match the card being read; this is the other direction,
+  // for a reader who went List -> Cards -> List -> Cards without an explicit target (a shared link, Listen playing).
+  function listStoryId() {
+    var items = document.querySelectorAll('.item[data-story-id]'), best = null, bestTop = -Infinity;
+    for (var k = 0; k < items.length; k++) {
+      var top = items[k].getBoundingClientRect().top;
+      if (top <= 120 && top > bestTop) { bestTop = top; best = items[k]; }
+    }
+    return best ? best.getAttribute('data-story-id') : null;
   }
 
   function render() {
@@ -808,6 +829,7 @@
     var now = listenNow();
     if (now.live && now.cur) lastFollowId = now.cur.id;              // opening mid-play: start on it, then follow the NEXT part
     if (i < 0 && now.live) i = unitIndex(now.cur);
+    if (i < 0) { var lastId = listStoryId(); if (lastId) i = indexOfStory(lastId); }
     if (i < 0) i = 0;
     deckW = track.clientWidth;
     goTo(i, false);

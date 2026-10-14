@@ -696,8 +696,11 @@ html.hb-deck-open:not(.hb-hub-open) .hb-deck { bottom: calc(var(--hb-tab-h) + va
 .dk-act[aria-pressed="true"] svg { fill: currentColor; }
 .dk-act:disabled { opacity: 0.85; cursor: default; }
 .dk-foot { flex: none; display: flex; align-items: center; gap: 12px; padding: 4px 16px 12px; }
-.dk-bar { flex: 1; height: 5px; border-radius: 3px; background: rgba(var(--hb-ink-rgb), 0.11); overflow: hidden; }
-.dk-bar i { display: block; width: 0; height: 100%; border-radius: 3px; background: var(--hb-primary); transition: width 0.2s ease; }
+/* A bit taller than a pure progress readout needs, since it doubles as a scrubber now (tap or drag to jump to a
+   card) — after the initial touch lands on it, pointer capture tracks the drag anywhere on screen, so this height
+   mostly just needs to be enough to land that first tap reliably. */
+.dk-bar { flex: 1; height: 9px; border-radius: 5px; background: rgba(var(--hb-ink-rgb), 0.11); overflow: hidden; cursor: pointer; touch-action: none; -webkit-tap-highlight-color: transparent; }
+.dk-bar i { display: block; width: 0; height: 100%; border-radius: 5px; background: var(--hb-primary); transition: width 0.2s ease; pointer-events: none; }
 .dk-count { display: none; }   /* the "N / total" readout read as clutter; the progress bar alone says enough. Stays in the DOM (cards.js still keeps it current) since it's a handy, stable hook for tests to read the current position from. */
 .dk-foot { width: 100%; max-width: 672px; margin: 0 auto; box-sizing: border-box; }
 

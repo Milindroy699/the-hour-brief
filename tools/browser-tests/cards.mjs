@@ -175,6 +175,18 @@ await c.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: '
 await c.sleep(400);
 check('Esc closes the deck and goes back to the list (and remembers List)', (await c.ev(`!HBCards.isOpen() && document.querySelector('.hb-deck').hidden && !document.documentElement.classList.contains('hb-deck-open')`)) && (await view()) === 'list');
 
+// The progress bar doubles as a scrubber: a real (CDP-level, trusted) mouse down+up at a point along it jumps straight there.
+await open();
+await openDeck();
+let barR = await J(`(() => { const r = document.querySelector('.dk-bar').getBoundingClientRect(); return { l: r.left, w: r.width, y: Math.round(r.top + r.height / 2) }; })()`);
+const targetIdx = Math.round((TOTAL - 1) * 0.5);
+const scrubX = Math.round(barR.l + barR.w * (targetIdx / (TOTAL - 1)));
+await c.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: scrubX, y: barR.y, button: 'left', clickCount: 1 });
+await c.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: scrubX, y: barR.y, button: 'left', clickCount: 1 });
+await c.sleep(700);
+t = await J(`({ pos: document.querySelector('.dk-count').textContent })`);
+check('tapping the progress bar jumps straight to that point in the deck', Math.abs(parseInt(t.pos, 10) - (targetIdx + 1)) <= 1, JSON.stringify({ got: t.pos, wantedIdx: targetIdx }));
+
 // a scroll that stops short (seen in Android WebViews) is finished
 await open();
 await openDeck();
@@ -372,6 +384,8 @@ const story3 = await c.ev(`document.querySelector('.dk-card:not([inert])').getAt
 await c.ev(`document.querySelectorAll('.vs-in button')[0].click()`); await c.sleep(500);
 t = await J(`({ top: Math.round(document.getElementById(${JSON.stringify(story3)}).getBoundingClientRect().top), deck: HBCards.isOpen() })`);
 check('going back to the list lands on the story you were reading', !t.deck && t.top >= 0 && t.top < 140, JSON.stringify(t));
+await c.ev(`document.querySelectorAll('.vs-in button')[1].click()`); await c.sleep(900);
+check('and switching back to Cards resumes on that same story — not back at the cover', (await c.ev(`document.querySelector('.dk-card:not([inert])').getAttribute('data-id')`)) === story3, JSON.stringify(story3));
 await open();
 await openDeck();
 await c.ev(`HBCards.goTo(HBCards.count() - 1, false)`); await c.sleep(600);
@@ -512,9 +526,8 @@ await c.sleep(400);
 // The quote's attribution (.pause-attr) is only in the page's markup on days the generator has someone to credit — cards.js
 // already builds .dk-quote-by only when it is there (see buildCover in cards.js), so the test follows the same condition
 // rather than assuming today's edition has one.
-t = await J(`(() => { const k = document.querySelector('.dk-cover'), q = (s) => k.querySelector(s), top = (s) => Math.round(q(s).getBoundingClientRect().top), ed = document.querySelector('.edition'), parts = ed.innerHTML.split('<br>').map((x) => x.replace(/<[^>]*>/g, '').trim()), pa = document.querySelector('.pause-attr'), pl = pa && pa.querySelector('a'), by = q('.dk-quote-by'), bl = by && by.querySelector('a'); return { first: k === document.querySelector('.dk-card'), kick: q('.dk-kick').textContent, edition: parts[0], word: q('.dk-wordmark').textContent, tag: q('.dk-metaline').textContent === document.querySelector('.tagline').textContent.trim(), label: q('.dk-quote-label').textContent, quote: q('.dk-quote-text').textContent === document.querySelector('.pause-text').textContent.trim(), hasAttr: !!pa, byMatchesAttr: !!pa === !!by, byText: by ? by.textContent : null, link: pl ? !!bl && bl.getAttribute('href') === pl.getAttribute('href') && bl.target + '/' + bl.rel === '_blank/noopener noreferrer' : !bl, intro: q('.dk-intro-p').textContent.startsWith('The Hour Brief is a daily read'), free: !!q('.dk-free'), pos: [top('.dk-quote'), top('.dk-intro-p')], noTiles: !q('.dk-listen') && !q('.dk-quizt'), start: q('.dk-hint').textContent, startInScroll: !!q('.dk-hint').closest('.dk-scroll') }; })()`);
-check('the first card is the top of the page: edition line, "The Hour Brief", the tagline, the quote (with its author and source link, when the day\'s edition credits one) and the intro paragraph — no Listen/quiz tiles here, those live on the closing card now', t.first && t.kick.includes(t.edition) && t.word === 'The Hour Brief' && t.tag && t.label === 'Before the news' && t.quote && t.byMatchesAttr && t.link && t.intro && t.free && t.noTiles, JSON.stringify(t));
-check('the quote comes before the long intro paragraph', t.pos[0] < t.pos[1], JSON.stringify(t.pos));
+t = await J(`(() => { const k = document.querySelector('.dk-cover'), q = (s) => k.querySelector(s), ed = document.querySelector('.edition'), parts = ed.innerHTML.split('<br>').map((x) => x.replace(/<[^>]*>/g, '').trim()), pa = document.querySelector('.pause-attr'), pl = pa && pa.querySelector('a'), by = q('.dk-quote-by'), bl = by && by.querySelector('a'); return { first: k === document.querySelector('.dk-card'), kick: q('.dk-kick').textContent, edition: parts[0], label: q('.dk-quote-label').textContent, quote: q('.dk-quote-text').textContent === document.querySelector('.pause-text').textContent.trim(), hasAttr: !!pa, byMatchesAttr: !!pa === !!by, byText: by ? by.textContent : null, link: pl ? !!bl && bl.getAttribute('href') === pl.getAttribute('href') && bl.target + '/' + bl.rel === '_blank/noopener noreferrer' : !bl, noExplainer: !q('.dk-wordmark') && !q('.dk-metaline') && !q('.dk-intro-p') && !q('.dk-free'), noTiles: !q('.dk-listen') && !q('.dk-quizt'), start: q('.dk-hint').textContent, startInScroll: !!q('.dk-hint').closest('.dk-scroll') }; })()`);
+check('the first card is just the edition line and "before the news" — no wordmark/tagline/explainer paragraph (a returning reader does not need The Hour Brief introduced to them), and no Listen/quiz tiles (those live on the closing card now)', t.first && t.kick.includes(t.edition) && t.label === 'Before the news' && t.quote && t.byMatchesAttr && t.link && t.noExplainer && t.noTiles, JSON.stringify(t));
 check('a "See today’s stories" button is pinned below', t.start === 'See today’s stories' && !t.startInScroll, JSON.stringify(t));
 // Checks the clamp is actually applied (content-independent: works whether today's quote is long or short), not that
 // today specifically overflows it — a short-quote day would make an "it visibly overflows" assertion flaky for no

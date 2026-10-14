@@ -124,7 +124,7 @@ Text is copied with `textContent`, never as HTML.
 - **Hint:** the one-time "Make it yours" (sections) hint, on the second day the app is opened, sits above the first section when the list is showing (unchanged, part of the normal document flow, costs no space it isn't given). When Cards is showing, it instead **floats** over the top of the current card (`.hb-tip-float`, `position: absolute`, anchored just under the deck's top bar) rather than sitting in the flex flow and squeezing the card down — reading space stays full height at all times. It fades itself out on its own after `HB_TIP_FADE_MS` (default 6s), or the moment the reader's first real touch lands on the track, whichever comes first — neither counts as a "no", so it gets another chance on the next visit; only an explicit "Not now" (or choosing sections) marks it done for good. State in `hb-tip-v1`.
 - **Web only:** no store release is needed; a Vercel deploy reaches every installed app on its next open.
 - **Test on a real Android WebView, not just headless Chrome** (see Emulator notes in the mobile docs).
-Tests: `node tools/browser-tests/cards.mjs` (162 checks, includes real touch swipes via `cdp.mjs` `swipe()`, and real Listen with a fake voice for the follow tests). The other suites (`premium`, `prefs`, `listen`, `bridge`) test the list, so they open with the List view stored — and now also exercise the switch, since `html.hb-switch-on` is active there too.
+Tests: `node tools/browser-tests/cards.mjs` (163 checks, includes real touch swipes via `cdp.mjs` `swipe()`, and real Listen with a fake voice for the follow tests). The other suites (`premium`, `prefs`, `listen`, `bridge`) test the list, so they open with the List view stored — and now also exercise the switch, since `html.hb-switch-on` is active there too.
 A known flake, present before this session and not caused by it: 3 of the checks around tapping/swiping straight to a section's first story (near
 the top of the suite) occasionally land one card further in than expected — reproduces on unmodified code too, so it looks like a timing quirk of
 the synthesized CDP touch gesture rather than the app; worth a closer look, but not from this pass.
@@ -176,6 +176,18 @@ rendering), which a real device's own font/DPI rendering is never guaranteed to 
 measures `.vs-in`'s actual rendered height after every time it becomes visible and corrects `--hb-switch-h` to that
 real number (`document.documentElement.style.setProperty(...)`), so the reserved space can no longer fall short of
 reality, on this device or any other.
+
+**Same day, later again — three more:** (1) switching List → Cards → List → Cards used to always restart at the cover,
+losing the reader's place. `open()` in `cards.js` now falls back to `listStoryId()` — the story nearest the top of
+the list's current scroll position — when there's no explicit target and Listen isn't actively playing something
+specific; `close()` already did the matching half (scrolling the list to the card being read), so now both
+directions agree. (2) The progress bar (`.dk-bar`) is now a scrubber: tap or drag anywhere along it to jump straight
+there — real `pointerdown`/`pointermove` with `setPointerCapture`, `aria-hidden` on the bar itself since the track
+already has full keyboard support and this is a pointer-only shortcut, not a second way to do the same thing with
+different semantics. Taller (9px) and `touch-action: none` so the first tap lands reliably; after that, capture
+tracks the drag anywhere on screen regardless of the (still visually thin) bar. (3) The cover dropped the wordmark,
+tagline and "what The Hour Brief is" paragraph — a returning reader doesn't need the publication introduced to them
+every morning. It's just the edition line and "before the news" now. `cards.mjs` is 163 checks.
 
 **Same day, later still:** the List | Cards switch now also hides while on the Audio or Challenge tab, not just Today —
 `syncTabs()` in `mobile.js` already computes which tab is current (`cur`) from scroll position, so it just toggles a
