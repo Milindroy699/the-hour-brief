@@ -694,64 +694,6 @@
     if (!t) { end(); return; }
     withCards(function (c) { c.open(t.id ? t : undefined); end(); }, end);
   }
-  // One switch, fixed just above the tab bar, built once and reused whichever view is showing — not two different
-  // controls in two different places (the old in-flow pill under the chips, and a separate "List" button in the
-  // deck's own header) depending on where the reader already is. Visibility and the pressed state both follow
-  // hb:deck, the same event cards.js already fires on every open/close.
-  function viewSwitch() {
-    var vs = document.querySelector('.view-switch');
-    if (!vs && cardsOk()) {
-      vs = mk('div', 'view-switch');
-      vs.hidden = true;                      // set true before it is visible even for a frame, syncViewSwitch() below decides
-      vs.setAttribute('role', 'group');
-      vs.setAttribute('aria-label', 'Reading view');
-      // The switch itself stays the plain, compact List | Cards pill in both views — not stretched or restyled in
-      // Cards, and the tab bar underneath it is never collapsed or hidden either: two earlier attempts at shrinking
-      // it away for Cards were both tried on a real device and reverted the same day, so this is the plain, boring
-      // version on purpose now, not a stepping stone to another redesign.
-      var inner = mk('div', 'vs-in');
-      var list = mk('button', '', 'List'), cards = mk('button', '', 'Cards');
-      list.type = cards.type = 'button';
-      list.addEventListener('click', function () { if (deckOpen()) window.HBCards.close(); });
-      cards.addEventListener('click', function () { openCards(); });
-      inner.appendChild(list);
-      inner.appendChild(cards);
-      vs.appendChild(inner);
-      document.body.appendChild(vs);
-      document.addEventListener('hb:deck', syncViewSwitch);
-      // Re-measure on every one of these, not just once at build time: a single requestAnimationFrame right after
-      // first building the switch has proven fragile in the past (the original version of this exact bug) — web
-      // fonts swapping in after that first paint, or the deck opening before layout has fully settled on a real
-      // device, can each leave --hb-switch-h a few pixels short of reality, opening a gap onto the list behind the
-      // deck. Cheap and idempotent, so measuring more often than strictly needed costs nothing.
-      document.addEventListener('hb:deck', measureSwitchH);
-      window.addEventListener('resize', measureSwitchH);
-      if (document.fonts && document.fonts.ready) document.fonts.ready.then(measureSwitchH);
-    }
-    if (!vs) return;
-    vs.hidden = !cardsOk();
-    document.documentElement.classList.toggle('hb-switch-on', !vs.hidden);
-    syncViewSwitch();
-    if (!vs.hidden) requestAnimationFrame(measureSwitchH);   // --hb-switch-h is an estimate; this corrects it to what actually rendered, so the deck's reserved space can never fall short of the real bar and open a gap onto the list underneath
-  }
-  function measureSwitchH() {
-    var vs = document.querySelector('.view-switch');
-    if (!vs) return;
-    var h = vs.getBoundingClientRect().height;
-    // +2px of slack on top of the real measurement: this exact bug (the deck's reserved bottom space ending up a
-    // few pixels short of the switch's real rendered height, opening a gap the list shows through) has recurred
-    // more than once this project — a slightly too-tall reservation is invisible; a slightly too-short one is a
-    // real, visible bug, so the rounding should err generously, not just up to the nearest pixel.
-    if (h > 0) document.documentElement.style.setProperty('--hb-switch-h', (Math.ceil(h) + 2) + 'px');
-  }
-  function syncViewSwitch() {
-    var vs = document.querySelector('.view-switch');
-    if (!vs || vs.hidden) return;
-    var on = deckOpen(), btns = vs.querySelectorAll('.vs-in > button');
-    btns[0].setAttribute('aria-pressed', String(!on));
-    btns[1].setAttribute('aria-pressed', String(on));
-  }
-
   // Customising is offered in passing, not at the door. The app counts the days it is opened; on the second day one small
   // card asks about sections (only for people with no saved sections). It sits above the first section, or under the top
   // bar of the deck when Cards is showing. It is shown through the day it first appears, never again on a later day.
@@ -912,8 +854,17 @@
       inner.appendChild(bar);
       refreshSaved();
     }
+    // The tagline, as its own full-width line under the header row (not squeezed into the small "Feed" subtitle,
+    // which stays put) — tried inside the compact subtitle first, asked to be its own, more legible line instead.
+    var band = inner.parentElement;
+    if (band && !band.querySelector('.masthead-tagline')) {
+      var tg = document.querySelector('.tagline');
+      if (tg) band.appendChild(mk('p', 'masthead-tagline', tg.textContent.trim()));
+    }
     var on = reader();
     [inner.querySelector('.ab-logo'), inner.querySelector('.ab-screen'), bar].forEach(function (el) { if (el) el.hidden = !on; });
+    var mtg = document.querySelector('.masthead-tagline');
+    if (mtg) mtg.hidden = !on;
   }
 
   function shareEdition() {
@@ -1052,12 +1003,33 @@
     quizPrevFocus = null;
   }
   window.HBQuizPage = { close: closeQuizPage, isOpen: function () { return quizOvShown; } };
+  // The List | Cards switch: a floating pill, appended straight to body (see below) — centred just above the tab
+  // bar in List, top-right of the deck in Cards. An earlier version nested it inside .tab-bar itself instead,
+  // specifically to remove a recurring real-device bug (list content bleeding through a seam between two
+  // independently-positioned fixed elements that had to agree on a pixel-perfect height). Floating is safe from
+  // that same bug because it anchors to --hb-tab-h, which watchTabBarH() below keeps continuously correct via a
+  // ResizeObserver, not a one-off measurement — so it can't drift stale the way the old --hb-switch-h did.
   function tabBar() {
     var bar = document.querySelector('.tab-bar');
     if (!bar) {
       bar = mk('nav', 'tab-bar');
       bar.setAttribute('aria-label', 'App sections');
       var feed = isFeed();
+      var sw = mk('div', 'tab-switch');
+      sw.hidden = true;                      // cardsOk() decides, in syncTabs() below
+      sw.setAttribute('role', 'group');
+      sw.setAttribute('aria-label', 'Reading view');
+      var list = mk('button', '', 'List'), cardsBtn = mk('button', '', 'Cards');
+      list.type = cardsBtn.type = 'button';
+      list.addEventListener('click', function () { if (deckOpen()) window.HBCards.close(); });
+      cardsBtn.addEventListener('click', function () { openCards(); });
+      sw.appendChild(list);
+      sw.appendChild(cardsBtn);
+      // A floating pill, not a row inside the bar: above the tab bar in List, top-right of the deck in Cards (see
+      // html.hb-deck-open .tab-switch in app.css). Appended to body, not .tab-bar, so it is never affected by the
+      // desktop/iPad tab bar's own centring transform.
+      document.body.appendChild(sw);
+      var row = mk('div', 'tab-row');
       TABS.forEach(function (t) {
         var link = t[0] === 'archive' || !feed;
         var el = link ? mk('a', 'tab') : mk('button', 'tab');
@@ -1065,15 +1037,28 @@
         el.innerHTML = '<span class="tab-ic">' + ICON[t[0]] + '</span><span class="tab-lb">' + t[1] + '</span>';
         if (link) el.href = TAB_HREF[t[0]];
         else { el.type = 'button'; el.addEventListener('click', function () { tabGo(t[0]); }); }
-        bar.appendChild(el);
+        row.appendChild(el);
       });
+      bar.appendChild(row);
       document.body.appendChild(bar);
       window.addEventListener('scroll', syncSoon, { passive: true });
       document.addEventListener('hb:hub', syncTabs);
       document.addEventListener('hb:deck', syncTabs);
+      watchTabBarH(bar);
     }
     bar.hidden = !reader();
     syncTabs();
+  }
+  // --hb-tab-h, kept exactly in sync with .tab-bar's own real rendered height, continuously, for as long as the
+  // page lives — not measured once and hoped to stay right. Fires immediately on observe() with the current size,
+  // then again on every future change (the tab row's label wrapping, a safe-area change, a late web font).
+  function watchTabBarH(bar) {
+    // The distance from the bar's own top edge to the bottom of the viewport, not just the bar's own height — on
+    // the desktop layout .tab-bar floats with its own bottom:16px gap below it, which also needs reserving; on
+    // phones it's flush (bottom:0), so this is simply the bar's height there, same result either way.
+    var set = function () { var h = window.innerHeight - bar.getBoundingClientRect().top; if (h > 0) document.documentElement.style.setProperty('--hb-tab-h', Math.ceil(h) + 'px'); };
+    if (window.ResizeObserver) { new ResizeObserver(set).observe(bar); } else { set(); }
+    window.addEventListener('resize', set);   // viewport height can change (a mobile URL bar collapsing) without the bar's own size changing
   }
   function syncTabs() {
     var bar = document.querySelector('.tab-bar');
@@ -1093,24 +1078,25 @@
     var quizPage = !!(window.HBQuizPage && window.HBQuizPage.isOpen && window.HBQuizPage.isOpen());
     var r = qOk && !quizPage ? q.getBoundingClientRect() : null;    // scrolled to the inline quiz chip's target in the normal list, not the dedicated page
     var cur = hub ? 'audio' : quizPage ? 'quiz' : deckOpen() ? 'today' : (r && r.top < window.innerHeight * 0.5 && r.bottom > 90) ? 'quiz' : 'today';
-    document.documentElement.classList.toggle('hb-on-quiz', cur === 'quiz');   // the List | Cards switch is a Today-only decision, hide it on Audio and Challenge
     bar.querySelectorAll('.tab').forEach(function (t) {
       var n = t.getAttribute('data-tab');
       if (n === cur) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
       if (n === 'quiz') t.hidden = !qOk;
     });
+    var sw = document.querySelector('.tab-switch');   // floating now, no longer a child of .tab-bar — see tabBar()
+    if (sw) {
+      sw.hidden = !cardsOk() || cur !== 'today';   // not a reading-mode decision while on Audio or Challenge
+      if (!sw.hidden) {
+        var on = deckOpen(), btns = sw.querySelectorAll('button');
+        btns[0].setAttribute('aria-pressed', String(!on));
+        btns[1].setAttribute('aria-pressed', String(on));
+      }
+    }
     var lb = document.querySelector('.ab-screen');
-    if (lb) lb.textContent = cur === 'audio' ? 'Audio' : cur === 'quiz' ? 'Quiz' : tagline();
+    // "Feed" added nothing a reader didn't already know from having opened the app, and the wordmark reads
+    // stronger with the line under it gone entirely on Today — Audio and Challenge keep their label, still useful there.
+    if (lb) { lb.hidden = cur === 'today'; if (cur !== 'today') lb.textContent = cur === 'audio' ? 'Audio' : 'Quiz'; }
   }
-  // The app bar's subtitle under the wordmark: the tagline on Today (brought back — "the essence of the platform",
-  // and a plain "Feed" label said nothing a reader didn't already know from just having opened the app), the
-  // screen's own name everywhere else (Audio/Challenge), where knowing where you are is actually useful.
-  var taglineCache = null;
-  function tagline() {
-    if (taglineCache === null) { var t = document.querySelector('.tagline'); taglineCache = t ? t.textContent.trim() : 'Feed'; }
-    return taglineCache;
-  }
-
   // Section chips: an "All" chip, and the one for the section in view is filled (replaces the page's own three-section spy)
   function syncChips() {
     var nav = document.querySelector('.nav');
@@ -1198,7 +1184,6 @@
     storyButtons();
     siteLinks();
     readerTools();
-    viewSwitch();
     pauseCard();
     appBar();
     navChips();

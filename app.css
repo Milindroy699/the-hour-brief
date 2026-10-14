@@ -43,7 +43,6 @@
   --hb-sans: "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
   --hb-label: "Space Grotesk", "Inter", -apple-system, system-ui, sans-serif;
   --hb-tab-h: calc(66px + env(safe-area-inset-bottom, 0px));
-  --hb-switch-h: 46px;  /* the List | Cards switch's own reserved band, just above the tab bar — same pill, same height, in both views; JS corrects this estimate to the real rendered height */
 
   --bg: #faf9fd;
   --paper: #ffffff;
@@ -164,14 +163,16 @@ body { background-color: var(--bg); background-image: url('/brand/backgrounds/li
   box-shadow: 0 2px 8px rgba(18, 19, 22, 0.04);
   padding: 10px 16px 10px;
 }
-.masthead-inner { display: flex; align-items: flex-start; gap: 12px; flex-wrap: nowrap; max-width: none; }   /* top-aligned, not centred: the tagline (back as the Today subtitle) can run to 2-3 lines, and centring against that put the icons oddly mid-block */
-.ab-logo, .ab-actions { margin-top: 1px; }   /* lines up visually with the wordmark's own cap-height at the top of a now-taller row */
+.masthead-inner { display: flex; align-items: center; gap: 12px; flex-wrap: nowrap; max-width: none; }
 .masthead-inner > .edition, .masthead-inner > .cap-actions, .masthead-inner > #cap-share, .masthead-inner > .back-link { display: none !important; }   /* the tab bar covers these */
+/* The tagline as its own line under the whole header row — legible size, not squeezed into the small "Feed"
+   subtitle next to the wordmark (tried that first; asked for this instead, with room to actually read it). */
+.masthead-tagline { margin: 10px 2px 0; font-size: 1rem; line-height: 1.4; color: var(--ink-soft); }
 .ab-logo { flex: none; width: 34px; height: 34px; border-radius: 9px; box-shadow: 0 0 0 1px var(--line); }
 .ab-brand { flex: 1 1 auto; min-width: 0; }
 .wordmark {
   font-family: var(--hb-label);
-  font-size: 0.98rem;
+  font-size: 1.22rem;
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.1;
@@ -369,7 +370,7 @@ footer.colophon { border-top-color: var(--line); }
 /* ---- Bottom tab bar (Today, Audio, Challenge, Archive) ---- */
 .tab-bar {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 9985;
-  display: flex; justify-content: space-around; align-items: stretch;
+  display: flex; flex-direction: column;
   padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px));
   background: rgba(var(--hb-paper-rgb), 0.94);
   -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
@@ -377,6 +378,29 @@ footer.colophon { border-top-color: var(--line); }
   box-shadow: 0 -2px 12px rgba(18, 19, 22, 0.04);
 }
 .tab-bar[hidden] { display: none; }
+/* The List | Cards switch: a floating glassy pill, not part of the tab bar's own box (appended straight to body in
+   tabBar() in mobile.js, so the desktop/iPad tab bar's own centring transform never affects it) — centred just
+   above the tab bar in List, top-right of the deck in Cards (see html.hb-deck-open below). An earlier version of
+   this control nested it inside the tab bar instead, specifically to remove a bug where it bled a gap of list
+   content through a seam between two independently-positioned fixed elements that had to agree on a pixel-perfect
+   height. Floating here is safe from that same bug because it anchors to --hb-tab-h, which is kept continuously
+   correct by a ResizeObserver (watchTabBarH in mobile.js) rather than a one-off measurement. */
+.tab-switch {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--hb-tab-h) + 10px); z-index: 9986;
+  display: inline-flex; align-items: center; gap: 2px; padding: 3px;
+  border-radius: 999px;
+  background: rgba(var(--hb-paper-rgb), 0.78);
+  border: 1px solid rgba(var(--hb-primary-rgb), 0.28);
+  box-shadow: 0 10px 26px rgba(18, 19, 22, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+}
+.tab-switch[hidden] { display: none; }
+html.hb-deck-open .tab-switch { top: calc(env(safe-area-inset-top, 0px) + 14px); left: auto; right: 16px; bottom: auto; transform: none; }
+.tab-switch button { min-height: 34px; padding: 0 16px; border: 0; border-radius: 999px; background: transparent; color: var(--ink-soft); font-family: var(--hb-label); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.tab-switch button[aria-pressed="true"] { background: var(--hb-primary); color: #fff; }
+.tab-switch button:focus-visible { outline: 2px solid var(--hb-primary); outline-offset: 2px; }
+.tab-row { display: flex; justify-content: space-around; align-items: stretch; }
 .tab {
   flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
   min-height: 54px; padding: 2px 0 0; border: 0; background: none; color: var(--ink-soft); text-decoration: none; cursor: pointer;
@@ -400,16 +424,6 @@ footer.colophon { border-top-color: var(--line); }
 body.hb-listening { padding-bottom: calc(var(--hb-tab-h) + 130px); }
 body.hb-listening #mob-top { bottom: calc(var(--hb-tab-h) + 138px); }
 body.hb-listening #mob-toast { bottom: calc(var(--hb-tab-h) + 150px); }
-/* The List | Cards switch floats just above the tab bar and is the same control, in the same place, whichever view is
-   showing — so while it is on screen everything else that already sits near the tab bar reserves room for it too,
-   rather than it overlapping the deck's own footer or the mini player. */
-html.hb-switch-on .page { padding-bottom: calc(var(--hb-tab-h) + var(--hb-switch-h) + 32px); }
-html.hb-switch-on #mob-top { bottom: calc(var(--hb-tab-h) + var(--hb-switch-h) + 14px); }
-html.hb-switch-on #mob-toast { bottom: calc(var(--hb-tab-h) + var(--hb-switch-h) + 16px); }
-html.hb-switch-on .hb-player { bottom: calc(var(--hb-tab-h) + var(--hb-switch-h) + 8px); }
-html.hb-switch-on body.hb-listening { padding-bottom: calc(var(--hb-tab-h) + var(--hb-switch-h) + 130px); }
-html.hb-switch-on body.hb-listening #mob-top { bottom: calc(var(--hb-tab-h) + var(--hb-switch-h) + 138px); }
-html.hb-switch-on body.hb-listening #mob-toast { bottom: calc(var(--hb-tab-h) + var(--hb-switch-h) + 150px); }
 .hb-pl-lane { font-family: var(--hb-label); color: var(--hb-primary-2); }
 .hb-pl-play { background: var(--hb-primary); }
 .hb-pl-title { font-weight: 650; }
@@ -442,7 +456,6 @@ html.hb-switch-on body.hb-listening #mob-toast { bottom: calc(var(--hb-tab-h) + 
 /* ---- Audio hub: the full-screen player (opened from the Audio tab or the mini player) ---- */
 html.hb-hub-open, html.hb-hub-open body { overflow: hidden; }
 html.hb-hub-open .hb-player { display: none; }
-html.hb-hub-open .view-switch, html.hb-on-quiz .view-switch { display: none; }   /* not a reading-mode decision while on Audio or Challenge */
 .hb-hub { position: fixed; top: 0; left: 0; right: 0; bottom: var(--hb-tab-h); z-index: 9983; display: flex; flex-direction: column; background: var(--bg); color: var(--ink); font-family: var(--hb-sans); }
 /* A dark, moody "now playing" glow (Stitch-generated) — dark mode only: this image is dark-toned and fades to near-
    black at the bottom (right where the play controls sit), which only reads correctly against dark-mode's already-
@@ -640,37 +653,6 @@ html.hb-quiz-page .hb-player { display: none; }
 .hub-eps { margin-bottom: 8px; }
 
 /* ---- Swipe cards (cards.js): the same stories, one per screen ---- */
-/* One switch, fixed and centred just above the tab bar, the same control in the same place whether List or Cards is
-   showing (not two different controls in two different spots depending on the view). Sits above the deck (z-index
-   9981) so it stays usable there, but below the Audio hub (9983) and any sheet, which cover it naturally — switching
-   reading mode makes no sense mid-hub or mid-sheet, so it simply disappears under them rather than needing its own
-   open/closed checks for every one of those.
-   The tab bar itself is never collapsed or hidden for Cards any more (two earlier attempts at shrinking/collapsing
-   it — icon-only, then a tucked-away chevron toggle — were both tried on a real device and reverted the same day):
-   it is the exact same full-width bar in both views, with the switch floating above it, same position, same look,
-   always — "just like the list view" is the standing rule for this control now, not a target to redesign toward. */
-.view-switch { position: fixed; left: 0; right: 0; bottom: var(--hb-tab-h); z-index: 9982; display: flex; align-items: center; justify-content: center; pointer-events: none; }
-.view-switch[hidden] { display: none; }
-/* A glassy pill (heavier blur+saturation, a soft violet-tinted ring, an inner top highlight) so it reads clearly as
-   a floating control in front of whatever is behind it, rather than looking like content it happens to be sitting
-   on top of. */
-.vs-in {
-  pointer-events: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 3px;
-  border-radius: 999px;
-  background: rgba(var(--hb-paper-rgb), 0.78);
-  border: 1px solid rgba(var(--hb-primary-rgb), 0.28);
-  box-shadow: 0 10px 26px rgba(18, 19, 22, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.4);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  backdrop-filter: blur(20px) saturate(180%);
-}
-.vs-in button { min-height: 34px; padding: 0 16px; border: 0; border-radius: 999px; background: transparent; color: var(--ink-soft); font-family: var(--hb-label); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.vs-in button[aria-pressed="true"] { background: var(--hb-primary); color: #fff; }
-.vs-in button:focus-visible { outline: 2px solid var(--hb-primary); outline-offset: 2px; }
-
 html.hb-deck-open, html.hb-deck-open body { overflow: hidden; }
 html.hb-deck-open #mob-progress, html.hb-deck-open #mob-top { display: none; }
 .hb-deck { position: fixed; top: 0; left: 0; right: 0; bottom: var(--hb-tab-h); z-index: 9981; display: flex; flex-direction: column; background: var(--bg); color: var(--ink); font-family: var(--hb-sans); }
@@ -683,12 +665,6 @@ html.hb-deck-open #mob-progress, html.hb-deck-open #mob-top { display: none; }
 }
 :root[data-theme="dark"] .hb-deck { background-image: url('/brand/backgrounds/cards-dark.jpg'); }
 .hb-deck { visibility: visible; }
-/* The deck's own reserved space must track the SAME class that shrinks the bar stack above it (html.hb-deck-open),
-   not a separately-toggled html.hb-switch-on — two different classes supposedly agreeing on one number is exactly how
-   a gap opened up on a real device (deck reserved one amount, the switch sat at another), showing the list underneath
-   through the gap. The deck is only ever visible while hb-deck-open is set anyway, so gating on it directly, with no
-   second class in the loop, is also just the more correct rule on its own. */
-html.hb-deck-open:not(.hb-hub-open) .hb-deck { bottom: calc(var(--hb-tab-h) + var(--hb-switch-h)); }
 .hb-deck[hidden] { display: none; }
 /* No header bar any more — every card carries its own .dk-kick (section/position), and this top strip's job was only
    ever to also provide the safe-area-inset-top clearance, which the track below now does directly. */

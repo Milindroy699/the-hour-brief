@@ -58,7 +58,7 @@ for (const set of SETS) {
     await c.shot(path.join(out, `${N.feed}${tag}.png`));
     await at('#ai .lane-head', 70); await c.shot(path.join(out, `${N.highlights}${tag}.png`));
     if (set.full) {                                            // the swipe cards: the cover (the top of the page), then the first story
-      await c.ev(`window.scrollTo(0, 0); document.querySelectorAll('.vs-in button')[1].click()`); await c.sleep(1500);
+      await c.ev(`window.scrollTo(0, 0); document.querySelectorAll('.tab-switch button')[1].click()`); await c.sleep(1500);
       await c.shot(path.join(out, `${N.cover}${tag}.png`));
       await c.ev(`HBCards.goTo(2, false)`); await c.sleep(700);
       await c.shot(path.join(out, `${N.cards}${tag}.png`));
