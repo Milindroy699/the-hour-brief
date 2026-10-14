@@ -733,8 +733,23 @@
     word.innerHTML = 'The Hour <span>Brief</span>';
     brand.appendChild(word);
     brand.appendChild(mk('p', 'ab-screen', 'Audio'));
+    // Same header everywhere — Today, Audio, Challenge, Archive — rather than each screen showing its own
+    // stripped-down version. mobile.js owns text size/saved/menu (and their icons); this file just calls through.
+    var HC = window.HBChrome;
+    var acts = mk('div', 'ab-actions');
+    var aa = btn('ab-btn reader-size', 'Text size', HC ? HC.icons.aa : '');
+    aa.addEventListener('click', function () { if (HC) HC.textSize(aa); });
+    var sv = btn('ab-btn reader-saved', 'Saved stories', (HC ? HC.icons.star : '') + '<span class="rd-count"></span>');
+    sv.addEventListener('click', function () { if (HC) HC.saved(sv); });
+    var mn = btn('ab-btn ab-menu', 'Menu: sections, text size, reminder, share', HC ? HC.icons.sliders : '');
+    mn.addEventListener('click', function () { if (HC) HC.menu(mn); });
+    acts.appendChild(aa);
+    acts.appendChild(sv);
+    acts.appendChild(mn);
     top.appendChild(logo);
     top.appendChild(brand);
+    top.appendChild(acts);
+    if (HC) HC.refreshSaved();
 
     var sc = mk('div', 'hub-scroll');
     var st = mk('div', 'hub-status');

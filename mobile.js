@@ -418,12 +418,11 @@
       b.setAttribute('aria-pressed', String(on));
       b.setAttribute('aria-label', on ? 'Remove from saved stories' : 'Save this story for later');
     });
-    var btn = document.querySelector('.reader-saved');
-    if (btn) {
+    document.querySelectorAll('.reader-saved').forEach(function (btn) {        // Today's masthead, plus Audio/Challenge's own copy of it
       var count = btn.querySelector('.rd-count');
       if (count) count.textContent = list.length ? String(list.length) : '';
       btn.setAttribute('aria-label', 'Saved stories' + (list.length ? ', ' + list.length : ''));
-    }
+    });
   }
   function toggleSaved(it) {
     var k = storyKey(it), list = loadSaved(), at = -1;
@@ -890,16 +889,10 @@
   var TAB_HREF = { today: '/', audio: '/?audio=1', quiz: '/#quiz', archive: '/archive/' };
   function tabGo(name) {
     var L = window.HBListen;
-    // Audio and Challenge no longer carry their own close button (it duplicated what tapping the tab itself already
-    // does) — tapping the tab you are already on now closes back to Today instead, same as tapping it did nothing
-    // before.
-    if (name === 'audio') {
-      if (L && L.hubOpen && L.hubOpen()) { L.closeHub(); setTimeout(syncTabs, 60); return; }
-      closeQuizPage();
-      if (L && L.openHub) L.openHub(); else toast('Audio is loading…');
-      setTimeout(syncTabs, 60);
-      return;
-    }
+    // Tapping the tab you are already on reopens/stays on it — it does not toggle closed (tried that after removing
+    // the X close button; tapping Challenge twice closing back to the list read as a bug, not a feature). Today
+    // remains the one way back to the list, same as any other tab bar.
+    if (name === 'audio') { closeQuizPage(); if (L && L.openHub) L.openHub(); else toast('Audio is loading…'); return; }
     if (L && L.closeHub) L.closeHub();
     if (name === 'today') {
       closeQuizPage();
@@ -908,7 +901,6 @@
       else window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     else if (name === 'quiz') {
-      if (quizOvShown) { closeQuizPage(); setTimeout(syncTabs, 60); return; }
       if (deckOpen()) window.HBCards.close({ keep: true });
       openQuizPage();
     }
@@ -942,8 +934,30 @@
     word.innerHTML = 'The Hour <span>Brief</span>';
     brand.appendChild(word);
     brand.appendChild(mk('p', 'ab-screen', 'Challenge'));
+    // Same header everywhere — Today, Audio, Challenge, Archive — rather than each screen showing its own
+    // stripped-down version (this one used to just close itself; Audio's own close went the same way).
+    var acts = mk('div', 'ab-actions');
+    var aa = mk('button', 'ab-btn reader-size');
+    aa.type = 'button';
+    aa.setAttribute('aria-label', 'Text size');
+    aa.innerHTML = ICON.aa;
+    aa.addEventListener('click', function () { openTextSize(aa); });
+    var sv = mk('button', 'ab-btn reader-saved');
+    sv.type = 'button';
+    sv.innerHTML = STAR_SVG + '<span class="rd-count"></span>';
+    sv.addEventListener('click', function () { openSaved(sv); });
+    var mn = mk('button', 'ab-btn ab-menu');
+    mn.type = 'button';
+    mn.setAttribute('aria-label', 'Menu: sections, text size, reminder, share');
+    mn.innerHTML = SLIDERS_SVG;
+    mn.addEventListener('click', function () { openMenu(mn); });
+    acts.appendChild(aa);
+    acts.appendChild(sv);
+    acts.appendChild(mn);
     top.appendChild(logo);
     top.appendChild(brand);
+    top.appendChild(acts);
+    refreshSaved();
     quizScroll = mk('div', 'hub-scroll');
     quizOv.appendChild(top);
     quizOv.appendChild(quizScroll);
@@ -973,6 +987,9 @@
     quizPrevFocus = null;
   }
   window.HBQuizPage = { close: closeQuizPage, isOpen: function () { return quizOvShown; } };
+  // listen.js builds the same header row (see buildHub() there) — it is a separate file/closure, so the actions it
+  // needs are handed across here rather than duplicated.
+  window.HBChrome = { textSize: openTextSize, saved: openSaved, menu: openMenu, refreshSaved: refreshSaved, icons: { aa: ICON.aa, star: STAR_SVG, sliders: SLIDERS_SVG } };
   // The List | Cards switch: a floating pill, appended straight to body (see below) — centred just above the tab
   // bar in List, top-right of the deck in Cards. An earlier version nested it inside .tab-bar itself instead,
   // specifically to remove a recurring real-device bug (list content bleeding through a seam between two
