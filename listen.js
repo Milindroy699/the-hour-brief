@@ -305,7 +305,7 @@
         S.date = date;
         MODES.forEach(mapCues);      // Full has no recording today, but would be used if one existed
       })
-      .catch(function () { /* no recording today: the device voice is used */ })
+      .catch(function (e) { if (window.console) console.warn('[hour-brief] recording manifest unavailable, using the device voice:', e); })
       .then(function () { clearTimeout(t); done(); });
   }
 
@@ -366,6 +366,7 @@
   function recFail() {
     S.bad[S.mode] = true;
     if (audio) audio.pause();
+    if (window.console) console.warn('[hour-brief] recorded audio failed to play, falling back to the device voice:', audio && audio.error);
     if (synth) { S.src = 'tts'; S.ci = 0; go(); render(); }
     else fail();
   }

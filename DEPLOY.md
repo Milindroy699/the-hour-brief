@@ -225,6 +225,82 @@ stories") and live on the closing card instead, which is now *always* the deck's
 reader has the quiz section — previously it was only added when the quiz wasn't already last. `cards.mjs` is 162
 checks.
 
+**2026-10-14, a larger round from real-device feedback (ten items at once):** the switch/chevron redesign above
+turned out not to be it once the reader actually used it, plus several other asks arrived in the same message.
+
+- **The switch is a plain pill again, in both views.** The expand chevron and the edition label are no longer folded
+  into `.vs-in` — the reader explicitly preferred the earlier, minimal two-button pill (a reference screenshot of
+  this exact control in List) over the stretched, stacked version Cards had grown. `.vs-in` is now untouched between
+  List and Cards: same markup, same compact centred pill. The edition label (`.vs-ed`) is gone outright — it was
+  never asked for. The expand button (`.vs-expand`) still exists (it has to: without it there would be no way back
+  to Audio/Challenge/Archive from inside Cards) but is now a separate round button beside the pill, not inside it —
+  `viewSwitch()` in `mobile.js` appends it as a sibling of `.vs-in`, both children of `.view-switch`. One
+  consequence: `.vs-in` alone is no longer exactly centred on screen while Cards is open (the chevron takes its own
+  space beside it) — the *pair* is what `.view-switch`'s `justify-content: center` centres now, not the pill alone.
+- **The background-bleed bug (list text visible below the collapsed menu) is fixed.** With the tab bar tucked away
+  (`max-height: 0`), nothing was left providing an opaque floor in that strip except the pill itself, which doesn't
+  span the full width — the gaps on either side (and below, now that `--hb-tab-h` collapses close to zero) showed
+  the frozen list behind the fixed deck. Fixed by making `.view-switch` itself become the floor whenever
+  `html.hb-deck-open:not(.hb-hub-open)`: full-width, `bottom: 0`, its own opaque/blurred background and top border,
+  padded for the safe area — the expand button and pill float on top of it, same as the tab bar used to sit under
+  the pill. `measureSwitchH()` now measures `.view-switch`'s own rendered height (the whole floor), not just
+  `.vs-in`'s, and re-measures after the expand/collapse transition too (its own height is different in each state),
+  not only on first reveal — getting this wrong a second time, after already shipping the `--hb-switch-h` fix above
+  for exactly this class of bug, would have been a much worse miss.
+- **The cover (`buildCover` in `cards.js`) has its title and tagline back.** They were removed earlier this session,
+  then the reader asked for them back specifically — "no explainer" was about a longer about-paragraph, never about
+  dropping the title. Cloned verbatim from the page's own `.wordmark`/`.tagline` (new `.dk-wordmark`/`.dk-tagline`
+  classes), same as the rest of the cover is built from the live page rather than hardcoded text. "Before the news"
+  no longer clamps at 4 lines — the lavender box now `flex: 1`s to fill whatever height is left below the title, so
+  a short quote still reads as a deliberate, uncluttered card instead of leaving a lot of plain white space, and a
+  long one simply makes the card taller (scrolls like any other card) instead of being cut off.
+- **Section-intro cards show the takeaway as plain text, not boxed.** Re-adding the old numbered story list was one
+  option raised but rejected: the whole point of this view is one story per screen, and the next several cards
+  *are* that section's stories — repeating all their headlines up front on the section card would undercut that.
+  Instead the takeaway dropped its boxed "Takeaway" callout treatment (border, background, label chip) — a story
+  card's own styling, which read oddly stamped onto a section — and is now just a flowing paragraph (`.dk-body-lg`),
+  reading as the section's own summary.
+- **The scrubber bar got a visible thumb and a bigger hit area.** The reported issue was specifically about dragging
+  precisely on Android. `.dk-bar` stayed visually thin (9px) but gained an invisible `::before` extending the real
+  touch target ±15px above and below it, plus a `.dk-bar-thumb` (16px circle) that tracks the fill percentage —
+  together a much easier target to grab and follow than a bare thin line. A light haptic tick (`Capacitor.Plugins
+  .Haptics.impact`, falling back to `navigator.vibrate` on the mobile web, silently no-op otherwise) fires once per
+  card index crossed while scrubbing, not once per pixel moved.
+- **The list view's section order is swapped: takeaway, then the highlights, then the stories.** `laneDigests()` in
+  `mobile.js` builds the "Today's highlights" numbered list client-side and inserts it next to the existing
+  `.lane-takeaway` paragraph — it was inserting right after the `<h2>`, ahead of the takeaway; now it inserts after
+  the takeaway instead, so the takeaway reads first as the section's summary and the highlights follow as pointers
+  into it. Confirmed via `git log -S` that this ordering predates this session (from the original highlights
+  feature, long before the swipe-card work) — not something broken by the cards.js changes, just a preference the
+  reader only raised now.
+- **Save/Share on a story card are icon-only.** The `.dk-lb` text-label spans next to the icon are gone from
+  `actionButtons()` in `cards.js`; `aria-label` (mirrored from the real button) is unchanged, so this is visual
+  only. `.dk-act` is a fixed 46px circle now rather than a stretched, equal-width pill with room for a label; the
+  vote buttons (emoji + count, never had a label either) keep an auto-width pill via a `:has(.dk-n)` exception.
+- **The dedicated "Play the quiz" card is gone.** `collect()` in `cards.js` no longer turns `section.lane#quiz` into
+  a card at all (`buildQuiz()` deleted outright) — it was sitting directly next to the closing card's own quiz tile
+  (`.dk-quizt`), making the same offer twice in a row, which is what was actually making that stretch of the deck
+  feel broken/redundant rather than finished. The quiz tile already does exactly what the old card's CTA did
+  (`close({keep:true, to: '#quiz .quiz-card'})`), so nothing about *reaching* the quiz changed, only the extra stop
+  on the way. One knock-on: reordering `quiz` in the reader's section prefs used to move this card around the deck;
+  since it's never a card now, that preference simply has no deck-visible effect any more (still respected
+  everywhere else the quiz shows, e.g. the Challenge tab, the quiz chip in the list).
+- **The closing card itself is no longer a wall of empty space under two tiles.** `.dk-end .dk-scroll` is now a
+  centred flex column (`justify-content: center`) instead of top-aligned content with whatever's left below it —
+  there's rarely enough content on this card to fill a full screen, so centring it reads as designed rather than
+  unfinished. Tapping "Listen to today's brief" there now also calls `setFab(true)` after starting playback, opening
+  the floating player's own controls instead of starting the audio silently with no visible way to pause/skip/stop
+  without hunting for the round button.
+- **Android plays the device voice where iOS plays the recorded (Sarvam) voice — investigated, not fixed.** Checked
+  everything visible from here: the R2 manifest and mp3 both serve correct CORS headers and content types, and
+  `capacitor.config.json` is byte-identical between the iOS and Android builds (same `server.url`, so the same
+  origin, same CORS allow-list match). Nothing server-side or in config explains a platform difference. Added two
+  `console.warn` lines (`listen.js`: the manifest-fetch `.catch()`, and `recFail()`) so the next time it falls back
+  on a real Android device, checking the console (`chrome://inspect` with the phone on USB) will show the actual
+  reason instead of it failing silently — this needs a real device log to go further, not more static reading.
+
+`cards.mjs` is 166 checks.
+
 ## Reload, and the next edition, without friction (`capacitor-bridge.js`, native apps only)
 
 Every page sets `history.scrollRestoration = 'manual'` in an inline `<head>` script (the very first thing in `<head>`, before

@@ -215,7 +215,9 @@
           });
           box.appendChild(t);
         }
-        (head.querySelector('.lane-more') || h2).insertAdjacentElement('afterend', box);   // the lane takeaway (if any) follows the highlights
+        // The takeaway (if any) comes first, reading like a summary of the section; the highlights are the pointers
+        // underneath it, before each story runs one after another.
+        (head.querySelector('.lane-takeaway') || head.querySelector('.lane-more') || h2).insertAdjacentElement('afterend', box);
         var tag = head.querySelector('.lane-tag');
         if (tag) lane.setAttribute('aria-label', tag.textContent.trim());
       }
@@ -717,9 +719,9 @@
       vs.hidden = true;                      // set true before it is visible even for a frame, syncViewSwitch() below decides
       vs.setAttribute('role', 'group');
       vs.setAttribute('aria-label', 'Reading view');
-      var inner = mk('div', 'vs-in');
-      // Collapsed by default in Cards (see the html.hb-deck-open... rules in app.css): this row alone, the full tab
-      // bar tucked away until asked for. Tapping it brings the tab bar back; tapping again puts it away.
+      // The switch itself stays the plain, compact List | Cards pill in both views — not stretched or restyled in
+      // Cards. Collapsed by default there (see the html.hb-deck-open... rules in app.css): this pill plus the
+      // separate expand button beside it, the full tab bar tucked away until asked for.
       var expand = mk('button', 'vs-expand', '');
       expand.type = 'button';
       expand.setAttribute('aria-label', 'Show the Audio, Challenge and Archive tabs');
@@ -729,16 +731,16 @@
         var on = document.documentElement.classList.toggle('hb-bar-expanded');
         expand.setAttribute('aria-expanded', String(on));
         expand.setAttribute('aria-label', on ? 'Hide the Audio, Challenge and Archive tabs' : 'Show the Audio, Challenge and Archive tabs');
+        requestAnimationFrame(measureSwitchH);   // the switch becomes a plain floating pill again once expanded: its own height changes, so the deck's reserved space must be re-measured, not just on first reveal
       });
-      var ed = mk('span', 'vs-ed');
+      var inner = mk('div', 'vs-in');
       var list = mk('button', '', 'List'), cards = mk('button', '', 'Cards');
       list.type = cards.type = 'button';
       list.addEventListener('click', function () { if (deckOpen()) window.HBCards.close(); });
       cards.addEventListener('click', function () { openCards(); });
-      inner.appendChild(expand);
-      inner.appendChild(ed);
       inner.appendChild(list);
       inner.appendChild(cards);
+      vs.appendChild(expand);
       vs.appendChild(inner);
       document.body.appendChild(vs);
       document.addEventListener('hb:deck', syncViewSwitch);
@@ -746,23 +748,27 @@
     if (!vs) return;
     vs.hidden = !cardsOk();
     document.documentElement.classList.toggle('hb-switch-on', !vs.hidden);
-    var ed2 = vs.querySelector('.vs-ed'), edEl = document.querySelector('.edition');
-    if (ed2 && edEl) ed2.textContent = edEl.innerHTML.split(/<br\s*\/?>/i)[0].replace(/<[^>]*>/g, '').trim();
     syncViewSwitch();
     if (!vs.hidden) requestAnimationFrame(measureSwitchH);   // --hb-switch-h is an estimate; this corrects it to what actually rendered, so the deck's reserved space can never fall short of the real bar and open a gap onto the list underneath
   }
   function measureSwitchH() {
-    var inner = document.querySelector('.vs-in');
-    if (!inner) return;
-    var h = inner.getBoundingClientRect().height;
+    var vs = document.querySelector('.view-switch');
+    if (!vs) return;
+    var h = vs.getBoundingClientRect().height;
     if (h > 0) document.documentElement.style.setProperty('--hb-switch-h', Math.ceil(h) + 'px');
   }
   function syncViewSwitch() {
     var vs = document.querySelector('.view-switch');
     if (!vs || vs.hidden) return;
-    var on = deckOpen(), btns = vs.querySelectorAll('.vs-in > button:not(.vs-expand)');   // List, Cards specifically — .vs-expand is a third button in the same row now, not one of the two states
+    var on = deckOpen(), btns = vs.querySelectorAll('.vs-in > button');
     btns[0].setAttribute('aria-pressed', String(!on));
     btns[1].setAttribute('aria-pressed', String(on));
+    if (!on) {
+      // Back to List: start collapsed again next time Cards opens, rather than remembering an expanded bar.
+      document.documentElement.classList.remove('hb-bar-expanded');
+      var expand = vs.querySelector('.vs-expand');
+      if (expand) { expand.setAttribute('aria-expanded', 'false'); expand.setAttribute('aria-label', 'Show the Audio, Challenge and Archive tabs'); }
+    }
   }
 
   // Customising is offered in passing, not at the door. The app counts the days it is opened; on the second day one small

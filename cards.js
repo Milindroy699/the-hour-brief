@@ -6,11 +6,12 @@
  * votes, saves and shared links are untouched. Text is copied with textContent only, never as HTML (the two small
  * icons are cloned from the feed's own buttons).
  *
- * Deck: a cover card (the top of the page: edition, the quote, the intro, the audio version, the quiz), then for each
- * section an intro card and one card per story, in the reader's own section order (hidden sections skipped), with the quiz
- * where the reader put it and a closing card if the quiz is not last. A horizontal scroll-snap track, so swiping,
- * momentum and snapping are the browser's own. Audio is a floating round button that opens into a small player; the
- * deck turns to whatever Listen is reading.
+ * Deck: a cover card (title, tagline, the day's "before the news" quote), then for each section an intro card and one
+ * card per story, in the reader's own section order (hidden sections skipped), then a closing card — always last —
+ * offering the audio version and the quiz as two tiles (the quiz lane itself is not a card of its own: that would be
+ * two cards making the same offer). A horizontal scroll-snap track, so swiping, momentum and snapping are the
+ * browser's own. Audio is a floating round button that opens into a small player; the deck turns to whatever Listen
+ * is reading.
  */
 (function () {
   'use strict';
@@ -38,6 +39,15 @@
     return b;
   }
   function setView(v) { try { localStorage.setItem(VIEW_KEY, v); } catch (e) { /* not remembered */ } }
+  // A light tick as the scrubber crosses into a new card — the native plugin in the app, the Vibration API on the
+  // phone web (Android only; iOS Safari has no equivalent, so it is simply silent there).
+  function haptic() {
+    try {
+      var P = window.Capacitor && window.Capacitor.Plugins;
+      if (P && P.Haptics) P.Haptics.impact({ style: 'LIGHT' });
+      else if (navigator.vibrate) navigator.vibrate(8);
+    } catch (e) { /* ignore */ }
+  }
   function cloneInto(to, from) { Array.prototype.forEach.call(from.childNodes, function (n) { to.appendChild(n.cloneNode(true)); }); }
   function icon(paths, circles) {
     var ns = 'http://www.w3.org/2000/svg', s = document.createElementNS(ns, 'svg');
@@ -92,7 +102,7 @@
     document.querySelectorAll('section.lane[id]').forEach(function (l) { if (laneShown(l)) lanes.push(l); });
     var secTotal = lanes.filter(function (l) { return l.id !== 'quiz' && l.querySelector('.item[data-story-id]'); }).length, sec = 0;
     lanes.forEach(function (lane) {
-      if (lane.id === 'quiz') { out.push({ kind: 'quiz', lane: lane, name: 'Quiz' }); return; }
+      if (lane.id === 'quiz') return;   // not a card of its own: the closing card already offers it as a tile
       var items = Array.prototype.slice.call(lane.querySelectorAll('.item[data-story-id]'));
       if (!items.length) return;
       sec += 1;
@@ -147,13 +157,22 @@
     return t;
   }
 
-  // The cover is "before the news" now, not an introduction to the publication — a returning reader does not need The
-  // Hour Brief explained to them every morning. Just the edition line (dating it), the quote, and the way in.
+  // The cover: the edition line and the title (so it still reads as The Hour Brief, not a blank screen), then
+  // "before the news" takes the rest of the card — no explainer paragraph, no Listen/quiz tiles (those live on the
+  // closing card now, the "now that you've read it" moment, not here).
   function buildCover(c) {
     var b = face('cover', 'Introduction: today’s brief');
     var line = editionLine();
     c.line = line;
     b.scroll.appendChild(mk('p', 'dk-kick', line || 'Today'));
+    var wmSrc = document.querySelector('.wordmark');
+    if (wmSrc) {
+      var wm = heading('h1', 'dk-wordmark', '');
+      cloneInto(wm, wmSrc);
+      b.scroll.appendChild(wm);
+    }
+    var tgSrc = document.querySelector('.tagline');
+    if (tgSrc) b.scroll.appendChild(mk('p', 'dk-tagline', plain(tgSrc)));
     var qt = document.querySelector('.pause-text');
     if (qt) {
       var fig = mk('figure', 'dk-quote');
@@ -218,13 +237,10 @@
     b.scroll.appendChild(heading('h2', 'dk-title dk-title-lg', c.name));
     var time = laneTime(c.lane);
     b.scroll.appendChild(mk('p', 'dk-metaline', (time ? time + ' · ' : '') + c.items.length + (c.items.length === 1 ? ' story' : ' stories')));
+    // Plain running text, not the boxed "Takeaway" callout a story card gets — this is reading as the section's own
+    // summary, not a pull-quote from within it, and a boxed label next to a lane name read oddly here.
     var tk = c.lane.querySelector('.lane-takeaway');
-    if (tk) {
-      var p = mk('p', 'dk-take');
-      p.appendChild(mk('span', 'takeaway-label', 'Takeaway'));
-      p.appendChild(document.createTextNode(' ' + plain(tk, true)));
-      b.scroll.appendChild(p);
-    }
+    if (tk) b.scroll.appendChild(mk('p', 'dk-body-lg', plain(tk, true)));
     var start = btn('dk-hint', 'Swipe to start');
     start.addEventListener('click', function () { goTo(idx + 1, true); });
     var bar = mk('div', 'dk-actions dk-startbar');       // pinned below the scrolling part, so it is always in reach
@@ -260,7 +276,7 @@
     vote('like', 'voted-like');
     vote('dislike', 'voted-dislike');
     var save = row && row.querySelector('.story-save');
-    proxy('save', save, function (b, real) { cloneInto(b, real); b.appendChild(mk('span', 'dk-lb', 'Save')); }, function (b, real) {
+    proxy('save', save, function (b, real) { cloneInto(b, real); }, function (b, real) {
       var on = real.getAttribute('aria-pressed') === 'true';
       b.setAttribute('aria-pressed', String(on));
       b.setAttribute('aria-label', real.getAttribute('aria-label') || 'Save this story for later');
@@ -268,7 +284,6 @@
     var share = row && row.querySelector('.story-share');
     proxy('share', share, function (b, real) {
       cloneInto(b, real);
-      b.appendChild(mk('span', 'dk-lb', 'Share'));
       b.setAttribute('aria-label', real.getAttribute('aria-label') || 'Share this story');
     }, function () { /* nothing to mirror */ });
     c.sync.forEach(function (f) { f(); });
@@ -308,25 +323,6 @@
     return b.card;
   }
 
-  function buildQuiz(c) {
-    var chip = document.querySelector('.quiz-chip');
-    var title = chip && chip.querySelector('.qc-title') ? chip.querySelector('.qc-title').textContent.trim() : 'Today’s quiz';
-    var sub = chip && chip.querySelector('.qc-sub') ? chip.querySelector('.qc-sub').textContent.trim() : 'See what stuck.';
-    var done = !!(chip && /review/i.test((chip.querySelector('.qc-go') || {}).textContent || ''));
-    var b = face('quiz', 'The quiz');
-    b.scroll.appendChild(mk('p', 'dk-kick', 'Challenge'));
-    b.scroll.appendChild(heading('h2', 'dk-title dk-title-lg', title));
-    b.scroll.appendChild(mk('p', 'dk-metaline', sub));
-    b.scroll.appendChild(mk('p', 'dk-body-lg', done ? 'You have played today’s quiz. Look back at your answers, or keep your streak going tomorrow.' : 'Five quick questions on what you just read. It takes about a minute.'));
-    var go = btn('dk-cta', done ? 'Review your answers' : 'Play the quiz');
-    go.addEventListener('click', function () {
-      // Hand over instantly, straight onto the question: the deck is replaced by the quiz in one step, with none of the feed scrolling past.
-      close({ keep: true, to: document.querySelector('#quiz .quiz-card') || c.lane });
-    });
-    b.scroll.appendChild(go);
-    return b.card;
-  }
-
   // The closing card: always the last one in the deck now (see collect()), so it is where the Listen and quiz tiles
   // live, not up on the cover — the cover is just "before the news" now, this is the "now that you've read it" card.
   function buildEnd(c) {
@@ -338,7 +334,11 @@
     var lt = tile('dk-listen', icon(HEADPHONES), 'Listen to today’s brief');      // shown once Listen is ready (it loads a moment after the page)
     lt.hidden = true;
     var go = btn('dk-tile-go');
-    go.addEventListener('click', function () { var g = document.querySelector('.listen-go'); if (g) g.click(); });
+    go.addEventListener('click', function () {
+      var g = document.querySelector('.listen-go');
+      if (g) g.click();
+      setFab(true);   // open into the player's own controls, not just start it silently
+    });
     lt.appendChild(go);
     c.listen = { el: lt, go: go };
     b.scroll.appendChild(lt);
@@ -385,21 +385,30 @@
     bar.setAttribute('aria-hidden', 'true');   // a pointer-only shortcut; the track itself already has full keyboard support (arrow keys, Home, End) and the real position announcements
     ui.fill = mk('i');
     bar.appendChild(ui.fill);
-    // The progress bar doubles as a scrubber: tap or drag anywhere along it to jump straight to that card.
-    var scrubbing = false;
+    ui.thumb = mk('span', 'dk-bar-thumb');
+    bar.appendChild(ui.thumb);
+    // The progress bar doubles as a scrubber: tap or drag anywhere along it (the thumb marks where it is now) to
+    // jump straight to that card, with a light haptic tick each time the drag crosses into a new one.
+    var scrubbing = false, scrubIdx = -1;
     function barIndexAt(clientX) {
       var r = bar.getBoundingClientRect();
       var frac = r.width > 0 ? (clientX - r.left) / r.width : 0;
       return Math.round(Math.max(0, Math.min(1, frac)) * (cards.length - 1));
     }
+    function scrubTo(clientX) {
+      var i = barIndexAt(clientX);
+      if (i !== scrubIdx) { scrubIdx = i; haptic(); }
+      goTo(i, false);
+    }
     bar.addEventListener('pointerdown', function (e) {
       if (cards.length < 2) return;
       scrubbing = true;
+      scrubIdx = -1;
       onManualNav();
       try { bar.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
-      goTo(barIndexAt(e.clientX), false);
+      scrubTo(e.clientX);
     });
-    bar.addEventListener('pointermove', function (e) { if (scrubbing) goTo(barIndexAt(e.clientX), false); });
+    bar.addEventListener('pointermove', function (e) { if (scrubbing) scrubTo(e.clientX); });
     var endScrub = function () { scrubbing = false; };
     bar.addEventListener('pointerup', endScrub);
     bar.addEventListener('pointercancel', endScrub);
@@ -537,7 +546,7 @@
     cards = collect();
     track.textContent = '';
     cards.forEach(function (c) {
-      c.el = c.kind === 'cover' ? buildCover(c) : c.kind === 'intro' ? buildIntro(c) : c.kind === 'story' ? buildStory(c) : c.kind === 'quiz' ? buildQuiz(c) : buildEnd(c);
+      c.el = c.kind === 'cover' ? buildCover(c) : c.kind === 'intro' ? buildIntro(c) : c.kind === 'story' ? buildStory(c) : buildEnd(c);
       track.appendChild(c.el);
     });
     watchMirror();
@@ -549,7 +558,9 @@
     var c = cards[idx];
     if (!c) return;
     ui.count.textContent = (idx + 1) + ' / ' + cards.length;
-    ui.fill.style.width = cards.length > 1 ? Math.round(idx / (cards.length - 1) * 100) + '%' : '100%';
+    var pct = cards.length > 1 ? Math.round(idx / (cards.length - 1) * 100) : 100;
+    ui.fill.style.width = pct + '%';
+    if (ui.thumb) ui.thumb.style.left = pct + '%';
     ui.prev.disabled = idx <= 0;
     ui.next.disabled = idx >= cards.length - 1;
     cards.forEach(function (x, i) {
@@ -775,7 +786,7 @@
     if (id === 'intro') return 0;
     if (id.indexOf('lane:') === 0) return indexOfLane(id.slice(5));
     if (id.indexOf('story:') === 0) return indexOfStory(id.slice(6));
-    if (id === 'outro') { for (var i = 0; i < cards.length; i++) if (cards[i].kind === 'quiz') return i; return cards.length - 1; }
+    if (id === 'outro') return cards.length - 1;
     return -1;
   }
   function markPlaying() { cards.forEach(function (c, i) { if (c.el) c.el.classList.toggle('dk-playing', i === playIdx); }); }

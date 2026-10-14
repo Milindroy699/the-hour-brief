@@ -43,7 +43,7 @@
   --hb-sans: "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
   --hb-label: "Space Grotesk", "Inter", -apple-system, system-ui, sans-serif;
   --hb-tab-h: calc(66px + env(safe-area-inset-bottom, 0px));
-  --hb-switch-h: 40px;  /* the List | Cards switch's own reserved band, just above the tab bar, when it is showing (it sits flush against the tab bar, so this is just the switch's own rendered height, no extra gap) */
+  --hb-switch-h: 70px;  /* the List | Cards switch's own reserved band, just above the tab bar when it is showing — in Cards (collapsed) it is itself the solid floor down to the screen edge, so this estimate runs a bit taller; JS corrects it to the real rendered height either way */
 
   --bg: #faf9fd;
   --paper: #ffffff;
@@ -619,38 +619,48 @@ html.hb-hub-open .view-switch, html.hb-on-quiz .view-switch { display: none; }  
    It sits flush against the tab bar (no gap, rounded only on top, sharing the same background/blur) rather than
    floating as its own separate pill above it — one continuous bottom surface, split only by the tab bar's own top
    border, not two stacked bars. */
-.view-switch { position: fixed; left: 0; right: 0; bottom: var(--hb-tab-h); z-index: 9982; display: flex; justify-content: center; pointer-events: none; }
+.view-switch { position: fixed; left: 0; right: 0; bottom: var(--hb-tab-h); z-index: 9982; display: flex; align-items: center; justify-content: center; gap: 10px; pointer-events: none; }
 .view-switch[hidden] { display: none; }
-.vs-in { pointer-events: auto; display: inline-flex; align-items: center; gap: 2px; padding: 3px; border-radius: 18px 18px 0 0; background: rgba(var(--hb-paper-rgb), 0.94); border: 1px solid var(--line); border-bottom: 0; box-shadow: 0 -4px 14px rgba(18, 19, 22, 0.08); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
-/* The chevron and edition label only mean anything once there's a tab bar they can reveal — i.e. only in Cards, where
-   it starts tucked away. In List the tab bar is never collapsed, so this row stays the plain List | Cards switch. */
-.vs-expand, .vs-ed { display: none; }
-html.hb-deck-open:not(.hb-hub-open) .vs-expand, html.hb-deck-open:not(.hb-hub-open) .vs-ed { display: inline-flex; }
-html.hb-deck-open:not(.hb-hub-open) .vs-ed { display: block; }
+/* The switch itself is the same plain, compact List | Cards pill whichever view is showing — never stretched or
+   restyled for Cards specifically; a reader who likes how it looks in List should see the same thing there. */
+.vs-in { pointer-events: auto; display: inline-flex; align-items: center; gap: 2px; padding: 3px; border-radius: 999px; background: rgba(var(--hb-paper-rgb), 0.94); border: 1px solid var(--line); box-shadow: 0 4px 14px rgba(18, 19, 22, 0.1); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
 .vs-in button { min-height: 34px; padding: 0 16px; border: 0; border-radius: 999px; background: transparent; color: var(--ink-soft); font-family: var(--hb-label); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .vs-in button[aria-pressed="true"] { background: var(--hb-primary); color: #fff; }
 .vs-in button:focus-visible { outline: 2px solid var(--hb-primary); outline-offset: 2px; }
-/* The expand chevron and the edition label, new members of the same row as List | Cards. */
-.vs-expand { display: inline-flex; align-items: center; justify-content: center; width: 30px; min-height: 34px; padding: 0; border: 0; background: none; color: var(--ink-faint); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform 0.22s ease; }
-.vs-expand svg { width: 16px; height: 16px; }
+/* The expand/collapse button only means anything once there's a tab bar it can reveal — i.e. only in Cards, where it
+   starts tucked away (see below). In List the tab bar is never collapsed, so only the plain switch pill shows. A
+   separate round button beside the pill, not folded into it, so it reads as its own clearly tappable control. */
+.vs-expand { display: none; pointer-events: auto; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: rgba(var(--hb-paper-rgb), 0.94); color: var(--ink-soft); box-shadow: 0 4px 14px rgba(18, 19, 22, 0.1); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform 0.22s ease; }
+.vs-expand svg { width: 18px; height: 18px; }
+.vs-expand:focus-visible { outline: 2px solid var(--hb-primary); outline-offset: 2px; }
 html.hb-bar-expanded .vs-expand { transform: rotate(180deg); }
-.vs-ed { flex: 1; min-width: 0; padding: 0 2px; font-family: var(--hb-label); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em; color: var(--ink-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.hb-deck-open:not(.hb-hub-open) .vs-expand { display: inline-flex; }
 
 /* While Cards is the active, top-most view (not just behind the Audio hub), the full tab bar tucks away by default —
-   the switch row (now with the expand chevron and edition label) is the only thing shown, pulled in from the screen
-   edges into a floating rounded capsule, and the reserved band above it shrinks to match: the deck actually
-   reclaims that height, not just a gap above a hidden bar. Tapping the chevron (html.hb-bar-expanded) brings the
-   full, normal-sized tab bar back for as long as the reader wants it, in the same capsule. Scoped with
+   only the switch pill and the expand button show, and the reserved band above them shrinks to match: the deck
+   actually reclaims that height, not just a gap above a hidden bar. Because the tab bar (the normal opaque floor)
+   is gone in this state, the switch row becomes its own solid floor down to the screen edge instead — otherwise
+   whatever sits behind the fixed deck would show through the gap where the tab bar used to be (the exact gap bug
+   this replaced). Tapping the expand button (html.hb-bar-expanded) brings the full, normal-sized tab bar back for as
+   long as the reader wants it, and the switch goes back to floating plainly above it, same as in List. Scoped with
    :not(.hb-hub-open) so opening the hub from inside the deck (it does not close the deck underneath) always gets
    the hub's normal, full-width, never-collapsed bar. */
 .tab-bar { transition: left 0.22s ease, right 0.22s ease, border-radius 0.22s ease, max-height 0.22s ease, opacity 0.15s ease, padding 0.22s ease; }
-.vs-in { transition: border-radius 0.22s ease; }
-html.hb-deck-open:not(.hb-hub-open) { --hb-tab-h: env(safe-area-inset-bottom, 0px); }
+.view-switch { transition: bottom 0.22s ease, background 0.22s ease, box-shadow 0.22s ease; }
+html.hb-deck-open:not(.hb-hub-open) { --hb-tab-h: 0px; }
 html.hb-deck-open:not(.hb-hub-open).hb-bar-expanded { --hb-tab-h: calc(66px + env(safe-area-inset-bottom, 0px)); }
 html.hb-deck-open:not(.hb-hub-open) .tab-bar { left: 16px; right: 16px; border-radius: 0 0 20px 20px; box-shadow: 0 10px 26px rgba(18, 19, 22, 0.16); max-height: 0; padding-top: 0; padding-bottom: 0; opacity: 0; overflow: hidden; }
 html.hb-deck-open:not(.hb-hub-open).hb-bar-expanded .tab-bar { max-height: 100px; padding-top: 6px; padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px)); opacity: 1; }
-html.hb-deck-open:not(.hb-hub-open) .view-switch { left: 16px; right: 16px; transition: left 0.22s ease, right 0.22s ease; }
-html.hb-deck-open:not(.hb-hub-open) .vs-in { width: 100%; justify-content: center; border-radius: 20px 20px 0 0; }
+html.hb-deck-open:not(.hb-hub-open) .view-switch {
+  bottom: 0;
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+  background: rgba(var(--hb-paper-rgb), 0.97);
+  border-top: 1px solid var(--line);
+  box-shadow: 0 -2px 12px rgba(18, 19, 22, 0.05);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+html.hb-deck-open:not(.hb-hub-open).hb-bar-expanded .view-switch { bottom: var(--hb-tab-h); padding: 0; background: transparent; border-top: 0; box-shadow: none; }
 
 html.hb-deck-open, html.hb-deck-open body { overflow: hidden; }
 html.hb-deck-open #mob-progress, html.hb-deck-open #mob-top { display: none; }
@@ -695,18 +705,24 @@ html.hb-deck-open:not(.hb-hub-open) .hb-deck { bottom: calc(var(--hb-tab-h) + va
 .dk-hint { display: inline-flex; align-items: center; justify-content: center; flex: 1 1 auto; margin: 0; min-height: 48px; padding: 0 20px; border: 0; border-radius: 999px; background: var(--hb-lav); color: var(--hb-primary-2); font-family: var(--hb-label); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .dk-hint:active { transform: scale(0.97); }
 .dk-cta { min-height: 52px; padding: 0 26px; border: 0; border-radius: 16px; background: var(--hb-primary); color: #fff; font-family: var(--hb-label); font-size: 0.92rem; font-weight: 700; letter-spacing: 0.03em; cursor: pointer; }
-.dk-actions { flex: none; display: flex; gap: 8px; padding: 10px 14px 14px; border-top: 1px solid var(--line); }
-.dk-act { flex: 1 1 0; min-width: 0; min-height: 46px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 6px; border: 1px solid var(--line); border-radius: 23px; background: var(--paper); color: var(--ink-soft); font: inherit; font-size: 0.86rem; font-weight: 600; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+/* Icon-only now (the actions are a like/dislike/save/share row — intuitive enough without a spelled-out label next
+   to each one), so the row centres them at a fixed size rather than stretching four pills edge to edge. */
+.dk-actions { flex: none; display: flex; justify-content: center; gap: 14px; padding: 10px 14px 14px; border-top: 1px solid var(--line); }
+.dk-act { flex: none; width: 46px; min-height: 46px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: var(--paper); color: var(--ink-soft); font: inherit; font-size: 0.78rem; font-weight: 600; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.dk-act:has(.dk-n) { width: auto; padding: 0 14px; border-radius: 23px; }
 .dk-act svg { width: 18px; height: 18px; fill: none; flex: none; }
 .dk-act.on, .dk-act[aria-pressed="true"] { color: var(--hb-primary-2); border-color: var(--hb-primary); }
 .dk-act[aria-pressed="true"] svg { fill: currentColor; }
 .dk-act:disabled { opacity: 0.85; cursor: default; }
 .dk-foot { flex: none; display: flex; align-items: center; gap: 12px; padding: 4px 16px 12px; }
-/* A bit taller than a pure progress readout needs, since it doubles as a scrubber now (tap or drag to jump to a
-   card) — after the initial touch lands on it, pointer capture tracks the drag anywhere on screen, so this height
-   mostly just needs to be enough to land that first tap reliably. */
-.dk-bar { flex: 1; height: 9px; border-radius: 5px; background: rgba(var(--hb-ink-rgb), 0.11); overflow: hidden; cursor: pointer; touch-action: none; -webkit-tap-highlight-color: transparent; }
+/* A thin track visually, but the real touch target is much taller (the ::before below) since it doubles as a
+   scrubber (tap or drag to jump to a card) — a 9px line is hard to land a finger on reliably, Android especially.
+   The thumb marks the current position and grows the target further; pointer capture tracks the drag anywhere on
+   screen once the initial touch lands, so landing that first tap is what matters most. */
+.dk-bar { position: relative; flex: 1; height: 9px; border-radius: 5px; background: rgba(var(--hb-ink-rgb), 0.11); cursor: pointer; touch-action: none; -webkit-tap-highlight-color: transparent; }
+.dk-bar::before { content: ''; position: absolute; left: 0; right: 0; top: -15px; bottom: -15px; }
 .dk-bar i { display: block; width: 0; height: 100%; border-radius: 5px; background: var(--hb-primary); transition: width 0.2s ease; pointer-events: none; }
+.dk-bar-thumb { position: absolute; top: 50%; left: 0; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; background: var(--hb-primary); box-shadow: 0 1px 4px rgba(18, 19, 22, 0.3), 0 0 0 3px var(--paper); transform: translateY(-50%); pointer-events: none; transition: left 0.2s ease; }
 .dk-count { display: none; }   /* the "N / total" readout read as clutter; the progress bar alone says enough. Stays in the DOM (cards.js still keeps it current) since it's a handy, stable hook for tests to read the current position from. */
 .dk-foot { width: 100%; max-width: 672px; margin: 0 auto; box-sizing: border-box; }
 
@@ -740,21 +756,21 @@ html.hb-deck-open:not(.hb-hub-open) .hb-deck { bottom: calc(var(--hb-tab-h) + va
 @keyframes dk-hint-nudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(-4px); } }
 @media (prefers-reduced-motion: reduce) { .dk-swipehint { animation: none; } .dk-swipehint-ic svg { animation: none; } }
 .dk-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-@media (prefers-reduced-motion: reduce) { .dk-bar i { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .dk-bar i, .dk-bar-thumb { transition: none; } }
 
 /* ---- Cover card: the top of the page, first in the deck ---- */
-.dk-wordmark { font-family: var(--hb-label); font-weight: 700; letter-spacing: -0.03em; font-size: 2rem; margin-bottom: 6px; }
+.dk-wordmark { margin: 0 0 4px; font-family: var(--hb-label); font-weight: 700; letter-spacing: -0.03em; font-size: 1.9rem; line-height: 1.1; color: var(--ink); }
 .dk-wordmark span { color: var(--hb-primary); }
-.dk-quote { margin: 4px 0 8px; padding: 16px 18px 16px 20px; border-left: 3px solid var(--hb-primary); border-radius: 2px 18px 18px 2px; background: var(--hb-lav); }
-.dk-quote-label { margin: 0 0 8px; font-family: var(--hb-label); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--hb-primary-2); }
-/* Clamped: some days' quotes are a single line, others a full paragraph — without a cap the longer ones push the
-   Listen tile, the quiz tile and "See today's stories" well down the card, meaning a lot of scrolling before the
-   cover is done. The source link and attribution right below it are unaffected. */
-.dk-quote-text { margin: 0; font-family: var(--hb-serif); font-size: 1.28rem; line-height: 1.42; color: var(--ink); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden; }
-.dk-quote-by { margin-top: 10px; font-size: 0.85rem; color: var(--ink-soft); }
+.dk-tagline { margin: 0 0 20px; font-size: 0.95rem; line-height: 1.5; color: var(--ink-soft); }
+/* "Before the news" fills the rest of the card rather than hugging its own text — the scroll area becomes a column
+   and the quote is its one flexed child, so a short quote's card still reads as a quiet, deliberate page instead of
+   leaving a slab of empty white space below a small box. A long quote simply scrolls, like any other card. */
+.dk-cover .dk-scroll { display: flex; flex-direction: column; }
+.dk-quote { flex: 1; display: flex; flex-direction: column; margin: 0 0 8px; padding: 18px 20px; border-left: 3px solid var(--hb-primary); border-radius: 2px 18px 18px 2px; background: var(--hb-lav); }
+.dk-quote-label { margin: 0 0 10px; font-family: var(--hb-label); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--hb-primary-2); }
+.dk-quote-text { margin: 0; font-family: var(--hb-serif); font-size: 1.3rem; line-height: 1.46; color: var(--ink); }
+.dk-quote-by { margin-top: 12px; font-size: 0.85rem; color: var(--ink-soft); }
 .dk-quote-by a { color: var(--ink-soft); }
-.dk-intro-p { margin: 20px 0 10px; font-size: 1rem; line-height: 1.62; color: var(--ink); }
-.dk-free { margin: 0 0 4px; font-size: 0.86rem; line-height: 1.55; color: var(--ink-faint); }
 .dk-tile { display: flex; align-items: center; gap: 12px; box-sizing: border-box; width: 100%; margin: 12px 0 0; padding: 14px 14px 14px 16px; border-radius: 18px; background: var(--hb-stone); color: var(--ink); text-align: left; }
 .dk-tile[hidden] { display: none; }
 .dk-quizt { cursor: pointer; background: var(--hb-lav); border: 1px solid rgba(var(--hb-primary-rgb), 0.12); }
@@ -767,6 +783,10 @@ html.hb-deck-open:not(.hb-hub-open) .hb-deck { bottom: calc(var(--hb-tab-h) + va
 .dk-tile-go { flex: none; width: 46px; height: 46px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 50%; background: var(--hb-primary); color: #fff; cursor: pointer; }
 .dk-tile-go svg { width: 22px; height: 22px; }
 .dk-tile-link { flex: none; font-family: var(--hb-label); font-size: 0.82rem; font-weight: 700; color: var(--hb-primary-2); white-space: nowrap; }
+
+/* ---- Closing card: title, body and the two tiles sit centred in the available height, not pinned to the top with
+   a slab of empty card below them (there's rarely enough content here to fill a full screen on its own). ---- */
+.dk-end .dk-scroll { display: flex; flex-direction: column; justify-content: center; }
 
 /* ---- What Listen is reading is marked on its card ---- */
 .dk-card.dk-playing .dk-face { box-shadow: 0 10px 30px rgba(18, 19, 22, 0.07), inset 0 4px 0 var(--hb-primary); }
