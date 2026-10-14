@@ -469,6 +469,10 @@
     S.mode = mode;
     S.rate = S.rates[mode];                       // each length keeps its own speed (Full starts at 1.25x)
     S.list = S.units[mode];
+    // A failed recording only gives up on *this* attempt, not the rest of the session — S.bad used to stick forever
+    // once set, so one bad network moment (a real-device report: "showing Neha, didn't play, fell back") meant
+    // device voice for good, even pressing Play again fresh. Starting over gets a real second chance.
+    S.bad[mode] = false;
     S.src = hasRec(mode) ? 'rec' : 'tts';
     save();
     ensurePlayer();
