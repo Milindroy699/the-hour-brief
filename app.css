@@ -384,16 +384,17 @@ footer.colophon { border-top-color: var(--line); }
    this control nested it inside the tab bar instead, specifically to remove a bug where it bled a gap of list
    content through a seam between two independently-positioned fixed elements that had to agree on a pixel-perfect
    height. Floating here is safe from that same bug because it anchors to --hb-tab-h, which is kept continuously
-   correct by a ResizeObserver (watchTabBarH in mobile.js) rather than a one-off measurement. */
+   correct by a ResizeObserver (watchTabBarH in mobile.js) rather than a one-off measurement.
+   It is still a fixed element sitting over whatever list content happens to scroll underneath it, which a
+   translucent background made visible as ghosted, half-legible text behind the pill (seen in a store screenshot).
+   Fully opaque instead, so it reads as a clean control sitting on top, not content bleeding through it. */
 .tab-switch {
   position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--hb-tab-h) + 10px); z-index: 9986;
   display: inline-flex; align-items: center; gap: 2px; padding: 3px;
   border-radius: 999px;
-  background: rgba(var(--hb-paper-rgb), 0.78);
+  background: var(--paper);
   border: 1px solid rgba(var(--hb-primary-rgb), 0.28);
-  box-shadow: 0 10px 26px rgba(18, 19, 22, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.4);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 10px 26px rgba(18, 19, 22, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 .tab-switch[hidden] { display: none; }
 html.hb-deck-open .tab-switch { top: calc(env(safe-area-inset-top, 0px) + 14px); left: auto; right: 16px; bottom: auto; transform: none; }
