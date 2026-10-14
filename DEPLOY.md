@@ -177,6 +177,24 @@ measures `.vs-in`'s actual rendered height after every time it becomes visible a
 real number (`document.documentElement.style.setProperty(...)`), so the reserved space can no longer fall short of
 reality, on this device or any other.
 
+**Same day, one more redesign, from a second reference image the user shared:** the shrink-to-icons approach above was
+superseded by a true collapse/expand toggle, matching a reference from another app ("Mind Echo" again) showing a
+single compact row — an expand chevron, the edition label, the List | Cards switch — with the full tab bar tucked
+away until that chevron is tapped. `viewSwitch()` in `mobile.js` now builds `.vs-expand` (the chevron) and `.vs-ed`
+(the edition label) into the same `.vs-in` row as the List/Cards buttons; a click toggles `html.hb-bar-expanded`.
+In app.css, `html.hb-deck-open:not(.hb-hub-open)` now collapses `.tab-bar` to `max-height:0` (padding zeroed too —
+`max-height` alone left ~13px of residual padding) and sets `--hb-tab-h: env(safe-area-inset-bottom, 0px)`, so the
+deck reclaims essentially the whole tab-bar's height by default; `.hb-bar-expanded` on top of that restores both to
+their normal, full-size, labelled state. **A real bug this surfaced:** `syncViewSwitch()` queried `.vs-in button`
+expecting exactly two buttons (List, Cards) to set `aria-pressed` on — adding `.vs-expand` as a third button in the
+same row silently shifted the indices, so the wrong elements got the pressed state. Fixed with a selector that
+excludes it explicitly (`.vs-in > button:not(.vs-expand)`); the same selector needed to replace `.vs-in button`
+throughout `cards.mjs` too (14 places), all still assuming exactly List/Cards at index 0/1.
+The section-intro card also dropped its numbered list of every story's headline (`.dk-list`/`.dk-go`, plus the now-
+dead delegated `[data-goto]` click handler on the track) — just the section's own takeaway now; the stories are the
+next cards, one at a time, so repeating all their titles first was the same "too much detail" complaint the cover
+had already gotten. `cards.mjs` is 163 checks.
+
 **Same day, later again — three more:** (1) switching List → Cards → List → Cards used to always restart at the cover,
 losing the reader's place. `open()` in `cards.js` now falls back to `listStoryId()` — the story nearest the top of
 the list's current scroll position — when there's no explicit target and Listen isn't actively playing something

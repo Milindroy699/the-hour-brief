@@ -50,7 +50,7 @@ async function open({ native = true, width = 390, height = 844, dark = false, pr
   await c.ev(`localStorage.clear(); ${prefs ? `localStorage.setItem('hb-prefs-v1', ${JSON.stringify(JSON.stringify(prefs))});` : ''} ${tip ? `localStorage.setItem('hb-tip-v1', ${JSON.stringify(JSON.stringify(tip))});` : ''} ${view !== 'default' ? `localStorage.setItem('hb-view-v1', '${view}');` : ''} ${size != null ? `localStorage.setItem('hb-textsize', '${size}');` : ''} ${hint ? `localStorage.setItem('hb-swipe-hint-v1', '1');` : ''} 'ok'`);
   await c.goto(B + '/' + query + hash, wait);
 }
-const cardsBtn = `document.querySelectorAll('.vs-in button')[1]`;
+const cardsBtn = `document.querySelectorAll('.vs-in button:not(.vs-expand)')[1]`;
 const openDeck = async ({ cover = false } = {}) => {              // the deck opens on the cover card; most tests want the first section card, as before
   await c.ev(`${cardsBtn}.click()`);
   const ok = await waitFor(`!!window.HBCards && HBCards.isOpen()`, 4000);
@@ -68,23 +68,25 @@ const view = () => c.ev(`localStorage.getItem('hb-view-v1')`);
 
 // ---------- 1. the switch, and where cards exist ----------
 await open();
-let t = await J(`(() => { const vs = document.querySelector('.view-switch'), r = vs.getBoundingClientRect(), cs = getComputedStyle(vs), tab = document.querySelector('.tab-bar').getBoundingClientRect(), pr = document.querySelector('.vs-in').getBoundingClientRect(); return { has: typeof window.HBCards, shown: !vs.hidden, btns: [...document.querySelectorAll('.vs-in button')].map((b) => b.textContent + ':' + b.getAttribute('aria-pressed')), fixed: cs.position, aboveTab: r.bottom <= tab.top + 1, centred: Math.abs((pr.left + pr.right) / 2 - innerWidth / 2) < 2, switchOn: document.documentElement.classList.contains('hb-switch-on'), top: Math.round(pr.top), centreX: Math.round((pr.left + pr.right) / 2) }; })()`);
+let t = await J(`(() => { const vs = document.querySelector('.view-switch'), r = vs.getBoundingClientRect(), cs = getComputedStyle(vs), tab = document.querySelector('.tab-bar').getBoundingClientRect(), pr = document.querySelector('.vs-in').getBoundingClientRect(); return { has: typeof window.HBCards, shown: !vs.hidden, btns: [...document.querySelectorAll('.vs-in button:not(.vs-expand)')].map((b) => b.textContent + ':' + b.getAttribute('aria-pressed')), fixed: cs.position, aboveTab: r.bottom <= tab.top + 1, centred: Math.abs((pr.left + pr.right) / 2 - innerWidth / 2) < 2, switchOn: document.documentElement.classList.contains('hb-switch-on'), top: Math.round(pr.top), centreX: Math.round((pr.left + pr.right) / 2) }; })()`);
 check('the app shows one List | Cards switch, fixed and centred just above the tab bar, List selected', t.shown && eq(t.btns, ['List:true', 'Cards:false']) && t.fixed === 'fixed' && t.aboveTab && t.centred && t.switchOn, JSON.stringify(t));
 check('cards.js is not loaded until someone asks for Cards (nothing extra on the normal list)', t.has === 'undefined', JSON.stringify(t));
 const listPos = { top: t.top, centreX: t.centreX };
 await openDeck({ cover: true });
-t = await J(`(() => { const pr = document.querySelector('.vs-in').getBoundingClientRect(); return { btns: [...document.querySelectorAll('.vs-in button')].map((b) => b.getAttribute('aria-pressed')), top: Math.round(pr.top), centreX: Math.round((pr.left + pr.right) / 2) }; })()`);
+t = await J(`(() => { const pr = document.querySelector('.vs-in').getBoundingClientRect(); return { btns: [...document.querySelectorAll('.vs-in button:not(.vs-expand)')].map((b) => b.getAttribute('aria-pressed')), top: Math.round(pr.top), centreX: Math.round((pr.left + pr.right) / 2) }; })()`);
 check('opening Cards is pressed now, still the exact same control, still horizontally centred — it rides down slightly as the bar shrinks and pulls in underneath it', eq(t.btns, ['false', 'true']) && Math.abs(t.centreX - listPos.centreX) <= 2 && t.top > listPos.top, JSON.stringify({ t, listPos }));
-await c.sleep(400);   // the shrink is an animated transition (0.22s); let it finish before measuring
-t = await J(`(() => { const barH = Math.round(document.querySelector('.tab-bar').getBoundingClientRect().height), lb = document.querySelector('.tab-lb'); return { shrunk: document.documentElement.classList.contains('hb-deck-open'), lbCollapsed: getComputedStyle(lb).maxHeight === '0px', barH }; })()`);
-check('Cards open: the tab bar’s own labels collapse and the bar itself gets noticeably shorter — the card actually gets that space back, not just a gap', t.shrunk && t.lbCollapsed && t.barH < 55, JSON.stringify(t));
-await c.ev(`document.querySelectorAll('.vs-in button')[0].click()`); await c.sleep(700);
-t = await J(`(() => { const lb = document.querySelector('.tab-lb'); return { lbBack: getComputedStyle(lb).maxHeight !== '0px', barH: Math.round(document.querySelector('.tab-bar').getBoundingClientRect().height) }; })()`);
-check('back on List: the full-size bar returns (labels back, taller again)', t.lbBack && t.barH >= 60, JSON.stringify(t));
-await c.ev(`document.querySelectorAll('.vs-in button')[1].click()`); await c.sleep(900);
-await c.ev(`document.querySelectorAll('.vs-in button')[0].click()`); await c.sleep(500);
+await c.sleep(400);   // the collapse is an animated transition (0.22s); let it finish before measuring
+t = await J(`(() => { const barH = Math.round(document.querySelector('.tab-bar').getBoundingClientRect().height), ex = document.querySelector('.vs-expand'), ed = document.querySelector('.vs-ed'), edPage = document.querySelector('.edition'); return { collapsed: document.documentElement.classList.contains('hb-deck-open') && !document.documentElement.classList.contains('hb-bar-expanded'), barH, exShown: getComputedStyle(ex).display !== 'none', exLabel: ex.getAttribute('aria-label'), exExpanded: ex.getAttribute('aria-expanded'), ed: ed.textContent, edPage: edPage.innerHTML.split(/<br\\s*\\/?>/i)[0].replace(/<[^>]*>/g, '').trim() }; })()`);
+check('Cards open: the tab bar tucks away by default — just the switch row, now with an expand chevron and the edition label, in its place', t.collapsed && t.barH < 10 && t.exShown && t.exExpanded === 'false' && /show/i.test(t.exLabel) && t.ed === t.edPage, JSON.stringify(t));
+await c.ev(`document.querySelector('.vs-expand').click()`); await c.sleep(400);
+t = await J(`(() => { const barH = Math.round(document.querySelector('.tab-bar').getBoundingClientRect().height), ex = document.querySelector('.vs-expand'), lb = document.querySelector('.tab-lb'); return { expanded: document.documentElement.classList.contains('hb-bar-expanded'), barH, lbVisible: getComputedStyle(lb).opacity !== '0' && lb.textContent.length > 0, exExpanded: ex.getAttribute('aria-expanded') }; })()`);
+check('tapping the chevron brings the full tab bar back, labels and all, at its normal size', t.expanded && t.barH >= 60 && t.lbVisible && t.exExpanded === 'true', JSON.stringify(t));
+await c.ev(`document.querySelector('.vs-expand').click()`); await c.sleep(400);
+check('tapping it again tucks the tab bar back away', (await c.ev(`!document.documentElement.classList.contains('hb-bar-expanded') && document.querySelector('.tab-bar').getBoundingClientRect().height`)) < 10);
+await c.ev(`document.querySelectorAll('.vs-in button:not(.vs-expand)')[1].click()`); await c.sleep(900);
+await c.ev(`document.querySelectorAll('.vs-in button:not(.vs-expand)')[0].click()`); await c.sleep(500);
 check('List, clicked from the switch while Cards was open, closes the deck (the deck’s own header has no separate List button any more)', (await c.ev(`!HBCards.isOpen() && !document.querySelector('.dk-tolist')`)) === true);
-check('and List is pressed again, back on the switch', eq(await J(`[...document.querySelectorAll('.vs-in button')].map((b) => b.getAttribute('aria-pressed'))`), ['true', 'false']));
+check('and List is pressed again, back on the switch', eq(await J(`[...document.querySelectorAll('.vs-in button:not(.vs-expand)')].map((b) => b.getAttribute('aria-pressed'))`), ['true', 'false']));
 await c.ev(`document.querySelector('.tab[data-tab=audio]').click()`); await c.sleep(900);
 check('the switch is not shown while the Audio hub is open — not a reading-mode decision there', (await c.ev(`document.querySelector('.view-switch').hidden === false && getComputedStyle(document.querySelector('.view-switch')).display === 'none'`)) === true);
 await c.ev(`document.querySelector('.hub-close').click()`); await c.sleep(300);
@@ -109,8 +111,8 @@ const k = await kinds();
 const feedAll = await feedIds(['ai', 'biz', 'mkt']);
 check('the deck is the cover, then a section card and its stories for each section, then the quiz, then the closing card', k[0] === 'cover' && k[1] === 'intro' && k.filter((x) => x === 'cover').length === 1 && k[k.length - 2] === 'quiz' && k[k.length - 1] === 'end' && k.filter((x) => x === 'intro').length === 3 && k.filter((x) => x === 'story').length === feedAll.length, JSON.stringify(k));
 check('the stories come in the feed\'s own order', eq(await storyIds(), feedAll));
-t = await J(`(() => { const lane = document.querySelector('#ai'), card = document.querySelector('.dk-intro'); const lt = lane.querySelector('.lane-takeaway').cloneNode(true); lt.querySelector('.takeaway-label').remove(); return { title: card.querySelector('.dk-title').textContent, tag: lane.querySelector('.lane-tag').childNodes[0].textContent.trim(), meta: card.querySelector('.dk-metaline').textContent, take: card.querySelector('.dk-take').textContent.replace('Takeaway', '').trim(), want: lt.textContent.trim(), n: card.querySelectorAll('.dk-go').length, items: lane.querySelectorAll('.item[data-story-id]').length, kick: card.querySelector('.dk-kick').textContent }; })()`);
-check('a section card shows its name, reading time and story count, its takeaway and a numbered list of its stories', t.title === t.tag && /min read · \d+ stories/.test(t.meta) && t.take === t.want && t.n === t.items && t.kick === 'Section 1 of 3', JSON.stringify(t));
+t = await J(`(() => { const lane = document.querySelector('#ai'), card = document.querySelector('.dk-intro'); const lt = lane.querySelector('.lane-takeaway').cloneNode(true); lt.querySelector('.takeaway-label').remove(); return { title: card.querySelector('.dk-title').textContent, tag: lane.querySelector('.lane-tag').childNodes[0].textContent.trim(), meta: card.querySelector('.dk-metaline').textContent, take: card.querySelector('.dk-take').textContent.replace('Takeaway', '').trim(), want: lt.textContent.trim(), kick: card.querySelector('.dk-kick').textContent, noList: !card.querySelector('.dk-list') }; })()`);
+check('a section card shows its name, reading time and story count and its takeaway — not a list of every story\'s headline (the stories are the next cards, one at a time)', t.title === t.tag && /min read · \d+ stories/.test(t.meta) && t.take === t.want && t.kick === 'Section 1 of 3' && t.noList, JSON.stringify(t));
 await c.shot(`${OUT}/cards_intro.png`);
 t = await J(`(() => { const h = document.querySelector('.dk-intro .dk-hint'), r = h.getBoundingClientRect(); return { tag: h.tagName, text: h.textContent, h: Math.round(r.height), l: Math.round(r.left), r: Math.round(r.right), w: innerWidth, bottom: Math.round(r.bottom), tab: Math.round(document.querySelector('.tab-bar').getBoundingClientRect().top), inScroll: !!h.closest('.dk-scroll') }; })()`);
 check('"Swipe to start" on a section card is a real button, pinned in view (no scrolling to find it), easy to tap and inside the screen', t.tag === 'BUTTON' && t.text === 'Swipe to start' && t.h >= 44 && t.l >= 0 && t.r <= t.w && t.bottom <= t.tab && !t.inScroll, JSON.stringify(t));
@@ -118,9 +120,7 @@ await c.ev(`document.querySelector('.dk-intro .dk-hint').click()`); await c.slee
 const curKick = `document.querySelector('.dk-card:not([inert]) .dk-kick').textContent`;
 t = await J(`({ pos: document.querySelector('.dk-count').textContent, sec: ${curKick}, id: document.querySelector('.dk-card:not([inert])').getAttribute('data-id') })`);
 check('tapping it swipes to the first story of that section, just as a swipe would', t.pos === `3 / ${TOTAL}` && t.sec === 'AI & Tech · Story 1 of 7' && t.id === 'ai-1', JSON.stringify(t));
-await c.ev(`HBCards.goTo(1, false)`); await c.sleep(500);
-await c.ev(`document.querySelectorAll('.dk-intro .dk-go')[1].click()`); await c.sleep(900);
-check('tapping a story in that list jumps to it', (await c.ev(curKick)) === 'AI & Tech · Story 2 of 7' && (await pos()) === `4 / ${TOTAL}`, await pos());
+await c.ev(`HBCards.goTo(3, false)`); await c.sleep(500);   // the section card no longer lists individual stories to tap — straight to the story for the next check
 t = await J(`(() => { const card = document.querySelectorAll('.dk-story')[1], it = document.querySelector('#ai-2'); const paras = [...it.querySelectorAll('.story-body > p')].map((p) => p.textContent.replace(/\\s+/g, ' ').trim()); const tk = it.querySelector('.takeaway').cloneNode(true); tk.querySelector('.takeaway-label').remove(); return { h: card.querySelector('.dk-title').textContent === it.querySelector('h3').textContent.trim(), body: JSON.stringify([...card.querySelectorAll('.dk-body p')].map((p) => p.textContent)) === JSON.stringify(paras), clampedInFeed: it.classList.contains('is-collapsed'), take: card.querySelector('.dk-take').textContent.replace('Takeaway', '').trim() === tk.textContent.trim(), src: card.querySelector('.dk-src a').href === it.querySelector('.src a').href, ext: card.querySelector('.dk-src a').target + '/' + card.querySelector('.dk-src a').rel }; })()`);
 check('a story card has the headline, the whole summary (unclamped), the takeaway and the source link, copied from the feed', t.h && t.body && t.take && t.src && t.ext === '_blank/noopener noreferrer', JSON.stringify(t));
 await c.shot(`${OUT}/cards_story.png`);
@@ -374,17 +374,17 @@ t = await J(`({ deck: typeof window.HBCards !== 'undefined' && HBCards.isOpen(),
 check('the same link with the list as the choice scrolls the feed to it as before, with no deck', !t.deck && t.top >= 0 && t.top < 200, JSON.stringify(t));
 await open({ view: 'cards' });
 check('if Cards was the last view used, the app opens straight into it', (await c.ev(`!!window.HBCards && HBCards.isOpen()`)) === true);
-await c.ev(`document.querySelectorAll('.vs-in button')[0].click()`); await c.sleep(400);
+await c.ev(`document.querySelectorAll('.vs-in button:not(.vs-expand)')[0].click()`); await c.sleep(400);
 await c.ev(`(location.reload(), 'ok')`); await c.sleep(2200);
 check('after choosing List it opens on the list next time', (await c.ev(`!(window.HBCards && HBCards.isOpen())`)) === true && (await view()) === 'list');
 await open();
 await openDeck();
 await c.ev(`HBCards.goTo(4, false)`); await c.sleep(500);
 const story3 = await c.ev(`document.querySelector('.dk-card:not([inert])').getAttribute('data-id')`);
-await c.ev(`document.querySelectorAll('.vs-in button')[0].click()`); await c.sleep(500);
+await c.ev(`document.querySelectorAll('.vs-in button:not(.vs-expand)')[0].click()`); await c.sleep(500);
 t = await J(`({ top: Math.round(document.getElementById(${JSON.stringify(story3)}).getBoundingClientRect().top), deck: HBCards.isOpen() })`);
 check('going back to the list lands on the story you were reading', !t.deck && t.top >= 0 && t.top < 140, JSON.stringify(t));
-await c.ev(`document.querySelectorAll('.vs-in button')[1].click()`); await c.sleep(900);
+await c.ev(`document.querySelectorAll('.vs-in button:not(.vs-expand)')[1].click()`); await c.sleep(900);
 check('and switching back to Cards resumes on that same story — not back at the cover', (await c.ev(`document.querySelector('.dk-card:not([inert])').getAttribute('data-id')`)) === story3, JSON.stringify(story3));
 await open();
 await openDeck();
@@ -423,7 +423,7 @@ await openDeck();
 await c.ev(`HBCards.goTo(5, false)`); await c.sleep(500);
 const readingId = await c.ev(`document.querySelector('.dk-card:not([inert])').getAttribute('data-id')`);
 await c.ev(`Element.prototype.scrollIntoView = function () { window.scrollTo({ top: this.getBoundingClientRect().top + scrollY - 72, behavior: 'smooth' }); }; 'ok'`);
-t = await J(`(() => { document.querySelectorAll('.vs-in button')[0].click(); const k = document.getElementById(${JSON.stringify(readingId)}).getBoundingClientRect(); return { deck: HBCards.isOpen(), top: Math.round(k.top) }; })()`);
+t = await J(`(() => { document.querySelectorAll('.vs-in button:not(.vs-expand)')[0].click(); const k = document.getElementById(${JSON.stringify(readingId)}).getBoundingClientRect(); return { deck: HBCards.isOpen(), top: Math.round(k.top) }; })()`);
 check('and going back to the list lands on the story you were reading in one step, too', !t.deck && t.top >= 40 && t.top <= 110, JSON.stringify(t));
 
 // ---------- 8. Cards is the default view ----------
@@ -436,7 +436,7 @@ check('the phone website opens on the cards too', (await c.ev(`!!window.HBCards 
 await open({ view: 'default', native: false, width: 1280, wait: 2000 });
 check('the desktop website is untouched: the normal page, no deck, nothing hidden', (await c.ev(`typeof window.HBCards === 'undefined' && document.body.style.visibility === ''`)) === true);
 await open({ view: 'default', wait: 2600 });
-await c.ev(`document.querySelectorAll('.vs-in button')[0].click()`); await c.sleep(400);
+await c.ev(`document.querySelectorAll('.vs-in button:not(.vs-expand)')[0].click()`); await c.sleep(400);
 await c.ev(`(location.reload(), 'ok')`); await c.sleep(2400);
 check('choosing List is remembered: the next open is the list', !(await c.ev(`window.HBCards && HBCards.isOpen()`)) && (await view()) === 'list');
 await c.ev(`${cardsBtn}.click()`); await c.sleep(1200);
@@ -464,7 +464,7 @@ check('if the deck cannot load, the list appears (page not left hidden) and no e
 await open({ view: 'default', wait: 2600 });
 t = await J(`({ top: !document.querySelector('.dk-top'), kick: document.querySelector('.dk-card:not([inert]) .dk-kick').textContent, noListBtn: !document.querySelector('.dk-tolist') })`);
 check('the deck has no header bar at all — the card names its own section, and the switch above the tab bar is the one way back to List', t.top && t.kick && t.noListBtn, JSON.stringify(t));
-await c.ev(`document.querySelectorAll('.vs-in button')[0].click()`); await c.sleep(500);     // List, from the switch
+await c.ev(`document.querySelectorAll('.vs-in button:not(.vs-expand)')[0].click()`); await c.sleep(500);     // List, from the switch
 await c.ev(`document.querySelector('.ab-menu').click()`); await waitFor(`!!document.querySelector('.rd-menu')`);
 t = await J(`({ items: [...document.querySelectorAll('.rd-item')].map((b) => b.getAttribute('data-act')), foot: [...document.querySelectorAll('.rd-menu-foot a')].map((a) => a.textContent) })`);
 // "Swipe cards" legitimately shows up here now — reached from List after switching away from Cards, so it is once
@@ -473,7 +473,7 @@ check('Menu, reached from List after switching, has Sections, Text size, Swipe c
 await c.ev(`document.querySelector('.rd-item[data-act=sections]').click()`); await waitFor(`!!document.querySelector('.rd-prefs')`);
 await c.ev(`document.querySelector('.rd-prefs li[data-id=biz] input').click()`); await c.sleep(600);
 await c.ev(`document.querySelector('.rd-sheet .rd-close').click()`); await c.sleep(400);
-await c.ev(`document.querySelectorAll('.vs-in button')[1].click()`); await c.sleep(900);     // back to Cards, from the switch
+await c.ev(`document.querySelectorAll('.vs-in button:not(.vs-expand)')[1].click()`); await c.sleep(900);     // back to Cards, from the switch
 check('changing sections from List, then switching to Cards, shows the deck rebuilt without that section', eq(await secOrder(), ['AI & Tech', 'Stock Market']) && (await c.ev(`HBCards.isOpen()`)), JSON.stringify(await secOrder()));
 await c.ev(`document.querySelector('.ab-menu').click()`); await waitFor(`!!document.querySelector('.rd-menu')`);
 t = await J(`(() => { const has = !!document.querySelector('.rd-item[data-act=email]'); if (has) document.querySelector('.rd-item[data-act=email]').click(); const box = document.querySelector('.subscribe-box').getBoundingClientRect(); return { has, top: Math.round(box.top), bottom: Math.round(box.bottom), tab: Math.round(document.querySelector('.tab-bar').getBoundingClientRect().top) }; })()`);
@@ -611,7 +611,7 @@ check('pause works from the panel', (await c.ev(`HBListen.state()`)) === 'paused
 await c.ev(`document.querySelector('.dk-fp-stop').click()`); await c.sleep(500);
 t = await J(FAB);
 check('stop ends the audio and folds the panel away; the round button stays for next time', (await c.ev(`HBListen.state()`)) === 'idle' && t.ballShown && !t.panelShown);
-await c.ev(`document.querySelectorAll('.vs-in button')[0].click()`); await c.sleep(400);
+await c.ev(`document.querySelectorAll('.vs-in button:not(.vs-expand)')[0].click()`); await c.sleep(400);
 await c.ev(`HBListen.start('quick')`); await waitFor(`HBListen.state() === 'playing'`, 4000);
 check('on the list, the normal mini player is back', (await c.ev(`getComputedStyle(document.querySelector('.hb-player')).display !== 'none' && !document.querySelector('.hb-player').hidden`)) === true);
 await c.ev(`HBListen.stop()`);

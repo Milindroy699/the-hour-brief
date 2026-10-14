@@ -621,24 +621,34 @@ html.hb-hub-open .view-switch, html.hb-on-quiz .view-switch { display: none; }  
    border, not two stacked bars. */
 .view-switch { position: fixed; left: 0; right: 0; bottom: var(--hb-tab-h); z-index: 9982; display: flex; justify-content: center; pointer-events: none; }
 .view-switch[hidden] { display: none; }
-.vs-in { pointer-events: auto; display: inline-flex; padding: 3px; border-radius: 18px 18px 0 0; background: rgba(var(--hb-paper-rgb), 0.94); border: 1px solid var(--line); border-bottom: 0; box-shadow: 0 -4px 14px rgba(18, 19, 22, 0.08); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.vs-in { pointer-events: auto; display: inline-flex; align-items: center; gap: 2px; padding: 3px; border-radius: 18px 18px 0 0; background: rgba(var(--hb-paper-rgb), 0.94); border: 1px solid var(--line); border-bottom: 0; box-shadow: 0 -4px 14px rgba(18, 19, 22, 0.08); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+/* The chevron and edition label only mean anything once there's a tab bar they can reveal — i.e. only in Cards, where
+   it starts tucked away. In List the tab bar is never collapsed, so this row stays the plain List | Cards switch. */
+.vs-expand, .vs-ed { display: none; }
+html.hb-deck-open:not(.hb-hub-open) .vs-expand, html.hb-deck-open:not(.hb-hub-open) .vs-ed { display: inline-flex; }
+html.hb-deck-open:not(.hb-hub-open) .vs-ed { display: block; }
 .vs-in button { min-height: 34px; padding: 0 16px; border: 0; border-radius: 999px; background: transparent; color: var(--ink-soft); font-family: var(--hb-label); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .vs-in button[aria-pressed="true"] { background: var(--hb-primary); color: #fff; }
 .vs-in button:focus-visible { outline: 2px solid var(--hb-primary); outline-offset: 2px; }
-/* While Cards is the active, top-most view (not just behind the Audio hub), the combined bar shrinks AND pulls in
-   from the screen edges into one floating rounded capsule — labels fade out, icons and padding tighten, and the
-   reserved band above it shrinks to match, so the deck actually reclaims that height rather than leaving a gap.
-   Scoped with :not(.hb-hub-open) so opening the hub from inside the deck (it does not close the deck underneath)
-   gets the hub's normal, full-width, un-shrunk bar. */
-.tab-bar, .tab-ic { transition: width 0.22s ease, height 0.22s ease, left 0.22s ease, right 0.22s ease, border-radius 0.22s ease; }
-.tab { transition: min-height 0.22s ease; }
-.tab-lb { display: block; max-height: 13px; opacity: 1; overflow: hidden; transition: max-height 0.22s ease, opacity 0.15s ease, margin-top 0.22s ease; }
+/* The expand chevron and the edition label, new members of the same row as List | Cards. */
+.vs-expand { display: inline-flex; align-items: center; justify-content: center; width: 30px; min-height: 34px; padding: 0; border: 0; background: none; color: var(--ink-faint); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform 0.22s ease; }
+.vs-expand svg { width: 16px; height: 16px; }
+html.hb-bar-expanded .vs-expand { transform: rotate(180deg); }
+.vs-ed { flex: 1; min-width: 0; padding: 0 2px; font-family: var(--hb-label); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em; color: var(--ink-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* While Cards is the active, top-most view (not just behind the Audio hub), the full tab bar tucks away by default —
+   the switch row (now with the expand chevron and edition label) is the only thing shown, pulled in from the screen
+   edges into a floating rounded capsule, and the reserved band above it shrinks to match: the deck actually
+   reclaims that height, not just a gap above a hidden bar. Tapping the chevron (html.hb-bar-expanded) brings the
+   full, normal-sized tab bar back for as long as the reader wants it, in the same capsule. Scoped with
+   :not(.hb-hub-open) so opening the hub from inside the deck (it does not close the deck underneath) always gets
+   the hub's normal, full-width, never-collapsed bar. */
+.tab-bar { transition: left 0.22s ease, right 0.22s ease, border-radius 0.22s ease, max-height 0.22s ease, opacity 0.15s ease, padding 0.22s ease; }
 .vs-in { transition: border-radius 0.22s ease; }
-html.hb-deck-open:not(.hb-hub-open) { --hb-tab-h: calc(50px + env(safe-area-inset-bottom, 0px)); }
-html.hb-deck-open:not(.hb-hub-open) .tab-bar { left: 16px; right: 16px; border-radius: 0 0 20px 20px; padding-top: 2px; box-shadow: 0 10px 26px rgba(18, 19, 22, 0.16); }
-html.hb-deck-open:not(.hb-hub-open) .tab { min-height: 42px; }
-html.hb-deck-open:not(.hb-hub-open) .tab-ic { width: 46px; height: 28px; }
-html.hb-deck-open:not(.hb-hub-open) .tab-lb { max-height: 0; opacity: 0; margin-top: 0; }
+html.hb-deck-open:not(.hb-hub-open) { --hb-tab-h: env(safe-area-inset-bottom, 0px); }
+html.hb-deck-open:not(.hb-hub-open).hb-bar-expanded { --hb-tab-h: calc(66px + env(safe-area-inset-bottom, 0px)); }
+html.hb-deck-open:not(.hb-hub-open) .tab-bar { left: 16px; right: 16px; border-radius: 0 0 20px 20px; box-shadow: 0 10px 26px rgba(18, 19, 22, 0.16); max-height: 0; padding-top: 0; padding-bottom: 0; opacity: 0; overflow: hidden; }
+html.hb-deck-open:not(.hb-hub-open).hb-bar-expanded .tab-bar { max-height: 100px; padding-top: 6px; padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px)); opacity: 1; }
 html.hb-deck-open:not(.hb-hub-open) .view-switch { left: 16px; right: 16px; transition: left 0.22s ease, right 0.22s ease; }
 html.hb-deck-open:not(.hb-hub-open) .vs-in { width: 100%; justify-content: center; border-radius: 20px 20px 0 0; }
 
@@ -662,7 +672,7 @@ html.hb-deck-open:not(.hb-hub-open) .hb-deck { bottom: calc(var(--hb-tab-h) + va
 @media (prefers-reduced-motion: reduce) { .hb-deck > .hb-tip.hb-tip-float { animation: none; } .hb-deck > .hb-tip.hb-tip-float.dk-tip-out { animation: none; opacity: 0; } }
 /* No header bar any more — every card carries its own .dk-kick (section/position), and this top strip's job was only
    ever to also provide the safe-area-inset-top clearance, which the track below now does directly. */
-.dk-nav:focus-visible, .dk-act:focus-visible, .dk-cta:focus-visible, .dk-go:focus-visible, .dk-hint:focus-visible, .dk-track:focus-visible { outline: 2px solid var(--hb-primary); outline-offset: 2px; }
+.dk-nav:focus-visible, .dk-act:focus-visible, .dk-cta:focus-visible, .dk-hint:focus-visible, .dk-track:focus-visible { outline: 2px solid var(--hb-primary); outline-offset: 2px; }
 .dk-track { flex: 1; min-height: 0; display: flex; padding-top: env(safe-area-inset-top, 0px); overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
 .dk-track::-webkit-scrollbar { display: none; }
 .dk-card { flex: 0 0 100%; min-width: 0; height: 100%; box-sizing: border-box; padding: 4px 16px 10px; scroll-snap-align: center; scroll-snap-stop: always; display: flex; }
@@ -681,10 +691,6 @@ html.hb-deck-open:not(.hb-hub-open) .hb-deck { bottom: calc(var(--hb-tab-h) + va
 .dk-take .takeaway-label { margin-right: 6px; }
 .dk-src { margin: 14px 0 0; font-size: 0.9rem; }
 .dk-src a { color: var(--ink-soft); }
-.dk-list { list-style: none; margin: 20px 0 0; padding: 0; counter-reset: dk; }
-.dk-list li { counter-increment: dk; display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-top: 1px solid var(--line); }
-.dk-list li::before { content: counter(dk); flex: 0 0 26px; height: 26px; border-radius: 50%; background: var(--hb-green-soft); color: var(--hb-green); font-family: var(--hb-label); font-size: 0.78rem; font-weight: 700; line-height: 26px; text-align: center; margin-top: 1px; }
-.dk-go { flex: 1; min-width: 0; padding: 0; border: 0; background: none; color: var(--ink); font: inherit; font-size: 0.98rem; font-weight: 600; line-height: 1.42; text-align: left; cursor: pointer; }
 .dk-startbar { justify-content: center; }
 .dk-hint { display: inline-flex; align-items: center; justify-content: center; flex: 1 1 auto; margin: 0; min-height: 48px; padding: 0 20px; border: 0; border-radius: 999px; background: var(--hb-lav); color: var(--hb-primary-2); font-family: var(--hb-label); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .dk-hint:active { transform: scale(0.97); }

@@ -209,6 +209,9 @@
     }
   }
 
+  // Just the section's own highlight now, not a list of every story's headline in it — the stories themselves are
+  // the next cards, one at a time; repeating all their titles here first was the same "too much detail" complaint
+  // the cover already got.
   function buildIntro(c) {
     var b = face('intro', 'Section ' + c.sec + ' of ' + c.secTotal + ': ' + c.name);
     b.scroll.appendChild(mk('p', 'dk-kick', 'Section ' + c.sec + ' of ' + c.secTotal));
@@ -222,17 +225,6 @@
       p.appendChild(document.createTextNode(' ' + plain(tk, true)));
       b.scroll.appendChild(p);
     }
-    var ol = mk('ol', 'dk-list');
-    c.items.forEach(function (it) {
-      var h3 = it.querySelector('h3');
-      if (!h3) return;
-      var li = mk('li');
-      var a = btn('dk-go', h3.textContent.trim());
-      a.setAttribute('data-goto', it.getAttribute('data-story-id'));
-      li.appendChild(a);
-      ol.appendChild(li);
-    });
-    b.scroll.appendChild(ol);
     var start = btn('dk-hint', 'Swipe to start');
     start.addEventListener('click', function () { goTo(idx + 1, true); });
     var bar = mk('div', 'dk-actions dk-startbar');       // pinned below the scrolling part, so it is always in reach
@@ -436,12 +428,6 @@
     ui.prev.addEventListener('click', function () { onManualNav(); goTo(idx - 1, true); });
     ui.next.addEventListener('click', function () { onManualNav(); goTo(idx + 1, true); });
     track.addEventListener('scroll', onScroll, { passive: true });
-    track.addEventListener('click', function (e) {
-      var g = e.target.closest && e.target.closest('[data-goto]');
-      if (!g) return;
-      var i = indexOfStory(g.getAttribute('data-goto'));
-      if (i >= 0) goTo(i, true);
-    });
     ['touchstart', 'pointerdown', 'wheel'].forEach(function (t) { deck.addEventListener(t, touched, { passive: true }); });
     ['touchstart', 'pointerdown'].forEach(function (t) { deck.addEventListener(t, function () { downAt = Date.now(); }, { passive: true }); });
     ['touchend', 'touchcancel', 'pointerup', 'pointercancel'].forEach(function (t) {

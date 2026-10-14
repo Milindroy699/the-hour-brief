@@ -718,10 +718,25 @@
       vs.setAttribute('role', 'group');
       vs.setAttribute('aria-label', 'Reading view');
       var inner = mk('div', 'vs-in');
+      // Collapsed by default in Cards (see the html.hb-deck-open... rules in app.css): this row alone, the full tab
+      // bar tucked away until asked for. Tapping it brings the tab bar back; tapping again puts it away.
+      var expand = mk('button', 'vs-expand', '');
+      expand.type = 'button';
+      expand.setAttribute('aria-label', 'Show the Audio, Challenge and Archive tabs');
+      expand.setAttribute('aria-expanded', 'false');
+      expand.innerHTML = '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+      expand.addEventListener('click', function () {
+        var on = document.documentElement.classList.toggle('hb-bar-expanded');
+        expand.setAttribute('aria-expanded', String(on));
+        expand.setAttribute('aria-label', on ? 'Hide the Audio, Challenge and Archive tabs' : 'Show the Audio, Challenge and Archive tabs');
+      });
+      var ed = mk('span', 'vs-ed');
       var list = mk('button', '', 'List'), cards = mk('button', '', 'Cards');
       list.type = cards.type = 'button';
       list.addEventListener('click', function () { if (deckOpen()) window.HBCards.close(); });
       cards.addEventListener('click', function () { openCards(); });
+      inner.appendChild(expand);
+      inner.appendChild(ed);
       inner.appendChild(list);
       inner.appendChild(cards);
       vs.appendChild(inner);
@@ -731,6 +746,8 @@
     if (!vs) return;
     vs.hidden = !cardsOk();
     document.documentElement.classList.toggle('hb-switch-on', !vs.hidden);
+    var ed2 = vs.querySelector('.vs-ed'), edEl = document.querySelector('.edition');
+    if (ed2 && edEl) ed2.textContent = edEl.innerHTML.split(/<br\s*\/?>/i)[0].replace(/<[^>]*>/g, '').trim();
     syncViewSwitch();
     if (!vs.hidden) requestAnimationFrame(measureSwitchH);   // --hb-switch-h is an estimate; this corrects it to what actually rendered, so the deck's reserved space can never fall short of the real bar and open a gap onto the list underneath
   }
@@ -743,7 +760,7 @@
   function syncViewSwitch() {
     var vs = document.querySelector('.view-switch');
     if (!vs || vs.hidden) return;
-    var on = deckOpen(), btns = vs.querySelectorAll('button');
+    var on = deckOpen(), btns = vs.querySelectorAll('.vs-in > button:not(.vs-expand)');   // List, Cards specifically — .vs-expand is a third button in the same row now, not one of the two states
     btns[0].setAttribute('aria-pressed', String(!on));
     btns[1].setAttribute('aria-pressed', String(on));
   }
