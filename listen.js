@@ -729,15 +729,12 @@
     logo.alt = '';
     logo.width = logo.height = 34;
     var brand = mk('div', 'ab-brand');
-    var word = mk('div', 'hub-word');
-    word.innerHTML = 'THE HOUR <span>BRIEF</span>';
+    var word = mk('div', 'wordmark');
+    word.innerHTML = 'The Hour <span>Brief</span>';
     brand.appendChild(word);
     brand.appendChild(mk('p', 'ab-screen', 'Audio'));
-    hubEl.close = btn('ab-btn hub-close', 'Close the audio player', I_CLOSE);
-    hubEl.close.addEventListener('click', closeHub);
     top.appendChild(logo);
     top.appendChild(brand);
-    top.appendChild(hubEl.close);
 
     var sc = mk('div', 'hub-scroll');
     var st = mk('div', 'hub-status');
@@ -956,6 +953,8 @@
     hubPrev = document.activeElement;
     buildChapters();
     hub.hidden = false;
+    hub.classList.add('hb-fade-in');
+    requestAnimationFrame(function () { requestAnimationFrame(function () { hub.classList.remove('hb-fade-in'); }); });
     hubShown = true;
     document.documentElement.classList.add('hb-hub-open');
     renderHub();

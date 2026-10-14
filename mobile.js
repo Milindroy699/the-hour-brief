@@ -890,7 +890,16 @@
   var TAB_HREF = { today: '/', audio: '/?audio=1', quiz: '/#quiz', archive: '/archive/' };
   function tabGo(name) {
     var L = window.HBListen;
-    if (name === 'audio') { closeQuizPage(); if (L && L.openHub) L.openHub(); else toast('Audio is loading…'); return; }
+    // Audio and Challenge no longer carry their own close button (it duplicated what tapping the tab itself already
+    // does) — tapping the tab you are already on now closes back to Today instead, same as tapping it did nothing
+    // before.
+    if (name === 'audio') {
+      if (L && L.hubOpen && L.hubOpen()) { L.closeHub(); setTimeout(syncTabs, 60); return; }
+      closeQuizPage();
+      if (L && L.openHub) L.openHub(); else toast('Audio is loading…');
+      setTimeout(syncTabs, 60);
+      return;
+    }
     if (L && L.closeHub) L.closeHub();
     if (name === 'today') {
       closeQuizPage();
@@ -899,6 +908,7 @@
       else window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     else if (name === 'quiz') {
+      if (quizOvShown) { closeQuizPage(); setTimeout(syncTabs, 60); return; }
       if (deckOpen()) window.HBCards.close({ keep: true });
       openQuizPage();
     }
@@ -928,18 +938,12 @@
     logo.alt = '';
     logo.width = logo.height = 34;
     var brand = mk('div', 'ab-brand');
-    var word = mk('div', 'hub-word');
-    word.innerHTML = 'THE HOUR <span>BRIEF</span>';
+    var word = mk('div', 'wordmark');
+    word.innerHTML = 'The Hour <span>Brief</span>';
     brand.appendChild(word);
     brand.appendChild(mk('p', 'ab-screen', 'Challenge'));
-    var close = mk('button', 'ab-btn hub-close');
-    close.type = 'button';
-    close.setAttribute('aria-label', 'Back to The Hour Brief');
-    close.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12 19 6.4 17.6 5 12 10.6z"/></svg>';
-    close.addEventListener('click', function () { tabGo('today'); });
     top.appendChild(logo);
     top.appendChild(brand);
-    top.appendChild(close);
     quizScroll = mk('div', 'hub-scroll');
     quizOv.appendChild(top);
     quizOv.appendChild(quizScroll);
@@ -951,6 +955,8 @@
     quizPrevFocus = document.activeElement;
     quizScroll.appendChild(document.getElementById('quiz'));
     quizOv.hidden = false;
+    quizOv.classList.add('hb-fade-in');
+    requestAnimationFrame(function () { requestAnimationFrame(function () { quizOv.classList.remove('hb-fade-in'); }); });
     quizOvShown = true;
     document.documentElement.classList.add('hb-quiz-page');
     quizScroll.scrollTop = 0;

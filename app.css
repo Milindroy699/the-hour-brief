@@ -456,7 +456,12 @@ body.hb-listening #mob-toast { bottom: calc(var(--hb-tab-h) + 150px); }
 /* ---- Audio hub: the full-screen player (opened from the Audio tab or the mini player) ---- */
 html.hb-hub-open, html.hb-hub-open body { overflow: hidden; }
 html.hb-hub-open .hb-player { display: none; }
-.hb-hub { position: fixed; top: 0; left: 0; right: 0; bottom: var(--hb-tab-h); z-index: 9983; display: flex; flex-direction: column; background: var(--bg); color: var(--ink); font-family: var(--hb-sans); }
+.hb-hub { position: fixed; top: 0; left: 0; right: 0; bottom: var(--hb-tab-h); z-index: 9983; display: flex; flex-direction: column; background: var(--bg); color: var(--ink); font-family: var(--hb-sans); opacity: 1; transition: opacity 0.14s ease; }
+/* Set right after [hidden] is cleared, removed a frame later (see openHub()/openQuizPage() in listen.js/mobile.js) —
+   a quick fade instead of popping straight in at full opacity, which read as a flash/flicker switching tabs,
+   especially while the background image above is still decoding. */
+.hb-hub.hb-fade-in { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .hb-hub { transition: none; } }
 /* A dark, moody "now playing" glow (Stitch-generated) — dark mode only: this image is dark-toned and fades to near-
    black at the bottom (right where the play controls sit), which only reads correctly against dark-mode's already-
    light text/icons. Light mode keeps the plain var(--bg) above; every piece of readable content here (.hub-card,
@@ -467,9 +472,6 @@ html.hb-hub-open .hb-player { display: none; }
 :root[data-theme="dark"] .hb-hub { background-image: url('/brand/backgrounds/audio-dark.jpg'); background-size: cover; background-position: center; }
 .hb-hub[hidden] { display: none; }
 .hub-top { flex: none; display: flex; align-items: center; gap: 12px; padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 10px; background: var(--paper); border-bottom: 1px solid var(--line); box-shadow: 0 2px 8px rgba(18, 19, 22, 0.04); }
-.hub-word { font-family: var(--hb-label); font-size: 0.98rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
-.hub-word span { color: var(--hb-primary); }
-.hub-close svg { width: 22px; height: 22px; fill: currentColor; }
 .hub-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding: 18px 16px 32px; }
 .hub-status { display: flex; margin-bottom: 14px; }
 .hub-pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: var(--hb-mint); color: var(--hb-mint-ink); font-family: var(--hb-label); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
