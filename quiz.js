@@ -83,6 +83,8 @@
   function jumpToStory(id) {
     var it = document.querySelector('.item[data-story-id="' + id + '"]');
     if (!it) return;
+    document.documentElement.classList.remove('hb-quiz-page');   // the story's section is hidden while the dedicated quiz page is showing (app.css); reveal it before scrolling to it
+
     if (it.classList.contains('is-collapsed')) {
       var more = it.querySelector(':scope > div > .story-more');
       if (more && !more.hidden) more.click();

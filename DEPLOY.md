@@ -301,6 +301,69 @@ turned out not to be it once the reader actually used it, plus several other ask
 
 `cards.mjs` is 166 checks.
 
+**2026-10-14, same day again — the switch/chevron redesign didn't survive real use either, plus a brand-new feature:**
+
+- **The expand/collapse chevron is gone. The tab bar is never collapsed for Cards any more.** This is the third round
+  of feedback on this one control in a single day. The tab bar is now the exact same full-width, always-visible bar
+  in both List and Cards, with the switch pill floating above it — unchanged, same position, same look, in both
+  views, permanently. `.vs-expand`, `html.hb-bar-expanded`, and every CSS rule that shrank `--hb-tab-h` or collapsed
+  `.tab-bar`'s `max-height` for Cards are deleted outright, not just hidden. The code comments now say this plainly:
+  "the plain, boring version on purpose, not a stepping stone to another redesign." The pill itself (`.vs-in`) got a
+  proper glassmorphic treatment instead — heavier blur+saturation, a violet-tinted border, an inset top highlight —
+  since the reader specifically asked for "a bit of border or color highlight" once the collapsing stopped being the
+  answer.
+- **The lane's long run-on `<h2>` is hidden unconditionally, no toggle.** It used to be tucked behind a "Read the
+  day's digest →" button (`is-digest`/`digest-open` in `laneDigests()`, `mobile.js`) that turned out to not actually
+  do anything in practice. Deleted that whole mechanism; reader.css now just hides any lane `<h2>` whenever a
+  `.lane-tag` badge is present (`section.lane:not(.quiz) .lane-head:has(.lane-tag) h2 { display: none; }`) — the tag
+  already names the section, so the long sentence was pure duplication. The quiz section is explicitly excluded
+  (`:not(.quiz)`): its own `<h2>` is short and already deliberately styled, unlike the other lanes' SEO-length ones.
+- **The closing card's overlaid edge-nav arrows are hidden on that card specifically.** A real bug report: the
+  previous round centred the closing card's content vertically, which put it right where `.dk-nav`'s fixed
+  `top: 32%` sits — the left arrow was visibly overlapping the word "quiz" mid-sentence. `paint()` in `cards.js` now
+  sets `ui.edgenav.hidden = c.kind === 'end'` — simpler than repositioning them, and there is nothing to go "next"
+  to on the last card anyway.
+- **New: a dedicated quiz page.** Tapping Challenge in the bottom tab bar used to just scroll to `#quiz` within the
+  normal page. Now `tabGo('quiz')` in `mobile.js` adds `html.hb-quiz-page` to `<html>`, and a single CSS rule
+  (`html.hb-quiz-page .page > *:not(#quiz) { display: none; }`) hides every other direct child of `.page` — the lane
+  sections, the "before the news" card, the chips, the subscribe box — so the quiz gets the whole screen. Deliberately
+  NOT a new fixed-position overlay layer like the Audio hub: `quiz.js` already scrolls and measures against the real
+  page (including a couple of `window.scrollBy` calls in its own `bringIntoView` helper that only make sense against
+  the real window scroll), so keeping it the real page with siblings hidden means quiz.js needed no changes beyond
+  one line — `jumpToStory()` now clears `html.hb-quiz-page` before scrolling to a story, since "From '…' →" would
+  otherwise silently fail to show anything hidden under the dedicated page. A new `quizBack()` in `mobile.js` builds
+  a "Back to The Hour Brief" button, prepended inside `#quiz`, visible only in this mode. Scoped to just the
+  bottom-tab Challenge button, per the literal ask ("the quiz button in the menu") — the inline quiz chip elsewhere
+  in the list stays a plain scroll, unchanged.
+- **Brand background art, generated in Stitch from prompts written to match the app's real tokens** (navy `#0c0d15`,
+  violet `#5e43f3`/`#7c5cf0`, the hourglass mark), reviewed and picked per surface rather than applied uniformly —
+  files in `brand/backgrounds/`:
+  - `list-light.svg` / `list-dark.svg`: the List view's own background (`body`, overriding the page's inline
+    `background: var(--bg)` by load order, same as the rest of app.css). Pure SVG gradient + grain, not a photo —
+    `body` can be many screens tall for a full edition, and because it's a vector, `background-size: cover`
+    stretching it that far stays perfectly smooth (no blur, no banding, the way a raster image would suffer).
+    Deliberately almost flat: this sits behind dense body text all day, so it has to all but disappear once reading
+    starts.
+  - `cards-light.jpg` / `cards-dark.jpg`: a soft curtain-light motif in the margins around the floating card in
+    Cards (`.hb-deck`). The card itself (`.dk-face`) is fully opaque, so this only ever shows at the edges, never
+    under any text.
+  - `audio-dark.jpg`: a moody "now playing" glow for the Audio hub (`.hb-hub`), dark mode only — it's a dark-toned
+    image that fades to near-black right where the player controls sit, which only reads correctly against dark
+    mode's already-light text/icons; light mode keeps the plain `var(--bg)` it always had.
+  - `cover-accent.jpg` exists in the folder but is not wired in anywhere yet — a more dramatic, colourful piece that
+    didn't fit as a universal background but could work as a one-off accent (the cover card specifically, a splash
+    screen, a store listing hero) if the reader wants it used somewhere later.
+  PNGs were exported from Stitch at 1–1.7MB each (too heavy to ship as-is for a daily-read app) and compressed to
+  JPEG (quality ~70, `sips` — no `cwebp`/imagemagick on this machine) down to 90–140KB each before committing.
+  Verified visually on a local static server across List/Cards (light+dark) and Audio (dark): no legibility issues,
+  nothing fighting the text on top of it.
+
+Two Stitch background designs that came out in the same batch were reviewed and set aside, not wired in: a bright,
+colourful hourglass-blob piece and a second, similarly busy abstract — both too high-contrast for behind dense body
+text and not clearly better than what shipped for Cards/Audio either; left in the source export folder
+(`~/Downloads/stitch_hour_brief 2/`) in case they're wanted for something more decorative later (a splash screen, a
+store listing) rather than as an in-app background.
+
 ## Reload, and the next edition, without friction (`capacitor-bridge.js`, native apps only)
 
 Every page sets `history.scrollRestoration = 'manual'` in an inline `<head>` script (the very first thing in `<head>`, before

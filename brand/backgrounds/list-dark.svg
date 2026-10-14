@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="768" height="1376" viewBox="0 0 768 1376">
+  <defs>
+    <!-- Deep near-black navy editorial gradient -->
+    <linearGradient id="darkPaperGrad" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#14151b"/>
+      <stop offset="50%" stop-color="#111217"/>
+      <stop offset="100%" stop-color="#0c0d12"/>
+    </linearGradient>
+
+    <!-- Fine linen / book-cloth grain filter -->
+    <filter id="darkPaperTexture" x="0%" y="0%" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="3" result="noise"/>
+      <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.04 0" result="coloredNoise"/>
+      <feComposite in="SourceGraphic" in2="coloredNoise" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Base dark background -->
+  <rect width="100%" height="100%" fill="url(#darkPaperGrad)"/>
+
+  <!-- Fine texture overlay -->
+  <rect width="100%" height="100%" filter="url(#darkPaperTexture)" fill="url(#darkPaperGrad)"/>
+
+  <!-- Faint top ambient violet whisper -->
+  <radialGradient id="darkTopGlow" cx="50%" cy="0%" r="70%">
+    <stop offset="0%" stop-color="#5e43f3" stop-opacity="0.045"/>
+    <stop offset="100%" stop-color="#111217" stop-opacity="0"/>
+  </radialGradient>
+  <rect width="100%" height="100%" fill="url(#darkTopGlow)"/>
+</svg>

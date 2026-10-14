@@ -74,26 +74,21 @@ check('the app shows one List | Cards switch, fixed and centred just above the t
 check('cards.js is not loaded until someone asks for Cards (nothing extra on the normal list)', t.has === 'undefined', JSON.stringify(t));
 const listPos = { top: t.top, centreX: t.centreX };
 await openDeck({ cover: true });
-await c.sleep(400);   // the pill's own "rides down" position is a transition (bottom 0.22s ease on .view-switch); let it settle before measuring, rather than catching it mid-animation
-// The chevron (.vs-expand) is now a sibling of the pill (.vs-in), not folded inside it, so the pill alone is no
-// longer dead-centre once the chevron is showing — the GROUP (chevron + gap + pill) is what .view-switch centres,
-// via justify-content:center. .view-switch itself is full-width (left:0;right:0), so its own rect is useless for
-// this; the group's true bounding box is the union of the chevron's and the pill's own rects.
-t = await J(`(() => { const pr = document.querySelector('.vs-in').getBoundingClientRect(), ex = document.querySelector('.vs-expand').getBoundingClientRect(), groupL = Math.min(pr.left, ex.left), groupR = Math.max(pr.right, ex.right); return { btns: [...document.querySelectorAll('.vs-in button')].map((b) => b.getAttribute('aria-pressed')), top: Math.round(pr.top), centreX: Math.round((pr.left + pr.right) / 2), groupCentreX: Math.round((groupL + groupR) / 2) }; })()`);
-check('opening Cards is pressed now, still the exact same control; the chevron+pill GROUP is still horizontally centred (the pill alone now sits right of centre, since the chevron takes its own space beside it), and it rides down as the bar shrinks and pulls in underneath it', eq(t.btns, ['false', 'true']) && Math.abs(t.groupCentreX - listPos.centreX) <= 2 && t.centreX > listPos.centreX && t.top > listPos.top, JSON.stringify({ t, listPos }));
-t = await J(`(() => { const barH = Math.round(document.querySelector('.tab-bar').getBoundingClientRect().height), ex = document.querySelector('.vs-expand'), vsw = document.querySelector('.view-switch'), r = vsw.getBoundingClientRect(), bg = getComputedStyle(vsw).backgroundColor; return { collapsed: document.documentElement.classList.contains('hb-deck-open') && !document.documentElement.classList.contains('hb-bar-expanded'), barH, exShown: getComputedStyle(ex).display !== 'none', exLabel: ex.getAttribute('aria-label'), exExpanded: ex.getAttribute('aria-expanded'), floorBottom: Math.round(r.bottom), innerH: innerHeight, bg, opaque: bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent' }; })()`);
-check('Cards open: the tab bar tucks away by default — just the switch pill and the expand button, in its place', t.collapsed && t.barH < 10 && t.exShown && t.exExpanded === 'false' && /show/i.test(t.exLabel), JSON.stringify(t));
-// Regression check for a real bug report: with the tab bar gone, .view-switch itself must become a solid, opaque
-// floor flush to the screen edge — otherwise whatever list content sits behind the fixed deck bleeds through the
-// gap where the tab bar used to be.
-check('with the tab bar tucked away, the switch row becomes its own solid floor, flush to the screen edge with no gap for the list behind it to show through', t.floorBottom >= t.innerH - 1 && t.opaque, JSON.stringify(t));
-await c.ev(`document.querySelector('.vs-expand').click()`); await c.sleep(400);
-t = await J(`(() => { const barH = Math.round(document.querySelector('.tab-bar').getBoundingClientRect().height), ex = document.querySelector('.vs-expand'), lb = document.querySelector('.tab-lb'); return { expanded: document.documentElement.classList.contains('hb-bar-expanded'), barH, lbVisible: getComputedStyle(lb).opacity !== '0' && lb.textContent.length > 0, exExpanded: ex.getAttribute('aria-expanded') }; })()`);
-check('tapping the chevron brings the full tab bar back, labels and all, at its normal size', t.expanded && t.barH >= 60 && t.lbVisible && t.exExpanded === 'true', JSON.stringify(t));
-await c.ev(`document.querySelector('.vs-expand').click()`); await c.sleep(400);
-check('tapping it again tucks the tab bar back away', (await c.ev(`!document.documentElement.classList.contains('hb-bar-expanded') && document.querySelector('.tab-bar').getBoundingClientRect().height`)) < 10);
-await c.ev(`document.querySelectorAll('.vs-in button')[1].click()`); await c.sleep(900);
-await c.ev(`document.querySelectorAll('.vs-in button')[0].click()`); await c.sleep(500);
+await c.sleep(400);   // nothing is meant to move at all any more; give any incidental reflow a moment to settle before measuring
+// This is the plain, boring version of this control on purpose now — not a stepping stone to another redesign. (It
+// has been through two since-reverted redesigns: icon-only, then a tucked-away chevron that collapsed the tab bar
+// in Cards — both tried on a real device and reverted the same day.) The tab bar is never collapsed or resized for
+// Cards any more, so nothing about the switch's own layout context changes between the two views: its bounding
+// rect should land in exactly the same place, pixel for pixel, whichever one is showing — the original design
+// intent before either of those redesigns, and the standing rule again now.
+t = await J(`(() => { const pr = document.querySelector('.vs-in').getBoundingClientRect(); return { btns: [...document.querySelectorAll('.vs-in button')].map((b) => b.getAttribute('aria-pressed')), top: Math.round(pr.top), centreX: Math.round((pr.left + pr.right) / 2) }; })()`);
+check('opening Cards presses the Cards button, but the switch itself sits in the exact same place as in List — same top, same centre, nothing rides down or resizes', eq(t.btns, ['false', 'true']) && t.top === listPos.top && t.centreX === listPos.centreX, JSON.stringify({ t, listPos }));
+t = await J(`(() => { const tab = document.querySelector('.tab-bar').getBoundingClientRect(), lb = document.querySelector('.tab-lb'); return { barH: Math.round(tab.height), barBottom: Math.round(tab.bottom), innerH: innerHeight, lbVisible: !!lb && getComputedStyle(lb).opacity !== '0' && lb.textContent.length > 0, noChevron: !document.querySelector('.vs-expand') }; })()`);
+check('Cards open: the tab bar is still the full, labelled bar — exactly as in List, never tucked away or shrunk (no expand/collapse button exists any more either)', t.barH >= 60 && t.lbVisible && t.noChevron, JSON.stringify(t));
+// Regression check for the real bug this replaced: with the tab bar always present and always opaque, there must be
+// no gap at all between it and the bottom of the screen for whatever is behind the fixed deck to bleed through.
+check('the tab bar reaches the very bottom of the screen, flush with no gap underneath it', t.barBottom >= t.innerH - 1, JSON.stringify(t));
+await c.ev(`document.querySelectorAll('.vs-in button')[0].click()`); await c.sleep(900);
 check('List, clicked from the switch while Cards was open, closes the deck (the deck’s own header has no separate List button any more)', (await c.ev(`!HBCards.isOpen() && !document.querySelector('.dk-tolist')`)) === true);
 check('and List is pressed again, back on the switch', eq(await J(`[...document.querySelectorAll('.vs-in button')].map((b) => b.getAttribute('aria-pressed'))`), ['true', 'false']));
 await c.ev(`document.querySelector('.tab[data-tab=audio]').click()`); await c.sleep(900);
@@ -112,16 +107,6 @@ await open({ native: false, width: 1280, query: '?classic=1' });
 check('desktop with ?classic=1: no switch either', (await c.ev(`!document.querySelector('.view-switch') || document.querySelector('.view-switch').hidden`)) === true);
 await open({ native: true, width: 820, height: 1100 });
 check('the iPad-sized app has it', (await c.ev(`!!document.querySelector('.view-switch') && !document.querySelector('.view-switch').hidden`)) === true);
-
-// Expanding the tab bar, then leaving Cards for List and coming back, should not be remembered — syncViewSwitch()
-// resets hb-bar-expanded whenever the deck is closed, so it is always re-tucked away the next time Cards opens.
-await open();
-await openDeck();
-await c.ev(`document.querySelector('.vs-expand').click()`); await c.sleep(400);   // leave the full tab bar showing
-await c.ev(`document.querySelectorAll('.vs-in button')[0].click()`); await c.sleep(500);   // List, from the switch — closes the deck
-await c.ev(`${cardsBtn}.click()`); await c.sleep(900);
-t = await J(`(() => { const ex = document.querySelector('.vs-expand'); return { expanded: document.documentElement.classList.contains('hb-bar-expanded'), barH: Math.round(document.querySelector('.tab-bar').getBoundingClientRect().height), exExpanded: ex.getAttribute('aria-expanded'), exLabel: ex.getAttribute('aria-label') }; })()`);
-check('expanding the tab bar, then leaving Cards and coming back, starts collapsed again rather than remembering it was expanded', !t.expanded && t.barH < 10 && t.exExpanded === 'false' && /show/i.test(t.exLabel), JSON.stringify(t));
 
 // ---------- 2. opening the deck; what it contains, in the reader's order ----------
 await open();
@@ -428,8 +413,16 @@ t = await J(`({ cardTop: Math.round(document.querySelector('#quiz .quiz-card').g
 check('and it stays there, with the question and its answers on screen, and Cards stays your choice for next time', t.cardTop >= 60 && t.cardTop <= 110 && t.opts >= 2, JSON.stringify(t));
 await open();
 await openDeck();
-t = await J(`(() => { document.querySelector('.tab[data-tab=quiz]').click(); return { deck: HBCards.isOpen(), quizTop: Math.round(document.getElementById('quiz').getBoundingClientRect().top), view: localStorage.getItem('hb-view-v1') }; })()`);
-check('the Challenge tab does the same from the deck: instantly on the quiz section, Cards still your choice', !t.deck && t.quizTop >= 0 && t.quizTop <= 110 && t.view === 'cards', JSON.stringify(t));
+// The Challenge tab does more than scroll now: it hands over to the dedicated quiz page (thorough coverage of that
+// page itself lives in premium.mjs) — from inside the deck, that means closing the deck straight into it, not just
+// landing on the quiz section of the list. The hand-over scrolls the page to the top; index.html sets
+// `html { scroll-behavior: smooth }` globally, so even this "auto" scroll animates for a few hundred ms rather than
+// landing instantly — give it a moment to settle before reading the result, same as every other transition here.
+await c.ev(`document.querySelector('.tab[data-tab=quiz]').click()`); await c.sleep(900);
+t = await J(`({ deck: HBCards.isOpen(), quizPage: document.documentElement.classList.contains('hb-quiz-page'), quizTop: Math.round(document.getElementById('quiz').getBoundingClientRect().top), aiHidden: getComputedStyle(document.getElementById('ai')).display === 'none', view: localStorage.getItem('hb-view-v1') })`);
+check('the Challenge tab closes the deck straight into the dedicated quiz page, Cards still your choice for next time', !t.deck && t.quizPage && t.quizTop >= 0 && t.quizTop <= 110 && t.aiHidden && t.view === 'cards', JSON.stringify(t));
+await c.ev(`document.querySelector('.tab[data-tab=today]').click()`); await c.sleep(600);
+check('and the Today tab leaves the dedicated quiz page again, same as it would from the list', (await c.ev(`!document.documentElement.classList.contains('hb-quiz-page')`)) === true);
 await open();
 await openDeck();
 await c.ev(`HBCards.goTo(5, false)`); await c.sleep(400);
@@ -578,6 +571,14 @@ check('"Start reading" moves on to the first section', (await pos()) === `2 / ${
 await c.ev(`HBCards.goTo(HBCards.count() - 1, false)`); await c.sleep(500);
 t = await J(`(() => { const cs = document.querySelectorAll('.dk-card'); return { isLastKind: cs[cs.length - 1].classList.contains('dk-end'), kick: document.querySelector('.dk-end .dk-kick').textContent }; })()`);
 check('the closing card is always the deck\'s last card', t.isLastKind && t.kick === 'That’s the brief', JSON.stringify(t));
+// The closing card's content is vertically centred (.dk-end .dk-scroll), which puts it right where the overlaid
+// prev/next edge arrows sit (top: 32% in app.css) — a real bug report showed the left arrow overlapping the word
+// "quiz" mid-sentence. There is nothing to go "next" to from the last card anyway (swipe back, the scrubber and
+// List still work), so the arrows are simply hidden there rather than repositioned.
+check('the edge-nav arrows are hidden on the closing card, where they would otherwise sit on top of its centred text', (await c.ev(`document.querySelector('.dk-edgenav').hidden`)) === true);
+await c.ev(`HBCards.goTo(1, false)`); await c.sleep(400);
+check('…but not on an ordinary card (a section card, here) — hiding them is specific to the closing card, not a general regression', (await c.ev(`document.querySelector('.dk-edgenav').hidden === false && getComputedStyle(document.querySelector('.dk-edgenav')).display !== 'none'`)) === true);
+await c.ev(`HBCards.goTo(HBCards.count() - 1, false)`); await c.sleep(500);
 t = await J(`(() => { const l = document.querySelector('.dk-listen'), q = document.querySelector('.dk-quizt'); return { listen: !l.hidden, lt: l.querySelector('strong').textContent, ls: l.querySelector('small').textContent, lbtn: l.querySelector('.dk-tile-go').getAttribute('aria-label'), quiz: !q.hidden, qt: q.querySelector('strong').textContent, qs: q.querySelector('small').textContent, ql: q.querySelector('.dk-tile-link').textContent, qrole: q.getAttribute('role') }; })()`);
 check('the Listen tile says what it is and how long ("Listen to today\'s brief", minutes and voice) with a play button, and the quiz tile carries the quiz chip\'s title, subtitle and "Play →"', t.listen && t.lt === 'Listen to today’s brief' && /min/.test(t.ls) && /Play/.test(t.lbtn) && t.quiz && /quiz/i.test(t.qt) && t.qs.length > 0 && /Play|Review/.test(t.ql) && t.qrole === 'button', JSON.stringify(t));
 await c.shot(`${OUT}/cards_end.png`);

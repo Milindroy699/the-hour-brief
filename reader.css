@@ -7,17 +7,13 @@
  * own tokens, so light and dark themes just work.
  */
 
-/* ---- Section header: highlights, then takeaway ----
-   The long "digest" sentence the daily edition puts in each lane <h2> is tucked behind a
-   toggle; a numbered list of the lane's story headlines (each a jump link) leads instead.
-   A short <h2> plus a .lane-takeaway (newer editions) shows as-is. */
-.lane-head.is-digest h2 { display: none; }
-.lane-head.is-digest.digest-open h2 {
-  display: block;
-  -webkit-line-clamp: unset;
-  overflow: visible;
-  margin-top: 12px;
-}
+/* ---- Section header: takeaway, then highlights ----
+   The <h2> the daily edition writes for each lane is a long run-on sentence meant for RSS/search,
+   not for reading on a card — any lane with the newer .lane-tag badge already names itself there,
+   so its <h2> is simply never shown in reader mode (no toggle: a "Read the digest" button that just
+   reveals a wall of text nobody asked to expand was clutter, not a feature). Genuinely old archived
+   editions with no .lane-tag fall back to mobile.css's own clamp-and-"Read more" handling instead. */
+section.lane:not(.quiz) .lane-head:has(.lane-tag) h2 { display: none; }
 .lane-digest { margin: 12px 0 0; }
 .lane-digest-label {
   font-size: 0.72rem;
@@ -57,17 +53,6 @@
   font-size: 0.95rem;
   line-height: 1.4;
   font-weight: 550;
-}
-.digest-toggle {
-  font: inherit;
-  font-size: 0.82rem;
-  font-weight: 600;
-  background: none;
-  border: 0;
-  color: var(--brand);
-  padding: 8px 0;
-  min-height: 40px;
-  cursor: pointer;
 }
 .lane-head .lane-takeaway { margin-top: 12px; font-size: 0.9rem; }
 .lane-head .takeaway-label, .lane-takeaway .takeaway-label { margin-right: 6px; }

@@ -563,6 +563,10 @@
     if (ui.thumb) ui.thumb.style.left = pct + '%';
     ui.prev.disabled = idx <= 0;
     ui.next.disabled = idx >= cards.length - 1;
+    // The closing card's content is vertically centred (see .dk-end .dk-scroll in app.css), which can put it right
+    // where the overlaid edge arrows sit (top: 32%) — hide them there specifically rather than fight their fixed
+    // position: there's nothing to go "next" to on the last card anyway, and swipe/the scrubber/List still work.
+    if (ui.edgenav) ui.edgenav.hidden = c.kind === 'end';
     cards.forEach(function (x, i) {
       if (canInert) x.el.inert = i !== idx;
       else x.el.setAttribute('aria-hidden', String(i !== idx));

@@ -43,7 +43,7 @@
   --hb-sans: "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
   --hb-label: "Space Grotesk", "Inter", -apple-system, system-ui, sans-serif;
   --hb-tab-h: calc(66px + env(safe-area-inset-bottom, 0px));
-  --hb-switch-h: 70px;  /* the List | Cards switch's own reserved band, just above the tab bar when it is showing — in Cards (collapsed) it is itself the solid floor down to the screen edge, so this estimate runs a bit taller; JS corrects it to the real rendered height either way */
+  --hb-switch-h: 46px;  /* the List | Cards switch's own reserved band, just above the tab bar — same pill, same height, in both views; JS corrects this estimate to the real rendered height */
 
   --bg: #faf9fd;
   --paper: #ffffff;
@@ -144,6 +144,17 @@
 /* ---- Base type ---- */
 body { font-family: var(--hb-sans); font-feature-settings: "cv11", "ss03"; }
 ::selection { background: rgba(var(--hb-primary-rgb), 0.24); }
+
+/* ---- Canvas background: a near-invisible paper texture behind the list, not a decoration ---- */
+/* Wins over the page's own inline body{background:var(--bg)} by load order (see the file header). An SVG gradient +
+   grain (Stitch-generated, brand/backgrounds/), not a photo: body can be many screens tall for a full edition, and
+   because it's a vector, background-size:cover stretching it to fit stays perfectly smooth — no blur, no banding,
+   unlike a raster image stretched that far. Deliberately almost flat: this sits behind dense body text all day. */
+body { background-color: var(--bg); background-image: url('/brand/backgrounds/list-light.svg'); background-size: cover; background-position: top center; background-repeat: no-repeat; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) body { background-image: url('/brand/backgrounds/list-dark.svg'); }
+}
+:root[data-theme="dark"] body { background-image: url('/brand/backgrounds/list-dark.svg'); }
 
 /* ---- App bar: the masthead, reworked (logo, wordmark, screen name; text size, saved, menu) ---- */
 .masthead-band {
@@ -321,7 +332,7 @@ section.lane { margin-bottom: 40px; }
 .lane-digest-list li:first-child { padding-top: 12px; }
 .lane-digest-list li::before { flex: 0 0 26px; height: 26px; margin-top: 1px; font-family: var(--hb-label); font-size: 0.78rem; line-height: 26px; background: var(--hb-green-soft) !important; color: var(--hb-green) !important; }
 .lane-digest-list a { font-size: 1.06rem; font-weight: 600; line-height: 1.42; letter-spacing: -0.005em; color: var(--ink); }
-.digest-toggle, .lane-more { color: var(--hb-primary-2); font-weight: 600; }
+.lane-more { color: var(--hb-primary-2); font-weight: 600; }
 .lane-head .lane-takeaway, .item .takeaway {
   position: relative;
   margin-top: 16px;
@@ -432,6 +443,14 @@ html.hb-hub-open, html.hb-hub-open body { overflow: hidden; }
 html.hb-hub-open .hb-player { display: none; }
 html.hb-hub-open .view-switch, html.hb-on-quiz .view-switch { display: none; }   /* not a reading-mode decision while on Audio or Challenge */
 .hb-hub { position: fixed; top: 0; left: 0; right: 0; bottom: var(--hb-tab-h); z-index: 9983; display: flex; flex-direction: column; background: var(--bg); color: var(--ink); font-family: var(--hb-sans); }
+/* A dark, moody "now playing" glow (Stitch-generated) — dark mode only: this image is dark-toned and fades to near-
+   black at the bottom (right where the play controls sit), which only reads correctly against dark-mode's already-
+   light text/icons. Light mode keeps the plain var(--bg) above; every piece of readable content here (.hub-card,
+   .hub-row, etc.) already carries its own opaque surface regardless, so this is purely the backdrop in the gaps. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .hb-hub { background-image: url('/brand/backgrounds/audio-dark.jpg'); background-size: cover; background-position: center; }
+}
+:root[data-theme="dark"] .hb-hub { background-image: url('/brand/backgrounds/audio-dark.jpg'); background-size: cover; background-position: center; }
 .hb-hub[hidden] { display: none; }
 .hub-top { flex: none; display: flex; align-items: center; gap: 12px; padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 10px; background: var(--paper); border-bottom: 1px solid var(--line); box-shadow: 0 2px 8px rgba(18, 19, 22, 0.04); }
 .hub-word { font-family: var(--hb-label); font-size: 0.98rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
@@ -485,6 +504,16 @@ html.hb-hub-open .view-switch, html.hb-on-quiz .view-switch { display: none; }  
 .hub-row.now .hub-t { background: var(--hb-primary); color: #fff; }
 .hub-row.now b, .hub-row.now .hub-i { color: var(--hb-primary-2); }
 @media (prefers-reduced-motion: reduce) { .hub-bar i, .hub-b, .tab-ic, .nav a { transition: none; } }
+
+/* ---- Dedicated quiz page: tapping Challenge hides every other page-level section instead of opening a separate
+   overlay (quiz.js scrolls and measures against the real page; keeping it the real page, just with its siblings
+   hidden, means none of that needs to change) — the quiz gets the whole screen rather than being one section among
+   three to scroll past. ---- */
+html.hb-quiz-page .pause-band, html.hb-quiz-page .page > .side-col, html.hb-quiz-page .main-col > *:not(#quiz) { display: none; }
+.quiz-page-back { display: none; align-items: center; gap: 6px; margin: 0 0 14px; padding: 10px 2px; border: 0; background: none; color: var(--hb-primary-2); font-family: var(--hb-label); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.04em; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.quiz-page-back svg { width: 18px; height: 18px; }
+.quiz-page-back:focus-visible { outline: 2px solid var(--hb-primary); outline-offset: 2px; }
+html.hb-quiz-page .quiz-page-back { display: inline-flex; }
 
 /* ---- Daily quiz (quiz.js): streak card, question card, answer tiles, insight, past quizzes ---- */
 :root .quiz .lane-tag { background: var(--hb-lav); color: var(--hb-primary-2); }
@@ -616,55 +645,43 @@ html.hb-hub-open .view-switch, html.hb-on-quiz .view-switch { display: none; }  
    9981) so it stays usable there, but below the Audio hub (9983) and any sheet, which cover it naturally — switching
    reading mode makes no sense mid-hub or mid-sheet, so it simply disappears under them rather than needing its own
    open/closed checks for every one of those.
-   It sits flush against the tab bar (no gap, rounded only on top, sharing the same background/blur) rather than
-   floating as its own separate pill above it — one continuous bottom surface, split only by the tab bar's own top
-   border, not two stacked bars. */
-.view-switch { position: fixed; left: 0; right: 0; bottom: var(--hb-tab-h); z-index: 9982; display: flex; align-items: center; justify-content: center; gap: 10px; pointer-events: none; }
+   The tab bar itself is never collapsed or hidden for Cards any more (two earlier attempts at shrinking/collapsing
+   it — icon-only, then a tucked-away chevron toggle — were both tried on a real device and reverted the same day):
+   it is the exact same full-width bar in both views, with the switch floating above it, same position, same look,
+   always — "just like the list view" is the standing rule for this control now, not a target to redesign toward. */
+.view-switch { position: fixed; left: 0; right: 0; bottom: var(--hb-tab-h); z-index: 9982; display: flex; align-items: center; justify-content: center; pointer-events: none; }
 .view-switch[hidden] { display: none; }
-/* The switch itself is the same plain, compact List | Cards pill whichever view is showing — never stretched or
-   restyled for Cards specifically; a reader who likes how it looks in List should see the same thing there. */
-.vs-in { pointer-events: auto; display: inline-flex; align-items: center; gap: 2px; padding: 3px; border-radius: 999px; background: rgba(var(--hb-paper-rgb), 0.94); border: 1px solid var(--line); box-shadow: 0 4px 14px rgba(18, 19, 22, 0.1); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+/* A glassy pill (heavier blur+saturation, a soft violet-tinted ring, an inner top highlight) so it reads clearly as
+   a floating control in front of whatever is behind it, rather than looking like content it happens to be sitting
+   on top of. */
+.vs-in {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(var(--hb-paper-rgb), 0.78);
+  border: 1px solid rgba(var(--hb-primary-rgb), 0.28);
+  box-shadow: 0 10px 26px rgba(18, 19, 22, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+}
 .vs-in button { min-height: 34px; padding: 0 16px; border: 0; border-radius: 999px; background: transparent; color: var(--ink-soft); font-family: var(--hb-label); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .vs-in button[aria-pressed="true"] { background: var(--hb-primary); color: #fff; }
 .vs-in button:focus-visible { outline: 2px solid var(--hb-primary); outline-offset: 2px; }
-/* The expand/collapse button only means anything once there's a tab bar it can reveal — i.e. only in Cards, where it
-   starts tucked away (see below). In List the tab bar is never collapsed, so only the plain switch pill shows. A
-   separate round button beside the pill, not folded into it, so it reads as its own clearly tappable control. */
-.vs-expand { display: none; pointer-events: auto; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: rgba(var(--hb-paper-rgb), 0.94); color: var(--ink-soft); box-shadow: 0 4px 14px rgba(18, 19, 22, 0.1); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform 0.22s ease; }
-.vs-expand svg { width: 18px; height: 18px; }
-.vs-expand:focus-visible { outline: 2px solid var(--hb-primary); outline-offset: 2px; }
-html.hb-bar-expanded .vs-expand { transform: rotate(180deg); }
-html.hb-deck-open:not(.hb-hub-open) .vs-expand { display: inline-flex; }
-
-/* While Cards is the active, top-most view (not just behind the Audio hub), the full tab bar tucks away by default —
-   only the switch pill and the expand button show, and the reserved band above them shrinks to match: the deck
-   actually reclaims that height, not just a gap above a hidden bar. Because the tab bar (the normal opaque floor)
-   is gone in this state, the switch row becomes its own solid floor down to the screen edge instead — otherwise
-   whatever sits behind the fixed deck would show through the gap where the tab bar used to be (the exact gap bug
-   this replaced). Tapping the expand button (html.hb-bar-expanded) brings the full, normal-sized tab bar back for as
-   long as the reader wants it, and the switch goes back to floating plainly above it, same as in List. Scoped with
-   :not(.hb-hub-open) so opening the hub from inside the deck (it does not close the deck underneath) always gets
-   the hub's normal, full-width, never-collapsed bar. */
-.tab-bar { transition: left 0.22s ease, right 0.22s ease, border-radius 0.22s ease, max-height 0.22s ease, opacity 0.15s ease, padding 0.22s ease; }
-.view-switch { transition: bottom 0.22s ease, background 0.22s ease, box-shadow 0.22s ease; }
-html.hb-deck-open:not(.hb-hub-open) { --hb-tab-h: 0px; }
-html.hb-deck-open:not(.hb-hub-open).hb-bar-expanded { --hb-tab-h: calc(66px + env(safe-area-inset-bottom, 0px)); }
-html.hb-deck-open:not(.hb-hub-open) .tab-bar { left: 16px; right: 16px; border-radius: 0 0 20px 20px; box-shadow: 0 10px 26px rgba(18, 19, 22, 0.16); max-height: 0; padding-top: 0; padding-bottom: 0; opacity: 0; overflow: hidden; }
-html.hb-deck-open:not(.hb-hub-open).hb-bar-expanded .tab-bar { max-height: 100px; padding-top: 6px; padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px)); opacity: 1; }
-html.hb-deck-open:not(.hb-hub-open) .view-switch {
-  bottom: 0;
-  padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
-  background: rgba(var(--hb-paper-rgb), 0.97);
-  border-top: 1px solid var(--line);
-  box-shadow: 0 -2px 12px rgba(18, 19, 22, 0.05);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
-}
-html.hb-deck-open:not(.hb-hub-open).hb-bar-expanded .view-switch { bottom: var(--hb-tab-h); padding: 0; background: transparent; border-top: 0; box-shadow: none; }
 
 html.hb-deck-open, html.hb-deck-open body { overflow: hidden; }
 html.hb-deck-open #mob-progress, html.hb-deck-open #mob-top { display: none; }
 .hb-deck { position: fixed; top: 0; left: 0; right: 0; bottom: var(--hb-tab-h); z-index: 9981; display: flex; flex-direction: column; background: var(--bg); color: var(--ink); font-family: var(--hb-sans); }
+/* A soft curtain-light backdrop in the margins around the floating card (Stitch-generated) — the card itself is an
+   opaque .dk-face, so this only ever shows at the edges, never under any text. One screen's worth of image, and the
+   deck is never taller than the viewport, so plain cover/center needs no stretching. */
+.hb-deck { background-image: url('/brand/backgrounds/cards-light.jpg'); background-size: cover; background-position: center; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .hb-deck { background-image: url('/brand/backgrounds/cards-dark.jpg'); }
+}
+:root[data-theme="dark"] .hb-deck { background-image: url('/brand/backgrounds/cards-dark.jpg'); }
 .hb-deck { visibility: visible; }
 /* The deck's own reserved space must track the SAME class that shrinks the bar stack above it (html.hb-deck-open),
    not a separately-toggled html.hb-switch-on — two different classes supposedly agreeing on one number is exactly how

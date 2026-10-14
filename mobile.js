@@ -200,29 +200,15 @@
         });
         box.appendChild(label);
         box.appendChild(ol);
-        // Long run-on digest sentence (older/legacy lane titles): keep it, but behind a toggle.
-        if (h2.textContent.length > 110) {
-          head.classList.add('is-digest');
-          var t = document.createElement('button');
-          t.type = 'button';
-          t.className = 'digest-toggle';
-          t.textContent = 'Read the day’s digest \u2192';
-          t.setAttribute('aria-expanded', 'false');
-          t.addEventListener('click', function () {
-            var open = head.classList.toggle('digest-open');
-            t.setAttribute('aria-expanded', String(open));
-            t.textContent = open ? 'Hide the digest' : 'Read the day’s digest \u2192';
-          });
-          box.appendChild(t);
-        }
         // The takeaway (if any) comes first, reading like a summary of the section; the highlights are the pointers
-        // underneath it, before each story runs one after another.
+        // underneath it, before each story runs one after another. The lane's own <h2> (a long run-on sentence meant
+        // for RSS/search) is simply hidden by CSS whenever a .lane-tag is present — see reader.css — rather than
+        // shown behind a toggle: nobody asked to read it, Takeaway + highlights already say what matters.
         (head.querySelector('.lane-takeaway') || head.querySelector('.lane-more') || h2).insertAdjacentElement('afterend', box);
         var tag = head.querySelector('.lane-tag');
         if (tag) lane.setAttribute('aria-label', tag.textContent.trim());
       }
       if (box) box.hidden = !reader();
-      if (!reader()) head.classList.remove('digest-open');
     });
   }
 
@@ -720,19 +706,9 @@
       vs.setAttribute('role', 'group');
       vs.setAttribute('aria-label', 'Reading view');
       // The switch itself stays the plain, compact List | Cards pill in both views — not stretched or restyled in
-      // Cards. Collapsed by default there (see the html.hb-deck-open... rules in app.css): this pill plus the
-      // separate expand button beside it, the full tab bar tucked away until asked for.
-      var expand = mk('button', 'vs-expand', '');
-      expand.type = 'button';
-      expand.setAttribute('aria-label', 'Show the Audio, Challenge and Archive tabs');
-      expand.setAttribute('aria-expanded', 'false');
-      expand.innerHTML = '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
-      expand.addEventListener('click', function () {
-        var on = document.documentElement.classList.toggle('hb-bar-expanded');
-        expand.setAttribute('aria-expanded', String(on));
-        expand.setAttribute('aria-label', on ? 'Hide the Audio, Challenge and Archive tabs' : 'Show the Audio, Challenge and Archive tabs');
-        requestAnimationFrame(measureSwitchH);   // the switch becomes a plain floating pill again once expanded: its own height changes, so the deck's reserved space must be re-measured, not just on first reveal
-      });
+      // Cards, and the tab bar underneath it is never collapsed or hidden either: two earlier attempts at shrinking
+      // it away for Cards were both tried on a real device and reverted the same day, so this is the plain, boring
+      // version on purpose now, not a stepping stone to another redesign.
       var inner = mk('div', 'vs-in');
       var list = mk('button', '', 'List'), cards = mk('button', '', 'Cards');
       list.type = cards.type = 'button';
@@ -740,7 +716,6 @@
       cards.addEventListener('click', function () { openCards(); });
       inner.appendChild(list);
       inner.appendChild(cards);
-      vs.appendChild(expand);
       vs.appendChild(inner);
       document.body.appendChild(vs);
       document.addEventListener('hb:deck', syncViewSwitch);
@@ -763,12 +738,6 @@
     var on = deckOpen(), btns = vs.querySelectorAll('.vs-in > button');
     btns[0].setAttribute('aria-pressed', String(!on));
     btns[1].setAttribute('aria-pressed', String(on));
-    if (!on) {
-      // Back to List: start collapsed again next time Cards opens, rather than remembering an expanded bar.
-      document.documentElement.classList.remove('hb-bar-expanded');
-      var expand = vs.querySelector('.vs-expand');
-      if (expand) { expand.setAttribute('aria-expanded', 'false'); expand.setAttribute('aria-label', 'Show the Audio, Challenge and Archive tabs'); }
-    }
   }
 
   // Customising is offered in passing, not at the door. The app counts the days it is opened; on the second day one small
@@ -1014,18 +983,35 @@
     if (name === 'audio') { if (L && L.openHub) L.openHub(); else toast('Audio is loading…'); return; }
     if (L && L.closeHub) L.closeHub();
     if (name === 'today') {
+      document.documentElement.classList.remove('hb-quiz-page');
       if (deckOpen()) window.HBCards.goTo(0, true);
       else if (cardsOk() && getView() === 'cards') openCards();                    // back to the cards after a trip to the quiz
       else window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+    // Challenge gets the whole screen: everything else on the page is hidden (html.hb-quiz-page, in app.css) rather
+    // than opening a separate overlay — quiz.js already scrolls and measures (bringIntoView) against the normal
+    // page, including a couple of window.scrollBy calls that only make sense against the real page scroll, so
+    // hiding its siblings keeps all of that working completely unchanged instead of needing quiz.js to learn about
+    // a new scroll container.
     else if (name === 'quiz') {
-      var q = document.getElementById('quiz');
-      if (deckOpen()) window.HBCards.close({ keep: true, to: q });                      // one instant change of screen, no sweep through the feed
-      else if (q) q.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      if (deckOpen()) window.HBCards.close({ keep: true });     // which card it lands on doesn't matter: about to hide everything but the quiz anyway
+      document.documentElement.classList.add('hb-quiz-page');
+      window.scrollTo({ top: 0, behavior: 'auto' });
     }
     setTimeout(syncTabs, 60);
   }
+  // A small way back in from inside the dedicated quiz page, in case the reader doesn't think to tap Today again.
+  function quizBack() {
+    var q = document.getElementById('quiz');
+    if (!q || q.querySelector('.quiz-page-back')) return;
+    var b = mk('button', 'quiz-page-back', '');
+    b.type = 'button';
+    b.innerHTML = '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span>Back to The Hour Brief</span>';
+    b.addEventListener('click', function () { tabGo('today'); });
+    q.insertBefore(b, q.firstChild);
+  }
   function tabBar() {
+    quizBack();
     var bar = document.querySelector('.tab-bar');
     if (!bar) {
       bar = mk('nav', 'tab-bar');
