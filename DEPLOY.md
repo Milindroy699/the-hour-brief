@@ -177,6 +177,15 @@ measures `.vs-in`'s actual rendered height after every time it becomes visible a
 real number (`document.documentElement.style.setProperty(...)`), so the reserved space can no longer fall short of
 reality, on this device or any other.
 
+**Same day, later still:** the List | Cards switch now also hides while on the Audio or Challenge tab, not just Today —
+`syncTabs()` in `mobile.js` already computes which tab is current (`cur`) from scroll position, so it just toggles a
+new `html.hb-on-quiz` class alongside that, read by the same CSS rule that already hides the switch for the Audio hub.
+The quiz streak display (`.qz-st-top`, `.qz-week`, `.qz-drill`) is noticeably more compact — about a quarter less
+height across the pill row, the day-of-week strip and the drill tile — so it takes less of the screen from the
+actual questions, while staying legible. A fuller "dedicated Challenge page" (its own full-screen overlay, like the
+Audio hub, so the quiz gets even more room) is scoped but not built yet — flagged to the user as a larger, separate
+piece of work rather than rushed in after an already-long, tooling-unstable session.
+
 **Also that day:** the "N / total" readout in the footer (`.dk-count`) is hidden — felt like clutter once the progress
 bar alone already says enough; it stays in the DOM (cards.js keeps it current) since several tests read the current
 position from it. The switch pill gained a border and a stronger shadow (`.vs-in`) for better contrast against the

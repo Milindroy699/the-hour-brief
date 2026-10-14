@@ -430,7 +430,7 @@ html.hb-switch-on body.hb-listening #mob-toast { bottom: calc(var(--hb-tab-h) + 
 /* ---- Audio hub: the full-screen player (opened from the Audio tab or the mini player) ---- */
 html.hb-hub-open, html.hb-hub-open body { overflow: hidden; }
 html.hb-hub-open .hb-player { display: none; }
-html.hb-hub-open .view-switch { display: none; }   /* not a reading-mode decision while browsing Audio */
+html.hb-hub-open .view-switch, html.hb-on-quiz .view-switch { display: none; }   /* not a reading-mode decision while on Audio or Challenge */
 .hb-hub { position: fixed; top: 0; left: 0; right: 0; bottom: var(--hb-tab-h); z-index: 9983; display: flex; flex-direction: column; background: var(--bg); color: var(--ink); font-family: var(--hb-sans); }
 .hb-hub[hidden] { display: none; }
 .hub-top { flex: none; display: flex; align-items: center; gap: 12px; padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 10px; background: var(--paper); border-bottom: 1px solid var(--line); box-shadow: 0 2px 8px rgba(18, 19, 22, 0.04); }
@@ -493,23 +493,25 @@ html.hb-hub-open .view-switch { display: none; }   /* not a reading-mode decisio
 :root .quiz .lane-count { display: none; }
 
 :root .qz-streak { display: block; margin: 0 0 22px; padding: 16px; border-radius: 26px; background: var(--hb-lav); border: 1px solid rgba(var(--hb-primary-rgb), 0.1); }
-.qz-st-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
-.qz-st-pill { display: inline-flex; align-items: center; padding: 8px 14px; border-radius: 999px; background: var(--paper); color: var(--ink-soft); font-family: var(--hb-label); font-size: 0.76rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; box-shadow: 0 0 0 1px var(--line); }
+/* Compacted (2026-10-14): good to have up front, just not at the expense of the actual questions — roughly a quarter
+   less height across the pill row, the day strip and the drill tile, so there's more screen left for the quiz itself. */
+.qz-st-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.qz-st-pill { display: inline-flex; align-items: center; padding: 5px 11px; border-radius: 999px; background: var(--paper); color: var(--ink-soft); font-family: var(--hb-label); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; box-shadow: 0 0 0 1px var(--line); }
 .qz-st-pill.on { background: var(--hb-mint); color: var(--hb-mint-ink); box-shadow: none; }
-.qz-st-best { font-size: 0.84rem; font-weight: 500; color: var(--ink-soft); }
-.qz-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 14px; }
-.qz-day { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.qz-dl { font-family: var(--hb-label); font-size: 0.72rem; font-weight: 700; color: var(--ink-faint); }
-.qz-dd { display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 50%; background: var(--paper); box-shadow: 0 0 0 1px var(--line); color: var(--ink-faint); font-family: var(--hb-label); font-size: 0.86rem; font-weight: 600; }
-.qz-day.done .qz-dd { background: var(--hb-green); box-shadow: none; color: #fff; font-size: 1rem; font-weight: 700; }
-.qz-day.today .qz-dd { background: var(--hb-primary); box-shadow: 0 0 0 4px rgba(var(--hb-primary-rgb), 0.22); color: #fff; font-weight: 700; }
-.qz-day.today.done .qz-dd { background: var(--hb-green); box-shadow: 0 0 0 4px rgba(var(--hb-green-rgb), 0.22); }
+.qz-st-best { font-size: 0.76rem; font-weight: 500; color: var(--ink-soft); }
+.qz-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-bottom: 8px; }
+.qz-day { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.qz-dl { font-family: var(--hb-label); font-size: 0.64rem; font-weight: 700; color: var(--ink-faint); }
+.qz-dd { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: var(--paper); box-shadow: 0 0 0 1px var(--line); color: var(--ink-faint); font-family: var(--hb-label); font-size: 0.74rem; font-weight: 600; }
+.qz-day.done .qz-dd { background: var(--hb-green); box-shadow: none; color: #fff; font-size: 0.86rem; font-weight: 700; }
+.qz-day.today .qz-dd { background: var(--hb-primary); box-shadow: 0 0 0 3px rgba(var(--hb-primary-rgb), 0.22); color: #fff; font-weight: 700; }
+.qz-day.today.done .qz-dd { background: var(--hb-green); box-shadow: 0 0 0 3px rgba(var(--hb-green-rgb), 0.22); }
 .qz-day.today .qz-dl { color: var(--hb-primary-2); }
 .qz-day.later .qz-dd { background: transparent; }
-.qz-drill { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-radius: 18px; background: var(--paper); box-shadow: 0 0 0 1px var(--line); }
-.qz-drill b { display: block; font-size: 1rem; font-weight: 650; }
-.qz-drill span { font-size: 0.84rem; color: var(--ink-soft); }
-.qz-drill .qz-drill-score { flex: none; padding: 8px 14px; border-radius: 999px; background: var(--hb-stone); color: var(--ink); font-family: var(--hb-label); font-size: 0.8rem; font-weight: 700; }
+.qz-drill { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; border-radius: 16px; background: var(--paper); box-shadow: 0 0 0 1px var(--line); }
+.qz-drill b { display: block; font-size: 0.9rem; font-weight: 650; }
+.qz-drill span { font-size: 0.78rem; color: var(--ink-soft); }
+.qz-drill .qz-drill-score { flex: none; padding: 6px 12px; border-radius: 999px; background: var(--hb-stone); color: var(--ink); font-family: var(--hb-label); font-size: 0.76rem; font-weight: 700; }
 
 :root .quiz-card { max-width: none; padding: 20px 18px; border-radius: 26px; border: 1px solid var(--line); background: var(--paper); box-shadow: var(--shadow); }
 :root .quiz-progress { align-items: flex-start; margin-bottom: 16px; font-size: inherit; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--ink-soft); }

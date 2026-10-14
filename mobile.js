@@ -1042,6 +1042,7 @@
     var L = window.HBListen, hub = !!(L && L.hubOpen && L.hubOpen());
     var r = qOk ? q.getBoundingClientRect() : null;
     var cur = hub ? 'audio' : deckOpen() ? 'today' : (r && r.top < window.innerHeight * 0.5 && r.bottom > 90) ? 'quiz' : 'today';
+    document.documentElement.classList.toggle('hb-on-quiz', cur === 'quiz');   // the List | Cards switch is a Today-only decision, hide it on Audio and Challenge
     bar.querySelectorAll('.tab').forEach(function (t) {
       var n = t.getAttribute('data-tab');
       if (n === cur) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
