@@ -788,7 +788,6 @@
           brand.appendChild(h1);
         }
         brand.classList.add('ab-brand');
-        h1.insertAdjacentElement('afterend', mk('p', 'ab-screen', screenName()));
       }
       var logo = mk('img', 'ab-logo');
       logo.src = LOGO_SRC;
@@ -825,7 +824,7 @@
       if (tg) band.appendChild(mk('p', 'masthead-tagline', tg.textContent.trim()));
     }
     var on = reader();
-    [inner.querySelector('.ab-logo'), inner.querySelector('.ab-screen'), bar].forEach(function (el) { if (el) el.hidden = !on; });
+    [inner.querySelector('.ab-logo'), bar].forEach(function (el) { if (el) el.hidden = !on; });
     var mtg = document.querySelector('.masthead-tagline');
     if (mtg) mtg.hidden = !on;
   }
@@ -933,7 +932,6 @@
     var word = mk('div', 'wordmark');
     word.innerHTML = 'The Hour <span>Brief</span>';
     brand.appendChild(word);
-    brand.appendChild(mk('p', 'ab-screen', 'Challenge'));
     // Same header everywhere — Today, Audio, Challenge, Archive — rather than each screen showing its own
     // stripped-down version (this one used to just close itself; Audio's own close went the same way).
     var acts = mk('div', 'ab-actions');
@@ -1056,8 +1054,6 @@
         if (t.getAttribute('data-tab') === 'archive' && here === 'Archive') t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
         if (t.getAttribute('data-tab') === 'quiz') t.hidden = false;
       });
-      var l2 = document.querySelector('.ab-screen');
-      if (l2) l2.textContent = here;
       return;
     }
     var q = document.getElementById('quiz'), qOk = !!(q && !q.hidden && !q.hasAttribute('data-pref-off'));
@@ -1079,10 +1075,6 @@
         btns[1].setAttribute('aria-pressed', String(on));
       }
     }
-    var lb = document.querySelector('.ab-screen');
-    // "Feed" added nothing a reader didn't already know from having opened the app, and the wordmark reads
-    // stronger with the line under it gone entirely on Today — Audio and Challenge keep their label, still useful there.
-    if (lb) { lb.hidden = cur === 'today'; if (cur !== 'today') lb.textContent = cur === 'audio' ? 'Audio' : 'Quiz'; }
   }
   // Section chips: an "All" chip, and the one for the section in view is filled (replaces the page's own three-section spy)
   function syncChips() {

@@ -11,6 +11,16 @@
  * the page's inline styles by order; only the quiz needs the ":root" prefix (quiz.css loads later than this file).
  */
 
+/* Archive and the other non-edition pages (About, Privacy, Contact) are plain server-rendered pages, not routes in a
+   single-page app — the tab bar's links to and from them are real navigations, not a JS transition cards.js or the
+   hub overlays can fade. The browser's own cross-document view transition does the same job with no JS at all: a
+   quick crossfade between the old and new page instead of the hard white-flash cut a plain navigation is otherwise.
+   Unsupported browsers (older Android WebView, pre-18 iOS) just ignore this at-rule and navigate as before — nothing
+   to feature-detect. */
+@view-transition {
+  navigation: auto;
+}
+
 /* ---- Fonts (self-hosted, Latin subset; OFL licences sit next to the files) ---- */
 @font-face {
   font-family: "Inter";
@@ -179,7 +189,6 @@ body { background-color: var(--bg); background-image: url('/brand/backgrounds/li
   color: var(--ink);
 }
 .wordmark span { color: var(--hb-primary); }
-.ab-screen { margin: 2px 0 0; font-size: 0.8rem; font-weight: 500; line-height: 1.1; color: var(--ink-faint); }
 .ab-actions { display: flex; align-items: center; gap: 2px; flex: none; }
 .ab-btn {
   position: relative;
@@ -451,7 +460,7 @@ body.hb-listening #mob-toast { bottom: calc(var(--hb-tab-h) + 150px); }
 .rd-toast-hide { display: none; }
 
 /* The apps' extra bits must obey [hidden] even where a rule above sets display */
-.ab-logo[hidden], .ab-screen[hidden], .ab-actions[hidden], .lane-count[hidden], .nav a[hidden], .tab[hidden] { display: none !important; }
+.ab-logo[hidden], .ab-actions[hidden], .lane-count[hidden], .nav a[hidden], .tab[hidden] { display: none !important; }
 
 /* ---- Audio hub: the full-screen player (opened from the Audio tab or the mini player) ---- */
 html.hb-hub-open, html.hb-hub-open body { overflow: hidden; }

@@ -732,7 +732,6 @@
     var word = mk('div', 'wordmark');
     word.innerHTML = 'The Hour <span>Brief</span>';
     brand.appendChild(word);
-    brand.appendChild(mk('p', 'ab-screen', 'Audio'));
     // Same header everywhere — Today, Audio, Challenge, Archive — rather than each screen showing its own
     // stripped-down version. mobile.js owns text size/saved/menu (and their icons); this file just calls through.
     var HC = window.HBChrome;
