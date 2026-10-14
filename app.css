@@ -537,7 +537,11 @@ html.hb-hub-open .hb-player { display: none; }
    which was the whole complaint). #quiz is moved inside it (a real DOM reparent, not a copy) and moved back out on
    close. No extra positioning/background rules needed here — .hb-hub already provides all of that. ---- */
 html.hb-quiz-page, html.hb-quiz-page body { overflow: hidden; }
-html.hb-quiz-page .hb-player { display: none; }
+/* Audio playing in the background while the reader is on Challenge still needs a visible, working control — the mini
+   player used to be hidden here (copied from the Audio hub's own rule, where it really is redundant against the
+   full player), which silently took away the only way to see or pause what was still playing. Reserve room for it
+   in the quiz page's own scroll area instead of letting it float over the last question on screen. */
+html.hb-quiz-page body.hb-listening .hub-scroll { padding-bottom: 130px; }
 
 /* ---- Daily quiz (quiz.js): streak card, question card, answer tiles, insight, past quizzes ---- */
 :root .quiz .lane-tag { background: var(--hb-lav); color: var(--hb-primary-2); }
