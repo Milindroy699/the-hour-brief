@@ -762,10 +762,14 @@
     var st = tipState();
     if (!st.done) { st.done = true; tipSave(st); }
   }
+  // Reading in Cards should never be interrupted by this — no floating card eating into the deck, no lost space.
+  // Cards is the default view, so most people would otherwise see this on literally their first card; it now simply
+  // waits and offers it in List instead, the next time the reader happens to be there (never "used up" silently
+  // while hidden behind the deck — see the early return in maybeSuggest() below).
   function tipCard(which, icon, title, body, goText, go) {
-    var deck = deckOpen() ? document.querySelector('.hb-deck') : null;
+    if (deckOpen()) return false;
     var first = document.querySelector('section.lane');
-    if ((!deck && !first) || document.querySelector('.hb-tip')) return false;
+    if (!first || document.querySelector('.hb-tip')) return false;
     var card = mk('aside', 'hb-tip');
     card.setAttribute('data-tip', which);
     card.setAttribute('aria-label', title);
@@ -786,28 +790,7 @@
     card.appendChild(ico);
     card.appendChild(text);
     card.appendChild(acts);
-    if (deck) {
-      // Floats over the top of the card instead of squeezing it — a brief, dismissible nudge, not a fixture. It fades itself
-      // out on its own (timer, or the moment the reader actually starts swiping/scrolling) so it never sits between the
-      // reader and the story; a real "Not now" is the only thing that marks it done for good.
-      card.classList.add('hb-tip-float');
-      deck.insertBefore(card, deck.querySelector('.dk-track'));   // the deck has no header any more to measure, so the top offset is a plain CSS default (see .hb-tip-float)
-      var floatGone = false;
-      var fadeFloat = function () {
-        if (floatGone || !card.isConnected) return;
-        floatGone = true;
-        card.classList.add('dk-tip-out');
-        setTimeout(function () { if (card.isConnected) card.remove(); }, 320);
-      };
-      var floatT = setTimeout(fadeFloat, window.HB_TIP_FADE_MS || 6000);
-      var track = deck.querySelector('.dk-track');
-      var onFirstTouch = function () { clearTimeout(floatT); fadeFloat(); };
-      if (track) track.addEventListener('touchstart', onFirstTouch, { passive: true, once: true });
-      yes.addEventListener('click', function () { clearTimeout(floatT); });
-      no.addEventListener('click', function () { clearTimeout(floatT); });
-    } else {
-      first.parentNode.insertBefore(card, first);
-    }
+    first.parentNode.insertBefore(card, first);
     return true;
   }
   function maybeSuggest() {
@@ -845,7 +828,7 @@
     mail: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>',
     bell: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>',
     today: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5h12.5v13H6.5a2.5 2.5 0 0 1-2.5-2.5V5.5z"/><path d="M16.5 9H20v7a2.5 2.5 0 0 1-2.5 2.5"/><path d="M7.5 9h6M7.5 12h6M7.5 15h3.5"/></svg>',
-    audio: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 10v4M8 6.5v11M12 3.5v17M16 7.5v9M20 10v4"/></svg>',
+    audio: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><path d="M4 15h3v5H5a1 1 0 0 1-1-1v-4z"/><path d="M20 15h-3v5h2a1 1 0 0 0 1-1v-4z"/></svg>',
     quiz: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/></svg>',
     archive: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.8c2.4-1 5.6-.8 9 .9 3.4-1.7 6.6-1.9 9-.9V19c-2.4-1-5.6-.8-9 .9-3.4-1.7-6.6-1.9-9-.9V5.8z"/><path d="M12 6.7v13.2"/></svg>',
   };
@@ -980,38 +963,84 @@
   var TAB_HREF = { today: '/', audio: '/?audio=1', quiz: '/#quiz', archive: '/archive/' };
   function tabGo(name) {
     var L = window.HBListen;
-    if (name === 'audio') { if (L && L.openHub) L.openHub(); else toast('Audio is loading…'); return; }
+    if (name === 'audio') { closeQuizPage(); if (L && L.openHub) L.openHub(); else toast('Audio is loading…'); return; }
     if (L && L.closeHub) L.closeHub();
     if (name === 'today') {
-      document.documentElement.classList.remove('hb-quiz-page');
+      closeQuizPage();
       if (deckOpen()) window.HBCards.goTo(0, true);
       else if (cardsOk() && getView() === 'cards') openCards();                    // back to the cards after a trip to the quiz
       else window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-    // Challenge gets the whole screen: everything else on the page is hidden (html.hb-quiz-page, in app.css) rather
-    // than opening a separate overlay — quiz.js already scrolls and measures (bringIntoView) against the normal
-    // page, including a couple of window.scrollBy calls that only make sense against the real page scroll, so
-    // hiding its siblings keeps all of that working completely unchanged instead of needing quiz.js to learn about
-    // a new scroll container.
     else if (name === 'quiz') {
-      if (deckOpen()) window.HBCards.close({ keep: true });     // which card it lands on doesn't matter: about to hide everything but the quiz anyway
-      document.documentElement.classList.add('hb-quiz-page');
-      window.scrollTo({ top: 0, behavior: 'auto' });
+      if (deckOpen()) window.HBCards.close({ keep: true });
+      openQuizPage();
     }
     setTimeout(syncTabs, 60);
   }
-  // A small way back in from inside the dedicated quiz page, in case the reader doesn't think to tap Today again.
-  function quizBack() {
+
+  // The dedicated quiz page: a real fixed overlay, built the same way the Audio hub is (same .hub-top/.hub-scroll
+  // markup and classes, so it reads as the same kind of "screen" the reader already knows from Audio, not a filtered
+  // view of the list with things hidden — an earlier version did exactly that (just toggling display:none on the
+  // list's other sections) and it never stopped feeling like "the list page, scrolled", which was the whole
+  // complaint. #quiz is moved into it (a real DOM reparent — quiz.js's own state, event listeners, everything, just
+  // comes along) and moved back out to its original spot on close, marked by quizAnchor.
+  var quizOv = null, quizScroll = null, quizAnchor = null, quizOvShown = false, quizPrevFocus = null;
+  function buildQuizPage() {
+    if (quizOv) return;
     var q = document.getElementById('quiz');
-    if (!q || q.querySelector('.quiz-page-back')) return;
-    var b = mk('button', 'quiz-page-back', '');
-    b.type = 'button';
-    b.innerHTML = '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span>Back to The Hour Brief</span>';
-    b.addEventListener('click', function () { tabGo('today'); });
-    q.insertBefore(b, q.firstChild);
+    if (!q) return;
+    quizAnchor = document.createComment('quiz-anchor');
+    q.parentNode.insertBefore(quizAnchor, q);
+    quizOv = mk('section', 'hb-hub hb-quizpage');
+    quizOv.hidden = true;
+    quizOv.setAttribute('role', 'region');
+    quizOv.setAttribute('aria-label', 'Challenge');
+    var top = mk('header', 'hub-top');
+    var logo = mk('img', 'ab-logo');
+    logo.src = '/brand/logo-128.png';
+    logo.alt = '';
+    logo.width = logo.height = 34;
+    var brand = mk('div', 'ab-brand');
+    var word = mk('div', 'hub-word');
+    word.innerHTML = 'THE HOUR <span>BRIEF</span>';
+    brand.appendChild(word);
+    brand.appendChild(mk('p', 'ab-screen', 'Challenge'));
+    var close = mk('button', 'ab-btn hub-close');
+    close.type = 'button';
+    close.setAttribute('aria-label', 'Back to The Hour Brief');
+    close.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12 19 6.4 17.6 5 12 10.6z"/></svg>';
+    close.addEventListener('click', function () { tabGo('today'); });
+    top.appendChild(logo);
+    top.appendChild(brand);
+    top.appendChild(close);
+    quizScroll = mk('div', 'hub-scroll');
+    quizOv.appendChild(top);
+    quizOv.appendChild(quizScroll);
+    document.body.appendChild(quizOv);
   }
+  function openQuizPage() {
+    buildQuizPage();
+    if (!quizOv || quizOvShown) return;
+    quizPrevFocus = document.activeElement;
+    quizScroll.appendChild(document.getElementById('quiz'));
+    quizOv.hidden = false;
+    quizOvShown = true;
+    document.documentElement.classList.add('hb-quiz-page');
+    quizScroll.scrollTop = 0;
+    document.dispatchEvent(new CustomEvent('hb:hub'));
+  }
+  function closeQuizPage() {
+    if (!quizOv || !quizOvShown) return;
+    if (quizAnchor && quizAnchor.parentNode) quizAnchor.parentNode.insertBefore(document.getElementById('quiz'), quizAnchor);
+    quizOv.hidden = true;
+    quizOvShown = false;
+    document.documentElement.classList.remove('hb-quiz-page');
+    document.dispatchEvent(new CustomEvent('hb:hub'));
+    if (quizPrevFocus && quizPrevFocus.focus && document.contains(quizPrevFocus)) { try { quizPrevFocus.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }
+    quizPrevFocus = null;
+  }
+  window.HBQuizPage = { close: closeQuizPage, isOpen: function () { return quizOvShown; } };
   function tabBar() {
-    quizBack();
     var bar = document.querySelector('.tab-bar');
     if (!bar) {
       bar = mk('nav', 'tab-bar');
@@ -1049,8 +1078,9 @@
     }
     var q = document.getElementById('quiz'), qOk = !!(q && !q.hidden && !q.hasAttribute('data-pref-off'));
     var L = window.HBListen, hub = !!(L && L.hubOpen && L.hubOpen());
-    var r = qOk ? q.getBoundingClientRect() : null;
-    var cur = hub ? 'audio' : deckOpen() ? 'today' : (r && r.top < window.innerHeight * 0.5 && r.bottom > 90) ? 'quiz' : 'today';
+    var quizPage = !!(window.HBQuizPage && window.HBQuizPage.isOpen && window.HBQuizPage.isOpen());
+    var r = qOk && !quizPage ? q.getBoundingClientRect() : null;    // scrolled to the inline quiz chip's target in the normal list, not the dedicated page
+    var cur = hub ? 'audio' : quizPage ? 'quiz' : deckOpen() ? 'today' : (r && r.top < window.innerHeight * 0.5 && r.bottom > 90) ? 'quiz' : 'today';
     document.documentElement.classList.toggle('hb-on-quiz', cur === 'quiz');   // the List | Cards switch is a Today-only decision, hide it on Audio and Challenge
     bar.querySelectorAll('.tab').forEach(function (t) {
       var n = t.getAttribute('data-tab');
@@ -1058,7 +1088,15 @@
       if (n === 'quiz') t.hidden = !qOk;
     });
     var lb = document.querySelector('.ab-screen');
-    if (lb) lb.textContent = cur === 'audio' ? 'Audio' : cur === 'quiz' ? 'Quiz' : 'Feed';
+    if (lb) lb.textContent = cur === 'audio' ? 'Audio' : cur === 'quiz' ? 'Quiz' : tagline();
+  }
+  // The app bar's subtitle under the wordmark: the tagline on Today (brought back — "the essence of the platform",
+  // and a plain "Feed" label said nothing a reader didn't already know from just having opened the app), the
+  // screen's own name everywhere else (Audio/Challenge), where knowing where you are is actually useful.
+  var taglineCache = null;
+  function tagline() {
+    if (taglineCache === null) { var t = document.querySelector('.tagline'); taglineCache = t ? t.textContent.trim() : 'Feed'; }
+    return taglineCache;
   }
 
   // Section chips: an "All" chip, and the one for the section in view is filled (replaces the page's own three-section spy)
@@ -1200,7 +1238,14 @@
   function start() {
     if (cardsOk() && getView() === 'cards' && deckTarget()) pendingOn();
     apply(); openFromHash(); loadListen();
-    restoreView(function () { maybeSuggest(); openAudioFromUrl(); });
+    restoreView(function () {
+      maybeSuggest();
+      // Cards is the default view, so the very first call above almost always finds the deck open and defers (see
+      // tipCard()) — give it another look the moment the reader actually reaches List, in the same visit, rather
+      // than only on a later day that happens to start there.
+      document.addEventListener('hb:deck', function () { if (!deckOpen()) maybeSuggest(); });
+      openAudioFromUrl();
+    });
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', start);

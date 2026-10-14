@@ -364,6 +364,59 @@ text and not clearly better than what shipped for Cards/Audio either; left in th
 (`~/Downloads/stitch_hour_brief 2/`) in case they're wanted for something more decorative later (a splash screen, a
 store listing) rather than as an in-app background.
 
+**2026-10-14, later the same day: the dedicated quiz page rebuilt as a real overlay, plus four smaller fixes from
+real-device feedback.**
+
+- **The dedicated quiz page is now a true fixed overlay, not a filtered view of the list.** The version shipped
+  earlier the same day hid every other `.page`-level section with CSS, keeping `#quiz` in its normal place in the
+  document — cheap to build, but it never stopped feeling like "the list page, scrolled" (the reader's own words),
+  since the footer and masthead were still technically right there if you scrolled or looked. Rebuilt to match the
+  Audio hub's own pattern exactly: a new `.hb-hub.hb-quizpage` element (literally reusing `.hb-hub`'s class, so all
+  of its fixed positioning, background and dark-mode styling come for free), with the same `.hub-top`/`.hub-scroll`
+  markup as the Audio hub — same header, same close button, the same "this is its own screen" framing the reader
+  already knows. `#quiz` is a real DOM reparent into it (`quizScroll.appendChild(document.getElementById('quiz'))`)
+  and moves back to its original spot (marked by a comment node, `quizAnchor`) on close — quiz.js's own state, event
+  listeners, everything just comes along for the move, untouched.
+  **One real fix this required in quiz.js:** its `bringIntoView` helper's second-pass "nudge" (after
+  `scrollIntoView`'s own imprecise positioning) used `window.scrollBy()` unconditionally, which only makes sense
+  against the real page scroll — inside the new fixed, internally-scrolling overlay, the actual motion happens in
+  that container, not the window. A new `scrollRoot()` helper finds the nearest scrollable ancestor and nudges that
+  instead, falling back to `window.scrollBy` (unchanged) when there isn't one, so the normal in-page case is
+  completely unaffected.
+  The Audio hub and the quiz page are both full-screen overlays now, so opening one explicitly closes the other
+  (`tabGo('audio')` calls `closeQuizPage()`, `tabGo('quiz')`/every non-audio tab already called `closeHub()`) —
+  deliberately NOT stacking, unlike the deck+hub relationship elsewhere, since two overlays at once would just be
+  confusing. Answering a question and following "From '…' →" now closes the quiz page first (`quiz.js`'s
+  `jumpToStory`, via a small exposed `window.HBQuizPage.close()`), since the story it jumps to lives in the list
+  behind the now-closed overlay.
+- **A real layout bug fixed**: `.dk-cta` ("Back to the list" on the closing card) had no top margin of its own, so
+  directly following a `.dk-tile` (which only has a top margin, no bottom one) it sat flush against it — looked like
+  an overlap in a screenshot. Fixed with `.dk-tile + .dk-cta { margin-top: 16px; }`.
+- **The Audio tab's icon changed** from a 5-bar equalizer/soundwave glyph to the same headphone icon used everywhere
+  else in the app for audio (the Listen tile, the floating player button) — the mismatch is what a screenshot's
+  "crossbar icon" complaint turned out to mean.
+- **The sections-onboarding nudge ("Make it yours") no longer interrupts reading in Cards, at all.** It used to
+  float over the top of the deck's current card (added earlier this project); told directly "I don't think that's
+  needed... the card reading experience [should be] seamless... without losing any space or interruptions" — the
+  whole floating-in-the-deck mechanism (`hb-tip-float`, the auto-fade timer, the swipe-to-dismiss listener) is
+  deleted outright, not just hidden. `tipCard()` now simply returns `false` whenever `deckOpen()`, and — since Cards
+  is the default view — a new `hb:deck` listener re-tries `maybeSuggest()` the moment the reader actually closes the
+  deck into List, in the same visit, rather than only on some later day that happens to start in List. Critically,
+  `tipCard()` only marks the day-tracking flag (`secOn`) on a render that actually happened, so it's never "used up"
+  silently while hidden behind the deck — a reader who stays in Cards all day just never gets asked that day, and
+  the chance carries over.
+- **The app bar's Today subtitle is the tagline again** ("Sixty minutes. Three lanes. Everything that actually
+  mattered today."), not the word "Feed" — removed in the original mobile redesign for space, brought back on
+  request ("it was the essence of the platform"). `.ab-screen` on the Today screen now shows `.tagline`'s own text
+  (read once and cached, `tagline()` in mobile.js) instead of a literal `'Feed'`; the Audio and Challenge screens
+  still get their own functional label, where knowing where you are actually matters. It runs to 2–3 lines at phone
+  width, so `.masthead-inner` switched from `align-items: center` to `flex-start` (centring the logo and the action
+  buttons against a now-much-taller text block looked off) with a 1px nudge on the logo/actions to line up with the
+  wordmark's own cap-height.
+
+`cards.mjs` is 163 checks (net down from 166 — the deck-floating-hint tests it replaced were more numerous than
+what replaced them); `premium.mjs` is 82. `prefs.mjs`/`listen.mjs` unaffected: 55/55 and 48/48.
+
 ## Reload, and the next edition, without friction (`capacitor-bridge.js`, native apps only)
 
 Every page sets `history.scrollRestoration = 'manual'` in an inline `<head>` script (the very first thing in `<head>`, before

@@ -63,8 +63,11 @@ const overflow = () => c.ev(`document.documentElement.scrollWidth > innerWidth`)
 // ---------- 1. app bar, fonts, tab bar (phone, light) ----------
 await open();
 let t = await J(`(() => { const logo = document.querySelector('.ab-logo'); const bs = [...document.querySelectorAll('.ab-actions .ab-btn')].map((b) => { const r = b.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; });
-  return { logo: logo && logo.naturalWidth > 0, word: document.querySelector('.wordmark').textContent, screen: document.querySelector('.ab-screen').textContent, bs, bg: getComputedStyle(document.querySelector('.masthead-band')).backgroundColor, edition: !!document.querySelector('.masthead-inner > .edition') && getComputedStyle(document.querySelector('.masthead-inner > .edition')).display }; })()`);
-check('app bar: the new logo, wordmark "The Hour Brief", screen name "Feed", and three 44px buttons (text size, saved, menu)', t.logo && /the hour brief/i.test(t.word) && t.screen === 'Feed' && t.bs.length === 3 && t.bs.every((b) => b[0] >= 44 && b[1] >= 44) && t.bg === 'rgb(255, 255, 255)' && t.edition === 'none', JSON.stringify(t));
+  return { logo: logo && logo.naturalWidth > 0, word: document.querySelector('.wordmark').textContent, screen: document.querySelector('.ab-screen').textContent, tagline: document.querySelector('.tagline').textContent.trim(), bs, bg: getComputedStyle(document.querySelector('.masthead-band')).backgroundColor, edition: !!document.querySelector('.masthead-inner > .edition') && getComputedStyle(document.querySelector('.masthead-inner > .edition')).display }; })()`);
+// The app bar's subtitle used to just say "Feed" (true, but told a reader nothing they didn't already know from
+// having opened the app) — it now carries the tagline instead on the Today screen specifically, brought back on
+// request ("the essence of the platform"); Audio and Challenge still get their own functional name, see below.
+check('app bar: the new logo, wordmark "The Hour Brief", the tagline as the subtitle (not a plain "Feed" label), and three 44px buttons (text size, saved, menu)', t.logo && /the hour brief/i.test(t.word) && t.screen === t.tagline && t.bs.length === 3 && t.bs.every((b) => b[0] >= 44 && b[1] >= 44) && t.bg === 'rgb(255, 255, 255)' && t.edition === 'none', JSON.stringify(t));
 await c.ev(`document.fonts.ready.then(() => 'ok')`);
 t = await J(`({ fam: [...new Set([...document.fonts].filter((f) => f.status === 'loaded').map((f) => f.family.replace(/"/g, '')))].sort() })`);
 check('the three self-hosted fonts load (Inter, Newsreader, Space Grotesk): nothing comes from a third party', eq(t.fam, ['Inter', 'Newsreader', 'Space Grotesk']), JSON.stringify(t));
@@ -89,17 +92,12 @@ check('the chip row opens at its start with the normal margin (no scroll-snap ju
 await c.shot(`${OUT}/p_top.png`);
 
 // ---------- 2. tabs and chips follow the page ----------
-// The Challenge tab now hands over to a dedicated quiz page (hb-quiz-page: every other section on the page hidden,
-// the quiz alone fills the screen) rather than just scrolling to it — see section 6d below for that page's own
-// thorough coverage; this just confirms the tab and app-bar label still follow along as before. The section chip
-// is not checked here any more: the chip row itself is one of the things hidden while the dedicated page is up, and
-// its "current" state is refreshed by the page's scroll listener, which this transition does not always trigger
-// (the dedicated page can open with the reader already at the very top) — an existing, scroll-driven mechanism
-// this new feature happens to land on, not something broken by it, and invisible either way while the chips are
-// hidden.
-await c.ev(`document.querySelector('.tab[data-tab=quiz]').click()`); await waitFor(`Math.abs(document.querySelector('#quiz').getBoundingClientRect().top) < 140`, 6000); await c.sleep(300);
-t = await J(`({ y: Math.round(document.querySelector('#quiz').getBoundingClientRect().top), cur: document.querySelector('.tab[aria-current]').dataset.tab, label: document.querySelector('.ab-screen').textContent, quizPage: document.documentElement.classList.contains('hb-quiz-page') })`);
-check('Challenge tab opens the dedicated quiz page; the tab and the app bar label ("Quiz") both follow', t.y < 140 && t.cur === 'quiz' && t.label === 'Quiz' && t.quizPage, JSON.stringify(t));
+// The Challenge tab now opens a dedicated quiz page (a real fixed overlay, see section 6d below for its own
+// thorough coverage) rather than just scrolling to it; this just confirms the tab and app-bar label still follow
+// along as before (syncTabs still updates the app bar's own .ab-screen regardless of it being behind the overlay).
+await c.ev(`document.querySelector('.tab[data-tab=quiz]').click()`); await waitFor(`!!document.querySelector('.hb-quizpage') && !document.querySelector('.hb-quizpage').hidden`, 6000); await c.sleep(300);
+t = await J(`({ cur: document.querySelector('.tab[aria-current]').dataset.tab, label: document.querySelector('.ab-screen').textContent, quizPage: document.documentElement.classList.contains('hb-quiz-page') })`);
+check('Challenge tab opens the dedicated quiz page; the tab and the app bar label ("Quiz") both follow', t.cur === 'quiz' && t.label === 'Quiz' && t.quizPage, JSON.stringify(t));
 await c.ev(`document.querySelector('.tab[data-tab=today]').click()`); await waitFor(`scrollY < 5`, 6000); await c.sleep(300);
 t = await J(`({ y: scrollY, cur: document.querySelector('.tab[aria-current]').dataset.tab, chip: (document.querySelector('.nav a.is-current') || {}).textContent, quizPage: document.documentElement.classList.contains('hb-quiz-page') })`);
 check('Today tab returns to the top, leaving the dedicated quiz page; the "All" chip is the current one', t.y < 5 && t.cur === 'today' && t.chip === 'All' && !t.quizPage, JSON.stringify(t));
@@ -294,54 +292,64 @@ await c.ev(`window.dispatchEvent(new Event('touchstart')); window.scrollTo(0, sc
 t = await J(`({ top: Math.round(document.querySelector('.quiz-card').getBoundingClientRect().top) })`);
 check('a reader who scrolls by hand right after "Next question" is not pulled back', t.top > 300, JSON.stringify(t));
 
-// ---------- 6d. the dedicated quiz page: tapping Challenge in the bottom tab bar used to just scroll to #quiz within
-// the normal page; now it hands the whole screen over to the quiz (html.hb-quiz-page, in app.css hides every other
-// direct section), with a "Back to The Hour Brief" button standing in for the way out. Brand new, so this is
-// thorough: what it hides, the back button, interplay with the Audio hub, and following "From '...' →" mid-question
-// back out to the story it came from. ----------
+// ---------- 6d. the dedicated quiz page: tapping Challenge used to just scroll to #quiz within the normal page; it
+// then briefly hid every other page-level section with CSS, which still felt like "the list page, scrolled" (the
+// footer and masthead sat right there if you knew to look); now it's a REAL fixed overlay, built the same way as
+// the Audio hub (same .hub-top/.hub-scroll markup) with #quiz physically moved inside it. Thorough, since this is
+// a real architectural change: what moves, the header and close button, that scrolling inside it never reveals the
+// list behind it, mutual exclusivity with the Audio hub (both are full-screen overlays now, so one replaces the
+// other rather than stacking), and following "From '...' →" mid-question back out to the story it came from. ----------
 await open({ quiz: past, wait: 2200 });
-const pageHeightNormal = await c.ev(`document.documentElement.scrollHeight`);
 await c.ev(`document.querySelector('.tab[data-tab=quiz]').click()`); await c.sleep(700);
-t = await J(`({
-  quizPage: document.documentElement.classList.contains('hb-quiz-page'),
-  scrollY,
-  pageHeight: document.documentElement.scrollHeight,
-  quizVisible: !!document.getElementById('quiz').offsetParent,
-  aiHidden: !document.getElementById('ai').offsetParent,
-  navHidden: !document.querySelector('.nav').offsetParent,
-  subscribeHidden: !document.querySelector('.subscribe-box').offsetParent,
-  pauseBandHidden: !document.querySelector('.pause-band').offsetParent,
-  backShown: (() => { const b = document.querySelector('.quiz-page-back'); return !!b && !!b.offsetParent; })(),
-  backText: (document.querySelector('.quiz-page-back') || {}).textContent,
-})`);
-check('tapping Challenge sets html.hb-quiz-page and scrolls to the top', t.quizPage && t.scrollY < 5, JSON.stringify(t));
-check('every other section is hidden — the lane sections, the section chips, the "before the news" quote card and the subscribe box all gone', t.aiHidden && t.navHidden && t.subscribeHidden && t.pauseBandHidden, JSON.stringify(t));
-check('the quiz itself is still visible and the page overall is dramatically shorter than before (nothing left to scroll past, instead of being one section among several)', t.quizVisible && t.pageHeight < pageHeightNormal * 0.6, JSON.stringify({ ...t, pageHeightNormal }));
-check('a "Back to The Hour Brief" button stands in for the way out', t.backShown && /Back to The Hour Brief/.test(t.backText), JSON.stringify(t));
+t = await J(`(() => {
+  const ov = document.querySelector('.hb-quizpage'), q = document.getElementById('quiz');
+  return {
+    quizPageClass: document.documentElement.classList.contains('hb-quiz-page'),
+    overlayShown: !!ov && !ov.hidden,
+    quizInOverlay: !!ov && ov.contains(q),
+    headerLabel: ov && ov.querySelector('.ab-screen') && ov.querySelector('.ab-screen').textContent,
+    hasCloseBtn: !!ov && !!ov.querySelector('.hub-close'),
+    scrollLocked: getComputedStyle(document.documentElement).overflow === 'hidden',
+    switchHidden: getComputedStyle(document.querySelector('.view-switch')).display === 'none',
+  };
+})()`);
+check('tapping Challenge opens a real fixed overlay (.hb-quizpage, the same markup/styling as the Audio hub), with #quiz physically moved inside it', t.quizPageClass && t.overlayShown && t.quizInOverlay, JSON.stringify(t));
+check('it has its own header, labelled "Challenge", with a close button — the same "this is its own screen" framing the Audio hub already uses', t.headerLabel === 'Challenge' && t.hasCloseBtn, JSON.stringify(t));
+check('the page behind it cannot scroll, and the List | Cards switch is not shown (not a reading-mode decision here)', t.scrollLocked && t.switchHidden, JSON.stringify(t));
 await c.shot(`${OUT}/p_quiz_page.png`);
 
-// the back button works, same as tapping Today
-await c.ev(`document.querySelector('.quiz-page-back').click()`); await c.sleep(600);
-t = await J(`({ quizPage: document.documentElement.classList.contains('hb-quiz-page'), aiVisible: !!document.getElementById('ai').offsetParent, navVisible: !!document.querySelector('.nav').offsetParent })`);
-check('tapping "Back to The Hour Brief" leaves the dedicated quiz page and restores every other section', !t.quizPage && t.aiVisible && t.navVisible, JSON.stringify(t));
+// scrolling inside the overlay must never reveal the list, the masthead or the footer behind it
+await c.ev(`document.querySelector('.hb-quizpage .hub-scroll').scrollTo({ top: 999999 })`); await c.sleep(400);
+t = await J(`(() => {
+  const f = document.querySelector('footer.colophon');
+  return { footerOnScreen: !!f && f.getBoundingClientRect().top < innerHeight, aiOnScreen: (() => { const r = document.getElementById('ai').getBoundingClientRect(); return r.top < innerHeight && r.bottom > 0; })() };
+})()`);
+check('scrolling all the way down inside the quiz page never reveals the list (AI & Tech) or the site footer behind it', !t.footerOnScreen && !t.aiOnScreen, JSON.stringify(t));
 
-// opening Audio from inside the dedicated quiz page, then closing it again, must not leave a half-broken state
+// the close button works, same as tapping Today, and puts #quiz back exactly where it came from
+await c.ev(`document.querySelector('.hb-quizpage .hub-close').click()`); await c.sleep(600);
+t = await J(`({ quizPage: document.documentElement.classList.contains('hb-quiz-page'), overlayHidden: document.querySelector('.hb-quizpage').hidden, quizBackInList: !!document.querySelector('.main-col #quiz, .page #quiz'), aiVisible: !!document.getElementById('ai').offsetParent, navVisible: !!document.querySelector('.nav').offsetParent })`);
+check('the close button leaves the dedicated quiz page, puts #quiz back in the list exactly where it was, and the list is usable again', !t.quizPage && t.overlayHidden && t.quizBackInList && t.aiVisible && t.navVisible, JSON.stringify(t));
+
+// the Audio hub and the dedicated quiz page are both full-screen overlays now, so one replaces the other rather than stacking
 await c.ev(`document.querySelector('.tab[data-tab=quiz]').click()`); await c.sleep(700);
-await c.ev(`document.querySelector('.tab[data-tab=audio]').click()`); await waitFor(`!document.querySelector('.hb-hub').hidden`, 2000); await c.sleep(300);
-t = await J(`({ hubOpen: !document.querySelector('.hb-hub').hidden, quizPage: document.documentElement.classList.contains('hb-quiz-page') })`);
-check('opening Audio from inside the dedicated quiz page opens the hub as its own overlay on top (.hb-hub lives outside .page, so it is untouched by the quiz page’s hiding rule)', t.hubOpen && t.quizPage, JSON.stringify(t));
-await c.ev(`document.querySelector('.hub-close').click()`); await c.sleep(400);
-t = await J(`({ hubOpen: !document.querySelector('.hb-hub').hidden, quizPage: document.documentElement.classList.contains('hb-quiz-page'), quizVisible: !!document.getElementById('quiz').offsetParent, aiHidden: !document.getElementById('ai').offsetParent })`);
-check('closing the hub again leaves you right back in the dedicated quiz page, not a half-broken mix of both', !t.hubOpen && t.quizPage && t.quizVisible && t.aiHidden, JSON.stringify(t));
+await c.ev(`document.querySelector('.tab[data-tab=audio]').click()`); await waitFor(`!document.querySelector('.hb-hub:not(.hb-quizpage)').hidden`, 2000); await c.sleep(300);
+t = await J(`({ hubOpen: !document.querySelector('.hb-hub:not(.hb-quizpage)').hidden, quizPageOpen: !document.querySelector('.hb-quizpage').hidden })`);
+check('opening Audio from inside the dedicated quiz page replaces it with the hub, rather than stacking one overlay on the other', t.hubOpen && !t.quizPageOpen, JSON.stringify(t));
+await c.ev(`document.querySelector('.hb-hub:not(.hb-quizpage) .hub-close').click()`); await c.sleep(400);
+await c.ev(`document.querySelector('.tab[data-tab=quiz]').click()`); await c.sleep(700);
+await c.ev(`document.querySelector('.tab[data-tab=quiz]').click()`); await c.sleep(300);   // tapping Challenge again while already there must not double-build a second overlay
+t = await J(`({ n: document.querySelectorAll('.hb-quizpage').length })`);
+check('tapping Challenge again while the quiz page is already open does not build a second overlay', t.n === 1, JSON.stringify(t));
 
-// answering a question and following "From '...' →" reveals that story (hidden under the dedicated page) and scrolls to it
+// answering a question and following "From '...' →" closes the overlay, restores the list, and scrolls to that story
 const q0 = await J(`JSON.parse(document.getElementById('quiz-data').textContent).questions[0]`);
 if (q0.story) {
   await c.ev(`(() => { const q = JSON.parse(document.getElementById('quiz-data').textContent).questions[0]; document.querySelectorAll('.quiz-opt')[(q.answer + 1) % q.options.length].click(); })()`); await c.sleep(400);
   check('"From \'…\' →" is offered on the dedicated quiz page too, same as in the list', await c.ev(`!!document.querySelector('.quiz-from')`));
   await c.ev(`document.querySelector('.quiz-from').click()`); await c.sleep(900);
-  t = await J(`(() => { const it = document.querySelector('.item[data-story-id="' + ${JSON.stringify(q0.story)} + '"]'); return { quizPage: document.documentElement.classList.contains('hb-quiz-page'), storyVisible: !!it && !!it.offsetParent, top: it ? Math.round(it.getBoundingClientRect().top) : null, deeplinked: !!it && it.classList.contains('deeplinked') }; })()`);
-  check('following it leaves the dedicated quiz page (so the story\'s own section is visible again) and scrolls straight to that story', !t.quizPage && t.storyVisible && t.top !== null && t.top < 200 && t.deeplinked, JSON.stringify(t));
+  t = await J(`(() => { const it = document.querySelector('.item[data-story-id="' + ${JSON.stringify(q0.story)} + '"]'); return { quizPage: document.documentElement.classList.contains('hb-quiz-page'), overlayHidden: document.querySelector('.hb-quizpage').hidden, storyVisible: !!it && !!it.offsetParent, top: it ? Math.round(it.getBoundingClientRect().top) : null, deeplinked: !!it && it.classList.contains('deeplinked') }; })()`);
+  check('following it closes the dedicated quiz page (so the story\'s own section is visible again) and scrolls straight to that story', !t.quizPage && t.overlayHidden && t.storyVisible && t.top !== null && t.top < 200 && t.deeplinked, JSON.stringify(t));
 } else {
   console.log(`(today's first quiz question has no "story" reference wired up — "From … →" coverage skipped for this edition)`);
 }

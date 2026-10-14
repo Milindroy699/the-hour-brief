@@ -419,8 +419,8 @@ await openDeck();
 // `html { scroll-behavior: smooth }` globally, so even this "auto" scroll animates for a few hundred ms rather than
 // landing instantly — give it a moment to settle before reading the result, same as every other transition here.
 await c.ev(`document.querySelector('.tab[data-tab=quiz]').click()`); await c.sleep(900);
-t = await J(`({ deck: HBCards.isOpen(), quizPage: document.documentElement.classList.contains('hb-quiz-page'), quizTop: Math.round(document.getElementById('quiz').getBoundingClientRect().top), aiHidden: getComputedStyle(document.getElementById('ai')).display === 'none', view: localStorage.getItem('hb-view-v1') })`);
-check('the Challenge tab closes the deck straight into the dedicated quiz page, Cards still your choice for next time', !t.deck && t.quizPage && t.quizTop >= 0 && t.quizTop <= 110 && t.aiHidden && t.view === 'cards', JSON.stringify(t));
+t = await J(`(() => { const ov = document.querySelector('.hb-quizpage'); return { deck: HBCards.isOpen(), quizPage: document.documentElement.classList.contains('hb-quiz-page'), overlayShown: !!ov && !ov.hidden, quizInOverlay: !!ov && ov.contains(document.getElementById('quiz')), view: localStorage.getItem('hb-view-v1') }; })()`);
+check('the Challenge tab closes the deck straight into the dedicated quiz page (a real overlay, #quiz moved inside it), Cards still your choice for next time', !t.deck && t.quizPage && t.overlayShown && t.quizInOverlay && t.view === 'cards', JSON.stringify(t));
 await c.ev(`document.querySelector('.tab[data-tab=today]').click()`); await c.sleep(600);
 check('and the Today tab leaves the dedicated quiz page again, same as it would from the list', (await c.ev(`!document.documentElement.classList.contains('hb-quiz-page')`)) === true);
 await open();
@@ -512,27 +512,32 @@ check('after "Play the quiz" you are on the list', !(await c.ev(`HBCards.isOpen(
 await c.ev(`document.querySelector('.tab[data-tab=today]').click()`); await c.sleep(1200);
 check('the Today tab brings the cards back (Cards is still your choice)', (await c.ev(`HBCards.isOpen()`)) === true && (await view()) === 'cards');
 
-// ---------- 8c. the sections hint (a later day), now inside the deck ----------
+// ---------- 8c. the sections hint (a later day) — never inside the deck any more ----------
+// Reading in Cards must never be interrupted by this (the user, in so many words: "the card reading experience
+// [should be] seamless... without losing any space or interruptions") — it used to float over the top of the
+// deck's current card; that is gone entirely. Cards is the default view, so most people would otherwise see this
+// on literally their first card. It now simply never shows there, and is not "used up" while hidden: tipCard()
+// only sets secOn (the day-tracking flag) on a render that actually happened, so it waits and offers it in List
+// instead, the next time the reader happens to be there.
 const fresh = { n: 0, last: LONG_AGO, done: false, secOn: '' };
 await open({ view: 'default', tip: { ...fresh, n: 1 }, wait: 2800 });
-t = await J(`(() => { const k = document.querySelector('.hb-deck > .hb-tip'); if (!k) return null; const r = k.getBoundingClientRect(), tr = document.querySelector('.dk-track').getBoundingClientRect(); return { tip: k.dataset.tip, title: k.querySelector('strong').textContent, btns: [...k.querySelectorAll('button')].map((b) => b.textContent), float: k.classList.contains('hb-tip-float'), noSpaceTaken: tr.top === 0, nearTop: r.top >= 0 && r.top < 80, inside: r.left >= 0 && r.right <= innerWidth, cards: !!document.querySelector('.hb-tip[data-tip=cards]') }; })()`);
-check('day 2, Cards showing: the "Make it yours" hint floats near the top of the card (not squeezing it, no header left to measure) with Choose / Not now', t && t.tip === 'sections' && t.title === 'Make it yours' && eq(t.btns, ['Choose', 'Not now']) && t.float && t.noSpaceTaken && t.nearTop && t.inside, JSON.stringify(t));
-check('there is no "Try swipe cards" hint any more (Cards is already the default)', !t.cards);
+t = await J(`({ hasTip: !!document.querySelector('.hb-tip'), deckOpen: HBCards.isOpen() })`);
+check('day 2, Cards showing (the default view): no hint anywhere, the deck is completely uninterrupted', !t.hasTip && t.deckOpen, JSON.stringify(t));
+check('and it was not silently "used up" while hidden -- still gets a chance once the reader is actually in List', (await tipState()).secOn === '', JSON.stringify(await tipState()));
+await c.shot(`${OUT}/cards_no_sections_hint_in_deck.png`);
+
+// switching to List from there offers it, same as a reader who chose List from the start would see
+await c.ev(`document.querySelectorAll('.vs-in button')[0].click()`); await c.sleep(500);
+t = await J(`(() => { const k = document.querySelector('.hb-tip'); if (!k) return null; return { tip: k.dataset.tip, title: k.querySelector('strong').textContent, btns: [...k.querySelectorAll('button')].map((b) => b.textContent), inDeck: !!document.querySelector('.hb-deck .hb-tip') }; })()`);
+check('switching to List from Cards offers the "Make it yours" hint there instead, above the first section, with Choose / Not now', t && t.tip === 'sections' && t.title === 'Make it yours' && eq(t.btns, ['Choose', 'Not now']) && !t.inDeck, JSON.stringify(t));
 await c.shot(`${OUT}/cards_sections_hint.png`);
 await c.ev(`document.querySelector('.hb-tip-go').click()`); await c.sleep(500);
-check('Choose opens Your sections over the deck, the hint goes, and the deck stays', (await c.ev(`document.querySelector('.rd-sheet h2').textContent`)) === 'Your sections' && !(await hasTip()) && (await c.ev(`HBCards.isOpen()`)));
-await open({ view: 'default', tip: { ...fresh, n: 1 }, wait: 2800 });
+check('Choose opens Your sections, and the hint goes', (await c.ev(`document.querySelector('.rd-sheet h2').textContent`)) === 'Your sections' && !(await hasTip()));
+await open({ view: 'list', tip: { ...fresh, n: 1 } });
 await c.ev(`document.querySelector('.hb-tip-no').click()`); await c.sleep(300);
 check('Not now removes it and it does not return', !(await hasTip()) && (await tipState()).done === true);
-await open({ view: 'default', tip: { ...fresh, n: 1 }, extra: `window.HB_TIP_FADE_MS = 400;`, wait: 2800 });
-check('left alone, the floating hint fades itself out on its own', await waitFor(`!document.querySelector('.hb-tip')`, 2000));
-check('…without marking it done — it gets another chance next visit', (await tipState()).done === false, JSON.stringify(await tipState()));
-await open({ view: 'default', tip: { ...fresh, n: 1 }, extra: `window.HB_TIP_FADE_MS = 60000;`, wait: 2800 });
-check('the hint is up before any swipe', await hasTip());
-await c.swipe(195, 420, -250, 0); await c.sleep(700);
-check('the moment the reader actually swipes, the hint gets out of the way too (still not marked done)', !(await hasTip()) && (await tipState()).done === false, JSON.stringify(await tipState()));
-await open({ view: 'default', tip: { ...fresh, n: 1, secOn: LONG_AGO }, wait: 2800 });
-check('ignored on its first day, it is not shown again on a later day', !(await hasTip()), JSON.stringify(await tipState()));
+await open({ view: 'list', tip: { ...fresh, n: 1, secOn: LONG_AGO } });
+check('ignored on its first day, it is not shown again on a later day (even in List, where it can actually render)', !(await hasTip()), JSON.stringify(await tipState()));
 await open({ view: 'default', prefs: { order: [], off: [] }, tip: { ...fresh, n: 1 }, wait: 2800 });
 check('someone who already has saved sections is not asked', !(await hasTip()));
 await open({ view: 'default', tip: { ...fresh, n: 1 }, hash: '#ai-2', wait: 2800 });
@@ -542,7 +547,7 @@ check('the website never shows it (and nothing is counted there)', !(await hasTi
 await open({ view: 'default', tip: { ...fresh, n: 0 }, wait: 2800 });
 check('day 1 (a brand-new install): no hint, one visit counted', !(await hasTip()) && (await tipState()).n === 1);
 await open({ view: 'list', tip: { ...fresh, n: 1 } });
-check('with the List chosen, the hint still appears above the first section, as before', (await c.ev(`!!document.querySelector('.hb-tip[data-tip=sections]') && !document.querySelector('.hb-deck .hb-tip')`)) === true);
+check('with the List chosen from the start, the hint appears above the first section, as before', (await c.ev(`!!document.querySelector('.hb-tip[data-tip=sections]') && !document.querySelector('.hb-deck .hb-tip')`)) === true);
 
 // ---------- 8d. the cover card: the top of the page comes first ----------
 await open({ tts: true });

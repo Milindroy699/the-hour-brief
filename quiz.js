@@ -83,7 +83,7 @@
   function jumpToStory(id) {
     var it = document.querySelector('.item[data-story-id="' + id + '"]');
     if (!it) return;
-    document.documentElement.classList.remove('hb-quiz-page');   // the story's section is hidden while the dedicated quiz page is showing (app.css); reveal it before scrolling to it
+    if (window.HBQuizPage && window.HBQuizPage.isOpen && window.HBQuizPage.isOpen()) window.HBQuizPage.close();   // the story lives in the normal page, which the dedicated quiz page (mobile.js) replaces while it's open
 
     if (it.classList.contains('is-collapsed')) {
       var more = it.querySelector(':scope > div > .story-more');
@@ -324,6 +324,19 @@
     return bar;
   }
 
+  // The nudge below (the second pass, after scrollIntoView's own imprecise block positioning) used to always adjust
+  // window scroll — fine while the quiz lived in the normal page, but it moved into its own fixed, internally-
+  // scrolling overlay (see mobile.js's dedicated quiz page), where the real motion happens inside that container,
+  // not the window. Finds the nearest scrollable ancestor and nudges that instead; returns null (meaning "use the
+  // window, as before") when there isn't one, so the normal in-page case is completely unchanged.
+  function scrollRoot(el) {
+    for (var p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+      var cs = getComputedStyle(p);
+      if (/(auto|scroll)/.test(cs.overflowY) && p.scrollHeight > p.clientHeight + 1) return p;
+    }
+    return null;
+  }
+
   // Moves the page to an element, then checks it got there: some Android WebViews end a smooth scroll early, and the
   // layout can still be settling. Anything a reader does by hand (touch, wheel, keys) cancels the check.
   function bringIntoView(target, where, smooth) {
@@ -337,7 +350,7 @@
         var cs = getComputedStyle(target), r = target.getBoundingClientRect(), off;
         if (where === 'top') off = r.top - (parseFloat(cs.scrollMarginTop) || 0);
         else { var lim = window.innerHeight - (parseFloat(cs.scrollMarginBottom) || 0); off = r.bottom > lim ? r.bottom - lim : 0; }
-        if (Math.abs(off) > 24) window.scrollBy({ top: off, behavior: 'auto' });
+        if (Math.abs(off) > 24) { var root = scrollRoot(target); if (root) root.scrollTop += off; else window.scrollBy({ top: off, behavior: 'auto' }); }
         if (n) stop();
       }, ms);
     });
