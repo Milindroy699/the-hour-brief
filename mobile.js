@@ -885,7 +885,7 @@
     return 'Feed';
   }
   // On pages that are not editions the tabs are plain links back to the right place.
-  var TAB_HREF = { today: '/', audio: '/?audio=1', quiz: '/#quiz', archive: '/archive/' };
+  var TAB_HREF = { today: '/', audio: '/?audio=1', quiz: '/?quiz=1', archive: '/archive/' };
   function tabGo(name) {
     var L = window.HBListen;
     // Tapping the tab you are already on reopens/stays on it — it does not toggle closed (tried that after removing
@@ -1207,6 +1207,15 @@
       if (++tries < 40) setTimeout(wait, 100);
     })();
   }
+  // /?quiz=1 from another page's Challenge tab (Archive, About, Privacy, Contact — all non-feed pages, where the tab
+  // is a plain link instead of tabGo()). Used to be a plain #quiz anchor, which the browser's own hash-scroll just
+  // landed on the inline quiz section in the list — not the dedicated Challenge page tapping the tab everywhere else
+  // opens, so arriving this way looked like a completely different, broken screen. #quiz itself still means exactly
+  // that elsewhere (shared story links, the quiz chip, archive edition links) — only this one tab link changed.
+  function openQuizFromUrl() {
+    if (!reader() || !/[?&]quiz=1(&|$)/.test(location.search)) return;
+    openQuizPage();
+  }
   function start() {
     if (cardsOk() && getView() === 'cards' && deckTarget()) pendingOn();
     apply(); openFromHash(); loadListen();
@@ -1217,6 +1226,7 @@
       // than only on a later day that happens to start there.
       document.addEventListener('hb:deck', function () { if (!deckOpen()) maybeSuggest(); });
       openAudioFromUrl();
+      openQuizFromUrl();
     });
   }
   if (document.readyState === 'loading') {
