@@ -22,6 +22,24 @@
     try { P.SplashScreen.hide(); } catch (e) {}
   }
 
+  // ---- One-time fresh start on the 1.1.2 app-store release ----
+  // Clears saved stories and quiz/streak progress once per device, the first time it reports
+  // running 1.1.2, so upgraders get a clean slate on the new app rather than old local state.
+  // Reloads once afterward so mobile.js/quiz.js (which load after this script) start from empty.
+  (function freshStartOnRelease() {
+    var RESET_VERSION = '1.1.2', DONE_KEY = 'hb-fresh-' + RESET_VERSION;
+    if (!P.App || !P.App.getInfo || localStorage.getItem(DONE_KEY)) return;
+    P.App.getInfo().then(function (info) {
+      if (!info || info.version !== RESET_VERSION) return;
+      try {
+        localStorage.removeItem('hb-saved-v1');
+        localStorage.removeItem('hb-quiz-v1');
+        localStorage.setItem(DONE_KEY, '1');
+      } catch (e) { return; }
+      location.reload();
+    }).catch(function () {});
+  })();
+
   // ---- Shared injected stylesheet for the bits this script builds ----
   (function injectStyle() {
     var css =
