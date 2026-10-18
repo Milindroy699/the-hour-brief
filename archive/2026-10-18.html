@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<script>if ("scrollRestoration" in history) history.scrollRestoration = "manual";</script>
+<title>The Hour Brief</title>
+<meta name="description" content="A free daily one-hour digest of AI/tech, product & business (India + global), and the Indian stock market — every item links to its original source.">
+<meta property="og:title" content="The Hour Brief">
+<meta property="og:description" content="A free daily one-hour digest of AI/tech, product & business (India + global), and the Indian stock market — every item links to its original source.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://the-hour-brief.vercel.app/og-image.png">
+<meta name="twitter:image" content="https://the-hour-brief.vercel.app/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" type="application/atom+xml" title="The Hour Brief" href="../feed.xml">
+<link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/brand/icon-192.png">
+<link rel="apple-touch-icon" href="/brand/apple-touch-icon.png">
+<style>
+  :root {
+    --bg: #f2f3ee;
+    --paper: #ffffff;
+    --paper-2: #e7e9e1;
+    --ink: #17191c;
+    --ink-soft: #52585a;
+    --ink-faint: #838a8a;
+    --line: #d7dad2;
+    --brand: #5b3e96;
+    --brand-soft: #efe9f7;
+    --tag-ai: #206b5a;
+    --tag-ai-soft: #e0ede9;
+    --tag-biz: #a3721f;
+    --tag-biz-soft: #f3e9d5;
+    --tag-mkt: #2c5490;
+    --tag-mkt-soft: #e2e9f2;
+    --up: #2f7a52;
+    --down: #b23b3b;
+    --shadow: 0 1px 2px rgba(23,25,28,0.06), 0 10px 28px rgba(23,25,28,0.06);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #131417;
+      --paper: #1b1d21;
+      --paper-2: #24262b;
+      --ink: #edeeec;
+      --ink-soft: #a9adaf;
+      --ink-faint: #757a7c;
+      --line: #2c2f34;
+      --brand: #a487d9;
+      --brand-soft: #241f34;
+      --tag-ai: #4fb59e;
+      --tag-ai-soft: #16241f;
+      --tag-biz: #d9a94e;
+      --tag-biz-soft: #2b2417;
+      --tag-mkt: #7ea2d6;
+      --tag-mkt-soft: #1b2532;
+      --up: #4fb579;
+      --down: #d9645f;
+      --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.4);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #131417;
+    --paper: #1b1d21;
+    --paper-2: #24262b;
+    --ink: #edeeec;
+    --ink-soft: #a9adaf;
+    --ink-faint: #757a7c;
+    --line: #2c2f34;
+    --brand: #a487d9;
+    --brand-soft: #241f34;
+    --tag-ai: #4fb59e;
+    --tag-ai-soft: #16241f;
+    --tag-biz: #d9a94e;
+    --tag-biz-soft: #2b2417;
+    --tag-mkt: #7ea2d6;
+    --tag-mkt-soft: #1b2532;
+    --up: #4fb579;
+    --down: #d9645f;
+    --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; }
+
+  html { background: var(--bg); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html { scroll-behavior: smooth; }
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, "Inter", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+
+  /* ---- Masthead band ---- */
+  .masthead-band {
+    background: var(--ink);
+    color: var(--bg);
+    padding: 30px 24px 26px;
+  }
+  .masthead-inner {
+    max-width: 1080px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .wordmark {
+    font-family: -apple-system, "Inter", ui-sans-serif, system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 2.1rem;
+    letter-spacing: -0.01em;
+    margin: 0;
+    text-transform: uppercase;
+  }
+  .wordmark span { color: var(--brand); }
+  .tagline {
+    margin: 6px 0 0;
+    font-size: 0.95rem;
+    color: color-mix(in srgb, var(--bg) 70%, transparent);
+    max-width: 42ch;
+  }
+  .edition {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--bg) 65%, transparent);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .page {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 24px 96px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 260px;
+    gap: 36px;
+    align-items: start;
+  }
+  .main-col { min-width: 0; }
+  .side-col { position: sticky; top: 72px; }
+  @media (max-width: 900px) {
+    .page { grid-template-columns: 1fr; max-width: 720px; }
+    .side-col { position: static; }
+  }
+
+  /* ---- Pause band ---- */
+  .pause-band {
+    background: var(--brand-soft);
+    border-bottom: 1px solid var(--line);
+  }
+  .pause-inner {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 22px 24px;
+  }
+  .pause-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--brand);
+    margin-bottom: 8px;
+  }
+  .pause-text {
+    margin: 0;
+    font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    font-style: italic;
+    font-size: 1.08rem;
+    line-height: 1.55;
+    color: var(--ink);
+    max-width: 62ch;
+    text-wrap: balance;
+  }
+  .pause-word {
+    font-style: normal;
+    font-weight: 700;
+  }
+  .pause-attr {
+    display: block;
+    margin-top: 10px;
+    font-size: 0.82rem;
+    font-style: normal;
+    color: var(--ink-faint);
+  }
+  .pause-attr a { color: var(--ink-soft); }
+
+  /* ---- About strip ---- */
+  .about {
+    padding: 22px 0 24px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 8px;
+  }
+  .about p {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    max-width: 66ch;
+  }
+  .about strong { color: var(--ink); }
+  .about .free-line {
+    margin-top: 10px;
+    font-size: 0.86rem;
+    color: var(--ink-faint);
+  }
+
+  /* ---- Subscribe box ---- */
+  .subscribe-box {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin: 20px 0 0;
+    box-shadow: var(--shadow);
+  }
+  .subscribe-box .sub-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--tag-mkt);
+    display: block;
+    margin-bottom: 6px;
+  }
+  .subscribe-box p {
+    margin: 0 0 12px;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .subscribe-form {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .subscribe-form input[type="email"] {
+    flex: 1 1 220px;
+    min-width: 0;
+    padding: 9px 12px;
+    border-radius: 7px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 0.92rem;
+    font-family: inherit;
+  }
+  .subscribe-form input[type="email"]:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 1px;
+  }
+  .subscribe-form button {
+    padding: 9px 18px;
+    border-radius: 7px;
+    border: none;
+    background: var(--brand);
+    color: var(--bg);
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .subscribe-form button:hover { opacity: 0.9; }
+  .subscribe-note {
+    margin-top: 8px;
+    font-size: 0.76rem;
+    color: var(--ink-faint);
+  }
+  .subscribe-status {
+    margin-top: 8px;
+    font-size: 0.8rem;
+    min-height: 1.1em;
+  }
+  .subscribe-status.ok { color: var(--up); }
+  .subscribe-status.err { color: var(--down); }
+
+  .nav {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin: 0 0 40px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--bg);
+    padding: 14px 0;
+  }
+  .nav a {
+    text-decoration: none;
+    font-size: 0.78rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 7px 13px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    background: var(--paper);
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+  .nav a:hover, .nav a:focus-visible { color: var(--ink); border-color: var(--ink-soft); }
+  .nav a.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .nav a:focus-visible { outline: 2px solid var(--ink-soft); outline-offset: 2px; }
+
+  /* ---- Section ---- */
+  section.lane { margin-bottom: 48px; scroll-margin-top: 20px; }
+
+  .lane-head { margin-bottom: 20px; }
+  .lane-tag {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+  }
+  .ai .lane-tag { background: var(--tag-ai-soft); color: var(--tag-ai); }
+  .biz .lane-tag { background: var(--tag-biz-soft); color: var(--tag-biz); }
+  .mkt .lane-tag { background: var(--tag-mkt-soft); color: var(--tag-mkt); }
+
+  .lane-head h2 {
+    font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    font-size: 1.65rem;
+    font-weight: 700;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .ai .lane-head h2 { border-left: 4px solid var(--tag-ai); padding-left: 13px; }
+  .biz .lane-head h2 { border-left: 4px solid var(--tag-biz); padding-left: 13px; }
+  .mkt .lane-head h2 { border-left: 4px solid var(--tag-mkt); padding-left: 13px; }
+
+  /* ---- Items ---- */
+  .item {
+    display: grid;
+    grid-template-columns: 20px 1fr;
+    gap: 12px;
+    padding: 15px 0;
+    border-top: 1px solid var(--line);
+  }
+  .item:first-of-type { border-top: none; padding-top: 0; }
+  .item .dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 7px; justify-self: center; }
+  .ai .item .dot { background: var(--tag-ai); }
+  .biz .item .dot { background: var(--tag-biz); }
+  .mkt .item .dot { background: var(--tag-mkt); }
+
+  .item h3 { font-size: 1.03rem; font-weight: 650; margin: 0 0 4px; line-height: 1.35; }
+  .item p { margin: 0; font-size: 0.94rem; line-height: 1.6; color: var(--ink-soft); max-width: 66ch; }
+  .item .src { display: inline-block; margin-top: 8px; font-size: 0.76rem; color: var(--ink-faint); letter-spacing: 0.02em; }
+  .item .src a { color: inherit; text-decoration-color: var(--line); }
+
+  /* ---- Takeaway ---- */
+  .item .takeaway {
+    margin: 10px 0 0;
+    padding: 8px 12px;
+    border-left: 3px solid var(--brand);
+    background: var(--paper-2);
+    border-radius: 0 6px 6px 0;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: var(--ink);
+    max-width: 64ch;
+  }
+  .lane-head .lane-takeaway {
+    margin: 14px 0 0;
+    padding: 8px 12px;
+    border-left: 3px solid var(--brand);
+    background: var(--paper-2);
+    border-radius: 0 6px 6px 0;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: var(--ink);
+    max-width: 64ch;
+  }
+  .item .takeaway-label,
+  .lane-takeaway .takeaway-label {
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    color: var(--brand);
+    margin-right: 6px;
+  }
+
+  /* ---- Comments ---- */
+  .comments-section {
+    margin: 48px 0 0;
+    padding-top: 28px;
+    border-top: 1px solid var(--line);
+  }
+  .comments-section h2 {
+    font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    font-size: 1.3rem;
+    margin: 0 0 6px;
+  }
+  .comments-section .comments-sub {
+    font-size: 0.86rem;
+    color: var(--ink-faint);
+    margin: 0 0 18px;
+  }
+  .comment-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 24px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+  }
+  .comment-form input, .comment-form textarea {
+    padding: 9px 12px;
+    border-radius: 7px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 0.92rem;
+    font-family: inherit;
+    resize: vertical;
+  }
+  .comment-form textarea { min-height: 70px; }
+  .comment-form input:focus-visible, .comment-form textarea:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 1px;
+  }
+  .comment-form button {
+    align-self: flex-start;
+    padding: 9px 18px;
+    border-radius: 7px;
+    border: none;
+    background: var(--brand);
+    color: var(--bg);
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .comment-form button:hover { opacity: 0.9; }
+  .comment-form button:disabled { opacity: 0.6; cursor: default; }
+  .comment-status { font-size: 0.82rem; color: var(--ink-faint); min-height: 1.2em; }
+  .comments-list { display: flex; flex-direction: column; gap: 0; }
+  .comment-item { padding: 12px 0; border-top: 1px solid var(--line); }
+  .comment-item:first-child { border-top: none; padding-top: 0; }
+  .comment-alias { font-weight: 700; font-size: 0.88rem; color: var(--ink); }
+  .comment-time { font-size: 0.74rem; color: var(--ink-faint); margin-left: 8px; }
+  .comment-text { margin: 4px 0 0; font-size: 0.92rem; color: var(--ink-soft); line-height: 1.55; white-space: pre-wrap; }
+  .comments-empty { font-size: 0.88rem; color: var(--ink-faint); font-style: italic; }
+
+  /* ---- Vote row ---- */
+  .vote-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .vote-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--ink-faint);
+    font-size: 0.78rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  }
+  .vote-btn:hover { border-color: var(--ink-soft); color: var(--ink-soft); }
+  .vote-btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+  .vote-btn.voted-like { border-color: var(--up); color: var(--up); background: color-mix(in srgb, var(--up) 12%, var(--paper)); }
+  .vote-btn.voted-dislike { border-color: var(--down); color: var(--down); background: color-mix(in srgb, var(--down) 12%, var(--paper)); }
+  .vote-btn:disabled { cursor: default; opacity: 0.85; }
+  .vote-count { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+
+  /* ---- Locked / subscriber reader's note ---- */
+  .locked {
+    border: 1px dashed color-mix(in srgb, var(--brand) 55%, var(--line));
+    background: var(--brand-soft);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-top: 4px;
+  }
+  .locked .locked-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--brand);
+    margin-bottom: 10px;
+  }
+  .locked ul { margin: 0; padding-left: 18px; }
+  .locked li { font-size: 0.92rem; line-height: 1.6; color: var(--ink-soft); margin-bottom: 6px; }
+  .locked li:last-child { margin-bottom: 0; }
+  .locked a { color: var(--ink); font-weight: 600; }
+  .locked .paid-tag {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--brand);
+    background: var(--paper);
+    border: 1px solid color-mix(in srgb, var(--brand) 40%, var(--line));
+    border-radius: 4px;
+    padding: 1px 6px;
+    vertical-align: middle;
+  }
+  .locked .note { margin-top: 10px; font-size: 0.82rem; color: var(--ink-faint); }
+
+  /* ---- Ticker ---- */
+  .ticker {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 22px;
+    box-shadow: var(--shadow);
+  }
+  .ticker .cell { background: var(--paper); padding: 12px 14px; }
+  .ticker .idx { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); margin-bottom: 4px; }
+  .ticker .val { font-size: 1.15rem; font-weight: 700; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  .ticker .chg { font-size: 0.8rem; margin-left: 6px; }
+  .chg.up { color: var(--up); }
+  .chg.down { color: var(--down); }
+
+  .movers { display: flex; gap: 24px; flex-wrap: wrap; margin: 4px 0 26px; }
+  .movers .label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); margin-bottom: 6px; display: block; }
+  .movers .row { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; padding: 2px 0; font-size: 0.86rem; display: block; }
+
+  .callout {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 16px 18px;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    box-shadow: var(--shadow);
+  }
+  .callout strong { color: var(--ink); }
+
+  footer.colophon {
+    margin-top: 56px;
+    padding-top: 22px;
+    border-top: 1px solid var(--line);
+    font-size: 0.8rem;
+    color: var(--ink-faint);
+    line-height: 1.75;
+  }
+  footer.colophon a { color: var(--ink-soft); }
+  footer.colophon .disclaimer {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+  }
+
+  @media (max-width: 480px) {
+    .wordmark { font-size: 1.6rem; }
+    .masthead-inner { align-items: flex-start; }
+    .edition { text-align: left; }
+  }
+</style>
+<link rel="stylesheet" href="/mobile.css" media="(max-width: 640px)">
+<script defer src="/_vercel/insights/script.js"></script>
+<script defer src="/capacitor-bridge.js"></script>
+<script defer src="/mobile.js"></script>
+<link rel="stylesheet" href="/quiz.css">
+<script defer src="/quiz.js"></script>
+</head>
+<body>
+
+<div class="masthead-band">
+  <div class="masthead-inner">
+    <div>
+      <h1 class="wordmark">The Hour <span>Brief</span></h1>
+      <p class="tagline">Sixty minutes. Three lanes. Everything that actually mattered today.</p>
+    </div>
+    <div class="edition">Edition 061<br>Sun, 18 Oct 2026</div>
+  </div>
+</div>
+
+<div class="pause-band">
+  <div class="pause-inner">
+    <span class="pause-label">Before the news</span>
+    <p class="pause-text">There&rsquo;s a Swedish word, <span class="pause-word">lagom</span> &mdash; roughly &ldquo;just the right amount,&rdquo; neither too much nor too little, prized as a kind of quiet moderation. It shows up today in Google quietly rationing free Gemini users down to its smallest model just as it rolls out paid tiers for more, in Apple&rsquo;s first foldable selling out in minutes despite a factory yield nowhere near enough to meet that demand, and in chipmakers posting record quarters that still aren&rsquo;t, apparently, good enough for Wall Street.</p>
+  </div>
+</div>
+
+<div class="page" data-edition-date="2026-10-18">
+
+  <div class="main-col">
+
+  <div class="archive-banner" style="background:var(--paper-2);border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin-bottom:18px;font-size:0.86rem;color:var(--ink-soft);">🗄️ You are viewing an archived edition from <strong>Oct 18, 2026</strong>. <a href="../" style="color:var(--ink);font-weight:600;">See the latest edition</a></div>
+
+  <div class="about">
+    <p><strong>The Hour Brief</strong> is a daily read built for one sitting: what moved in AI and technology, what's shaping product and business across India and the rest of the world, and what the Indian stock market did and why. Every item links back to its original source — read the take here, click through for the full story.</p>
+    <p class="free-line">Free to read, no account or sign-up needed. A few items point to stories from paid publications — those are marked and link out; everything else on this page is open.</p>
+  </div>
+
+  <nav class="nav" aria-label="Sections">
+    <a href="#ai">AI &amp; Tech</a>
+    <a href="#biz">Product &amp; Business</a>
+    <a href="#mkt">Stock Market</a>
+    <a href="#quiz">Quiz</a>
+    <a href="./" target="_blank" rel="noopener">Past Editions</a>
+    <a href="/contact.html">Contact</a>
+  </nav>
+  <!-- AI & TECH -->
+  <section class="lane ai" id="ai">
+    <div class="lane-head">
+      <span class="lane-tag">AI &amp; Tech</span>
+      <h2>TSMC posts a record Q3 as AI chip demand keeps outrunning its own guidance even as ASML&rsquo;s own blowout quarter still gets punished by investors, while Apple&rsquo;s first foldable iPhone sells out within minutes despite a factory yield barely above 60%, Google quietly rations free Gemini users down to its smallest model, xAI ships Grok Voice 3.0 at flat pricing, and Microsoft undercuts OpenAI&rsquo;s brand-new Decisions API with a far cheaper rival built on a Chinese open-weight model</h2>
+      <p class="lane-takeaway"><span class="takeaway-label">Takeaway</span> Chip and equipment makers keep beating guidance even as markets punish them for it, Apple&rsquo;s hottest hardware launch in years is bottlenecked by its own factory, and two AI platforms are now competing as hard on rationing access as on winning it.</p>
+    </div>
+
+    <div class="item" data-story-id="ai-1">
+      <span class="dot"></span>
+      <div>
+        <h3>TSMC posts a record Q3 as AI chip demand keeps outrunning its own guidance</h3>
+        <p>TSMC&rsquo;s third-quarter 2026 net income rose 68.7% year-on-year to NT$763.06 billion on revenue of about $46.72 billion, beating the top of its own guidance range, according to the company&rsquo;s SEC filing and Focus Taiwan. Gross margin came in at 66.4% and operating margin at 58.7% &mdash; within guidance for the first time in 2026 &mdash; and TSMC raised its full-year 2026 revenue-growth forecast to 44% in dollar terms while keeping its capital-expenditure budget unchanged.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Beating guidance it has already raised twice this year is TSMC&rsquo;s own numbers, not analyst optimism, saying the AI-chip buildout still isn&rsquo;t near its ceiling.</p>
+        <span class="src"><a href="https://focustaiwan.tw/business/202610150018" target="_blank" rel="noopener">Focus Taiwan &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-1">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="ai-2">
+      <span class="dot"></span>
+      <div>
+        <h3>ASML&rsquo;s record €11.7 billion quarter still leaves its stock lower on margin worries</h3>
+        <p>ASML reported third-quarter 2026 total net sales of about €11.7 billion, up 55.2% year-on-year, with gross margin at 57.5%, according to the company&rsquo;s SEC filing. The Dutch chipmaking-equipment maker guided to Q4 2026 sales of €14.2-15.2 billion and raised its full-year 2026 outlook to €44-45 billion, but shares fell 4.2% on the day as investors focused on margin pressure even as management said planned supply may fall short of customer demand.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A stock falling 4% on a quarter this strong shows how high the bar has climbed for anyone selling into the AI buildout &mdash; merely beating guidance isn&rsquo;t enough anymore.</p>
+        <span class="src"><a href="https://www.sec.gov/Archives/edgar/data/0000937966/000162828026065813/pressreleasefinancialresul.htm" target="_blank" rel="noopener">SEC filing &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-2">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="ai-3">
+      <span class="dot"></span>
+      <div>
+        <h3>Apple&rsquo;s first foldable iPhone sells out in minutes, but its own ship dates slip past launch day</h3>
+        <p>Pre-orders for Apple&rsquo;s iPhone Duo, its first foldable phone, opened October 16 at 5am PT and reportedly sold out at every store in the New York/Connecticut area within three minutes, according to a Creativestrat analyst cited by CBS News. The $1,999 phone &mdash; with a 7.6-inch inner display, 5.4-inch outer display and new A20 Pro chip &mdash; has an October 23 retail launch in more than 70 countries, but Apple&rsquo;s own online ship estimates for new orders have slipped to late January, with supply-chain sources putting factory assembly yields only slightly above 60%.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A six-week wait for a phone that &ldquo;launched&rdquo; weeks earlier is Apple admitting its production line, not demand, is the actual bottleneck.</p>
+        <span class="src"><a href="https://www.cbsnews.com/news/iphone-duo-pre-order-sales-apple-foldable" target="_blank" rel="noopener">CBS News &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-3">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="ai-4">
+      <span class="dot"></span>
+      <div>
+        <h3>Google rations free Gemini users down to its smallest model</h3>
+        <p>Effective October 9, Google restricted Gemini access for users without a paid plan to Flash-Lite, its smallest model, removing access to Flash and Pro; AI Plus subscribers ($4.99/month) lose Pro but keep Flash-Lite and Flash, while AI Pro ($19.99/month) and AI Ultra subscribers keep all three models, according to multiple reports including MobileSyrup and NotebookCheck. Google is also rolling out low/medium/high &ldquo;effort&rdquo; settings that trade answer depth for usage-limit consumption.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Cutting free users down to the smallest model right as it adds paid effort tiers is Google trying to push casual users toward a subscription, not just managing compute costs.</p>
+        <span class="src"><a href="https://mobilesyrup.com/2026/10/05/google-limit-free-budget-user-access-newer-gemini-models/" target="_blank" rel="noopener">MobileSyrup &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-4">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="ai-5">
+      <span class="dot"></span>
+      <div>
+        <h3>xAI ships Grok Voice 3.0, replacing its default speech-to-speech model at flat pricing</h3>
+        <p>xAI released Grok Voice 3.0 on October 14, replacing Grok Voice 2.0 as the default model behind its Voice Agent API, with pricing held flat at $0.08 per minute, according to DevX. The company says the new model handles turn-taking and interruptions with under-one-second latency and cites an 86.9 score on the Artificial Analysis Speech-to-Speech Index, though that figure comes from xAI&rsquo;s own materials rather than an independently published Artificial Analysis leaderboard.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Holding the price flat while touting better benchmarks is xAI betting it can compete on capability alone, without yet having to compete on cost.</p>
+        <span class="src"><a href="https://www.devx.com/artificial-intelligence-ai/what-is-grok-voice-3-0-xai-speech-to-speech-model/" target="_blank" rel="noopener">DevX &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-5">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="ai-6">
+      <span class="dot"></span>
+      <div>
+        <h3>Microsoft undercuts OpenAI&rsquo;s new Decisions API with a far cheaper rival model</h3>
+        <p>OpenAI opened its Decisions API to all developers in public beta on October 6, running on a dedicated model called GPT-6 Luna at a reported $0.10 per million input tokens. Three days later, Microsoft shipped a rival called Decision-1 &mdash; built by post-training Alibaba&rsquo;s Qwen3.5-9B &mdash; priced at $0.042 per million input tokens with free output, available through Microsoft Foundry and OpenRouter, according to TheNextWeb.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Microsoft reaching for a Chinese open-weight model to undercut OpenAI on its own new product category shows how fast price competition is spreading beyond chatbots into narrow, task-specific AI.</p>
+        <span class="src"><a href="https://thenextweb.com/news/microsoft-decision-1-qwen-decision-model" target="_blank" rel="noopener">TheNextWeb &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-6">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+  </section>
+  <!-- PRODUCT & BUSINESS -->
+  <section class="lane biz" id="biz">
+    <div class="lane-head">
+      <span class="lane-tag">Product &amp; Business</span>
+      <h2>Netflix cuts roughly 1,000 jobs in its biggest round since 2022 as Amazon trims about 1,000 more corporate roles during its own Prime sale, even as India&rsquo;s Boldfit raises over ₹400 crore to fund a retail push and Flipkart&rsquo;s Big Billion Days draws 6.3 million concurrent users at its opening, while Zetwerk&rsquo;s ₹5,012 crore IPO books head toward Monday&rsquo;s close, Jio Platforms&rsquo; anchor book readies to open for what could be India&rsquo;s largest-ever listing, and Tata Trusts chair Noel Tata files a Bombay High Court caveat as the Tata Sons succession fight drags on</h2>
+      <p class="lane-takeaway"><span class="takeaway-label">Takeaway</span> Netflix and Amazon are both trimming headcount even as they insist growth is intact, India&rsquo;s festive and primary markets are absorbing enormous demand at once, and the Tata succession fight keeps escalating one procedural filing at a time.</p>
+    </div>
+
+    <div class="item" data-story-id="biz-1">
+      <span class="dot"></span>
+      <div>
+        <h3>Netflix cuts about 1,000 jobs in its biggest round since 2022</h3>
+        <p>Netflix announced on October 14 that it is cutting roughly 6% of its workforce &mdash; nearly 1,000 positions &mdash; in its largest round of layoffs in years, with product, tech, legal and HR teams hit hardest, according to the Associated Press and Entrepreneur. Co-CEOs Greg Peters and Ted Sarandos framed the move as &ldquo;organizational changes&rdquo; in a staff memo, saying the business remains &ldquo;strong and growing&rdquo; and on track for its full-year forecast, even as Netflix shares have fallen more than 40% over the past year on slowing engagement.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Insisting the business is &ldquo;strong and growing&rdquo; in the same memo that cuts 1,000 jobs is Netflix trying to manage the signal as carefully as the headcount.</p>
+        <span class="src"><a href="https://abc30.com/story/netflix-is-laying-off-6-workforce-1000-employees-biggest-round-job-cuts-streaming-giant-years/19938143/" target="_blank" rel="noopener">ABC30 / AP &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-1">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="biz-2">
+      <span class="dot"></span>
+      <div>
+        <h3>Amazon cuts about 1,000 more corporate roles during its own Prime sale</h3>
+        <p>Amazon eliminated roughly 1,000 corporate positions in early October, concentrated in its online-store business including customer service, selling-partner support and retail engineering, with affected staff in the US, India and the UK, according to reporting on the October 6-7 round. The cuts landed during Amazon&rsquo;s own Prime Big Deal Days sale and add to the roughly 30,000 corporate jobs the company has eliminated since late 2025; affected employees get a 90-day notice period.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Cutting corporate staff in the same week as its own flagship sale event is Amazon separating the parts of the business it&rsquo;s shrinking from the parts it&rsquo;s still pushing to grow.</p>
+        <span class="src"><a href="https://ppc.land/amazon-cuts-fewer-than-1-000-roles-on-top-of-30-000-since-late-2025/" target="_blank" rel="noopener">PPC Land &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-2">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="biz-3">
+      <span class="dot"></span>
+      <div>
+        <h3>D2C fitness brand Boldfit raises over ₹400 crore to fund a retail push</h3>
+        <p>Boldfit, the KL Rahul-backed fitness and nutrition brand, raised more than ₹400 crore (about $42 million) in a Series B round led by Bharat Value Fund, managed by The Wealth Company Alternates, with existing investor Bessemer Venture Partners also participating, according to Inc42 and YourStory. The round &mdash; Bharat Value Fund&rsquo;s fourth investment in 12 months &mdash; will fund retail expansion, product innovation and manufacturing, following Boldfit&rsquo;s ₹110 crore Series A from Bessemer in 2024.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A fitness brand built on cricket-star backing now raising nine figures for physical stores is D2C&rsquo;s familiar next step: prove the brand online, then go find the customers who don&rsquo;t shop there.</p>
+        <span class="src"><a href="https://inc42.com/buzz/d2c-brand-boldfit-raises-₹400-cr-from-bharat-value-fund-for-retail-expansion/" target="_blank" rel="noopener">Inc42 &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-3">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="biz-4">
+      <span class="dot"></span>
+      <div>
+        <h3>Flipkart&rsquo;s Big Billion Days draws 6.3 million concurrent users at its opening</h3>
+        <p>Flipkart&rsquo;s 13th Big Billion Days sale drew 6.3 million concurrent users during its opening phase, with new customer sign-ups up 34% and more than six times the platform&rsquo;s usual first-hour traffic, according to a report cited by Trak.in. The sale&rsquo;s earlier Early Access phase, open from midnight October 8 to Plus and Black members and co-branded cardholders, logged over 287 million sessions, with non-metro markets accounting for roughly 60% of demand.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Non-metro buyers driving 60% of demand is the clearest sign yet that India&rsquo;s festive e-commerce growth is coming from well beyond the big cities Flipkart built its business on.</p>
+        <span class="src"><a href="https://trak.in/stories/flipkart-big-billion-days-2026-63-lakh-live-users-34-more-new-users/" target="_blank" rel="noopener">Trak.in &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-4">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="biz-5">
+      <span class="dot"></span>
+      <div>
+        <h3>Zetwerk&rsquo;s ₹5,012 crore IPO books head toward Monday&rsquo;s close</h3>
+        <p>Manufacturing platform Zetwerk&rsquo;s ₹5,012 crore IPO &mdash; priced at ₹143-151 a share &mdash; has been open for public bidding since October 15 and closes October 19, with allotment expected October 21 and a tentative NSE/BSE listing on October 23, according to multiple IPO trackers. Grey-market premiums of roughly ₹19-21 a share are pointing to listing gains of about 12-13%, though coverage also flags that recent tech-services listings Fractal Analytics and Shadowfax have struggled after their own debuts.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A double-digit grey-market premium is encouraging, but it&rsquo;s the kind of signal that recent listings have already shown can evaporate by the time shares actually start trading.</p>
+        <span class="src"><a href="https://www.businesstoday.in/markets/ipo-corner/story/zetwerk-ipo-opens-today-should-you-apply-or-avoid-check-price-band-reviews-latest-gmp-more-561690-2026-10-15" target="_blank" rel="noopener">Business Today &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-5">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="biz-6">
+      <span class="dot"></span>
+      <div>
+        <h3>Jio Platforms&rsquo; record IPO firms up a price band of ₹1,065-1,119 a share</h3>
+        <p>Reliance&rsquo;s Jio Platforms is targeting a fresh-issue-only IPO of about ₹36,000 crore (roughly $3.8 billion) at a price band of ₹1,065-1,119 a share for 270 million new shares, according to Reuters-sourced reporting, with the offer opening for public subscription October 21-23 and a listing targeted for around October 28. Having received SEBI&rsquo;s final observations on August 28, the issue would be the first public offering from the Reliance group since 2008 and, if completed as planned, India&rsquo;s largest-ever IPO.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Structuring the entire issue as a fresh share sale, with nothing for existing shareholders to cash out, is Reliance signaling this IPO is about raising capital, not giving early backers an exit.</p>
+        <span class="src"><a href="https://www.khaleejtimes.com/business/mukesh-ambanis-jio-seeks-32-billion-in-record-india-ipo" target="_blank" rel="noopener">Khaleej Times &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-6">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="biz-7">
+      <span class="dot"></span>
+      <div>
+        <h3>Tata Trusts chair Noel Tata files a Bombay High Court caveat as the succession fight drags on</h3>
+        <p>Noel Tata, chairman of Tata Trusts, filed a caveat in the Bombay High Court on October 7 naming fellow trustee Venu Srinivasan and three others &mdash; a procedural step ensuring Tata is heard if any of them go to court, not a lawsuit itself, according to Moneylife and Outlook Business. The filing follows Srinivasan&rsquo;s and trustee Vijay Singh&rsquo;s separate complaint asking Maharashtra&rsquo;s Charity Commissioner to probe the Sir Dorabji Tata Trust&rsquo;s administration, with the regulator extending Tata Trusts&rsquo; response deadline past October 12; the core dispute remains Tata Sons&rsquo; planned public listing, which Noel Tata and Tata Trusts oppose but Srinivasan and Shapoorji Pallonji support.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Filing a pre-emptive court caveat rather than waiting to be sued is Noel Tata making sure he controls the venue the next round of this fight gets fought in.</p>
+        <span class="src"><a href="https://www.moneylife.in/article/venu-srinivasan-flags-serious-governance-lapses-at-tata-trust-seeks-inquiry-board-freeze-and-noel-tatas-recusal/81812.html" target="_blank" rel="noopener">Moneylife &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-7">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+  </section>
+  <!-- STOCK MARKET -->
+  <section class="lane mkt" id="mkt">
+    <div class="lane-head">
+      <span class="lane-tag">Stock Market</span>
+      <h2>Indian markets sit out the weekend with Friday&rsquo;s third straight gain &mdash; Sensex up 0.56%, Nifty up 0.65%, led by IT after Tech Mahindra&rsquo;s and Wipro&rsquo;s results &mdash; the last word heading into Monday&rsquo;s reopen, as FIIs turn net buyers for a change even as Wall Street&rsquo;s chip-stock selloff stretches to an eighth session, its longest since 2008, and Jio Platforms&rsquo; and Zetwerk&rsquo;s overlapping IPOs bear down on the week ahead</h2>
+      <p class="lane-takeaway"><span class="takeaway-label">Takeaway</span> Three straight up days and an FII/DII reversal gave Dalal Street its best week in a while, even as Wall Street&rsquo;s chip-stock funk and three overlapping mega-IPOs both complicate how long that calm actually lasts.</p>
+    </div>
+
+    <div class="ticker">
+      <div class="cell">
+        <div class="idx">Sensex &mdash; last close, Fri 16 Oct</div>
+        <div class="val mono">74,729.28<span class="chg up">+413.67 &middot; +0.56%</span></div>
+      </div>
+      <div class="cell">
+        <div class="idx">Nifty 50 &mdash; last close, Fri 16 Oct</div>
+        <div class="val mono">23,146.15<span class="chg up">+148.80 &middot; +0.65%</span></div>
+      </div>
+      <div class="cell">
+        <div class="idx">S&amp;P 500 &mdash; last close, Fri 16 Oct</div>
+        <div class="val mono">7,659.44<span class="chg down">&minus;84.62 &middot; &minus;1.1%</span></div>
+      </div>
+    </div>
+
+    <div class="movers">
+      <div class="col">
+        <span class="label">India &mdash; Friday&rsquo;s close</span>
+        <span class="row mono">Sensex, week-on-week <span style="color:var(--up)">+3.1% from last Friday</span></span>
+        <span class="row mono">Nifty IT (Fri) <span style="color:var(--up)">best sector, Tech Mahindra &amp; Wipro lead</span></span>
+      </div>
+      <div class="col">
+        <span class="label">Global &mdash; Friday&rsquo;s close</span>
+        <span class="row mono">Nasdaq Composite <span style="color:var(--down)">&minus;2.1% to 26,140.03</span></span>
+        <span class="row mono">Dow Jones <span style="color:var(--down)">&minus;0.3% to 52,002.41</span></span>
+      </div>
+    </div>
+
+    <div class="item" data-story-id="mkt-1">
+      <span class="dot"></span>
+      <div>
+        <h3>Markets sit out the weekend after Friday&rsquo;s third straight gain, led by IT</h3>
+        <p>NSE and BSE are closed through Sunday after the Sensex closed Friday, October 16 at 74,729.28, up 413.67 points (0.56%), and the Nifty 50 at 23,146.15, up 148.80 points (0.65%) &mdash; a third straight gain that leaves the Sensex up roughly 3.1% for the week from last Friday&rsquo;s 72,472.33, according to Ventura Securities&rsquo; daily notes. IT stocks led Friday&rsquo;s session, with Tech Mahindra and Wipro the strongest performers after their own quarterly results.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Three straight up days closing out the week is a real recovery, not just a one-session bounce, with this week&rsquo;s own IT earnings now doing the heavy lifting.</p>
+        <span class="src"><a href="https://www.venturasecurities.com/?p=65474" target="_blank" rel="noopener">Ventura Securities &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="mkt-1">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="mkt-2">
+      <span class="dot"></span>
+      <div>
+        <h3>FIIs turn net buyers on Friday as DIIs book profits for a change</h3>
+        <p>Foreign institutional investors were net buyers of about ₹1,165.92 crore in Indian cash equities on October 16, while domestic institutional investors turned net sellers of about ₹3,661.28 crore, according to Trendlyne&rsquo;s daily tracker &mdash; a reversal of the pattern seen through most of October, when DIIs had been the ones cushioning FII outflows.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> One day of FIIs buying and DIIs selling doesn&rsquo;t undo weeks of the opposite pattern, but it&rsquo;s the first session in a while where the market didn&rsquo;t need domestic money to hold the line.</p>
+        <span class="src"><a href="https://trendlyne.com/macro-data/fii-dii/latest/cash-pastmonth/15-Dec-2020" target="_blank" rel="noopener">Trendlyne &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="mkt-2">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="mkt-3">
+      <span class="dot"></span>
+      <div>
+        <h3>Wall Street&rsquo;s chip-stock selloff stretches to an eighth session, its longest since 2008</h3>
+        <p>The semiconductor-led selloff on Wall Street extended to an eighth consecutive session on October 16 &mdash; the sector&rsquo;s longest losing streak since the 2008 financial crisis, according to Trading Economics. The S&amp;P 500 fell 1.1% to 7,659.44 and the Nasdaq Composite dropped 2.1% to 26,140.03, with Micron down 5.6% and AMD down 5.9%; for the week, the S&amp;P 500 lost about 2% and the Nasdaq about 5%, their worst week since June.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> An eight-session losing streak in chipmakers outlasting any single week&rsquo;s headlines is the market pricing in doubt about the AI buildout&rsquo;s pace, not reacting to one bad data point.</p>
+        <span class="src"><a href="https://tradingeconomics.com/united-states/stock-market/news/592870" target="_blank" rel="noopener">Trading Economics &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="mkt-3">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="mkt-4">
+      <span class="dot"></span>
+      <div>
+        <h3>Jio Platforms&rsquo; anchor book readies to open ahead of India&rsquo;s largest-ever IPO</h3>
+        <p>Reliance&rsquo;s Jio Platforms is set to open its anchor book October 19, ahead of a public subscription window of October 21-23 and a listing targeted for around October 28, at a price band of ₹1,065-1,119 a share for an all-fresh-issue raise of roughly ₹36,000 crore, according to Reuters-sourced reporting. It would be the first Reliance group listing since 2008 and, if it goes as planned, India&rsquo;s largest IPO on record &mdash; landing in the same fortnight as Zetwerk&rsquo;s own ₹5,012 crore issue and Lenskart&rsquo;s planned October 31 listing.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Three large IPOs landing inside the same three-week window will test how much fresh capital India&rsquo;s primary market can actually absorb at once, not just how much any one issue is worth.</p>
+        <span class="src"><a href="https://www.khaleejtimes.com/business/mukesh-ambanis-jio-seeks-32-billion-in-record-india-ipo" target="_blank" rel="noopener">Khaleej Times &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="mkt-4">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="mkt-5">
+      <span class="dot"></span>
+      <div>
+        <h3>Zetwerk&rsquo;s grey-market premium points to a 12-13% listing pop, but recent IPOs warn against complacency</h3>
+        <p>Grey-market premiums of roughly ₹19-21 a share on Zetwerk&rsquo;s ₹143-151 IPO are pricing in listing gains of about 12-13% when its issue lists October 23, according to Business Today&rsquo;s IPO tracker. The same coverage flags that recent tech-services listings Fractal Analytics and Shadowfax Technologies have struggled to hold their own post-listing gains this year, a reminder that grey-market pricing is an unofficial, pre-listing indicator rather than a guarantee.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Citing two recent IPOs that disappointed, in the same breath as a bullish premium, is the market&rsquo;s own analysts hedging their optimism before the stock even lists.</p>
+        <span class="src"><a href="https://www.businesstoday.in/markets/ipo-corner/story/zetwerk-ipo-opens-today-should-you-apply-or-avoid-check-price-band-reviews-latest-gmp-more-561690-2026-10-15" target="_blank" rel="noopener">Business Today &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="mkt-5">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>Trading concept for today, via Zerodha Varsity:</strong> Support and resistance are price levels on a chart &mdash; support sits below the current price, where buyers have tended to step in before, and resistance sits above it, where sellers have tended to show up. A level gets more reliable the more times price has touched and reversed near it, and traders typically target the nearest resistance when going long, or the nearest support when going short.
+      <br><span class="src"><a href="https://zerodha.com/varsity/chapter/support-and-resistance" target="_blank" rel="noopener">Zerodha Varsity &rarr;</a></span>
+    </div>
+  </section>
+    <!-- DAILY QUIZ -->
+  <section class="lane quiz" id="quiz" aria-labelledby="quiz-title">
+    <div class="lane-head">
+      <span class="lane-tag">Daily quiz</span>
+      <h2 id="quiz-title">Five questions on today&rsquo;s edition</h2>
+    </div>
+    <div id="quiz-root"></div>
+    <script type="application/json" id="quiz-data">
+      {
+        "v": 1,
+        "date": "2026-10-18",
+        "questions": [
+          {
+            "q": "By how much did ASML's Q3 2026 net sales rise year-on-year?",
+            "options": [
+              "25.2%",
+              "40%",
+              "55.2%",
+              "68.7%"
+            ],
+            "answer": 2,
+            "why": "ASML's Q3 2026 total net sales rose 55.2% year-on-year to about €11.7 billion.",
+            "story": "ai-2"
+          },
+          {
+            "q": "What did Apple's iPhone Duo pre-orders reveal on October 16?",
+            "options": [
+              "It sold out in minutes despite limited supply",
+              "It was delayed indefinitely",
+              "It launched only in the US",
+              "It sold fewer units than Grok Voice 3.0"
+            ],
+            "answer": 0,
+            "why": "Pre-orders reportedly sold out at every NYC/CT store within three minutes of opening.",
+            "story": "ai-3"
+          },
+          {
+            "q": "About how many jobs did Netflix cut on October 14?",
+            "options": [
+              "100",
+              "5,000",
+              "16,000",
+              "1,000"
+            ],
+            "answer": 3,
+            "why": "Netflix cut roughly 6% of its workforce, nearly 1,000 positions, its biggest round since 2022.",
+            "story": "biz-1"
+          },
+          {
+            "q": "Which fund led Boldfit's ₹400 crore Series B round?",
+            "options": [
+              "Bharat Value Fund",
+              "Bessemer Venture Partners",
+              "Tiger Global",
+              "SoftBank"
+            ],
+            "answer": 0,
+            "why": "Bharat Value Fund, managed by The Wealth Company Alternates, led Boldfit's Series B.",
+            "story": "biz-3"
+          },
+          {
+            "q": "What made Wall Street's chip-stock selloff notable on October 16?",
+            "options": [
+              "It was the first drop in a year",
+              "It stretched to an eighth straight session",
+              "It only affected Indian markets",
+              "Chip stocks actually rose that day"
+            ],
+            "answer": 1,
+            "why": "The chip-led selloff stretched to an eighth consecutive session, its longest since the 2008 financial crisis.",
+            "story": "mkt-3"
+          }
+        ]
+      }
+    </script>
+    <noscript><p>The daily quiz needs JavaScript.</p></noscript>
+  </section>
+  <section class="comments-section" id="comments" data-edition-date="2026-10-18">
+    <h2>Discuss today's edition</h2>
+    <p class="comments-sub">Leave a name (or make one up) and join the conversation. Comments are public and lightly moderated.</p>
+
+    <form class="comment-form" id="comment-form">
+      <input type="text" id="comment-alias" placeholder="Name or alias" maxlength="40" required>
+      <textarea id="comment-text" placeholder="What stood out to you today?" maxlength="500" required></textarea>
+      <button type="submit">Post comment</button>
+      <div class="comment-status" id="comment-status"></div>
+    </form>
+
+    <div class="comments-list" id="comments-list">
+      <p class="comments-empty">Loading comments…</p>
+    </div>
+  </section>
+
+  <footer class="colophon">
+    The Hour Brief is compiled daily from public reporting, newsletters and market data, with every summary linked back to its original source. AI &amp; Tech and Product &amp; Business draw on general technology and business press; Stock Market data covers NSE/BSE and US indices via public market reports. <a href="../about.html" target="_blank" rel="noopener">How this is made →</a> · <a href="../privacy.html" target="_blank" rel="noopener">Privacy</a>
+    <div class="disclaimer contact-us">
+      <strong style="color:var(--ink)">Contact us:</strong> corrections, feedback or app support &mdash; <a href="mailto:milindroy101292@gmail.com">milindroy101292@gmail.com</a> &middot; <a href="/contact.html">Contact page</a>
+    </div>
+    <div class="disclaimer">
+      New edition every morning. <a href="../feed.xml" target="_blank" rel="noopener">Subscribe via RSS</a> to get each edition in your reader of choice (Feedly, NetNewsWire, Reeder, Inoreader, etc.) — no email or account needed.
+    </div>
+    <div class="disclaimer">
+      Nothing here is investment advice. Market figures are for information and discussion only — verify with a live data source before acting, and consult a licensed advisor for anything you're putting money behind.
+    </div>
+  </footer>
+
+  </div>
+
+  <aside class="side-col">
+    <div class="subscribe-box">
+      <span class="sub-label">Get it by email</span>
+      <p>One email a day, every morning. Unsubscribe anytime — no spam, just the day's edition.</p>
+      <form id="subscribe-form" class="subscribe-form">
+        <input type="email" name="email" id="sub-email" placeholder="you@example.com" required>
+        <button type="submit">Subscribe</button>
+      </form>
+      <div class="subscribe-status" id="subscribe-status"></div>
+      <p class="subscribe-note">Prefer no inbox clutter? <a href="../feed.xml" target="_blank" rel="noopener">Use RSS instead</a>.</p>
+    </div>
+  </aside>
+</div>
+<script>
+(function () {
+  var page = document.querySelector('.page');
+  var editionDate = page ? page.getAttribute('data-edition-date') : '';
+
+  // ---- Archive banner accuracy check ----
+  // Only present on archive/<date>.html pages. If this date turns out to still
+  // be the latest edition (not yet superseded), the "archived" framing is
+  // misleading — swap it for a neutral permalink note instead.
+  var archiveBanner = document.querySelector('.archive-banner');
+  if (archiveBanner && editionDate) {
+    fetch('../editions.json')
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data || !data.editions || !data.editions.length) return;
+        var latest = data.editions[data.editions.length - 1];
+        if (latest && latest.date === editionDate) {
+          archiveBanner.innerHTML = '📌 This is also today’s latest edition — permanently linked here. <a href="./" target="_blank" rel="noopener">Browse all editions</a>';
+        }
+      })
+      .catch(function () {});
+  }
+
+  // ---- Scrollspy tabs ----
+  var navLinks = Array.prototype.slice.call(document.querySelectorAll('.nav a[href^="#"]'));
+  var spySections = ['ai', 'biz', 'mkt']
+    .map(function (id) { return document.getElementById(id); })
+    .filter(Boolean);
+  if (navLinks.length && spySections.length && 'IntersectionObserver' in window) {
+    var spy = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          navLinks.forEach(function (link) {
+            link.classList.toggle('active', link.getAttribute('href') === '#' + entry.target.id);
+          });
+        }
+      });
+    }, { rootMargin: '-88px 0px -70% 0px', threshold: 0 });
+    spySections.forEach(function (s) { spy.observe(s); });
+  }
+
+  function voteKey(storyId) { return editionDate + ':' + storyId; }
+  function votedFlagKey(storyId) { return 'hb-voted-' + voteKey(storyId); }
+
+  // ---- Votes ----
+  var voteRows = Array.prototype.slice.call(document.querySelectorAll('.vote-row[data-vote-key]'));
+  if (voteRows.length) {
+    var ids = voteRows.map(function (r) { return voteKey(r.getAttribute('data-vote-key')); });
+    fetch('/api/vote?ids=' + encodeURIComponent(ids.join(',')))
+      .then(function (r) { return r.ok ? r.json() : {}; })
+      .then(function (counts) {
+        voteRows.forEach(function (row) {
+          var storyId = row.getAttribute('data-vote-key');
+          var c = counts[voteKey(storyId)] || { like: 0, dislike: 0 };
+          setCounts(row, c.like, c.dislike);
+          applyVotedState(row, storyId);
+        });
+      })
+      .catch(function () {});
+
+    voteRows.forEach(function (row) {
+      var storyId = row.getAttribute('data-vote-key');
+      applyVotedState(row, storyId);
+      row.querySelectorAll('.vote-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          if (localStorage.getItem(votedFlagKey(storyId))) return;
+          var type = btn.getAttribute('data-vote');
+          btn.disabled = true;
+          fetch('/api/vote', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: voteKey(storyId), type: type })
+          })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+              setCounts(row, data.like, data.dislike);
+              localStorage.setItem(votedFlagKey(storyId), type);
+              applyVotedState(row, storyId);
+            })
+            .catch(function () { btn.disabled = false; });
+        });
+      });
+    });
+  }
+
+  function setCounts(row, like, dislike) {
+    var likeEl = row.querySelector('.vote-like .vote-count');
+    var dislikeEl = row.querySelector('.vote-dislike .vote-count');
+    if (likeEl) likeEl.textContent = like != null ? like : 0;
+    if (dislikeEl) dislikeEl.textContent = dislike != null ? dislike : 0;
+  }
+
+  function applyVotedState(row, storyId) {
+    var voted = localStorage.getItem(votedFlagKey(storyId));
+    row.querySelectorAll('.vote-btn').forEach(function (btn) {
+      var type = btn.getAttribute('data-vote');
+      btn.classList.toggle('voted-' + type, voted === type);
+      btn.disabled = !!voted;
+    });
+  }
+
+  // ---- Email subscribe ----
+  var subForm = document.getElementById('subscribe-form');
+  var subStatus = document.getElementById('subscribe-status');
+  if (subForm) {
+    subForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var emailInput = document.getElementById('sub-email');
+      var email = emailInput.value.trim();
+      if (!email) return;
+      var btn = subForm.querySelector('button');
+      btn.disabled = true;
+      subStatus.className = 'subscribe-status';
+      subStatus.textContent = 'Subscribing…';
+      fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email })
+      })
+        .then(function (r) { return r.ok ? r.json() : Promise.reject(r); })
+        .then(function () {
+          subStatus.className = 'subscribe-status ok';
+          subStatus.textContent = "You're in — first edition lands next morning.";
+          emailInput.value = '';
+        })
+        .catch(function () {
+          subStatus.className = 'subscribe-status err';
+          subStatus.textContent = 'Something went wrong — try again.';
+        })
+        .finally(function () { btn.disabled = false; });
+    });
+  }
+
+  // ---- Comments ----
+  var list = document.getElementById('comments-list');
+  var form = document.getElementById('comment-form');
+  var status = document.getElementById('comment-status');
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function renderComments(comments) {
+    if (!list) return;
+    if (!comments || !comments.length) {
+      list.innerHTML = '<p class="comments-empty">No comments yet — be the first.</p>';
+      return;
+    }
+    list.innerHTML = comments.map(function (c) {
+      var when = '';
+      try { when = new Date(c.ts).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch (e) {}
+      return '<div class="comment-item"><span class="comment-alias">' + escapeHtml(c.alias) +
+        '</span><span class="comment-time">' + when + '</span>' +
+        '<p class="comment-text">' + escapeHtml(c.text) + '</p></div>';
+    }).join('');
+  }
+
+  if (list && editionDate) {
+    fetch('/api/comments?date=' + encodeURIComponent(editionDate))
+      .then(function (r) { return r.ok ? r.json() : { comments: [] }; })
+      .then(function (data) { renderComments(data.comments); })
+      .catch(function () { list.innerHTML = '<p class="comments-empty">Couldn\'t load comments right now.</p>'; });
+  }
+
+  if (form) {
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var alias = document.getElementById('comment-alias').value.trim();
+      var text = document.getElementById('comment-text').value.trim();
+      if (!text) return;
+      var btn = form.querySelector('button');
+      btn.disabled = true;
+      status.textContent = 'Posting…';
+      fetch('/api/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: editionDate, alias: alias, text: text })
+      })
+        .then(function (r) {
+          if (r.status === 429) { status.textContent = "You're commenting a bit fast — try again in a bit."; throw new Error('rate limited'); }
+          if (!r.ok) { status.textContent = 'Something went wrong — try again.'; throw new Error('failed'); }
+          return r.json();
+        })
+        .then(function (data) {
+          status.textContent = '';
+          document.getElementById('comment-text').value = '';
+          var empty = list.querySelector('.comments-empty');
+          if (empty) list.innerHTML = '';
+          var when = '';
+          try { when = new Date(data.comment.ts).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch (e) {}
+          var el = document.createElement('div');
+          el.className = 'comment-item';
+          el.innerHTML = '<span class="comment-alias">' + escapeHtml(data.comment.alias) +
+            '</span><span class="comment-time">' + when + '</span>' +
+            '<p class="comment-text">' + escapeHtml(data.comment.text) + '</p>';
+          list.insertBefore(el, list.firstChild);
+        })
+        .catch(function () {})
+        .finally(function () { btn.disabled = false; });
+    });
+  }
+})();
+</script>
+</body>
+</html>
