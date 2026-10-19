@@ -38,8 +38,23 @@ if (!meta.date) { console.error('Could not read the edition date from the page')
 console.log(`Edition ${meta.number} (${meta.date}) · voice ${VOICE} · pace ${PACE} · modes ${MODES.join(',')}${DRY ? ' · DRY RUN' : ''}`);
 
 if (flag('--skip-existing') && !flag('--force') && process.env.R2_PUBLIC_URL) {
-  const res = await fetch(`${process.env.R2_PUBLIC_URL}/audio/${meta.date}/manifest.json`, { method: 'HEAD' });
-  if (res.ok) { console.log('Audio for this edition already exists; nothing to do.'); process.exit(0); }
+  const res = await fetch(`${process.env.R2_PUBLIC_URL}/audio/${meta.date}/manifest.json`);
+  // A same-day fix/correction commit can change which stories are on the page after the first recording already
+  // ran — the player refuses to play a recording whose story order doesn't match the page (listen.js mapCues),
+  // so a content mismatch here means every reader silently falls back to the device voice with no recording ever
+  // playing again that day. Only skip when the existing recording's story order still matches the current page.
+  if (res.ok) {
+    const existing = await res.json().catch(() => null);
+    const stillMatches = existing && MODES.every((mode) => {
+      const have = existing.modes && existing.modes[mode];
+      if (!have) return false;
+      const currentIds = buildUnits(html, mode).map((u) => u.id);
+      const recordedIds = (have.cues || []).map((c) => c.id);
+      return currentIds.length === recordedIds.length && currentIds.every((id, i) => id === recordedIds[i]);
+    });
+    if (stillMatches) { console.log('Audio for this edition already exists and still matches the page; nothing to do.'); process.exit(0); }
+    console.log('A recording exists for this edition, but the page no longer matches it (content changed since) — recording again.');
+  }
 }
 if (!DRY && !KEY) { console.error('SARVAM_API_KEY is not set'); process.exit(1); }
 

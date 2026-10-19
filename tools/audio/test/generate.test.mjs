@@ -7,15 +7,32 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFile } from 'node:child_process';
 import { toneWav } from '../wav.mjs';
+import { buildUnits } from '../script.mjs';
 
 const DIR = path.resolve(import.meta.dirname, '..');
-function fakeSarvam({ quirks = true } = {}) {
+const ROOT = path.resolve(DIR, '../..');
+
+// Builds a manifest shaped like a real one, from the real page, for "does the existing recording still match
+// the page" tests — reuses the same unit-building code generate.mjs itself calls, rather than hand-guessing ids.
+function realManifestFor(date, mode = 'quick') {
+  const html = fs.readFileSync(path.join(ROOT, 'archive', `${date}.html`), 'utf8');
+  const cues = buildUnits(html, mode).map((u, i) => ({ id: u.id, kind: u.kind, lane: u.lane, title: u.title, start: i, end: i + 1 }));
+  return { v: 1, date, modes: { [mode]: { file: `${mode}.deadbeef.mp3`, duration: cues.length, cues } } };
+}
+
+// manifestFor: what GET .../manifest.json returns (undefined -> 404, an object -> that JSON) — simulates R2.
+function fakeSarvam({ quirks = true, manifestFor } = {}) {
   const seen = { requests: [], hits: 0 };
   const server = http.createServer((req, res) => {
+    if (/\/manifest\.json(\?|$)/.test(req.url)) {
+      if (!manifestFor) { res.writeHead(404); res.end(); return; }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(manifestFor));
+      return;
+    }
     let body = '';
     req.on('data', (d) => body += d);
     req.on('end', () => {
-      if (req.method === 'HEAD') { res.writeHead(200); res.end(); return; }
       seen.hits++;
       const j = JSON.parse(body || '{}');
       seen.requests.push({ ...j, key: req.headers['api-subscription-key'] });
@@ -70,8 +87,8 @@ test('refuses to spend when the script is far longer than a normal day', async (
   assert.equal(seen.hits, 0, 'no paid request may be made');
 });
 
-test('--skip-existing does nothing when the manifest is already published', async () => {
-  const { server, seen, url } = await fakeSarvam({ quirks: false });
+test('--skip-existing does nothing when the manifest is already published and still matches the page', async () => {
+  const { server, seen, url } = await fakeSarvam({ quirks: false, manifestFor: realManifestFor('2026-09-23') });
   const out = fs.mkdtempSync(path.join(os.tmpdir(), 'hb-gen-'));
   const r = await run(['--date', '2026-09-23', '--out', out, '--skip-existing'], { SARVAM_URL: url, SARVAM_API_KEY: 'k', R2_PUBLIC_URL: url });
   server.close();
@@ -79,6 +96,19 @@ test('--skip-existing does nothing when the manifest is already published', asyn
   assert.match(r.stdout, /already exists/);
   assert.equal(seen.hits, 0);
   assert.equal(fs.existsSync(path.join(out, 'audio')), false);
+});
+
+test('--skip-existing records anyway when the page has changed since the existing recording (a same-day content fix)', async () => {
+  const stale = realManifestFor('2026-09-23');
+  stale.modes.quick.cues = stale.modes.quick.cues.slice(0, -1);   // pretend the recording predates the page's last story
+  const { server, seen, url } = await fakeSarvam({ quirks: false, manifestFor: stale });
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'hb-gen-'));
+  const r = await run(['--date', '2026-09-23', '--out', out, '--skip-existing'], { SARVAM_URL: url, SARVAM_API_KEY: 'k', R2_PUBLIC_URL: url });
+  server.close();
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.match(r.stdout, /no longer matches/);
+  assert.ok(seen.hits > 0, 'should have recorded for real, not skipped');
+  assert.ok(fs.existsSync(path.join(out, 'audio', '2026-09-23', 'manifest.json')));
 });
 
 test('fails clearly when the key is missing', async () => {
