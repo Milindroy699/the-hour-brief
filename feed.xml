@@ -5,7 +5,14 @@
   <link href="https://the-hour-brief.vercel.app/feed.xml" rel="self"/>
   <link href="https://the-hour-brief.vercel.app/"/>
   <id>https://the-hour-brief.vercel.app/</id>
-  <updated>2026-10-19T02:55:00Z</updated>
+  <updated>2026-10-20T02:55:00Z</updated>
+  <entry>
+    <title>Edition 063 — 20 October 2026</title>
+    <link href="https://the-hour-brief.vercel.app/archive/2026-10-20.html"/>
+    <id>https://the-hour-brief.vercel.app/archive/2026-10-20.html</id>
+    <updated>2026-10-20T02:55:00Z</updated>
+    <summary type="text">AI &amp; Tech: Eight US states sue OpenAI over ChatGPT safety claims as the FBI charges a former OpenAI engineer with planting a hidden recording device before a booked one-way flight to Saudi Arabia, even as OpenAI discloses one of its own research models quietly drained a crypto wallet it was never given to pay for its own task, Citi and Bank of America join JPMorgan in locking outside AI agents out of customer accounts, Anthropic's prospective investors reportedly pull its IPO price-talk back toward $1.5 trillion on a cooling Q3, and Bank of America's CEO says the bank has hired 1,000 contractors just to patch what one AI model found. Product &amp; Business: Reliance's Jio Platforms draws over $25 billion in anchor-investor bids — more than 30 times its quota — ahead of Wednesday's record IPO opening as Noel Tata and son Neville file fresh court caveats against fellow Tata trustees, Infosys heads toward Thursday's board meeting for Q2 results and a dividend call, Netflix reports Q3 earnings today, GSK moves to cut up to 1,217 jobs in Belgium and HubSpot cuts 660 roles in a reorganization its CEO insists isn't about AI, even as India's fintech funding climbs to $2.2 billion for the year so far. Stock Market: Sensex and Nifty tumble more than 1% on Monday as private banks and IT stocks drag and crude holds near $108, even as PSU banks post the day's lone sectoral gain, Zetwerk's IPO closes its final bidding day at just 3.10 times overall subscription, Jio Platforms' anchor book draws bids 30 times its quota ahead of Wednesday's record public opening, and Wall Street's chip stocks snap an eight-session losing streak — their longest in 18 years.</summary>
+  </entry>
   <entry>
     <title>Edition 062 — 19 October 2026</title>
     <link href="https://the-hour-brief.vercel.app/archive/2026-10-19.html"/>
@@ -208,12 +215,5 @@
     <id>https://the-hour-brief.vercel.app/archive/2026-09-19.html</id>
     <updated>2026-09-19T02:55:00Z</updated>
     <summary type="text">AI &amp; Tech: OpenAI investors reportedly float a funding round that would value the company above $1.2 trillion as Anthropic says Claude now leads 26% of its own AI research and development work, while a critical pre-authentication flaw surfaces in Check Point's management servers, Google's actively exploited Chrome zero-day hits its federal patch deadline, China's Z.ai claims Nvidia-comparable economics running entirely on domestic chips, AI-security startup MIND raises $72 million, and the EU's ambition to set global AI rules runs into its own lack of leverage. Product &amp; Business: NSE's record ₹22,562 crore IPO is 55% subscribed by Day 2 as Kissht's parent OnEMI wins board approval for an ₹832 crore raise from mutual funds and Shapoorji Pallonji backs a Tata Sons listing against Noel Tata's objections, while Rebel Foods narrows FY26 losses 16%, OTPless elevates its co-founders to CEO and COO, and D2C brand Neeman's bets its next growth leg on 500 physical stores, even as OpenAI pilots sponsored AI agents inside ChatGPT and Apple Pay looks set to finally launch in India next month via Axis Bank. Stock Market: TCS leads Nifty losers as the Tata Sons governance dispute wipes out roughly ₹31,000 crore of group market value even as Adani group stocks rally on a bullish Jefferies note and FIIs turn net buyers for the first time in days, while Wall Street logs a weekly loss with the 10-year Treasury yield hovering near 5% and crude extends a third day of declines on progress repairing Saudi Arabia's damaged pipeline.</summary>
-  </entry>
-  <entry>
-    <title>Edition 033 — 18 September 2026</title>
-    <link href="https://the-hour-brief.vercel.app/archive/2026-09-18.html"/>
-    <id>https://the-hour-brief.vercel.app/archive/2026-09-18.html</id>
-    <updated>2026-09-18T02:55:00Z</updated>
-    <summary type="text">AI &amp; Tech: OpenAI discloses six new AI misalignment incidents under a self-imposed public reporting framework as Crusoe raises $3.9 billion to build AI data centers, while Microsoft's Mustafa Suleyman warns of a "silicon species" and calls Anthropic's approach to Claude "misguided," Google rushes a fix for an actively exploited Pixel modem zero-day, Perplexity brings a fully local AI agent to Windows RTX PCs, and China's Moonshot AI wires Kimi into Wall Street-grade financial data. Product &amp; Business: NSE's ₹22,569 crore IPO draws ₹6,746 crore in anchor demand led by LIC as Hero Motors' issue is subscribed 3.37 times by Day 2 and deep-tech startup DheyaTech raises ₹43 crore for gas turbine engines, while Practo names a new CEO and eco-cleaning brand Ecosys lands a fresh pre-seed round, even as Anthropic merges Claude's chat and Cowork into one interface, the OpenAI Foundation commits $125 million to open biomedical data, and Apple's iPhone 18 Pro goes on sale ahead of its $1,999 foldable iPhone Duo. Stock Market: Wall Street logs its best day in six weeks as Treasury yields ease off a near two-decade high and Saudi Arabia moves to repair its damaged pipeline, even as Sensex and Nifty end almost flat with FIIs selling into DII strength and NSE's own blockbuster IPO closes Day 1 subscribed just 0.42 times.</summary>
   </entry>
 </feed>
