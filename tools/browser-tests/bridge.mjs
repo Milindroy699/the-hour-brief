@@ -148,6 +148,37 @@ check("the dismissal is remembered against that edition's date", dismissed === '
 await open('/', [FAKE_EDITIONS(300)], { wait: 1500 });
 check('on the website (not the app), nothing opens on its own and no banner appears, even idle with a newer edition available', (await navCount()) === 1 && !(await banner()));
 
+// ---------- 12. Universal/App Links: a shared link opens the right in-app destination, no round trip through /api/share ----------
+const NATIVE_URLOPEN = `window.Capacitor = { isNativePlatform: () => true, Plugins: { App: { addListener: function (ev, cb) { if (ev === 'appUrlOpen') window.__fireUrlOpen = cb; } } } };`;
+const fireUrlOpen = (path_) => c.ev(`(window.__fireUrlOpen && window.__fireUrlOpen({ url: ${JSON.stringify(B)} + ${JSON.stringify(path_)} }), 'ok')`);
+const landed = () => c.ev(`location.pathname + location.search + location.hash`);
+
+await open('/', [NATIVE_URLOPEN], { wait: 300 });
+await fireUrlOpen(`/e/${CURRENT}`);
+check('a shared edition link (/e/DATE) opens that archive page in-app', await waitFor(async () => (await landed()) === `/archive/${CURRENT}.html`, 2000), await landed());
+
+await open('/', [NATIVE_URLOPEN], { wait: 300 });
+await fireUrlOpen('/e/latest');
+check('a shared "latest edition" link (/e/latest) opens the app at the root, not a literal /archive/latest.html', await waitFor(async () => (await landed()) === '/', 2000), await landed());
+
+await open('/', [NATIVE_URLOPEN], { wait: 300 });
+await fireUrlOpen(`/s/${CURRENT}/ai-1`);
+check('a shared story link (/s/DATE/ID) opens that story, deep-linked to its id', await waitFor(async () => (await landed()) === `/archive/${CURRENT}.html?utm_source=share&utm_medium=story#ai-1`, 2000), await landed());
+
+await open('/', [NATIVE_URLOPEN], { wait: 300 });
+await fireUrlOpen(`/q/${CURRENT}/4`);
+check('a shared quiz-score link (/q/DATE/SCORE) opens the quiz with the right "beat" score carried over', await waitFor(async () => (await landed()) === `/archive/${CURRENT}.html?utm_source=share&utm_medium=quiz&beat=4#quiz`, 2000), await landed());
+
+await open('/', [NATIVE_URLOPEN], { wait: 300 });
+await fireUrlOpen('/l/ABC123');
+check('a shared league-invite link (/l/CODE) opens the quiz with the join code carried over', await waitFor(async () => (await landed()) === '/?join=ABC123#quiz', 2000), await landed());
+
+await open('/', [NATIVE_URLOPEN], { wait: 300 });
+const before = await landed();
+await fireUrlOpen('https://not-the-hour-brief.example/e/2026-01-01');
+await c.sleep(300);
+check('a URL on a different origin is ignored outright, never treated as if it were one of this site\'s own paths', (await landed()) === before, await landed());
+
 const errs = c.errors.filter((e) => !/r2\.dev|__audio|net::ERR|CORS/.test(e));
 check('no script errors anywhere in the run', errs.length === 0, errs.join(' | '));
 

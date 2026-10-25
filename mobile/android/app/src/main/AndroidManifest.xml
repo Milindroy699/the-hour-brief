@@ -19,6 +19,14 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- App Links: shared /e,/s,/q,/l links open here instead of the browser once Play verifies
+                 assetlinks.json against the signed app (see .well-known/assetlinks.json at the repo root). -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="the-hour-brief.vercel.app" />
+            </intent-filter>
         </activity>
 
         <provider

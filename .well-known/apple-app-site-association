@@ -1,0 +1,15 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["PUXF34ZNNT.app.thehourbrief"],
+        "components": [
+          { "/": "/e/*" },
+          { "/": "/s/*" },
+          { "/": "/q/*" },
+          { "/": "/l/*" }
+        ]
+      }
+    ]
+  }
+}

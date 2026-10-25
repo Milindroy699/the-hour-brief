@@ -293,6 +293,47 @@ t = await J(`(() => { const norm = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g,
   return { done: HBListen.state(), ai: said.includes(head('ai-1')), biz: said.includes(head('biz-1')), mkt: said.includes(head('mkt-1')), mktBeforeAi: said.indexOf(head('mkt-1')) >= 0 && said.indexOf(head('mkt-1')) < said.indexOf(head('ai-1')) }; })()`);
 check('device voice: hidden section is not read, the others are read in the reader’s order', t.done === 'done' && t.ai && t.mkt && !t.biz && t.mktBeforeAi, JSON.stringify(t));
 
+// ---------- 14. install nudge: a browser visitor (not the app) is offered the app, OS-aware ----------
+const installStored = () => J(`JSON.parse(localStorage.getItem('hb-install-v1') || 'null')`);
+const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
+const ANDROID_UA = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36';
+const setUA = (ua) => c.send('Emulation.setUserAgentOverride', { userAgent: ua });
+
+await setUA(IPHONE_UA);
+await open({ wait: 600 }); await c.sleep(1800);
+check('browser visitor, first visit: no install card yet (same day-2-or-later restraint as the sections tip)', !(await hasTip('install')) && (await installStored()).n === 1);
+
+await c.ev(`(() => { const o = JSON.parse(localStorage.getItem('hb-install-v1')); o.last = '${LONG_AGO}'; localStorage.setItem('hb-install-v1', JSON.stringify(o)); return 'ok'; })()`);
+await c.ev(`(location.reload(), 'ok')`); await c.sleep(1800);
+t = await J(`(() => { const k = document.querySelector('.hb-tip[data-tip="install"]'); if (!k) return null; return { title: k.querySelector('strong').textContent, go: k.querySelector('.hb-tip-go').textContent, href: document.getElementById && null }; })()`);
+check('on iPhone Safari, second day: the install card appears with "Get the app" / "Get it"', t && t.title === 'Get the app' && t.go === 'Get it', JSON.stringify(t));
+await c.ev(`document.querySelector('.hb-tip-no').click()`); await c.sleep(200);
+check('"Not now" dismisses it and remembers that, independently of the sections tip\'s own done flag', !(await hasTip('install')) && (await installStored()).done === true && (await tipStored()) === null, JSON.stringify({ install: await installStored(), tip: await tipStored() }));
+await c.ev(`(() => { const o = JSON.parse(localStorage.getItem('hb-install-v1')); o.last = '${LONG_AGO}'; localStorage.setItem('hb-install-v1', JSON.stringify(o)); return 'ok'; })()`);
+await c.ev(`(location.reload(), 'ok')`); await c.sleep(1800);
+check('a dismissed install nudge never comes back on a later day', !(await hasTip('install')));
+
+await setUA(ANDROID_UA);
+await open({ wait: 600 }); await c.sleep(1800);
+check('Android Chrome counts as a mobile browser too (not iOS-only)', (await installStored()).n === 1);
+// "Get it" also calls installDone() before assigning location.href to the (OS-specific) store URL — same
+// done/removal side effect already proven above via "Not now", so there's nothing further to prove here
+// without triggering a real outbound navigation, which a headless test should never actually let happen
+// (reliably intercepting a same-window location assignment is its own source of flakiness, not attempted).
+// The OS -> STORE_URL mapping itself is a plain two-entry object literal in mobile.js, easy to eyeball correct.
+
+await setUA(IPHONE_UA);
+await open({ native: true, wait: 600 }); await c.sleep(1800);
+await c.ev(`(() => { const o = JSON.parse(localStorage.getItem('hb-install-v1') || '{"n":1,"last":"2020-01-01","done":false}'); o.last = '${LONG_AGO}'; localStorage.setItem('hb-install-v1', JSON.stringify(o)); return 'ok'; })()`);
+await c.ev(`(location.reload(), 'ok')`); await c.sleep(1800);
+check('never shown inside the app itself, no matter the device/day', !(await hasTip('install')));
+
+await setUA('');  // restore a normal desktop UA for the rest of the suite
+await open({ wait: 600 }); await c.sleep(1800);
+await c.ev(`(() => { const o = JSON.parse(localStorage.getItem('hb-install-v1') || '{"n":1,"last":"2020-01-01","done":false}'); o.last = '${LONG_AGO}'; localStorage.setItem('hb-install-v1', JSON.stringify(o)); return 'ok'; })()`);
+await c.ev(`(location.reload(), 'ok')`); await c.sleep(1800);
+check('on a plain desktop browser, never shown (nothing to install there)', !(await hasTip('install')));
+
 // ---------- visuals ----------
 await open({ prefs: { order: ['mkt', 'ai', 'biz', 'quiz'], off: ['biz'] }, dark: true, width: 360, wait: 1500 });
 t = await J(`(() => { const nav = document.querySelector('.nav'), all = nav.querySelector('.nav-all'), first = [...nav.querySelectorAll('a:not(.nav-all)')].find((a) => getComputedStyle(a).display !== 'none'); const chip = document.querySelector('.quiz-chip'), tools = document.querySelector('.reader-tools'); const cr = chip.getBoundingClientRect(), tr = tools.getBoundingClientRect(); const bs = [...tools.querySelectorAll('.reader-btn')].map((b) => Math.round(b.getBoundingClientRect().top)); return { scroll: nav.scrollLeft, first: first.textContent.trim(), left: Math.round(all.getBoundingClientRect().left), chipH: Math.round(cr.height), chipW: Math.round(cr.width), toolsW: Math.round(tr.width), bar: [...document.querySelectorAll('.ab-actions .ab-btn')].map((b) => { const r = b.getBoundingClientRect(); return { l: Math.round(r.left), r: Math.round(r.right) }; }) }; })()`);

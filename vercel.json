@@ -22,6 +22,16 @@
       "destination": "/api/share?t=l&code=:code"
     }
   ],
+  "headers": [
+    {
+      "source": "/.well-known/apple-app-site-association",
+      "headers": [{ "key": "Content-Type", "value": "application/json" }]
+    },
+    {
+      "source": "/.well-known/assetlinks.json",
+      "headers": [{ "key": "Content-Type", "value": "application/json" }]
+    }
+  ],
   "crons": [
     {
       "path": "/api/post-digest",

@@ -23,9 +23,28 @@ function page({ title, description, image, alt, landing, dest }) {
 <meta name="twitter:title" content="${esc(title)}">
 <meta name="twitter:description" content="${esc(description)}">
 <meta name="twitter:image" content="${esc(image)}">
-<meta http-equiv="refresh" content="0;url=${esc(dest)}">
-<script>location.replace(${JSON.stringify(dest)});</script>
-</head><body style="font:16px/1.5 system-ui,sans-serif;padding:24px"><p>Opening <a href="${esc(dest)}">The Hour Brief</a>…</p></body></html>`;
+<meta http-equiv="refresh" content="3;url=${esc(dest)}">
+</head><body style="font:16px/1.5 system-ui,sans-serif;padding:24px;max-width:420px;margin:0 auto;text-align:center">
+<p id="hb-land-msg">Opening <a href="${esc(dest)}">The Hour Brief</a>…</p>
+<p id="hb-land-store" hidden style="margin-top:14px">
+<a id="hb-land-ios" href="https://apps.apple.com/app/id6817195056" style="display:none">Get it on the App Store</a>
+<a id="hb-land-android" href="https://play.google.com/store/apps/details?id=app.thehourbrief" style="display:none">Get it on Google Play</a>
+</p>
+<script>
+(function () {
+  var ua = navigator.userAgent || '';
+  var ios = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+  var android = /Android/.test(ua);
+  var dest = ${JSON.stringify(dest)};
+  if (ios || android) {
+    document.getElementById('hb-land-store').hidden = false;
+    document.getElementById(ios ? 'hb-land-ios' : 'hb-land-android').style.display = 'inline-block';
+    document.getElementById('hb-land-msg').textContent = 'The Hour Brief has an app.';
+  }
+  setTimeout(function () { location.replace(dest); }, ios || android ? 2500 : 0);
+})();
+</script>
+</body></html>`;
 }
 
 const img = (params) => `${CANON}/api/og?${new URLSearchParams(params).toString()}`;

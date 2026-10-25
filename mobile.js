@@ -470,6 +470,8 @@
   var SLIDERS_SVG = '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" ' +
     'stroke-linejoin="round" aria-hidden="true"><path d="M4 6h9"/><path d="M17 6h3"/><circle cx="15" cy="6" r="2"/>' +
     '<path d="M4 12h3"/><path d="M11 12h9"/><circle cx="9" cy="12" r="2"/><path d="M4 18h9"/><path d="M17 18h3"/><circle cx="15" cy="18" r="2"/></svg>';
+  var DOWNLOAD_SVG = '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" ' +
+    'stroke-linejoin="round" fill="none" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>';
   var CARDS_SVG = '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" ' +
     'stroke-linejoin="round" aria-hidden="true"><rect x="6.5" y="4" width="11" height="16" rx="2"/><path d="M3 8v8"/><path d="M21 8v8"/></svg>';
   var prefs = null, laneBase = null, prefSig = null, lastNavKey = '';
@@ -683,7 +685,7 @@
   // Cards is the default view, so most people would otherwise see this on literally their first card; it now simply
   // waits and offers it in List instead, the next time the reader happens to be there (never "used up" silently
   // while hidden behind the deck — see the early return in maybeSuggest() below).
-  function tipCard(which, icon, title, body, goText, go) {
+  function tipCard(which, icon, title, body, goText, go, onDismiss) {
     if (deckOpen()) return false;
     var first = document.querySelector('section.lane');
     if (!first || document.querySelector('.hb-tip')) return false;
@@ -701,7 +703,7 @@
     yes.addEventListener('click', go);
     var no = mk('button', 'hb-tip-no', 'Not now');
     no.type = 'button';
-    no.addEventListener('click', function () { tipDone(which); });
+    no.addEventListener('click', onDismiss || function () { tipDone(which); });
     acts.appendChild(yes);
     acts.appendChild(no);
     card.appendChild(ico);
@@ -720,6 +722,42 @@
       if (tipCard('sections', SLIDERS_SVG, 'Make it yours', 'Choose which sections you see, and in what order.', 'Choose', function () { openPrefs(null); })) { st.secOn = today; tipSave(st); }
       return;
     }
+  }
+
+  // ---- Install nudge for browser visitors (never shown inside the app itself) ----
+  var STORE_URL = { ios: 'https://apps.apple.com/app/id6817195056', android: 'https://play.google.com/store/apps/details?id=app.thehourbrief' };
+  function mobileOS() {
+    var ua = navigator.userAgent || '';
+    if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) return 'ios';
+    if (/Android/.test(ua)) return 'android';
+    return null;
+  }
+  // Own key, deliberately separate from TIP_KEY/hb-tip-v1: sharing one "done" flag across two different
+  // tips would mean dismissing one silently dismisses the other for good, which is wrong for either of them.
+  var INSTALL_KEY = 'hb-install-v1';
+  function installState() {
+    try {
+      var o = JSON.parse(localStorage.getItem(INSTALL_KEY) || 'null');
+      if (o && typeof o === 'object') return { n: +o.n || 0, last: String(o.last || ''), done: !!o.done };
+    } catch (e) { /* none saved */ }
+    return { n: 0, last: '', done: false };
+  }
+  function installSave(st) { try { localStorage.setItem(INSTALL_KEY, JSON.stringify(st)); return true; } catch (e) { return false; } }
+  function installDone() {
+    var el = document.querySelector('.hb-tip[data-tip="install"]');
+    if (el) el.remove();
+    var st = installState();
+    if (!st.done) { st.done = true; installSave(st); }
+  }
+  function maybeSuggestInstall() {
+    var os = mobileOS();
+    if (NATIVE || !laneBase || !os) return;          // only an actual mobile browser, never inside the app
+    var st = installState(), today = localDay();
+    if (st.last !== today) { st.n += 1; st.last = today; }
+    if (!installSave(st)) return;
+    if (st.done || st.n < 2 || location.hash || /[?&]utm_/.test(location.search) || document.querySelector('.hb-tip')) return;
+    tipCard('install', DOWNLOAD_SVG, 'Get the app', 'Faster, with offline reading and a daily reminder.', 'Get it',
+      function () { installDone(); location.href = STORE_URL[os]; }, installDone);
   }
 
   // ---- Tools row under the chips: hosts the quiz chip (and, in Listen, the listen card follows it) ----
@@ -1224,10 +1262,11 @@
     apply(); openFromHash(); loadListen();
     restoreView(function () {
       maybeSuggest();
+      maybeSuggestInstall();
       // Cards is the default view, so the very first call above almost always finds the deck open and defers (see
       // tipCard()) — give it another look the moment the reader actually reaches List, in the same visit, rather
       // than only on a later day that happens to start there.
-      document.addEventListener('hb:deck', function () { if (!deckOpen()) maybeSuggest(); });
+      document.addEventListener('hb:deck', function () { if (!deckOpen()) { maybeSuggest(); maybeSuggestInstall(); } });
       openAudioFromUrl();
       openQuizFromUrl();
     });

@@ -561,4 +561,23 @@
       else if (P.App.exitApp) { P.App.exitApp(); }
     });
   }
+
+  // ---- Universal Links (iOS) / App Links (Android): shared links open straight inside the app ----
+  // The WebView already shares this app's own origin (server.url), so compute the destination directly —
+  // the same transform api/share.js's `dest` makes for /e, /s, /q, /l — instead of bouncing through
+  // /api/share again, which would show a visible "Opening…" flash first. Keep these in sync if either changes.
+  if (P.App) {
+    P.App.addListener('appUrlOpen', function (data) {
+      var url;
+      try { url = new URL(data && data.url); } catch (e) { return; }
+      if (url.origin !== location.origin) return;
+      var seg = url.pathname.split('/').filter(Boolean);
+      var dest = null;
+      if (seg[0] === 'e' && seg[1]) { dest = seg[1] === 'latest' ? '/' : '/archive/' + seg[1] + '.html'; }
+      else if (seg[0] === 's' && seg[1] && seg[2]) { dest = '/archive/' + seg[1] + '.html?utm_source=share&utm_medium=story#' + seg[2]; }
+      else if (seg[0] === 'q' && seg[1] && seg[2]) { dest = '/archive/' + seg[1] + '.html?utm_source=share&utm_medium=quiz&beat=' + seg[2] + '#quiz'; }
+      else if (seg[0] === 'l' && seg[1]) { dest = '/?join=' + seg[1] + '#quiz'; }
+      location.assign(dest || (url.pathname + url.search + url.hash));
+    });
+  }
 })();

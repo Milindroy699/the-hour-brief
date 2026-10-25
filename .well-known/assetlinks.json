@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.thehourbrief",
+      "sha256_cert_fingerprints": [
+        "CE:1E:B6:18:75:18:51:6E:D3:03:5B:5D:7C:69:D1:FC:31:3F:4A:64:4F:80:82:8A:1F:00:02:54:2D:F1:E5:35"
+      ]
+    }
+  }
+]
