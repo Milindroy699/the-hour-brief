@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Firebase Analytics' own manifest auto-merges these for ad-attribution features we don't
+         use (no ads, no ad personalization) — stripped so Play's "advertising ID" declaration can
+         accurately answer No instead of needing to claim usage that doesn't exist. -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_AD_ID" tools:node="remove" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
