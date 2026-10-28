@@ -1,0 +1,79 @@
+name: Live smoke checks
+
+# Confirms today's actual published content works on the live site, not just that the code is
+# correct — catches the class of bug fixed 2026-10-19 (Listen silently falling back to the device
+# voice after a same-day content correction) that a local/dry-run test can't see, since it only
+# shows up once a recording genuinely drifts from the live page.
+#   - Quiz check runs in the afternoon (IST), audio check in the evening — both well after the
+#     daily content routine's ~08:00 IST publish window, with buffer for its own retry windows.
+#   - Each SKIPs cleanly (exit 0) if today's edition isn't live yet, rather than failing — a late
+#     publish is not a live-check failure.
+#   - A real failure opens a GitHub issue (deduped by label so a persisting problem doesn't spam a
+#     new issue every run), mirroring tools/audio/credit.sh's existing alert pattern.
+on:
+  schedule:
+    - cron: '30 8 * * *'   # ~14:00 IST — quiz check
+    - cron: '30 13 * * *'  # ~19:00 IST — audio check
+  workflow_dispatch:
+    inputs:
+      check:
+        description: Which check to run
+        type: choice
+        options: [quiz, audio]
+        default: quiz
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  quiz-check:
+    if: github.event.schedule == '30 8 * * *' || (github.event_name == 'workflow_dispatch' && inputs.check == 'quiz')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check today's live quiz
+        id: check
+        run: node tools/checks/live-quiz.mjs
+      - name: Open an issue on failure
+        if: failure() && steps.check.outcome == 'failure'
+        run: |
+          gh label create live-check --color d93f0b --description "Live production smoke-check failures" 2>/dev/null || true
+          if [ "$(gh issue list --label live-check --state open --json title -q '[.[] | select(.title == "Live quiz check failed")] | length')" = "0" ]; then
+            gh issue create --label live-check --title "Live quiz check failed" \
+              --body "The scheduled live quiz smoke test failed — today's quiz on the live site is missing or malformed. See the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details."
+          fi
+
+  audio-check:
+    if: github.event.schedule == '30 13 * * *' || (github.event_name == 'workflow_dispatch' && inputs.check == 'audio')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install tools
+        working-directory: tools/audio
+        run: npm ci --silent
+      - name: Check today's live audio
+        id: check
+        working-directory: tools/audio
+        run: node check-live.mjs
+      - name: Open an issue on failure
+        if: failure() && steps.check.outcome == 'failure'
+        run: |
+          gh label create live-check --color d93f0b --description "Live production smoke-check failures" 2>/dev/null || true
+          if [ "$(gh issue list --label live-check --state open --json title -q '[.[] | select(.title == "Live audio check failed")] | length')" = "0" ]; then
+            gh issue create --label live-check --title "Live audio check failed" \
+              --body "The scheduled live audio smoke test failed — today's Listen recording doesn't match the live page (readers are likely getting the device-voice fallback instead). See the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details."
+          fi
