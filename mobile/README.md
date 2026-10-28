@@ -184,19 +184,22 @@ one) from `MessagingDelegate.didReceiveRegistrationToken` to Capacitor via
 `registration` listener POSTs to `/api/register-push` — an FCM token on both platforms,
 which is what the server-side Firebase Admin SDK can actually send to.
 
-**Backend (`/api/_push.js`, `/api/push-edition.js`, `/api/push-reengagement.js`):**
+**Backend (`/api/_push.js`, `/api/push-send.js`):**
 - `register-push.js` stores tokens in Vercel KV (`push:tokens:ios` / `push:tokens:android`
   sets) and a `push:lastseen` sorted set (updated on every app launch, since the bridge
   re-registers each time — this doubles as activity tracking for re-engagement).
 - The daily "edition is ready" push piggybacks `post-digest.js`'s existing Vercel Cron
   slots (`sendEditionPush`, independently dedupe-keyed from the Telegram post) rather than
   spending more of the project's limited cron jobs on the same publish-time check.
-  `push-edition.js` is a thin manual/dry-run wrapper around the same function, auth'd with
-  `ROUTINE_SECRET`.
-- `push-reengagement.js` (win-back push to devices not seen in 7+ days) is **not on an
-  automatic schedule yet** — no spare cron slot for it was confirmed safe to add without
-  knowing this project's Vercel plan tier. Call it by hand, or wire it into wherever the
-  daily content routine runs, with `Authorization: Bearer $ROUTINE_SECRET`.
+- `push-send.js` is the manual/dry-run entry point for both push kinds (`?kind=edition`,
+  the default, or `?kind=reengagement` for the win-back push to devices not seen in 7+
+  days), auth'd with `Authorization: Bearer $ROUTINE_SECRET`. The two started as separate
+  files but got merged into one — this project is on Vercel's Hobby plan, capped at 12
+  Serverless Functions per deployment, and `api/` was already at 11 routable functions
+  before any of today's work.
+- Re-engagement has **no automatic schedule yet** — no spare function/cron slot was safe
+  to add without more headroom. Call `push-send.js?kind=reengagement` by hand, or wire it
+  into wherever the daily content routine runs.
 - Env vars: `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` (the
   Firebase Admin SDK service account), already set in Vercel.
 
