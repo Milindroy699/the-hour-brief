@@ -5,7 +5,8 @@
       "namespace": "android_app",
       "package_name": "app.thehourbrief",
       "sha256_cert_fingerprints": [
-        "CE:1E:B6:18:75:18:51:6E:D3:03:5B:5D:7C:69:D1:FC:31:3F:4A:64:4F:80:82:8A:1F:00:02:54:2D:F1:E5:35"
+        "CE:1E:B6:18:75:18:51:6E:D3:03:5B:5D:7C:69:D1:FC:31:3F:4A:64:4F:80:82:8A:1F:00:02:54:2D:F1:E5:35",
+        "AE:63:3E:2E:F3:A1:13:81:55:1C:87:D5:E1:16:E8:08:7D:66:0D:05:B8:CD:B4:70:43:B3:68:DD:F6:68:15:1E"
       ]
     }
   }
