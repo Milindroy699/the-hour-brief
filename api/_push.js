@@ -2,7 +2,11 @@
 // push-reengagement.js. Tokens are FCM registration tokens for both platforms — on iOS this
 // is the token AppDelegate.swift hands over after exchanging the raw APNs token with Firebase
 // (see mobile/ios/App/App/AppDelegate.swift), not the raw APNs token itself.
-const admin = require('firebase-admin');
+// firebase-admin v14 dropped the admin.credential.cert() / admin.messaging() namespace object
+// style in favor of modular subpath imports — require('firebase-admin') alone no longer exposes
+// either.
+const { initializeApp, cert } = require('firebase-admin/app');
+const { getMessaging } = require('firebase-admin/messaging');
 
 const KV_URL = process.env.KV_REST_API_URL;
 const KV_TOKEN = process.env.KV_REST_API_TOKEN;
@@ -16,8 +20,8 @@ async function kv(command) {
 let app;
 function firebaseApp() {
   if (app) return app;
-  app = admin.initializeApp({
-    credential: admin.credential.cert({
+  app = initializeApp({
+    credential: cert({
       projectId: process.env.FIREBASE_PROJECT_ID,
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
       privateKey: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
@@ -62,7 +66,7 @@ async function sendToTokens(tokens, { title, body, url }) {
 
   for (let i = 0; i < tokens.length; i += 500) {
     const chunk = tokens.slice(i, i + 500);
-    const resp = await admin.messaging().sendEachForMulticast({ tokens: chunk, ...message });
+    const resp = await getMessaging().sendEachForMulticast({ tokens: chunk, ...message });
     successCount += resp.successCount;
     failureCount += resp.failureCount;
     resp.responses.forEach((r, j) => {
