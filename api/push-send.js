@@ -1,10 +1,10 @@
-// Manual/testing entry point for both push kinds — merged into one file to stay within the
-// Hobby plan's 12-serverless-functions-per-deployment cap. The daily "edition is ready" push
-// doesn't need this at all in normal operation: it piggybacks post-digest.js's existing Vercel
-// Cron slots automatically (see sendEditionPush in _push.js). This endpoint exists for dry-running
-// or force-sending either kind by hand, and for re-engagement specifically, which has no
-// automatic schedule yet (no spare cron slot was safe to add without knowing this project's plan
-// tier — see mobile/README.md "Push notifications").
+// Manual/testing entry point for all push kinds — merged into one file to stay within the Hobby
+// plan's 12-serverless-functions-per-deployment cap. Neither the daily edition push nor the
+// weekly re-engagement push need this in normal operation: both piggyback cron jobs that already
+// exist elsewhere (sendEditionPush from post-digest.js's slots, sendReengagementPush from the same
+// place gated to Sundays — see both in _push.js) rather than spending any of the project's limited
+// Vercel cron/function slots on their own schedules. This endpoint exists for dry-running or
+// force-sending either one by hand, plus a pure connectivity test.
 //   ?kind=edition        (default) today's "edition is ready" push
 //   ?kind=reengagement    win-back push to devices lapsed N days (?days=, default 7)
 //   ?kind=test             a plain connectivity-check push to every registered token right now,
@@ -16,7 +16,7 @@
 // needs the production automation's own secret).
 const crypto = require('crypto');
 const { buildDigest } = require('./_digest');
-const { allTokens, lapsedTokens, sendToTokens, sendEditionPush, kv } = require('./_push');
+const { allTokens, lapsedTokens, sendToTokens, sendEditionPush, sendReengagementPush } = require('./_push');
 
 function istToday() {
   return new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
@@ -61,32 +61,12 @@ async function editionPush(q) {
 
 async function reengagementPush(q) {
   const days = Math.max(1, parseInt(q.days, 10) || 7);
-  const payload = {
-    title: 'Your daily brief is waiting',
-    body: 'Catch up on AI, business and markets — a fresh edition every morning.',
-    url: 'https://the-hour-brief.vercel.app/',
-  };
-  const tokens = await lapsedTokens(days);
-  const today = istToday();
   if (q.dry === '1') {
-    return { status: 200, body: { ok: true, dry: true, tokens: tokens.length, days, ...payload } };
+    const tokens = await lapsedTokens(days);
+    return { status: 200, body: { ok: true, dry: true, tokens: tokens.length, days } };
   }
-  if (!tokens.length) return { status: 200, body: { ok: true, skipped: 'no lapsed devices' } };
-  if (!process.env.FIREBASE_PROJECT_ID) return { status: 200, body: { ok: false, skipped: 'firebase not configured' } };
-
-  const force = q.force === '1';
-  const key = `push:reeng-sent:${today}`;
-  if (!force) {
-    const claimed = await kv(['SET', key, '1', 'EX', '259200', 'NX']);
-    if (claimed.result === null) return { status: 200, body: { ok: true, skipped: 'already sent today', date: today } };
-  }
-  try {
-    const result = await sendToTokens(tokens, payload);
-    return { status: 200, body: { ok: true, date: today, days, ...result } };
-  } catch (e) {
-    if (!force) await kv(['DEL', key]);
-    return { status: 502, body: { error: 'push send failed', detail: e.message } };
-  }
+  const result = await sendReengagementPush({ force: q.force === '1', days });
+  return { status: result.ok ? 200 : 502, body: result };
 }
 
 module.exports = async (req, res) => {

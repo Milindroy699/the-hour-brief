@@ -125,4 +125,32 @@ async function sendEditionPush(d, { force } = {}) {
   }
 }
 
-module.exports = { kv, allTokens, lapsedTokens, sendToTokens, sendEditionPush };
+// Sends the weekly win-back push to devices lapsed `days`+ (default 7). Independently dedupe-keyed
+// by date, same pattern as sendEditionPush — safe to call from a cron gated to a specific day
+// without worrying about the two daily retry windows double-sending it.
+async function sendReengagementPush({ force, days = 7 } = {}) {
+  const payload = {
+    title: 'Your daily brief is waiting',
+    body: 'Catch up on AI, business and markets — a fresh edition every morning.',
+    url: 'https://the-hour-brief.vercel.app/',
+  };
+  const today = new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
+  const tokens = await lapsedTokens(days);
+  if (!tokens.length) return { ok: true, skipped: 'no lapsed devices' };
+  if (!process.env.FIREBASE_PROJECT_ID) return { ok: false, skipped: 'firebase not configured' };
+
+  const key = `push:reeng-sent:${today}`;
+  if (!force) {
+    const claimed = await kv(['SET', key, '1', 'EX', '259200', 'NX']);
+    if (claimed.result === null) return { ok: true, skipped: 'already sent today', date: today };
+  }
+  try {
+    const result = await sendToTokens(tokens, payload);
+    return { ok: true, date: today, days, ...result };
+  } catch (e) {
+    if (!force) await kv(['DEL', key]);
+    return { ok: false, error: 'push send failed', detail: e.message };
+  }
+}
+
+module.exports = { kv, allTokens, lapsedTokens, sendToTokens, sendEditionPush, sendReengagementPush };

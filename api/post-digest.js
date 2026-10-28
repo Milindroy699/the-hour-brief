@@ -1,14 +1,15 @@
 // Posts today's digest to a Telegram channel, and (piggybacking this same cron slot rather than
 // spending more of the project's limited Vercel Cron jobs) sends the "edition is ready" push
-// notification via sendEditionPush — independently dedupe-keyed, so one failing never blocks the
-// other. Called by Vercel Cron (which sends "Authorization: Bearer $CRON_SECRET") or by hand with
+// notification via sendEditionPush, plus the weekly re-engagement push on Sundays via
+// sendReengagementPush — all three independently dedupe-keyed, so one failing never blocks the
+// others. Called by Vercel Cron (which sends "Authorization: Bearer $CRON_SECRET") or by hand with
 // the same header.
 //   ?dry=1   build and return the post without sending
-//   ?force=1 post/push even if today's edition was already posted/pushed
+//   ?force=1 post/push even if today's edition/re-engagement was already posted/pushed
 // Env: CRON_SECRET, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID (e.g. @yourchannel), KV_REST_API_URL/TOKEN (dedupe).
 const crypto = require('crypto');
 const { buildDigest } = require('./_digest');
-const { sendEditionPush } = require('./_push');
+const { sendEditionPush, sendReengagementPush } = require('./_push');
 
 const KV_URL = process.env.KV_REST_API_URL;
 const KV_TOKEN = process.env.KV_REST_API_TOKEN;
@@ -49,6 +50,11 @@ module.exports = async (req, res) => {
   // Independent of Telegram below: its own dedupe key, its own failure handling. One failing
   // (e.g. Telegram not configured, which is the current state) never blocks the other.
   const push = await sendEditionPush(d, { force });
+
+  // Sundays only — dedupe-keyed by date, so if both daily cron windows land on the same Sunday
+  // (the usual retry pattern), only the first actually sends.
+  const isSunday = new Date(d.date + 'T00:00:00Z').getUTCDay() === 0;
+  const reengagement = isSunday ? await sendReengagementPush({ force }) : { ok: true, skipped: 'not Sunday' };
 
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chat = process.env.TELEGRAM_CHAT_ID;
@@ -91,5 +97,5 @@ module.exports = async (req, res) => {
     }
   }
 
-  res.status(200).json({ ok: true, date: d.date, edition: d.edition, telegram, push });
+  res.status(200).json({ ok: true, date: d.date, edition: d.edition, telegram, push, reengagement });
 };
