@@ -77,8 +77,12 @@ async function sendToTokens(tokens, { title, body, url }) {
     resp.responses.forEach((r, j) => {
       if (r.success) return;
       const code = r.error && r.error.code;
+      const token = chunk[j];
+      // tokenTail lets this be cross-referenced against a SMEMBERS push:tokens:ios/android dump
+      // to identify which platform/registration actually failed, without logging the full token.
+      console.error('push send failed', { code, message: r.error && r.error.message, tokenTail: token.slice(-16) });
       if (code === 'messaging/registration-token-not-registered' || code === 'messaging/invalid-registration-token') {
-        invalid.push(chunk[j]);
+        invalid.push(token);
       }
     });
   }
