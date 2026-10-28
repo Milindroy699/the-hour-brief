@@ -1,13 +1,21 @@
-# Release checklist (last verified 2026-09-29)
+# Release checklist (last verified 2026-10-27)
 
 ## Android bundle
-`mobile/dist/the-hour-brief-1.1.2-vc6.aab` (versionCode 6; Play already had a version code 5 from an earlier upload attempt, and version codes can never be reused, so vc5 is superseded, as is vc4).
-Rebuilt 2026-09-25 from `main` with the final config (white status-bar default); SHA-256 `2de0d800de4cd408dc8934c5a43ac8407f1e19fb61fc3bb3f27facf8f814fc8d` (`shasum -a 256` to confirm you are uploading this file). Loaded on the emulator against the live site: new design, AI voice card, version 5. Verified on the built artifact: signed with the upload key
-(SHA-256 `CE:1E:B6:18:75:18:51:6E:D3:03:5B:5D:7C:69:D1:FC:31:3F:4A:64:4F:80:82:8A:1F:00:02:54:2D:F1:E5:35`), target/compile SDK 36,
-min SDK 24, not debuggable, HTTPS only, no native libraries (the 16 KB page-size rule does not apply), zip-aligned, permissions
-`INTERNET, VIBRATE, POST_NOTIFICATIONS, RECEIVE_BOOT_COMPLETED, WAKE_LOCK` only (no exact-alarm, no storage), server URL = production.
-Smoke-tested on the emulator (new icon on the launcher, hourglass splash on navy, offline page in the new colours): loads the live edition, Listen card on the first screen and the Contact row in the footer; with the network off it
-shows the bundled offline page (`www/offline.html`) that carries the contact details.
+`mobile/dist/the-hour-brief-1.1.2-vc7.aab` (versionCode 7; Play had already consumed versionCode 6 via the closed-testing
+upload, so vc6/vc5/vc4 are all superseded and can't be reused). Built 2026-10-27 from `main` (`npx cap sync android` then
+`./gradlew bundleRelease assembleRelease`) — this build includes the deep-links AndroidManifest intent-filter
+(`android:autoVerify="true"` on `https://the-hour-brief.vercel.app`) from commit `b63526a`.
+SHA-256 (the file to upload): `5100f83b072d207df7ad20fdb6c30342eaac6882d006d606f1f53a7333f7edc9` (`shasum -a 256` to confirm).
+Verified on the built artifact: `app.thehourbrief` versionCode 7 / versionName 1.1.2 (`aapt2 dump badging`), signed with the
+upload key — `apksigner verify --print-certs` gives SHA-256 `CE:1E:B6:18:75:18:51:6E:D3:03:5B:5D:7C:69:D1:FC:31:3F:4A:64:4F:80:82:8A:1F:00:02:54:2D:F1:E5:35`, matching the fingerprint
+already in `.well-known/assetlinks.json` — target/compile SDK 36, min SDK 24, not debuggable, permissions
+`INTERNET, VIBRATE, POST_NOTIFICATIONS, RECEIVE_BOOT_COMPLETED, WAKE_LOCK` only (no exact-alarm, no storage).
+**Not yet confirmed: whether this upload-key fingerprint also matches Play's own App Signing key certificate** (Play Console →
+Setup → App integrity) — Play re-signs with its own key, which can differ from the upload key, and App Links verification
+checks against *that* certificate. If it differs, add the second fingerprint to `.well-known/assetlinks.json`'s array (both can
+coexist) before relying on deep links working from Play-distributed installs. Not smoke-tested on an emulator/device yet since
+this rebuild — do that before uploading if the last emulator check (new icon, offline page, Listen card) feels stale.
+**Left for you:** upload `the-hour-brief-1.1.2-vc7.aab` to the Production release draft in Play Console.
 
 ## Web UI the app loads
 The redesigned screens are part of the website and now also its desktop version (see DEPLOY.md, "Premium skin"). Verified on the emulator's Android WebView (Chrome 113): app bar, tabs, chips, Listen card, Audio hub with the device voice, quiz with the streak strip, the Sections sheet. Deploy them after Play's review of the current build, so reviewers keep seeing what they already saw.
@@ -36,10 +44,18 @@ Policy: News and Magazines (enforced 24 Sep): no easy-to-find contact page in th
 - Also added this session: `AVAudioSession` set to `.playback` in `AppDelegate.swift`, to go with the `UIBackgroundModes: audio` key you'd already added to Info.plist — without both, Listen stops the moment the screen locks or the app backgrounds even though the entitlement is declared. Needs a real-device check (TestFlight): silent switch on and off, screen lock during playback.
 - Verified 2026-09-26 (still true): version 1.1.2 (build 1), iOS 15.0+, iPhone + iPad, the new icon (1024, RGB, no alpha) and launch image, privacy manifests for the app, Capacitor and Cordova. Bundle id `app.thehourbrief`, `ITSAppUsesNonExemptEncryption = false`. Privacy manifest declares the file-timestamp API (C617.1) used by `@capacitor/filesystem`; iPhone is locked to portrait (in landscape a swipe card's text area is about 90px).
 - No usage-description strings are needed (no camera, photos, location, microphone).
-- **Left for you:** the App Store Connect **app record** (Apps → + → New App — a website step, no CLI path for this one) if not already created; then either let me run archive → export → upload from here, or do Archive → Distribute in Xcode yourself (both now work) — your call. After that: TestFlight on your own iPhone first, then the listing (`app-store/listing.md` has the steps, field values and review notes; add your phone number), select the build, submit. Bump the build number for each upload after the first.
 - Biggest risk stays Guideline 4.2 (web wrapper). Native features to point out to the reviewer: daily local-notification reminder, share
   sheet, haptics, native rating prompt, on-device speech fallback, bundled offline page, quiz with streaks/badges, friends leagues, swipe cards, personalised sections.
 - Not tested on a real iPhone yet: the offline page (`errorPath`), Listen with the background-audio fix above, the share-image flow. TestFlight on your own iPhone is the way to cover these.
+
+**2026-10-27: iOS 1.1.3, Universal Links.** Added the Associated Domains capability in Xcode (`App.entitlements` +
+`CODE_SIGN_ENTITLEMENTS` now wired in `project.pbxproj`), but the entitlement's value was left on Xcode's default
+placeholder (`webcredentials:example.com`) instead of the real domain — fixed directly in the plist to
+`applinks:the-hour-brief.vercel.app`, matching `appIDs: ["PUXF34ZNNT.app.thehourbrief"]` in
+`.well-known/apple-app-site-association`. **Left for you:** bump the build number, archive and upload as 1.1.3 (Xcode
+Distribute, or ask for the terminal `xcodebuild archive` + `-exportArchive` route), then test a shared `/q`, `/e`, `/s`,
+or `/l` link on a real device via TestFlight — both with the app installed (should open in-app) and freshly deleted
+(should land on the OS-aware install-nudge page from commit `b63526a`).
 
 ## Known open risks
 - The digest is AI-written and not human-reviewed each day (About says so plainly). Play's misinformation and News policies could

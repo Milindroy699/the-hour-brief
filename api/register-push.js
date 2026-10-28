@@ -1,7 +1,8 @@
-// Collects device push tokens from the native apps (see /mobile).
-// Tokens are stored in Redis sets, one per platform, for a sender job to read
-// when a new edition publishes. Sending the pushes themselves needs APNs / FCM
-// credentials — see /mobile/README.md "Push notifications".
+// Collects device push tokens from the native apps (see /mobile). Called on every app launch
+// (capacitor-bridge.js re-registers each time), so the ZADD below also works as a "last seen"
+// heartbeat that push-reengagement.js uses to find lapsed readers.
+// Tokens are stored in Redis sets, one per platform, for push-edition.js / push-reengagement.js
+// to read — see /mobile/README.md "Push notifications".
 const KV_URL = process.env.KV_REST_API_URL;
 const KV_TOKEN = process.env.KV_REST_API_TOKEN;
 
@@ -39,6 +40,9 @@ module.exports = async (req, res) => {
     return;
   }
 
-  await kv(['SADD', `push:tokens:${platform}`, token]);
+  await Promise.all([
+    kv(['SADD', `push:tokens:${platform}`, token]),
+    kv(['ZADD', 'push:lastseen', String(Date.now()), token]),
+  ]);
   res.status(200).json({ ok: true });
 };

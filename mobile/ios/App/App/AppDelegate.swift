@@ -1,13 +1,17 @@
 import UIKit
 import Capacitor
 import AVFoundation
+import FirebaseCore
+import FirebaseMessaging
 
 @UIApplicationMain
-class AppDelegate: UIResponder, UIApplicationDelegate {
+class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
 
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        FirebaseApp.configure()
+        Messaging.messaging().delegate = self
         // Override point for customization after application launch.
         // Listen plays through an <audio> element in the WKWebView; without this, playback stops the moment the
         // screen locks or the app backgrounds, even with the "audio" Background Mode declared in Info.plist.
@@ -19,6 +23,26 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             print("AVAudioSession setup failed: \(error)")
         }
         return true
+    }
+
+    // Hands the raw APNs token to Firebase, which exchanges it for an FCM token (delivered below via
+    // messaging(_:didReceiveRegistrationToken:)). Deliberately NOT posted to Capacitor here — only the
+    // FCM token is something the server-side Firebase Admin SDK can actually send a push to.
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        Messaging.messaging().apnsToken = deviceToken
+    }
+
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        NotificationCenter.default.post(name: .capacitorDidFailToRegisterForRemoteNotifications, object: error)
+    }
+
+    // This is the token capacitor-bridge.js's PushNotifications 'registration' listener actually
+    // receives and POSTs to /api/register-push — Capacitor's handler accepts a String here just as
+    // readily as the raw APNs Data, so routing the FCM token through is what makes register-push.js's
+    // stored tokens usable by the server's Firebase Admin SDK sender.
+    func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+        guard let fcmToken = fcmToken else { return }
+        NotificationCenter.default.post(name: .capacitorDidRegisterForRemoteNotifications, object: fcmToken)
     }
 
     func applicationWillResignActive(_ application: UIApplication) {

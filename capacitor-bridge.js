@@ -514,20 +514,14 @@
     if (!navigator.onLine) reflect(false);
   })();
 
-  // ---- Push notifications — not in the app yet ----
-  //
-  // @capacitor/push-notifications is not installed in the v1 release (it drags
-  // in the whole Firebase stack + a POST_NOTIFICATIONS permission for a feature
-  // that has no backend sender). To add push later:
-  //   1. npm i @capacitor/push-notifications && npx cap sync
-  //   2. google-services.json (Android) + APNs key & entitlement (iOS)
-  //   3. the sender job (see /mobile/README.md "Push notifications")
-  //   4. add <meta name="thb-push" content="on"> to the site <head>
-  // This block already no-ops when the plugin is absent.
-  var pushMeta = document.querySelector('meta[name="thb-push"]');
-  var pushEnabled = pushMeta && pushMeta.getAttribute('content') === 'on';
-
-  if (P.PushNotifications && pushEnabled) {
+  // ---- Push notifications ----
+  // @capacitor/push-notifications + Firebase (google-services.json / GoogleService-Info.plist, plus the
+  // APNs key uploaded in the Firebase console) wired in 2026-10-28. The sender jobs are
+  // /api/push-edition.js (daily, Vercel Cron) and /api/push-reengagement.js (weekly), both reading the
+  // token sets this block populates below via /api/register-push.js. No separate site-wide kill switch
+  // is needed: this whole file already no-ops outside Capacitor, and P.PushNotifications only exists
+  // when the plugin is actually compiled into a native build.
+  if (P.PushNotifications) {
     P.PushNotifications.addListener('registration', function (token) {
       fetch('/api/register-push', {
         method: 'POST',
@@ -537,7 +531,7 @@
     });
     P.PushNotifications.addListener('pushNotificationActionPerformed', function (action) {
       var data = action && action.notification && action.notification.data;
-      if (data && data.url) { location.href = data.url; }
+      if (data && data.url) { location.assign(destFor(data.url)); }
     });
     P.PushNotifications.checkPermissions()
       .then(function (res) {
@@ -562,22 +556,32 @@
     });
   }
 
-  // ---- Universal Links (iOS) / App Links (Android): shared links open straight inside the app ----
-  // The WebView already shares this app's own origin (server.url), so compute the destination directly —
-  // the same transform api/share.js's `dest` makes for /e, /s, /q, /l — instead of bouncing through
-  // /api/share again, which would show a visible "Opening…" flash first. Keep these in sync if either changes.
+  // ---- Universal Links (iOS) / App Links (Android), and push notification taps: resolve straight to
+  // an in-app destination ---- The WebView already shares this app's own origin (server.url), so compute
+  // the destination directly — the same transform api/share.js's `dest` makes for /e, /s, /q, /l —
+  // instead of bouncing through /api/share again, which would show a visible "Opening…" flash first (or,
+  // for a push tap, make no sense at all — there's no "not installed" case to land on). Keep in sync with
+  // api/share.js's own dest logic if either changes.
+  function destFor(rawUrl) {
+    var url;
+    try { url = new URL(rawUrl, location.origin); } catch (e) { return rawUrl; }
+    if (url.origin !== location.origin) return rawUrl;
+    var seg = url.pathname.split('/').filter(Boolean);
+    var dest = null;
+    if (seg[0] === 'e' && seg[1]) { dest = seg[1] === 'latest' ? '/' : '/archive/' + seg[1] + '.html'; }
+    else if (seg[0] === 's' && seg[1] && seg[2]) { dest = '/archive/' + seg[1] + '.html?utm_source=share&utm_medium=story#' + seg[2]; }
+    else if (seg[0] === 'q' && seg[1] && seg[2]) { dest = '/archive/' + seg[1] + '.html?utm_source=share&utm_medium=quiz&beat=' + seg[2] + '#quiz'; }
+    else if (seg[0] === 'l' && seg[1]) { dest = '/?join=' + seg[1] + '#quiz'; }
+    return dest || (url.pathname + url.search + url.hash);
+  }
+
   if (P.App) {
     P.App.addListener('appUrlOpen', function (data) {
+      if (!data || !data.url) return;
       var url;
-      try { url = new URL(data && data.url); } catch (e) { return; }
+      try { url = new URL(data.url); } catch (e) { return; }
       if (url.origin !== location.origin) return;
-      var seg = url.pathname.split('/').filter(Boolean);
-      var dest = null;
-      if (seg[0] === 'e' && seg[1]) { dest = seg[1] === 'latest' ? '/' : '/archive/' + seg[1] + '.html'; }
-      else if (seg[0] === 's' && seg[1] && seg[2]) { dest = '/archive/' + seg[1] + '.html?utm_source=share&utm_medium=story#' + seg[2]; }
-      else if (seg[0] === 'q' && seg[1] && seg[2]) { dest = '/archive/' + seg[1] + '.html?utm_source=share&utm_medium=quiz&beat=' + seg[2] + '#quiz'; }
-      else if (seg[0] === 'l' && seg[1]) { dest = '/?join=' + seg[1] + '#quiz'; }
-      location.assign(dest || (url.pathname + url.search + url.hash));
+      location.assign(destFor(data.url));
     });
   }
 })();

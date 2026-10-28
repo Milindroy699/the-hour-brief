@@ -1,10 +1,14 @@
-// Posts today's digest to a Telegram channel. Called by Vercel Cron (which sends
-// "Authorization: Bearer $CRON_SECRET") or by hand with the same header.
+// Posts today's digest to a Telegram channel, and (piggybacking this same cron slot rather than
+// spending more of the project's limited Vercel Cron jobs) sends the "edition is ready" push
+// notification via sendEditionPush — independently dedupe-keyed, so one failing never blocks the
+// other. Called by Vercel Cron (which sends "Authorization: Bearer $CRON_SECRET") or by hand with
+// the same header.
 //   ?dry=1   build and return the post without sending
-//   ?force=1 post even if today's edition was already posted
+//   ?force=1 post/push even if today's edition was already posted/pushed
 // Env: CRON_SECRET, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID (e.g. @yourchannel), KV_REST_API_URL/TOKEN (dedupe).
 const crypto = require('crypto');
 const { buildDigest } = require('./_digest');
+const { sendEditionPush } = require('./_push');
 
 const KV_URL = process.env.KV_REST_API_URL;
 const KV_TOKEN = process.env.KV_REST_API_TOKEN;
@@ -42,37 +46,50 @@ module.exports = async (req, res) => {
   }
   if (dry) { res.status(200).json({ ok: true, dry: true, ...d }); return; }
 
+  // Independent of Telegram below: its own dedupe key, its own failure handling. One failing
+  // (e.g. Telegram not configured, which is the current state) never blocks the other.
+  const push = await sendEditionPush(d, { force });
+
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chat = process.env.TELEGRAM_CHAT_ID;
-  if (!token || !chat) { res.status(200).json({ ok: false, skipped: 'telegram not configured' }); return; }
-
-  const key = `digest:tg:${d.date}`;
-  const useKv = !!(KV_URL && KV_TOKEN);
-  if (useKv && !force) {
-    const claimed = await kv(['SET', key, '1', 'EX', '259200', 'NX']);
-    if (claimed.result === null) { res.status(200).json({ ok: true, skipped: 'already posted', date: d.date }); return; }
+  let telegram;
+  if (!token || !chat) {
+    telegram = { ok: false, skipped: 'telegram not configured' };
+  } else {
+    const key = `digest:tg:${d.date}`;
+    const useKv = !!(KV_URL && KV_TOKEN);
+    let claimed = true;
+    if (useKv && !force) {
+      const claim = await kv(['SET', key, '1', 'EX', '259200', 'NX']);
+      claimed = claim.result !== null;
+    }
+    if (!claimed) {
+      telegram = { ok: true, skipped: 'already posted', date: d.date };
+    } else {
+      let data;
+      try {
+        const r = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chat,
+            text: d.telegram,
+            parse_mode: 'HTML',
+            link_preview_options: { url: d.editionUrl, prefer_large_media: true, show_above_text: false },
+          }),
+        });
+        data = await r.json();
+      } catch (e) {
+        data = { ok: false, description: 'network error' };
+      }
+      if (!data.ok) {
+        if (useKv && !force) await kv(['DEL', key]);   // let the retry run post it
+        telegram = { ok: false, error: 'telegram rejected the post', detail: data.description || 'unknown' };
+      } else {
+        telegram = { ok: true, date: d.date, edition: d.edition, messageId: data.result && data.result.message_id };
+      }
+    }
   }
 
-  let data;
-  try {
-    const r = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chat,
-        text: d.telegram,
-        parse_mode: 'HTML',
-        link_preview_options: { url: d.editionUrl, prefer_large_media: true, show_above_text: false },
-      }),
-    });
-    data = await r.json();
-  } catch (e) {
-    data = { ok: false, description: 'network error' };
-  }
-  if (!data.ok) {
-    if (useKv && !force) await kv(['DEL', key]);   // let the retry run post it
-    res.status(502).json({ error: 'telegram rejected the post', detail: data.description || 'unknown' });
-    return;
-  }
-  res.status(200).json({ ok: true, date: d.date, edition: d.edition, messageId: data.result && data.result.message_id });
+  res.status(200).json({ ok: true, date: d.date, edition: d.edition, telegram, push });
 };

@@ -169,41 +169,39 @@ keytool -genkeypair -v -keystore android/thb-upload-key.jks -alias thb-upload \
 
 ---
 
-## Push notifications ("new edition is live") — NOT in the app
+## Push notifications ("new edition is live")
 
-`@capacitor/push-notifications` is **not installed** in the v1 release — it pulls
-in the whole Firebase Messaging stack and a `POST_NOTIFICATIONS` permission for a
-feature with no backend sender. The `capacitor-bridge.js` push block no-ops when
-the plugin is absent.
+Wired in 2026-10-28. `@capacitor/push-notifications` is installed, `PushNotifications`
+is in `capacitor.config.json`, and the Firebase project (`the-hour-brief`) backs both
+platforms: `google-services.json` (Android, git-ignored) and `GoogleService-Info.plist`
+(iOS, git-ignored) are both in place, with `FirebaseAnalytics` + `FirebaseMessaging`
+linked into the Xcode project via Swift Package Manager.
 
-**To add push later:**
+**iOS token flow:** `AppDelegate.swift` hands the raw APNs token to
+`Messaging.messaging().apnsToken`, then forwards the **FCM token** (not the raw APNs
+one) from `MessagingDelegate.didReceiveRegistrationToken` to Capacitor via
+`.capacitorDidRegisterForRemoteNotifications`. This is what `capacitor-bridge.js`'s
+`registration` listener POSTs to `/api/register-push` — an FCM token on both platforms,
+which is what the server-side Firebase Admin SDK can actually send to.
 
-```bash
-npm i @capacitor/push-notifications && npx cap sync
-```
+**Backend (`/api/_push.js`, `/api/push-edition.js`, `/api/push-reengagement.js`):**
+- `register-push.js` stores tokens in Vercel KV (`push:tokens:ios` / `push:tokens:android`
+  sets) and a `push:lastseen` sorted set (updated on every app launch, since the bridge
+  re-registers each time — this doubles as activity tracking for re-engagement).
+- The daily "edition is ready" push piggybacks `post-digest.js`'s existing Vercel Cron
+  slots (`sendEditionPush`, independently dedupe-keyed from the Telegram post) rather than
+  spending more of the project's limited cron jobs on the same publish-time check.
+  `push-edition.js` is a thin manual/dry-run wrapper around the same function, auth'd with
+  `ROUTINE_SECRET`.
+- `push-reengagement.js` (win-back push to devices not seen in 7+ days) is **not on an
+  automatic schedule yet** — no spare cron slot for it was confirmed safe to add without
+  knowing this project's Vercel plan tier. Call it by hand, or wire it into wherever the
+  daily content routine runs, with `Authorization: Bearer $ROUTINE_SECRET`.
+- Env vars: `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` (the
+  Firebase Admin SDK service account), already set in Vercel.
 
-then re-add `"PushNotifications"` to `capacitor.config.json` plugins, and on iOS
-re-add the `remote-notification` background mode. Then, after the setup below,
-add to every page's `<head>`:
-
-```html
-<meta name="thb-push" content="on">
-```
-
-**Setup:**
-
-1. **Apple (APNs).** Create an APNs Auth Key (.p8) in the Apple Developer
-   portal. In Xcode → Signing & Capabilities add **Push Notifications** and
-   **Background Modes → Remote notifications** (Info.plist already declares the
-   background mode).
-2. **Google (FCM).** Create a Firebase project, add an Android app with id
-   `app.thehourbrief`, download `google-services.json` into `android/app/`
-   (git-ignored).
-3. **Sender job.** Add a Vercel function (e.g. `api/send-push.js`) that reads
-   the token sets (`push:tokens:ios` / `push:tokens:android` in Vercel KV,
-   populated by `api/register-push.js`) and calls APNs + FCM. Trigger it from
-   the publish step or a Vercel Cron. Include `data.url` = the edition URL so
-   the bridge can deep-link on tap.
+**Note:** push does not deliver on the iOS Simulator — APNs doesn't reach simulated
+devices. Verify on a real iPhone via TestFlight.
 
 ---
 

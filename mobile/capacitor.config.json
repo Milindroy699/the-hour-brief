@@ -37,6 +37,9 @@
     "LocalNotifications": {
       "smallIcon": "ic_stat_thb",
       "iconColor": "#7c5cf0"
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
     }
   }
 }
