@@ -32,6 +32,21 @@
   var CLASSIC = /[?&]classic=1(&|$)/.test(location.search);
   window.HB_CLASSIC = CLASSIC;
   if (NATIVE) document.documentElement.classList.add('hb-native');
+
+  // Google Analytics (GA4), website visitors only. The apps get their own Firebase Analytics
+  // instrumentation instead — skipping it here keeps in-app WebView sessions from double-counting
+  // into the website's traffic numbers.
+  if (!NATIVE) {
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function () { window.dataLayer.push(arguments); };
+    window.gtag('js', new Date());
+    window.gtag('config', 'G-X3GD72ENSN');
+    var gaScript = document.createElement('script');
+    gaScript.async = true;
+    gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-X3GD72ENSN';
+    document.head.appendChild(gaScript);
+  }
+
   function reader() { return !CLASSIC || mq.matches || NATIVE; }
   function ensureReaderCss() {
     if (document.querySelector('link[data-reader-css]')) return;

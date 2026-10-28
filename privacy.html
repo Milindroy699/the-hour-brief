@@ -83,11 +83,11 @@
 <div class="page">
   <h1>Privacy</h1>
   <p class="lede">The Hour Brief runs no ads, sells no data, and needs no account to read. This page covers exactly what is collected — on the website and in the iOS and Android apps, which are the same website wrapped in a native shell.</p>
-  <p class="updated">Last updated: 25 September 2026</p>
+  <p class="updated">Last updated: 28 October 2026</p>
 
   <section>
     <h2>Just reading</h2>
-    <p>If you only read editions, the sole data collected is <strong>privacy-friendly, aggregate analytics</strong> through Vercel Web Analytics: counts of page views and referrers, plus the country, device type and browser of visitors in aggregate, with no cookies, no cross-site tracking, and nothing that identifies you personally. Everything below happens only if you choose to interact.</p>
+    <p>If you only read editions, the data collected is <strong>aggregate analytics</strong>: Vercel Web Analytics everywhere (counts of page views and referrers, plus the country, device type and browser of visitors in aggregate, no cookies, no cross-site tracking), and on the website only, Google Analytics, which sets a first-party cookie to distinguish visitors across a session. Neither identifies you personally, and Google Analytics is not loaded inside the iOS or Android apps. Everything below happens only if you choose to interact.</p>
   </section>
 
   <section>
@@ -133,13 +133,14 @@
 
   <section>
     <h2>Cookies and local storage</h2>
-    <p>The site sets no advertising or tracking cookies. It uses your browser's <code>localStorage</code> only to remember, on your own device, which items you've already voted on, whether you've dismissed the "new edition" prompt, your daily quiz answers, scores, streak and badges, the stories you save for later, your text-size choice, which sections you show and in what order, your Listen speed, and (only if you use leagues) your league codes and random device ID. All of it stays on your device, except that a league&rsquo;s code and your random device ID are sent to our league service so the league works, as described in &ldquo;If you join a friends league&rdquo; above.</p>
+    <p>The website sets one first-party analytics cookie, from Google Analytics, to distinguish visitors across a session; it is not an advertising or cross-site tracking cookie, and it is not set at all inside the iOS or Android apps. Separately, it uses your browser's <code>localStorage</code> only to remember, on your own device, which items you've already voted on, whether you've dismissed the "new edition" prompt, your daily quiz answers, scores, streak and badges, the stories you save for later, your text-size choice, which sections you show and in what order, your Listen speed, and (only if you use leagues) your league codes and random device ID. All of it stays on your device, except that a league&rsquo;s code and your random device ID are sent to our league service so the league works, as described in &ldquo;If you join a friends league&rdquo; above.</p>
   </section>
 
   <section>
     <h2>Third parties</h2>
     <ul>
       <li><strong>Vercel</strong> — website hosting and the aggregate analytics.</li>
+      <li><strong>Google Analytics</strong> — aggregate website traffic analytics (page views, referrers, approximate location and device, in aggregate); website only, not loaded in the apps.</li>
       <li><strong>MailerLite</strong> — email delivery, only if you subscribe.</li>
       <li><strong>Upstash / Vercel KV</strong> — storage for vote counts, comments, the anonymous quiz tally and friends leagues.</li>
       <li><strong>Sarvam AI</strong> — turns the public edition text into the AI voice recording. It receives only that public text, never any reader&rsquo;s data.</li>
