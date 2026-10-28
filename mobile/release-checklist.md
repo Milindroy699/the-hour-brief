@@ -1,21 +1,23 @@
-# Release checklist (last verified 2026-10-27)
+# Release checklist (last verified 2026-10-28)
 
 ## Android bundle
-`mobile/dist/the-hour-brief-1.1.2-vc7.aab` (versionCode 7; Play had already consumed versionCode 6 via the closed-testing
-upload, so vc6/vc5/vc4 are all superseded and can't be reused). Built 2026-10-27 from `main` (`npx cap sync android` then
-`./gradlew bundleRelease assembleRelease`) — this build includes the deep-links AndroidManifest intent-filter
-(`android:autoVerify="true"` on `https://the-hour-brief.vercel.app`) from commit `b63526a`.
-SHA-256 (the file to upload): `5100f83b072d207df7ad20fdb6c30342eaac6882d006d606f1f53a7333f7edc9` (`shasum -a 256` to confirm).
-Verified on the built artifact: `app.thehourbrief` versionCode 7 / versionName 1.1.2 (`aapt2 dump badging`), signed with the
+`mobile/dist/the-hour-brief-1.1.3-vc8.aab` (versionCode 8, versionName 1.1.3). vc7 was built and then found to be missing
+the push-notifications native module (`npx cap sync android` was run before `npm i @capacitor/push-notifications`, so the
+module was never registered in `capacitor.settings.gradle` despite the JS/config side looking complete) — vc7 was deleted
+from `mobile/dist/`, never uploaded. vc8 is a clean rebuild after re-running `cap sync android` with the plugin actually
+installed; `capacitor-push-notifications` now appears in `capacitor.settings.gradle` and `app/capacitor.build.gradle`.
+Includes: the deep-links AndroidManifest intent-filter (commit `b63526a`), Firebase Analytics + Messaging, FCM default
+notification icon/color.
+SHA-256 (the file to upload): `b89fcbb7dfb7b3b0f3c87a3c26e845a2600b840866bb342252e91a254923ab5c` (`shasum -a 256` to confirm).
+Verified on the built artifact: `app.thehourbrief` versionCode 8 / versionName 1.1.3 (`aapt2 dump badging`), signed with the
 upload key — `apksigner verify --print-certs` gives SHA-256 `CE:1E:B6:18:75:18:51:6E:D3:03:5B:5D:7C:69:D1:FC:31:3F:4A:64:4F:80:82:8A:1F:00:02:54:2D:F1:E5:35`, matching the fingerprint
-already in `.well-known/assetlinks.json` — target/compile SDK 36, min SDK 24, not debuggable, permissions
-`INTERNET, VIBRATE, POST_NOTIFICATIONS, RECEIVE_BOOT_COMPLETED, WAKE_LOCK` only (no exact-alarm, no storage).
+already in `.well-known/assetlinks.json` — target/compile SDK 36, min SDK 24, not debuggable.
 **Not yet confirmed: whether this upload-key fingerprint also matches Play's own App Signing key certificate** (Play Console →
 Setup → App integrity) — Play re-signs with its own key, which can differ from the upload key, and App Links verification
 checks against *that* certificate. If it differs, add the second fingerprint to `.well-known/assetlinks.json`'s array (both can
-coexist) before relying on deep links working from Play-distributed installs. Not smoke-tested on an emulator/device yet since
-this rebuild — do that before uploading if the last emulator check (new icon, offline page, Listen card) feels stale.
-**Left for you:** upload `the-hour-brief-1.1.2-vc7.aab` to the Production release draft in Play Console.
+coexist) before relying on deep links working from Play-distributed installs. Not smoke-tested on an emulator/device yet —
+do that before uploading, including the push-notification permission prompt and a real registration.
+**Left for you:** upload `the-hour-brief-1.1.3-vc8.aab` to the Production release draft in Play Console.
 
 ## Web UI the app loads
 The redesigned screens are part of the website and now also its desktop version (see DEPLOY.md, "Premium skin"). Verified on the emulator's Android WebView (Chrome 113): app bar, tabs, chips, Listen card, Audio hub with the device voice, quiz with the streak strip, the Sections sheet. Deploy them after Play's review of the current build, so reviewers keep seeing what they already saw.
@@ -52,10 +54,26 @@ Policy: News and Magazines (enforced 24 Sep): no easy-to-find contact page in th
 `CODE_SIGN_ENTITLEMENTS` now wired in `project.pbxproj`), but the entitlement's value was left on Xcode's default
 placeholder (`webcredentials:example.com`) instead of the real domain — fixed directly in the plist to
 `applinks:the-hour-brief.vercel.app`, matching `appIDs: ["PUXF34ZNNT.app.thehourbrief"]` in
-`.well-known/apple-app-site-association`. **Left for you:** bump the build number, archive and upload as 1.1.3 (Xcode
-Distribute, or ask for the terminal `xcodebuild archive` + `-exportArchive` route), then test a shared `/q`, `/e`, `/s`,
-or `/l` link on a real device via TestFlight — both with the app installed (should open in-app) and freshly deleted
-(should land on the OS-aware install-nudge page from commit `b63526a`).
+`.well-known/apple-app-site-association`.
+
+**2026-10-28: Firebase (push + Analytics), and 1.1.3 (build 2) uploaded.** `FirebaseAnalytics` + `FirebaseMessaging` linked
+via SPM, `AppDelegate.swift` wired (APNs token → Firebase → FCM token → Capacitor's registration event), `aps-environment`
++ `remote-notification` background mode added. Archived and uploaded for real this time (not a throwaway): `MARKETING_VERSION`
+bumped 1.1.2 → **1.1.3** (version 1.1.2 is already approved and closed for new submissions — Apple rejected the first
+attempt, build-number-only, with "Invalid Pre-Release Train"; bumping the marketing version fixed it), `CURRENT_PROJECT_VERSION`
+(build) bumped 1 → 2. `xcodebuild archive` (Release, `generic/platform=iOS`) signed correctly with the Apple Distribution
+cert despite the archive step itself showing a Development identity mid-build — export re-signs for the chosen method, and
+the exported `.ipa` verified with `Authority=Apple Distribution: Milind Roy (PUXF34ZNNT)`, `aps-environment: production`,
+provisioning profile "iOS Team Store Provisioning Profile: app.thehourbrief". Uploaded via `xcodebuild -exportArchive`
+with `destination: upload` in `mobile/ios/App/exportOptions.plist` (reuses Xcode's own authenticated session, no API key
+needed) — **Upload succeeded**, now processing in App Store Connect. Benign warnings: missing dSYMs for
+FirebaseAnalytics/GoogleAdsOnDeviceConversion/GoogleAppMeasurement (known Firebase static-xcframework issue, doesn't block
+review, just means slightly less symbolicated crash reports from those frameworks).
+
+**Left for you:** once it finishes processing (check App Store Connect or TestFlight), install on your iPhone via
+TestFlight, open the app, accept the notification permission prompt — that's what triggers registration. Then test a
+shared `/q`, `/e`, `/s`, or `/l` link on a real device — both with the app installed (should open in-app) and freshly
+deleted (should land on the OS-aware install-nudge page from commit `b63526a`).
 
 ## Known open risks
 - The digest is AI-written and not human-reviewed each day (About says so plainly). Play's misinformation and News policies could
