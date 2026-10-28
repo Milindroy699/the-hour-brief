@@ -55,7 +55,12 @@ async function sendToTokens(tokens, { title, body, url }) {
   firebaseApp();
   const message = {
     notification: { title, body },
-    apns: { payload: { aps: { sound: 'default' } } },
+    // apns-priority 10 + interruption-level time-sensitive: without these, iOS can silently defer
+    // delivery into Scheduled Summary (bundled, non-immediate) instead of showing the push right away.
+    apns: {
+      headers: { 'apns-priority': '10', 'apns-push-type': 'alert' },
+      payload: { aps: { sound: 'default', 'interruption-level': 'time-sensitive' } },
+    },
     android: { priority: 'high', notification: { sound: 'default' } },
   };
   if (url) message.data = { url };
