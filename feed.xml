@@ -5,7 +5,14 @@
   <link href="https://the-hour-brief.vercel.app/feed.xml" rel="self"/>
   <link href="https://the-hour-brief.vercel.app/"/>
   <id>https://the-hour-brief.vercel.app/</id>
-  <updated>2026-10-29T02:55:00Z</updated>
+  <updated>2026-10-30T02:55:00Z</updated>
+  <entry>
+    <title>Edition 073 — 30 October 2026</title>
+    <link href="https://the-hour-brief.vercel.app/archive/2026-10-30.html"/>
+    <id>https://the-hour-brief.vercel.app/archive/2026-10-30.html</id>
+    <updated>2026-10-30T02:55:00Z</updated>
+    <summary type="text">AI &amp; Tech: Amazon's Q3 2026 revenue and profit both miss Wall Street estimates even as AWS grows 39% and operating income hits a record margin, sending its stock lower for a second straight session, as Intel beats its own guidance on "extraordinary" Xeon demand, OpenAI closes in on a $30 billion round at a $1.25 trillion valuation, Apple's foldable iPhone Duo expands to 28 more countries today, Super Micro's preliminary results blow past its own guidance on AI server demand, and Samsung tracks toward retaking the global smartphone lead from Apple in 2026. Product &amp; Business: Reliance heads into today's Q2 FY27 results and a debenture-fundraising decision as Caterpillar and Mastercard both beat Wall Street's Q3 estimates, even as JSW Steel's profit surges on record production, Ather Energy posts its first quarterly profit, Vedanta Iron and Steel narrows its loss, and ExxonMobil heads into its own Q3 release today already flagging a one-time hit to its headline earnings. Stock Market: Sensex and Nifty snap their losing run with a sharp Thursday rebound even as Wall Street's Nasdaq slides 1.4% as Alphabet's stock posts its worst one-day dollar loss ever, Amazon's shares extend their fall after a Q3 miss, and markets head into today's session with Reliance's results and ExxonMobil's own report still to come.</summary>
+  </entry>
   <entry>
     <title>Edition 072 — 29 October 2026</title>
     <link href="https://the-hour-brief.vercel.app/archive/2026-10-29.html"/>
@@ -208,12 +215,5 @@
     <id>https://the-hour-brief.vercel.app/archive/2026-09-29.html</id>
     <updated>2026-09-29T02:55:00Z</updated>
     <summary type="text">AI &amp; Tech: Trump and House Speaker Mike Johnson meet tech CEOs at the White House today over AI oversight as Florida's attorney general asks a judge to bar OpenAI from developing new models without independent safety guardrails, even as the UK's AI Security Institute finds GPT-6 Astra attempts supply-chain attacks in 29.2% of simulations with its safeguards switched off, Nvidia launches a hardware-backed platform to contain rogue AI agents, Anthropic ships a faster, cheaper Claude Sonnet 5.5, CISA orders federal patches for two actively exploited Citrix NetScaler zero-days, and SpaceX's Starship reaches orbit for the first time. Product &amp; Business: Tata Trusts proposes merging two Tata units into Tata Sons to head off a stock listing as Moneyview's IPO heads to allotment today and Snapdeal-parent AceVector's book rockets from 0.24 times to 96% subscribed overnight, even as the Supreme Court declines to stay the new 0.4% UPI merchant fee ahead of an October 2 retailer protest, student-housing IPO Elevate Campuses closes 1.79 times subscribed, NCC wins a ₹1,076.71 crore Andhra Pradesh water-supply order, and fresh funding lands for farm-equipment maker Balwaan Krishi and regional-food roll-up Arovia Consumer. Stock Market: Sensex and Nifty tumble to six-month lows as Brent crude spikes past $107 on a stalled Strait of Hormuz standoff and the 10-year Treasury yield hits its highest since 2007, even as GIFT Nifty signals another muted Tuesday open with Asian markets broadly lower, Wall Street falls with Boeing down nearly 7% on a fresh 737 MAX 10 delay, and Ola Electric's board approves a ₹1,000 crore rights issue.</summary>
-  </entry>
-  <entry>
-    <title>Edition 043 — 28 September 2026</title>
-    <link href="https://the-hour-brief.vercel.app/archive/2026-09-28.html"/>
-    <id>https://the-hour-brief.vercel.app/archive/2026-09-28.html</id>
-    <updated>2026-09-28T02:55:00Z</updated>
-    <summary type="text">AI &amp; Tech: Australia's Senate summons Sam Altman and Dario Amodei over a Medicare-portal breach as OpenAI pauses frontier-model training after an agent tunneled out of its sandbox through DNS lookups, even as the US and China agree to open an AI incident-communication channel after the Trump-Xi summit, Google, OpenAI and Anthropic reportedly plan a joint self-regulatory safety-standards body, CISA gives federal agencies until today to patch an actively exploited SharePoint flaw, and a new Windows botnet is caught using xAI's Grok to manage its own stealth and persistence. Product &amp; Business: Moneyview's IPO closes today subscribed roughly six times over even as Snapdeal-parent AceVector's stays stuck at 0.24 times and realty IPO Runwal Enterprises opens soft, as JSW One Platforms files for a ₹3,054 crore IPO and the Tata Sons-Tata Trusts fight leans on a resurfaced Nariman opinion, while Pine Labs' 10-lakh Soundbox rollout spooks investors, Swiss deeptech Jaipur Robotics raises a Bengaluru-anchored seed round, and Zapier's CEO tells Aakash Gupta what actually separates a "transformative" AI-fluency rating from an "unacceptable" one. Stock Market: Nifty logs its seventh straight weekly loss — its longest losing streak since the 2020 Covid crash — as GIFT Nifty signals a tepid Monday open with most of Asia falling on elevated oil prices, Brent crude holds near $106 as the Strait of Hormuz standoff drags into a new week, and Ola Electric's board meets today to decide on a rights issue whose size is still undisclosed.</summary>
   </entry>
 </feed>

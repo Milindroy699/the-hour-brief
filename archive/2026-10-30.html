@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<script>if ("scrollRestoration" in history) history.scrollRestoration = "manual";</script>
+<title>The Hour Brief</title>
+<meta name="description" content="A free daily one-hour digest of AI/tech, product & business (India + global), and the Indian stock market — every item links to its original source.">
+<meta property="og:title" content="The Hour Brief">
+<meta property="og:description" content="A free daily one-hour digest of AI/tech, product & business (India + global), and the Indian stock market — every item links to its original source.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://the-hour-brief.vercel.app/og-image.png">
+<meta name="twitter:image" content="https://the-hour-brief.vercel.app/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" type="application/atom+xml" title="The Hour Brief" href="../feed.xml">
+<link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/brand/icon-192.png">
+<link rel="apple-touch-icon" href="/brand/apple-touch-icon.png">
+<style>
+  :root {
+    --bg: #f2f3ee;
+    --paper: #ffffff;
+    --paper-2: #e7e9e1;
+    --ink: #17191c;
+    --ink-soft: #52585a;
+    --ink-faint: #838a8a;
+    --line: #d7dad2;
+    --brand: #5b3e96;
+    --brand-soft: #efe9f7;
+    --tag-ai: #206b5a;
+    --tag-ai-soft: #e0ede9;
+    --tag-biz: #a3721f;
+    --tag-biz-soft: #f3e9d5;
+    --tag-mkt: #2c5490;
+    --tag-mkt-soft: #e2e9f2;
+    --up: #2f7a52;
+    --down: #b23b3b;
+    --shadow: 0 1px 2px rgba(23,25,28,0.06), 0 10px 28px rgba(23,25,28,0.06);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #131417;
+      --paper: #1b1d21;
+      --paper-2: #24262b;
+      --ink: #edeeec;
+      --ink-soft: #a9adaf;
+      --ink-faint: #757a7c;
+      --line: #2c2f34;
+      --brand: #a487d9;
+      --brand-soft: #241f34;
+      --tag-ai: #4fb59e;
+      --tag-ai-soft: #16241f;
+      --tag-biz: #d9a94e;
+      --tag-biz-soft: #2b2417;
+      --tag-mkt: #7ea2d6;
+      --tag-mkt-soft: #1b2532;
+      --up: #4fb579;
+      --down: #d9645f;
+      --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.4);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #131417;
+    --paper: #1b1d21;
+    --paper-2: #24262b;
+    --ink: #edeeec;
+    --ink-soft: #a9adaf;
+    --ink-faint: #757a7c;
+    --line: #2c2f34;
+    --brand: #a487d9;
+    --brand-soft: #241f34;
+    --tag-ai: #4fb59e;
+    --tag-ai-soft: #16241f;
+    --tag-biz: #d9a94e;
+    --tag-biz-soft: #2b2417;
+    --tag-mkt: #7ea2d6;
+    --tag-mkt-soft: #1b2532;
+    --up: #4fb579;
+    --down: #d9645f;
+    --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; }
+
+  html { background: var(--bg); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html { scroll-behavior: smooth; }
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, "Inter", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+
+  /* ---- Masthead band ---- */
+  .masthead-band {
+    background: var(--ink);
+    color: var(--bg);
+    padding: 30px 24px 26px;
+  }
+  .masthead-inner {
+    max-width: 1080px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .wordmark {
+    font-family: -apple-system, "Inter", ui-sans-serif, system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 2.1rem;
+    letter-spacing: -0.01em;
+    margin: 0;
+    text-transform: uppercase;
+  }
+  .wordmark span { color: var(--brand); }
+  .tagline {
+    margin: 6px 0 0;
+    font-size: 0.95rem;
+    color: color-mix(in srgb, var(--bg) 70%, transparent);
+    max-width: 42ch;
+  }
+  .edition {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--bg) 65%, transparent);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .page {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 24px 96px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 260px;
+    gap: 36px;
+    align-items: start;
+  }
+  .main-col { min-width: 0; }
+  .side-col { position: sticky; top: 72px; }
+  @media (max-width: 900px) {
+    .page { grid-template-columns: 1fr; max-width: 720px; }
+    .side-col { position: static; }
+  }
+
+  /* ---- Pause band ---- */
+  .pause-band {
+    background: var(--brand-soft);
+    border-bottom: 1px solid var(--line);
+  }
+  .pause-inner {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 22px 24px;
+  }
+  .pause-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--brand);
+    margin-bottom: 8px;
+  }
+  .pause-text {
+    margin: 0;
+    font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    font-style: italic;
+    font-size: 1.08rem;
+    line-height: 1.55;
+    color: var(--ink);
+    max-width: 62ch;
+    text-wrap: balance;
+  }
+  .pause-word {
+    font-style: normal;
+    font-weight: 700;
+  }
+  .pause-attr {
+    display: block;
+    margin-top: 10px;
+    font-size: 0.82rem;
+    font-style: normal;
+    color: var(--ink-faint);
+  }
+  .pause-attr a { color: var(--ink-soft); }
+
+  /* ---- About strip ---- */
+  .about {
+    padding: 22px 0 24px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 8px;
+  }
+  .about p {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    max-width: 66ch;
+  }
+  .about strong { color: var(--ink); }
+  .about .free-line {
+    margin-top: 10px;
+    font-size: 0.86rem;
+    color: var(--ink-faint);
+  }
+
+  /* ---- Subscribe box ---- */
+  .subscribe-box {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin: 20px 0 0;
+    box-shadow: var(--shadow);
+  }
+  .subscribe-box .sub-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--tag-mkt);
+    display: block;
+    margin-bottom: 6px;
+  }
+  .subscribe-box p {
+    margin: 0 0 12px;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .subscribe-form {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .subscribe-form input[type="email"] {
+    flex: 1 1 220px;
+    min-width: 0;
+    padding: 9px 12px;
+    border-radius: 7px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 0.92rem;
+    font-family: inherit;
+  }
+  .subscribe-form input[type="email"]:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 1px;
+  }
+  .subscribe-form button {
+    padding: 9px 18px;
+    border-radius: 7px;
+    border: none;
+    background: var(--brand);
+    color: var(--bg);
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .subscribe-form button:hover { opacity: 0.9; }
+  .subscribe-note {
+    margin-top: 8px;
+    font-size: 0.76rem;
+    color: var(--ink-faint);
+  }
+  .subscribe-status {
+    margin-top: 8px;
+    font-size: 0.8rem;
+    min-height: 1.1em;
+  }
+  .subscribe-status.ok { color: var(--up); }
+  .subscribe-status.err { color: var(--down); }
+
+  .nav {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin: 0 0 40px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--bg);
+    padding: 14px 0;
+  }
+  .nav a {
+    text-decoration: none;
+    font-size: 0.78rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 7px 13px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    background: var(--paper);
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+  .nav a:hover, .nav a:focus-visible { color: var(--ink); border-color: var(--ink-soft); }
+  .nav a.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .nav a:focus-visible { outline: 2px solid var(--ink-soft); outline-offset: 2px; }
+
+  /* ---- Section ---- */
+  section.lane { margin-bottom: 48px; scroll-margin-top: 20px; }
+
+  .lane-head { margin-bottom: 20px; }
+  .lane-tag {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+  }
+  .ai .lane-tag { background: var(--tag-ai-soft); color: var(--tag-ai); }
+  .biz .lane-tag { background: var(--tag-biz-soft); color: var(--tag-biz); }
+  .mkt .lane-tag { background: var(--tag-mkt-soft); color: var(--tag-mkt); }
+
+  .lane-head h2 {
+    font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    font-size: 1.65rem;
+    font-weight: 700;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .ai .lane-head h2 { border-left: 4px solid var(--tag-ai); padding-left: 13px; }
+  .biz .lane-head h2 { border-left: 4px solid var(--tag-biz); padding-left: 13px; }
+  .mkt .lane-head h2 { border-left: 4px solid var(--tag-mkt); padding-left: 13px; }
+
+  /* ---- Items ---- */
+  .item {
+    display: grid;
+    grid-template-columns: 20px 1fr;
+    gap: 12px;
+    padding: 15px 0;
+    border-top: 1px solid var(--line);
+  }
+  .item:first-of-type { border-top: none; padding-top: 0; }
+  .item .dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 7px; justify-self: center; }
+  .ai .item .dot { background: var(--tag-ai); }
+  .biz .item .dot { background: var(--tag-biz); }
+  .mkt .item .dot { background: var(--tag-mkt); }
+
+  .item h3 { font-size: 1.03rem; font-weight: 650; margin: 0 0 4px; line-height: 1.35; }
+  .item p { margin: 0; font-size: 0.94rem; line-height: 1.6; color: var(--ink-soft); max-width: 66ch; }
+  .item .src { display: inline-block; margin-top: 8px; font-size: 0.76rem; color: var(--ink-faint); letter-spacing: 0.02em; }
+  .item .src a { color: inherit; text-decoration-color: var(--line); }
+
+  /* ---- Takeaway ---- */
+  .item .takeaway {
+    margin: 10px 0 0;
+    padding: 8px 12px;
+    border-left: 3px solid var(--brand);
+    background: var(--paper-2);
+    border-radius: 0 6px 6px 0;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: var(--ink);
+    max-width: 64ch;
+  }
+  .lane-head .lane-takeaway {
+    margin: 14px 0 0;
+    padding: 8px 12px;
+    border-left: 3px solid var(--brand);
+    background: var(--paper-2);
+    border-radius: 0 6px 6px 0;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: var(--ink);
+    max-width: 64ch;
+  }
+  .item .takeaway-label,
+  .lane-takeaway .takeaway-label {
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    color: var(--brand);
+    margin-right: 6px;
+  }
+
+  /* ---- Comments ---- */
+  .comments-section {
+    margin: 48px 0 0;
+    padding-top: 28px;
+    border-top: 1px solid var(--line);
+  }
+  .comments-section h2 {
+    font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    font-size: 1.3rem;
+    margin: 0 0 6px;
+  }
+  .comments-section .comments-sub {
+    font-size: 0.86rem;
+    color: var(--ink-faint);
+    margin: 0 0 18px;
+  }
+  .comment-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 24px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+  }
+  .comment-form input, .comment-form textarea {
+    padding: 9px 12px;
+    border-radius: 7px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 0.92rem;
+    font-family: inherit;
+    resize: vertical;
+  }
+  .comment-form textarea { min-height: 70px; }
+  .comment-form input:focus-visible, .comment-form textarea:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 1px;
+  }
+  .comment-form button {
+    align-self: flex-start;
+    padding: 9px 18px;
+    border-radius: 7px;
+    border: none;
+    background: var(--brand);
+    color: var(--bg);
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .comment-form button:hover { opacity: 0.9; }
+  .comment-form button:disabled { opacity: 0.6; cursor: default; }
+  .comment-status { font-size: 0.82rem; color: var(--ink-faint); min-height: 1.2em; }
+  .comments-list { display: flex; flex-direction: column; gap: 0; }
+  .comment-item { padding: 12px 0; border-top: 1px solid var(--line); }
+  .comment-item:first-child { border-top: none; padding-top: 0; }
+  .comment-alias { font-weight: 700; font-size: 0.88rem; color: var(--ink); }
+  .comment-time { font-size: 0.74rem; color: var(--ink-faint); margin-left: 8px; }
+  .comment-text { margin: 4px 0 0; font-size: 0.92rem; color: var(--ink-soft); line-height: 1.55; white-space: pre-wrap; }
+  .comments-empty { font-size: 0.88rem; color: var(--ink-faint); font-style: italic; }
+
+  /* ---- Vote row ---- */
+  .vote-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .vote-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--ink-faint);
+    font-size: 0.78rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  }
+  .vote-btn:hover { border-color: var(--ink-soft); color: var(--ink-soft); }
+  .vote-btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+  .vote-btn.voted-like { border-color: var(--up); color: var(--up); background: color-mix(in srgb, var(--up) 12%, var(--paper)); }
+  .vote-btn.voted-dislike { border-color: var(--down); color: var(--down); background: color-mix(in srgb, var(--down) 12%, var(--paper)); }
+  .vote-btn:disabled { cursor: default; opacity: 0.85; }
+  .vote-count { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+
+  /* ---- Locked / subscriber reader's note ---- */
+  .locked {
+    border: 1px dashed color-mix(in srgb, var(--brand) 55%, var(--line));
+    background: var(--brand-soft);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-top: 4px;
+  }
+  .locked .locked-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--brand);
+    margin-bottom: 10px;
+  }
+  .locked ul { margin: 0; padding-left: 18px; }
+  .locked li { font-size: 0.92rem; line-height: 1.6; color: var(--ink-soft); margin-bottom: 6px; }
+  .locked li:last-child { margin-bottom: 0; }
+  .locked a { color: var(--ink); font-weight: 600; }
+  .locked .paid-tag {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--brand);
+    background: var(--paper);
+    border: 1px solid color-mix(in srgb, var(--brand) 40%, var(--line));
+    border-radius: 4px;
+    padding: 1px 6px;
+    vertical-align: middle;
+  }
+  .locked .note { margin-top: 10px; font-size: 0.82rem; color: var(--ink-faint); }
+
+  /* ---- Ticker ---- */
+  .ticker {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 22px;
+    box-shadow: var(--shadow);
+  }
+  .ticker .cell { background: var(--paper); padding: 12px 14px; }
+  .ticker .idx { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); margin-bottom: 4px; }
+  .ticker .val { font-size: 1.15rem; font-weight: 700; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  .ticker .chg { font-size: 0.8rem; margin-left: 6px; }
+  .chg.up { color: var(--up); }
+  .chg.down { color: var(--down); }
+
+  .movers { display: flex; gap: 24px; flex-wrap: wrap; margin: 4px 0 26px; }
+  .movers .label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); margin-bottom: 6px; display: block; }
+  .movers .row { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; padding: 2px 0; font-size: 0.86rem; display: block; }
+
+  .callout {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 16px 18px;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    box-shadow: var(--shadow);
+  }
+  .callout strong { color: var(--ink); }
+
+  footer.colophon {
+    margin-top: 56px;
+    padding-top: 22px;
+    border-top: 1px solid var(--line);
+    font-size: 0.8rem;
+    color: var(--ink-faint);
+    line-height: 1.75;
+  }
+  footer.colophon a { color: var(--ink-soft); }
+  footer.colophon .disclaimer {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+  }
+
+  @media (max-width: 480px) {
+    .wordmark { font-size: 1.6rem; }
+    .masthead-inner { align-items: flex-start; }
+    .edition { text-align: left; }
+  }
+</style>
+<link rel="stylesheet" href="/mobile.css" media="(max-width: 640px)">
+<script defer src="/_vercel/insights/script.js"></script>
+<script defer src="/capacitor-bridge.js"></script>
+<script defer src="/mobile.js"></script>
+<link rel="stylesheet" href="/quiz.css">
+<script defer src="/quiz.js"></script>
+</head>
+<body>
+
+<div class="masthead-band">
+  <div class="masthead-inner">
+    <div>
+      <h1 class="wordmark">The Hour <span>Brief</span></h1>
+      <p class="tagline">Sixty minutes. Three lanes. Everything that actually mattered today.</p>
+    </div>
+    <div class="edition">Edition 073<br>Fri, 30 Oct 2026</div>
+  </div>
+</div>
+
+<div class="pause-band">
+  <div class="pause-inner">
+    <span class="pause-label">Before the news</span>
+    <p class="pause-text">There&rsquo;s a Greek idea called <span class="pause-word">meraki</span> &mdash; doing something with soul, creativity or love, leaving a piece of yourself in the work rather than just going through the motions. It shows up today in Caterpillar&rsquo;s chief executive crediting a record order backlog for real demand rather than a lucky quarter; in Intel&rsquo;s own CEO pointing to &ldquo;extraordinary demand&rdquo; behind a quarter that beat its own guidance; and in Wall Street&rsquo;s much harsher verdict on Amazon and Alphabet, whose results suggest investors are starting to ask not just how much these companies are spending on AI, but whether it&rsquo;s being spent with real purpose.</p>
+  </div>
+</div>
+
+<div class="page" data-edition-date="2026-10-30">
+
+  <div class="main-col">
+
+  <div class="archive-banner" style="background:var(--paper-2);border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin-bottom:18px;font-size:0.86rem;color:var(--ink-soft);">🗄️ You are viewing an archived edition from <strong>Oct 30, 2026</strong>. <a href="../" style="color:var(--ink);font-weight:600;">See the latest edition</a></div>
+
+  <div class="about">
+    <p><strong>The Hour Brief</strong> is a daily read built for one sitting: what moved in AI and technology, what's shaping product and business across India and the rest of the world, and what the Indian stock market did and why. Every item links back to its original source — read the take here, click through for the full story.</p>
+    <p class="free-line">Free to read, no account or sign-up needed. A few items point to stories from paid publications — those are marked and link out; everything else on this page is open.</p>
+  </div>
+
+  <nav class="nav" aria-label="Sections">
+    <a href="#ai">AI &amp; Tech</a>
+    <a href="#biz">Product &amp; Business</a>
+    <a href="#mkt">Stock Market</a>
+    <a href="#quiz">Quiz</a>
+    <a href="./" target="_blank" rel="noopener">Past Editions</a>
+    <a href="/contact.html">Contact</a>
+  </nav>
+  <!-- AI & TECH -->
+  <section class="lane ai" id="ai">
+    <div class="lane-head">
+      <span class="lane-tag">AI &amp; Tech</span>
+      <h2>Amazon's Q3 2026 revenue and profit both miss Wall Street estimates even as AWS grows 39% and operating income hits a record margin, sending its stock lower for a second straight session, as Intel beats its own guidance on &ldquo;extraordinary&rdquo; Xeon demand, OpenAI closes in on a $30 billion round at a $1.25 trillion valuation, Apple's foldable iPhone Duo expands to 28 more countries today, Super Micro's preliminary results blow past its own guidance on AI server demand, and Samsung tracks toward retaking the global smartphone lead from Apple in 2026</h2>
+      <p class="lane-takeaway"><span class="takeaway-label">Takeaway</span> Today&rsquo;s AI story is the market getting pickier about spending versus proof: Amazon and Intel both posted genuine growth, but only the one that cleanly beat its own numbers was rewarded &mdash; scale alone isn&rsquo;t settling the AI-capex argument anymore.</p>
+    </div>
+
+    <div class="item" data-story-id="ai-1">
+      <span class="dot"></span>
+      <div>
+        <h3>Amazon's stock falls for a second day as Q3 revenue and profit miss despite AWS growing 39%</h3>
+        <p>Amazon reported third-quarter 2026 revenue of $201.9 billion, up 12% year-over-year, and diluted EPS of $1.89, both missing Wall Street's roughly $202.3 billion and $1.96&ndash;$1.97 estimates, according to the Motley Fool's October 29 market-close report. AWS revenue grew 39% to about $46 billion and operating income reached a record $28.1 billion &mdash; Amazon's highest-ever operating margin &mdash; but the stock, which had already closed down 4.25% at $243.79 in Thursday's regular session on capex jitters, fell further after hours as Amazon held its 2026 AI infrastructure spending plan at roughly $220 billion.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Beating on AWS growth and operating income wasn&rsquo;t enough once investors zeroed in on the size of the capex bill behind it &mdash; the same pattern that sank Alphabet two sessions earlier.</p>
+        <span class="src"><a href="https://www.fool.com/coverage/stock-market-today/2026/10/29/stock-market-today-oct-29-amazon-falls-on-q3-earnings-report-and-capex-concerns/" target="_blank" rel="noopener">The Motley Fool &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-1">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="ai-2">
+      <span class="dot"></span>
+      <div>
+        <h3>Intel beats its own Q3 guidance as its CEO cites &ldquo;extraordinary demand&rdquo; for Xeon chips</h3>
+        <p>Intel reported third-quarter 2026 revenue of $16.5 billion, up 21% year-over-year, with non-GAAP EPS of $0.52 against a roughly $0.40 estimate heading into the October 29 report, according to the company's SEC filing. The release said revenue, gross margin and earnings per share all exceeded guidance, and CEO Lip-Bu Tan described extraordinary demand for the Xeon family, adding that supply is now the priority. Intel guided fourth-quarter revenue to $15.0&ndash;$16.0 billion with non-GAAP EPS of $0.25.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A chipmaker beating its own guidance on data-center demand, in the same week Amazon and Alphabet got punished for spending on exactly that demand, shows investors drawing a line between supplying the AI boom and bankrolling it.</p>
+        <span class="src"><a href="https://www.sec.gov/Archives/edgar/data/0000050863/000005086326000188/q326earningsrelease.htm" target="_blank" rel="noopener">SEC filing &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-2">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="ai-3">
+      <span class="dot"></span>
+      <div>
+        <h3>OpenAI closes in on a $30 billion round that would value it at $1.25 trillion</h3>
+        <p>OpenAI is nearing a funding round of up to $30 billion led by investors from the United Arab Emirates and Coatue, at a pre-money valuation of about $1.25 trillion, CNBC reported on October 22; the round had not been confirmed closed as of this week. A separate Bloomberg report put the target valuation closer to $1.4 trillion, a gap that may come down to pre- versus post-money framing.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A round this size still being described in &ldquo;nears&rdquo; and &ldquo;reportedly&rdquo; more than a week after it first surfaced says as much about how guarded OpenAI is being as it does about the price tag itself.</p>
+        <span class="src"><a href="https://aiweekly.co/alerts/openai-nears-30b-uae-and-coatue-round-at-125t-valuation" target="_blank" rel="noopener">AI Weekly &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-3">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="ai-4">
+      <span class="dot"></span>
+      <div>
+        <h3>Apple's foldable iPhone Duo expands to 28 more countries today</h3>
+        <p>Apple's first foldable iPhone, the iPhone Duo, launched in more than 70 countries and regions on October 23 and reaches 28 additional countries and regions today, October 30, according to MacTrast's rollout coverage. Apple has said walk-in stock at its stores will be limited on launch days, and some markets' online delivery windows are already stretching into early 2027.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Staggering one device's rollout across a full week, rather than launching everywhere at once, is Apple managing a supply constraint in public instead of hiding one.</p>
+        <span class="src"><a href="https://www.mactrast.com/2026/10/the-iphone-duo-begins-arriving-at-apple-stores-around-the-globe/" target="_blank" rel="noopener">MacTrast &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-4">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="ai-5">
+      <span class="dot"></span>
+      <div>
+        <h3>Super Micro's preliminary results blow past its own guidance on AI server demand</h3>
+        <p>Super Micro said preliminary revenue for its fiscal first quarter of 2027 (ended September 30) will come in between $18.5 billion and $19.5 billion, far above the $14.5&ndash;$15.5 billion it had guided, with gross margin now estimated at 12.0%&ndash;12.5% versus 10.4%&ndash;10.8% guided, according to an October 20 disclosure covered by LetsDataScience. The company credited AI platform demand for the gap and will hold its full earnings call on November 3; the figures remain unaudited and subject to revision.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Pre-announcing numbers this far above its own guidance, three weeks before the actual earnings call, is Super Micro trying to get ahead of a market that's turned skeptical of AI-spending stories by backing this one with hard numbers early.</p>
+        <span class="src"><a href="https://letsdatascience.com/news/super-micro-preannounces-q1-revenue-far-above-guidance-on-ai-72a07111" target="_blank" rel="noopener">LetsDataScience &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-5">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="ai-6">
+      <span class="dot"></span>
+      <div>
+        <h3>Samsung tracks toward retaking the global smartphone lead from Apple in 2026</h3>
+        <p>Counterpoint Research forecasts Samsung's 2026 smartphone shipments rising about 0.8% while Apple's fall 2.1%, which would hand Samsung back the global shipment lead, according to the Korea JoongAng Daily. The same coverage notes a separate outlook suggesting Apple could retake the top spot again in 2027.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A one-year swing over fractions of a percent in a two-horse race shows how close to a coin flip the smartphone market has become at the very top.</p>
+        <span class="src"><a href="https://www.koreajoongangdaily.com/business/samsung-poised-to-surpass-apple-retake-smartphone-crown/12840537" target="_blank" rel="noopener">Korea JoongAng Daily &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-6">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+  </section>
+  <!-- PRODUCT & BUSINESS -->
+  <section class="lane biz" id="biz">
+    <div class="lane-head">
+      <span class="lane-tag">Product &amp; Business</span>
+      <h2>Reliance heads into today's Q2 FY27 results and a debenture-fundraising decision as Caterpillar and Mastercard both beat Wall Street's Q3 estimates, even as JSW Steel's profit surges on record production, Ather Energy posts its first quarterly profit, Vedanta Iron and Steel narrows its loss, and ExxonMobil heads into its own Q3 release today already flagging a one-time hit to its headline earnings</h2>
+      <p class="lane-takeaway"><span class="takeaway-label">Takeaway</span> Today&rsquo;s business story is genuine operating strength turning up across very different companies &mdash; from Caterpillar&rsquo;s record backlog to Ather&rsquo;s first profit &mdash; even as the day&rsquo;s two biggest results, Reliance&rsquo;s and Exxon&rsquo;s, are still to come.</p>
+    </div>
+
+    <div class="item" data-story-id="biz-1">
+      <span class="dot"></span>
+      <div>
+        <h3>Reliance heads into today's Q2 FY27 results and a debenture-fundraising decision</h3>
+        <p>Reliance Industries' board meets today, October 30, to consider its September-quarter and first-half FY27 results alongside a possible fundraise through non-convertible debentures, according to a Kotak Neo preview. The results follow a week in which Jio Platforms' stock-market debut lifted Reliance's group value past the Tata Group's to become India's most valuable business house.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Weighing a debenture raise in the same board meeting as results, right after Jio's listing lifted the group's standing, suggests Reliance wants fresh financing options on the table while its valuation story is working in its favour.</p>
+        <span class="src"><a href="https://www.kotakneo.com/news/stocks/reliance-industries-q2-fy27-results-share-price-in-focus/" target="_blank" rel="noopener">Kotak Neo &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-1">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="biz-2">
+      <span class="dot"></span>
+      <div>
+        <h3>Caterpillar's Q3 profit surges on a record order backlog</h3>
+        <p>Caterpillar reported third-quarter 2026 sales and revenues of $20.7 billion, up from $17.6 billion a year earlier, with profit per share of $7.13 ($7.20 adjusted) against $4.88 a year ago, according to the company's SEC filing. CEO Joe Creed credited strong order rates and a record backlog, and the company returned $2.0 billion of cash to shareholders through buybacks and dividends during the quarter.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A record backlog, not a one-off order, behind this jump is Caterpillar's strongest signal yet that the industrial side of this year's spending boom has real staying power.</p>
+        <span class="src"><a href="https://www.sec.gov/Archives/edgar/data/0000018230/000001823026000052/ex991toformcat3q2026earnin.htm" target="_blank" rel="noopener">SEC filing &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-2">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="biz-3">
+      <span class="dot"></span>
+      <div>
+        <h3>Mastercard's Q3 profit climbs on revenue as consumer spending stays resilient</h3>
+        <p>Mastercard reported third-quarter 2026 net income of $4.6 billion and diluted EPS of $5.28 ($5.31 adjusted), on net revenue of $9.8 billion, up 14%, with gross dollar volume up 7% in local currency, according to the company's October 29 SEC filing. CEO Michael Miebach called it "another strong quarter."</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Double-digit revenue growth holding steady through a week when Big Tech's spending plans spooked markets is a reminder that consumer spending itself hasn't flinched yet.</p>
+        <span class="src"><a href="https://www.sec.gov/Archives/edgar/data/0001141391/000114139126000122/ma09302026-exx991xearnings.htm" target="_blank" rel="noopener">SEC filing &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-3">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="biz-4">
+      <span class="dot"></span>
+      <div>
+        <h3>JSW Steel's profit surges on record steel production</h3>
+        <p>JSW Steel reported Q2 FY27 consolidated net profit of about &#8377;5,359 crore, up sharply from &#8377;1,646 crore a year earlier, as revenue rose to roughly &#8377;54,486 crore from &#8377;45,152 crore, on crude steel production of 7.27 million tonnes &mdash; the company's highest-ever quarterly output, according to Kotak Neo's October 23 report. Higher coking coal and other input costs continued to press on margins at its Indian operations even as volumes hit the record.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Record output delivering a record profit while input costs keep rising underneath it shows JSW growing past a cost problem rather than solving it.</p>
+        <span class="src"><a href="https://www.kotakneo.com/news/stocks/jsw-steel-q2-profit-surges-as-revenue-and-sales-rise-share-price-in-focus/" target="_blank" rel="noopener">Kotak Neo &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-4">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="biz-5">
+      <span class="dot"></span>
+      <div>
+        <h3>Ather Energy posts its first quarterly profit</h3>
+        <p>Ather Energy reported a Q2 FY27 profit of about &#8377;1.26 crore, compared with a loss of roughly &#8377;154 crore a year earlier, as revenue rose about 63% to roughly &#8377;1,527 crore and volumes climbed 42% to 93,211 units, according to Business Today's October 26 report. Its Hosur plant ran at 98% peak capacity utilisation, shares rose as much as 15% on the news, and the company plans to add about 2.25 lakh units of annual capacity.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> One profitable quarter after years of losses is a real milestone for Ather, but a single quarter &mdash; however welcome &mdash; is not yet proof the business can stay profitable through a slower one.</p>
+        <span class="src"><a href="https://www.businesstoday.in/markets/stocks/story/ather-energy-shares-zoom-15-as-q2-fy27-profit-turns-positive-rs-122-crore-capex-planned-563666-2026-10-26" target="_blank" rel="noopener">Business Today &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-5">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="biz-6">
+      <span class="dot"></span>
+      <div>
+        <h3>Vedanta Iron and Steel narrows its loss as operations improve</h3>
+        <p>Vedanta Iron and Steel's consolidated loss after tax narrowed to about &#8377;324 crore in Q2 FY27 from &#8377;477 crore a year earlier, with EBITDA up 56% as steel operations improved, even as quarterly revenue of about &#8377;2,788 crore slipped roughly 2.4% year-over-year, according to Kotak Neo's October 27 report.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A shrinking loss built on efficiency gains rather than higher revenue shows this business still finding its footing, not yet growing out of its problems.</p>
+        <span class="src"><a href="https://www.kotakneo.com/news/stocks/vedanta-iron-steel-q2-fy-27-results-share-price-in-focus/" target="_blank" rel="noopener">Kotak Neo &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-6">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="biz-7">
+      <span class="dot"></span>
+      <div>
+        <h3>ExxonMobil heads into today's Q3 report already flagging a one-time earnings hit</h3>
+        <p>ExxonMobil is scheduled to release third-quarter 2026 results today, October 30, with an October 16 regulatory filing flagging an estimated $2.5 billion negative timing effect on GAAP earnings for the quarter &mdash; a measure the company said would not affect its non-GAAP adjusted earnings, according to its own investor-relations announcement. The report follows a strong second quarter, when Exxon posted $14.5 billion in GAAP earnings.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Disclosing a one-time hit to the headline number two weeks before reporting it is Exxon trying to make sure the real story &mdash; the adjusted figure &mdash; isn't lost in a confusing GAAP number on the day.</p>
+        <span class="src"><a href="https://investor.exxonmobil.com/company-information/press-releases/detail/1212/exxonmobil-to-release-third-quarter-2026-financial-results" target="_blank" rel="noopener">ExxonMobil IR &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-7">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+  </section>
+  <!-- STOCK MARKET -->
+  <section class="lane mkt" id="mkt">
+    <div class="lane-head">
+      <span class="lane-tag">Stock Market</span>
+      <h2>Sensex and Nifty snap their losing run with a sharp Thursday rebound even as Wall Street's Nasdaq slides 1.4% as Alphabet's stock posts its worst one-day dollar loss ever, Amazon's shares extend their fall after a Q3 miss, and markets head into today's session with Reliance's results and ExxonMobil's own report still to come</h2>
+      <p class="lane-takeaway"><span class="takeaway-label">Takeaway</span> Today&rsquo;s market story is a split screen &mdash; India shook off four days of losses in one broad Thursday rally while Wall Street absorbed its roughest big-tech earnings reaction in years, and today's session has to reconcile both moods.</p>
+    </div>
+
+    <div class="ticker">
+      <div class="cell">
+        <div class="idx">Sensex &mdash; last close, Thu 29 Oct</div>
+        <div class="val mono">74,151.04<span class="chg up">+905.01 &middot; +1.24%</span></div>
+      </div>
+      <div class="cell">
+        <div class="idx">Nifty 50 &mdash; last close, Thu 29 Oct</div>
+        <div class="val mono">22,936.75<span class="chg up">+237.90 &middot; +1.05%</span></div>
+      </div>
+      <div class="cell">
+        <div class="idx">S&amp;P 500 &mdash; last close, Thu 29 Oct</div>
+        <div class="val mono">7,720.39<span class="chg down">&minus;0.30%</span></div>
+      </div>
+    </div>
+
+    <div class="movers">
+      <div class="col">
+        <span class="label">India &mdash; Thursday's close</span>
+        <span class="row mono">Nifty Realty <span style="color:var(--up)">Thursday's top sectoral gainer</span></span>
+      </div>
+      <div class="col">
+        <span class="label">Global &mdash; Thursday's close</span>
+        <span class="row mono">Nasdaq Composite <span style="color:var(--down)">&minus;1.4%</span></span>
+        <span class="row mono">Alphabet <span style="color:var(--down)">&minus;12.64% &middot; worst one-day $ loss ever</span></span>
+      </div>
+    </div>
+
+    <div class="item" data-story-id="mkt-1">
+      <span class="dot"></span>
+      <div>
+        <h3>Sensex and Nifty rebound sharply, snapping a losing run</h3>
+        <p>The Sensex closed up 905.01 points (1.24%) at 74,151.04 and the Nifty 50 gained 237.90 points (1.05%) to settle at 22,936.75 on Thursday, October 29, after opening lower and reversing through the session, according to Business Standard's market-close report. Realty led the sectoral rally; the gains came despite elevated crude prices and lingering geopolitical worries, with the Federal Reserve's rate hold and a run of upbeat earnings cited as the main support.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Opening lower and closing sharply higher on the same day shows this was a session where sentiment genuinely turned, not just a market drifting up on calm.</p>
+        <span class="src"><a href="https://www.business-standard.com/markets/news/stock-market-live-oct-29-nse-bse-sensex-today-nifty-gift-nifty-jpl-share-price-ipo-today-126102900090_1.html" target="_blank" rel="noopener">Business Standard &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="mkt-1">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="mkt-2">
+      <span class="dot"></span>
+      <div>
+        <h3>Alphabet's stock posts its biggest one-day dollar loss ever as Wall Street's tech selloff deepens</h3>
+        <p>The Nasdaq Composite fell about 1.4%, the S&amp;P 500 slipped to roughly 7,720, and the Dow eased to around 52,340 on Thursday, October 29, as Alphabet's stock closed down 12.64% &mdash; wiping out close to $500 billion in market value in a single session, the largest one-day dollar loss by any company in history, according to Yahoo Finance's market-close coverage. The slide came two sessions after Alphabet's own earnings miss and extended into Thursday as investors kept reassessing how much cash Big Tech is burning on AI infrastructure.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Wiping out this much value in one session, days after the earnings that triggered it, shows the market is still repricing Alphabet downward rather than having already found its new level.</p>
+        <span class="src"><a href="https://finance.yahoo.com/markets/live/stock-market-today-thursday-october-29-dow-sp-500-nasdaq-alphabet-microsoft-earnings-130305714.html" target="_blank" rel="noopener">Yahoo Finance &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="mkt-2">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="mkt-3">
+      <span class="dot"></span>
+      <div>
+        <h3>Amazon's shares extend their slide after hours following Thursday's Q3 miss</h3>
+        <p>Amazon's stock, which had already closed down 4.25% at $243.79 in Thursday's regular session on capex concerns ahead of its report, fell further after its earnings release &mdash; estimates of the after-hours drop ranged from about 6% to as much as 9% across different trackers, according to Investing.com's coverage of the October 29 report. The declines came even though AWS revenue grew 39% in the quarter, underlining how closely investors are now watching Amazon's roughly $220 billion 2026 AI capital-spending plan.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A stock falling before earnings on capex fears, then falling again after earnings confirm the capex, shows the market had already made up its mind about what it didn't want to hear.</p>
+        <span class="src"><a href="https://www.investing.com/news/transcripts/earnings-call-transcript-amazon-q3-2026-misses-eps-as-shares-fall-after-hours-93CH-4985489" target="_blank" rel="noopener">Investing.com &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="mkt-3">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="mkt-4">
+      <span class="dot"></span>
+      <div>
+        <h3>Markets head into today's session with Reliance's results and Exxon's report still to come</h3>
+        <p>India's markets open today with Reliance Industries' board set to consider its September-quarter results and a debenture fundraise, while US markets await ExxonMobil's third-quarter report after a week dominated by hyperscaler earnings reactions. Both are among the last major results of a week that has moved sharply on earnings news in both directions.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Closing out an earnings-heavy week with two more big reports due is a reminder that today's calm open can still turn on a single number this afternoon or tonight.</p>
+        <span class="src"><a href="https://investor.exxonmobil.com/company-information/press-releases/detail/1212/exxonmobil-to-release-third-quarter-2026-financial-results" target="_blank" rel="noopener">ExxonMobil IR &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="mkt-4">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>Valuation lens for today, via Zerodha Varsity:</strong> Varsity's fundamental analysis module frames a P/E or other valuation multiple as a question about how much future growth a stock's price already assumes &mdash; the higher the multiple, the more growth has to show up just to justify today's price. It's a useful way to read why strong results from Amazon and Intel this week landed so differently: one still had more growth priced in than it delivered, the other didn't.
+      <br><span class="src"><a href="https://zerodha.com/varsity/module/fundamental-analysis/" target="_blank" rel="noopener">Zerodha Varsity &rarr;</a></span>
+    </div>
+  </section>
+    <!-- DAILY QUIZ -->
+  <section class="lane quiz" id="quiz" aria-labelledby="quiz-title">
+    <div class="lane-head">
+      <span class="lane-tag">Daily quiz</span>
+      <h2 id="quiz-title">Five questions on today&rsquo;s edition</h2>
+    </div>
+    <div id="quiz-root"></div>
+    <script type="application/json" id="quiz-data">
+      {
+        "v": 1,
+        "date": "2026-10-30",
+        "questions": [
+          {
+            "q": "By how much did Amazon's AWS revenue grow in its Q3 2026 report?",
+            "options": [
+              "21%",
+              "39%",
+              "48%",
+              "62%"
+            ],
+            "answer": 1,
+            "why": "AWS revenue grew 39% to about $46 billion in Amazon's Q3 2026 report.",
+            "story": "ai-1"
+          },
+          {
+            "q": "What product line did Intel's CEO say was seeing \"extraordinary demand\" in Q3 2026?",
+            "options": [
+              "Xeon chips",
+              "Memory chips",
+              "GPUs",
+              "Foundry services"
+            ],
+            "answer": 0,
+            "why": "Intel's CEO Lip-Bu Tan described extraordinary demand for the Xeon family in the Q3 2026 release.",
+            "story": "ai-2"
+          },
+          {
+            "q": "By roughly how much did Caterpillar's Q3 2026 sales and revenues rise year-over-year?",
+            "options": [
+              "5%",
+              "10%",
+              "17%",
+              "30%"
+            ],
+            "answer": 2,
+            "why": "Caterpillar's Q3 2026 sales and revenues rose to $20.7 billion from $17.6 billion, about 17% higher.",
+            "story": "biz-2"
+          },
+          {
+            "q": "What milestone did Ather Energy reach in its Q2 FY27 results?",
+            "options": [
+              "A merger with Ola Electric",
+              "A stock market listing",
+              "Its highest-ever loss",
+              "Its first quarterly profit"
+            ],
+            "answer": 3,
+            "why": "Ather Energy posted a Q2 FY27 profit of about ₹1.26 crore, compared with a loss a year earlier.",
+            "story": "biz-5"
+          },
+          {
+            "q": "What happened to Alphabet's stock on Thursday, October 29?",
+            "options": [
+              "It hit an all-time high",
+              "It rallied on a stock split",
+              "It posted its biggest one-day dollar loss ever",
+              "It was unchanged"
+            ],
+            "answer": 2,
+            "why": "Alphabet's stock closed down 12.64% on October 29, wiping out close to $500 billion in value, its largest one-day dollar loss ever.",
+            "story": "mkt-2"
+          }
+        ]
+      }
+    </script>
+    <noscript><p>The daily quiz needs JavaScript.</p></noscript>
+  </section>
+  <section class="comments-section" id="comments" data-edition-date="2026-10-30">
+    <h2>Discuss today's edition</h2>
+    <p class="comments-sub">Leave a name (or make one up) and join the conversation. Comments are public and lightly moderated.</p>
+
+    <form class="comment-form" id="comment-form">
+      <input type="text" id="comment-alias" placeholder="Name or alias" maxlength="40" required>
+      <textarea id="comment-text" placeholder="What stood out to you today?" maxlength="500" required></textarea>
+      <button type="submit">Post comment</button>
+      <div class="comment-status" id="comment-status"></div>
+    </form>
+
+    <div class="comments-list" id="comments-list">
+      <p class="comments-empty">Loading comments…</p>
+    </div>
+  </section>
+
+  <footer class="colophon">
+    The Hour Brief is compiled daily from public reporting, newsletters and market data, with every summary linked back to its original source. AI &amp; Tech and Product &amp; Business draw on general technology and business press; Stock Market data covers NSE/BSE and US indices via public market reports. <a href="../about.html" target="_blank" rel="noopener">How this is made →</a> · <a href="../privacy.html" target="_blank" rel="noopener">Privacy</a>
+    <div class="disclaimer contact-us">
+      <strong style="color:var(--ink)">Contact us:</strong> corrections, feedback or app support &mdash; <a href="mailto:milindroy101292@gmail.com">milindroy101292@gmail.com</a> &middot; <a href="/contact.html">Contact page</a>
+    </div>
+    <div class="disclaimer">
+      New edition every morning. <a href="../feed.xml" target="_blank" rel="noopener">Subscribe via RSS</a> to get each edition in your reader of choice (Feedly, NetNewsWire, Reeder, Inoreader, etc.) — no email or account needed.
+    </div>
+    <div class="disclaimer">
+      Nothing here is investment advice. Market figures are for information and discussion only — verify with a live data source before acting, and consult a licensed advisor for anything you're putting money behind.
+    </div>
+  </footer>
+
+  </div>
+
+  <aside class="side-col">
+    <div class="subscribe-box">
+      <span class="sub-label">Get it by email</span>
+      <p>One email a day, every morning. Unsubscribe anytime — no spam, just the day's edition.</p>
+      <form id="subscribe-form" class="subscribe-form">
+        <input type="email" name="email" id="sub-email" placeholder="you@example.com" required>
+        <button type="submit">Subscribe</button>
+      </form>
+      <div class="subscribe-status" id="subscribe-status"></div>
+      <p class="subscribe-note">Prefer no inbox clutter? <a href="../feed.xml" target="_blank" rel="noopener">Use RSS instead</a>.</p>
+    </div>
+  </aside>
+</div>
+<script>
+(function () {
+  var page = document.querySelector('.page');
+  var editionDate = page ? page.getAttribute('data-edition-date') : '';
+
+  // ---- Archive banner accuracy check ----
+  // Only present on archive/<date>.html pages. If this date turns out to still
+  // be the latest edition (not yet superseded), the "archived" framing is
+  // misleading — swap it for a neutral permalink note instead.
+  var archiveBanner = document.querySelector('.archive-banner');
+  if (archiveBanner && editionDate) {
+    fetch('../editions.json')
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data || !data.editions || !data.editions.length) return;
+        var latest = data.editions[data.editions.length - 1];
+        if (latest && latest.date === editionDate) {
+          archiveBanner.innerHTML = '📌 This is also today’s latest edition — permanently linked here. <a href="./" target="_blank" rel="noopener">Browse all editions</a>';
+        }
+      })
+      .catch(function () {});
+  }
+
+  // ---- Scrollspy tabs ----
+  var navLinks = Array.prototype.slice.call(document.querySelectorAll('.nav a[href^="#"]'));
+  var spySections = ['ai', 'biz', 'mkt']
+    .map(function (id) { return document.getElementById(id); })
+    .filter(Boolean);
+  if (navLinks.length && spySections.length && 'IntersectionObserver' in window) {
+    var spy = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          navLinks.forEach(function (link) {
+            link.classList.toggle('active', link.getAttribute('href') === '#' + entry.target.id);
+          });
+        }
+      });
+    }, { rootMargin: '-88px 0px -70% 0px', threshold: 0 });
+    spySections.forEach(function (s) { spy.observe(s); });
+  }
+
+  function voteKey(storyId) { return editionDate + ':' + storyId; }
+  function votedFlagKey(storyId) { return 'hb-voted-' + voteKey(storyId); }
+
+  // ---- Votes ----
+  var voteRows = Array.prototype.slice.call(document.querySelectorAll('.vote-row[data-vote-key]'));
+  if (voteRows.length) {
+    var ids = voteRows.map(function (r) { return voteKey(r.getAttribute('data-vote-key')); });
+    fetch('/api/vote?ids=' + encodeURIComponent(ids.join(',')))
+      .then(function (r) { return r.ok ? r.json() : {}; })
+      .then(function (counts) {
+        voteRows.forEach(function (row) {
+          var storyId = row.getAttribute('data-vote-key');
+          var c = counts[voteKey(storyId)] || { like: 0, dislike: 0 };
+          setCounts(row, c.like, c.dislike);
+          applyVotedState(row, storyId);
+        });
+      })
+      .catch(function () {});
+
+    voteRows.forEach(function (row) {
+      var storyId = row.getAttribute('data-vote-key');
+      applyVotedState(row, storyId);
+      row.querySelectorAll('.vote-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          if (localStorage.getItem(votedFlagKey(storyId))) return;
+          var type = btn.getAttribute('data-vote');
+          btn.disabled = true;
+          fetch('/api/vote', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: voteKey(storyId), type: type })
+          })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+              setCounts(row, data.like, data.dislike);
+              localStorage.setItem(votedFlagKey(storyId), type);
+              applyVotedState(row, storyId);
+            })
+            .catch(function () { btn.disabled = false; });
+        });
+      });
+    });
+  }
+
+  function setCounts(row, like, dislike) {
+    var likeEl = row.querySelector('.vote-like .vote-count');
+    var dislikeEl = row.querySelector('.vote-dislike .vote-count');
+    if (likeEl) likeEl.textContent = like != null ? like : 0;
+    if (dislikeEl) dislikeEl.textContent = dislike != null ? dislike : 0;
+  }
+
+  function applyVotedState(row, storyId) {
+    var voted = localStorage.getItem(votedFlagKey(storyId));
+    row.querySelectorAll('.vote-btn').forEach(function (btn) {
+      var type = btn.getAttribute('data-vote');
+      btn.classList.toggle('voted-' + type, voted === type);
+      btn.disabled = !!voted;
+    });
+  }
+
+  // ---- Email subscribe ----
+  var subForm = document.getElementById('subscribe-form');
+  var subStatus = document.getElementById('subscribe-status');
+  if (subForm) {
+    subForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var emailInput = document.getElementById('sub-email');
+      var email = emailInput.value.trim();
+      if (!email) return;
+      var btn = subForm.querySelector('button');
+      btn.disabled = true;
+      subStatus.className = 'subscribe-status';
+      subStatus.textContent = 'Subscribing…';
+      fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email })
+      })
+        .then(function (r) { return r.ok ? r.json() : Promise.reject(r); })
+        .then(function () {
+          subStatus.className = 'subscribe-status ok';
+          subStatus.textContent = "You're in — first edition lands next morning.";
+          emailInput.value = '';
+        })
+        .catch(function () {
+          subStatus.className = 'subscribe-status err';
+          subStatus.textContent = 'Something went wrong — try again.';
+        })
+        .finally(function () { btn.disabled = false; });
+    });
+  }
+
+  // ---- Comments ----
+  var list = document.getElementById('comments-list');
+  var form = document.getElementById('comment-form');
+  var status = document.getElementById('comment-status');
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function renderComments(comments) {
+    if (!list) return;
+    if (!comments || !comments.length) {
+      list.innerHTML = '<p class="comments-empty">No comments yet — be the first.</p>';
+      return;
+    }
+    list.innerHTML = comments.map(function (c) {
+      var when = '';
+      try { when = new Date(c.ts).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch (e) {}
+      return '<div class="comment-item"><span class="comment-alias">' + escapeHtml(c.alias) +
+        '</span><span class="comment-time">' + when + '</span>' +
+        '<p class="comment-text">' + escapeHtml(c.text) + '</p></div>';
+    }).join('');
+  }
+
+  if (list && editionDate) {
+    fetch('/api/comments?date=' + encodeURIComponent(editionDate))
+      .then(function (r) { return r.ok ? r.json() : { comments: [] }; })
+      .then(function (data) { renderComments(data.comments); })
+      .catch(function () { list.innerHTML = '<p class="comments-empty">Couldn\'t load comments right now.</p>'; });
+  }
+
+  if (form) {
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var alias = document.getElementById('comment-alias').value.trim();
+      var text = document.getElementById('comment-text').value.trim();
+      if (!text) return;
+      var btn = form.querySelector('button');
+      btn.disabled = true;
+      status.textContent = 'Posting…';
+      fetch('/api/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: editionDate, alias: alias, text: text })
+      })
+        .then(function (r) {
+          if (r.status === 429) { status.textContent = "You're commenting a bit fast — try again in a bit."; throw new Error('rate limited'); }
+          if (!r.ok) { status.textContent = 'Something went wrong — try again.'; throw new Error('failed'); }
+          return r.json();
+        })
+        .then(function (data) {
+          status.textContent = '';
+          document.getElementById('comment-text').value = '';
+          var empty = list.querySelector('.comments-empty');
+          if (empty) list.innerHTML = '';
+          var when = '';
+          try { when = new Date(data.comment.ts).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch (e) {}
+          var el = document.createElement('div');
+          el.className = 'comment-item';
+          el.innerHTML = '<span class="comment-alias">' + escapeHtml(data.comment.alias) +
+            '</span><span class="comment-time">' + when + '</span>' +
+            '<p class="comment-text">' + escapeHtml(data.comment.text) + '</p>';
+          list.insertBefore(el, list.firstChild);
+        })
+        .catch(function () {})
+        .finally(function () { btn.disabled = false; });
+    });
+  }
+})();
+</script>
+</body>
+</html>
