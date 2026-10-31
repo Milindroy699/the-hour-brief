@@ -20,6 +20,14 @@
     {
       "source": "/l/:code",
       "destination": "/api/share?t=l&code=:code"
+    },
+    {
+      "source": "/api/subscribe",
+      "destination": "/api/newsletter?action=subscribe"
+    },
+    {
+      "source": "/api/create-draft",
+      "destination": "/api/newsletter?action=create-draft"
     }
   ],
   "headers": [

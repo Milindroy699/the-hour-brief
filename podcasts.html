@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<script>if ("scrollRestoration" in history) history.scrollRestoration = "manual";</script>
+<title>Podcast Highlights — The Hour Brief</title>
+<meta name="description" content="Highlights from top business, tech and product YouTube podcasts — Lenny's Podcast, Nikhil Kamath, SOIC, Stratechery, The Ken's Intermission, Dwarkesh Patel, All-In and Acquired.">
+<link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/brand/icon-192.png">
+<link rel="apple-touch-icon" href="/brand/apple-touch-icon.png">
+<style>
+  :root {
+    --bg: #f2f3ee; --paper: #ffffff; --paper-2: #e7e9e1;
+    --ink: #17191c; --ink-soft: #52585a; --ink-faint: #838a8a; --line: #d7dad2;
+    --brand: #5b3e96; --brand-soft: #efe9f7;
+    --shadow: 0 1px 2px rgba(23,25,28,0.06), 0 10px 28px rgba(23,25,28,0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #131417; --paper: #1b1d21; --paper-2: #24262b;
+      --ink: #edeeec; --ink-soft: #a9adaf; --ink-faint: #757a7c; --line: #2c2f34;
+      --brand: #a487d9; --brand-soft: #241f34;
+      --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #131417; --paper: #1b1d21; --paper-2: #24262b;
+    --ink: #edeeec; --ink-soft: #a9adaf; --ink-faint: #757a7c; --line: #2c2f34;
+    --brand: #a487d9; --brand-soft: #241f34;
+    --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.4);
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--bg); }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, "Inter", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .masthead-band { background: var(--ink); color: var(--bg); padding: 30px 24px 26px; }
+  .masthead-inner { max-width: 760px; margin: 0 auto; display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; }
+  .wordmark { font-weight: 800; font-size: 2.1rem; letter-spacing: -0.01em; margin: 0; text-transform: uppercase; }
+  .wordmark span { color: var(--brand); }
+  .back-link { font-size: 0.78rem; letter-spacing: 0.03em; text-transform: uppercase; color: color-mix(in srgb, var(--bg) 70%, transparent); text-decoration: none; white-space: nowrap; }
+  .back-link:hover { color: var(--bg); }
+
+  .page { max-width: 760px; margin: 0 auto; padding: 40px 24px 96px; }
+  h1 { font-family: Georgia, "Iowan Old Style", "Times New Roman", serif; font-size: 1.8rem; margin: 0 0 8px; }
+  .lede { color: var(--ink-soft); font-size: 1.02rem; line-height: 1.6; margin: 0 0 32px; }
+
+  .state { color: var(--ink-faint); font-size: 0.92rem; padding: 24px 0; }
+
+  .card {
+    background: var(--paper); border: 1px solid var(--line); border-radius: 12px;
+    box-shadow: var(--shadow); padding: 18px 20px; margin-bottom: 18px;
+  }
+  .card-head { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 10px; }
+  .thumb { width: 100px; height: 56px; object-fit: cover; border-radius: 6px; background: var(--paper-2); flex-shrink: 0; }
+  .card-meta { flex: 1; min-width: 0; }
+  .show { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--brand); }
+  .card-title { font-size: 1.05rem; font-weight: 700; margin: 2px 0 2px; line-height: 1.35; }
+  .card-title a { color: var(--ink); text-decoration: none; }
+  .card-title a:hover { text-decoration: underline; }
+  .published { font-size: 0.78rem; color: var(--ink-faint); }
+
+  .highlights { margin: 10px 0 0; padding-left: 20px; color: var(--ink-soft); line-height: 1.6; font-size: 0.93rem; }
+  .highlights li { margin-bottom: 5px; }
+  .quote {
+    margin: 10px 0 0; padding: 10px 14px; background: var(--brand-soft); border-radius: 8px;
+    font-size: 0.9rem; color: var(--ink); font-style: italic; line-height: 1.5;
+  }
+
+  footer.colophon { margin-top: 48px; padding-top: 22px; border-top: 1px solid var(--line); font-size: 0.8rem; color: var(--ink-faint); }
+  footer.colophon a { color: var(--ink-soft); }
+</style>
+<link rel="stylesheet" href="/mobile.css" media="(max-width: 640px)">
+<script defer src="/_vercel/insights/script.js"></script>
+<script defer src="/capacitor-bridge.js"></script>
+<script defer src="/mobile.js"></script>
+</head>
+<body>
+
+<div class="masthead-band">
+  <div class="masthead-inner">
+    <h1 class="wordmark">The Hour <span>Brief</span></h1>
+    <a class="back-link" href="./" target="_blank" rel="noopener">← Back to today's edition</a>
+  </div>
+</div>
+
+<div class="page">
+  <h1>Podcast highlights</h1>
+  <p class="lede">Highlights from Lenny's Podcast, Nikhil Kamath, SOIC, Stratechery, The Ken's Intermission, Dwarkesh Patel, All-In and Acquired — checked a few times a week, summarized automatically, no audio to sit through.</p>
+
+  <div id="list" class="state">Loading…</div>
+
+  <footer class="colophon">
+    Questions or something look wrong? Email us from the <a href="/contact.html">contact page</a>. <a href="./" target="_blank" rel="noopener">Back to today's edition</a> · <a href="about.html">How this is made</a> · <a href="privacy.html" target="_blank" rel="noopener">Privacy</a> · <a href="/contact.html">Contact us</a>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var list = document.getElementById('list');
+
+  function esc(s) {
+    return (s || '').replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function render(episodes) {
+    if (!episodes.length) {
+      list.className = 'state';
+      list.textContent = 'No highlights yet — check back soon.';
+      return;
+    }
+    list.className = '';
+    list.innerHTML = episodes.map(function (ep) {
+      var thumb = ep.thumbnail ? '<img class="thumb" src="' + esc(ep.thumbnail) + '" alt="" loading="lazy">' : '';
+      var hl = (ep.highlights || []).map(function (h) { return '<li>' + esc(h) + '</li>'; }).join('');
+      var quote = ep.quote ? '<div class="quote">“' + esc(ep.quote) + '”</div>' : '';
+      return (
+        '<article class="card">' +
+          '<div class="card-head">' +
+            thumb +
+            '<div class="card-meta">' +
+              '<div class="show">' + esc(ep.show || ep.channelName) + '</div>' +
+              '<div class="card-title"><a href="' + esc(ep.url) + '" target="_blank" rel="noopener">' + esc(ep.title) + '</a></div>' +
+              '<div class="published">' + fmtDate(ep.publishedAt) + '</div>' +
+            '</div>' +
+          '</div>' +
+          (hl ? '<ul class="highlights">' + hl + '</ul>' : '') +
+          quote +
+        '</article>'
+      );
+    }).join('');
+  }
+
+  fetch('/api/podcasts?limit=40')
+    .then(function (r) { return r.json(); })
+    .then(function (data) { render(data.episodes || []); })
+    .catch(function () {
+      list.className = 'state';
+      list.textContent = 'Could not load highlights right now.';
+    });
+})();
+</script>
+
+</body>
+</html>

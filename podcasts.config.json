@@ -1,0 +1,12 @@
+{
+  "channels": [
+    { "show": "Lenny's Podcast", "channelId": "UC6t1O76G0jYXOAoYCm153dA" },
+    { "show": "Nikhil Kamath", "channelId": "UCnC8SAZzQiBGYVSKZ_S3y4Q" },
+    { "show": "SOIC", "channelId": "UCB7GnQlJPIL6rBBqEoX87vA" },
+    { "show": "Stratechery", "channelId": "UC9AHywQeW9BOcOl7dg-YMqA" },
+    { "show": "The Ken: Intermission", "channelId": "UCoz0O9z6RWoUYZQMBEhh6zw", "titleFilter": "Intermission" },
+    { "show": "Dwarkesh Podcast", "channelId": "UCXl4i9dYBrFOabk0xGmbkRA" },
+    { "show": "All-In Podcast", "channelId": "UCESLZhusAkFfsNsApnjF_Cg" },
+    { "show": "Acquired", "channelId": "UCyFqFYfTW2VoIQKylJ04Rtw" }
+  ]
+}
