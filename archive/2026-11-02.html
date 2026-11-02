@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<script>if ("scrollRestoration" in history) history.scrollRestoration = "manual";</script>
+<title>The Hour Brief</title>
+<meta name="description" content="A free daily one-hour digest of AI/tech, product & business (India + global), and the Indian stock market — every item links to its original source.">
+<meta property="og:title" content="The Hour Brief">
+<meta property="og:description" content="A free daily one-hour digest of AI/tech, product & business (India + global), and the Indian stock market — every item links to its original source.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://the-hour-brief.vercel.app/og-image.png">
+<meta name="twitter:image" content="https://the-hour-brief.vercel.app/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" type="application/atom+xml" title="The Hour Brief" href="../feed.xml">
+<link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/brand/icon-192.png">
+<link rel="apple-touch-icon" href="/brand/apple-touch-icon.png">
+<style>
+  :root {
+    --bg: #f2f3ee;
+    --paper: #ffffff;
+    --paper-2: #e7e9e1;
+    --ink: #17191c;
+    --ink-soft: #52585a;
+    --ink-faint: #838a8a;
+    --line: #d7dad2;
+    --brand: #5b3e96;
+    --brand-soft: #efe9f7;
+    --tag-ai: #206b5a;
+    --tag-ai-soft: #e0ede9;
+    --tag-biz: #a3721f;
+    --tag-biz-soft: #f3e9d5;
+    --tag-mkt: #2c5490;
+    --tag-mkt-soft: #e2e9f2;
+    --up: #2f7a52;
+    --down: #b23b3b;
+    --shadow: 0 1px 2px rgba(23,25,28,0.06), 0 10px 28px rgba(23,25,28,0.06);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #131417;
+      --paper: #1b1d21;
+      --paper-2: #24262b;
+      --ink: #edeeec;
+      --ink-soft: #a9adaf;
+      --ink-faint: #757a7c;
+      --line: #2c2f34;
+      --brand: #a487d9;
+      --brand-soft: #241f34;
+      --tag-ai: #4fb59e;
+      --tag-ai-soft: #16241f;
+      --tag-biz: #d9a94e;
+      --tag-biz-soft: #2b2417;
+      --tag-mkt: #7ea2d6;
+      --tag-mkt-soft: #1b2532;
+      --up: #4fb579;
+      --down: #d9645f;
+      --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.4);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #131417;
+    --paper: #1b1d21;
+    --paper-2: #24262b;
+    --ink: #edeeec;
+    --ink-soft: #a9adaf;
+    --ink-faint: #757a7c;
+    --line: #2c2f34;
+    --brand: #a487d9;
+    --brand-soft: #241f34;
+    --tag-ai: #4fb59e;
+    --tag-ai-soft: #16241f;
+    --tag-biz: #d9a94e;
+    --tag-biz-soft: #2b2417;
+    --tag-mkt: #7ea2d6;
+    --tag-mkt-soft: #1b2532;
+    --up: #4fb579;
+    --down: #d9645f;
+    --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; }
+
+  html { background: var(--bg); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html { scroll-behavior: smooth; }
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, "Inter", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+
+  /* ---- Masthead band ---- */
+  .masthead-band {
+    background: var(--ink);
+    color: var(--bg);
+    padding: 30px 24px 26px;
+  }
+  .masthead-inner {
+    max-width: 1080px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .wordmark {
+    font-family: -apple-system, "Inter", ui-sans-serif, system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 2.1rem;
+    letter-spacing: -0.01em;
+    margin: 0;
+    text-transform: uppercase;
+  }
+  .wordmark span { color: var(--brand); }
+  .tagline {
+    margin: 6px 0 0;
+    font-size: 0.95rem;
+    color: color-mix(in srgb, var(--bg) 70%, transparent);
+    max-width: 42ch;
+  }
+  .edition {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--bg) 65%, transparent);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .page {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 24px 96px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 260px;
+    gap: 36px;
+    align-items: start;
+  }
+  .main-col { min-width: 0; }
+  .side-col { position: sticky; top: 72px; }
+  @media (max-width: 900px) {
+    .page { grid-template-columns: 1fr; max-width: 720px; }
+    .side-col { position: static; }
+  }
+
+  /* ---- Pause band ---- */
+  .pause-band {
+    background: var(--brand-soft);
+    border-bottom: 1px solid var(--line);
+  }
+  .pause-inner {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 22px 24px;
+  }
+  .pause-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--brand);
+    margin-bottom: 8px;
+  }
+  .pause-text {
+    margin: 0;
+    font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    font-style: italic;
+    font-size: 1.08rem;
+    line-height: 1.55;
+    color: var(--ink);
+    max-width: 62ch;
+    text-wrap: balance;
+  }
+  .pause-word {
+    font-style: normal;
+    font-weight: 700;
+  }
+  .pause-attr {
+    display: block;
+    margin-top: 10px;
+    font-size: 0.82rem;
+    font-style: normal;
+    color: var(--ink-faint);
+  }
+  .pause-attr a { color: var(--ink-soft); }
+
+  /* ---- About strip ---- */
+  .about {
+    padding: 22px 0 24px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 8px;
+  }
+  .about p {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    max-width: 66ch;
+  }
+  .about strong { color: var(--ink); }
+  .about .free-line {
+    margin-top: 10px;
+    font-size: 0.86rem;
+    color: var(--ink-faint);
+  }
+
+  /* ---- Subscribe box ---- */
+  .subscribe-box {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin: 20px 0 0;
+    box-shadow: var(--shadow);
+  }
+  .subscribe-box .sub-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--tag-mkt);
+    display: block;
+    margin-bottom: 6px;
+  }
+  .subscribe-box p {
+    margin: 0 0 12px;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .subscribe-form {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .subscribe-form input[type="email"] {
+    flex: 1 1 220px;
+    min-width: 0;
+    padding: 9px 12px;
+    border-radius: 7px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 0.92rem;
+    font-family: inherit;
+  }
+  .subscribe-form input[type="email"]:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 1px;
+  }
+  .subscribe-form button {
+    padding: 9px 18px;
+    border-radius: 7px;
+    border: none;
+    background: var(--brand);
+    color: var(--bg);
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .subscribe-form button:hover { opacity: 0.9; }
+  .subscribe-note {
+    margin-top: 8px;
+    font-size: 0.76rem;
+    color: var(--ink-faint);
+  }
+  .subscribe-status {
+    margin-top: 8px;
+    font-size: 0.8rem;
+    min-height: 1.1em;
+  }
+  .subscribe-status.ok { color: var(--up); }
+  .subscribe-status.err { color: var(--down); }
+
+  .nav {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin: 0 0 40px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--bg);
+    padding: 14px 0;
+  }
+  .nav a {
+    text-decoration: none;
+    font-size: 0.78rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 7px 13px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    background: var(--paper);
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+  .nav a:hover, .nav a:focus-visible { color: var(--ink); border-color: var(--ink-soft); }
+  .nav a.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .nav a:focus-visible { outline: 2px solid var(--ink-soft); outline-offset: 2px; }
+
+  /* ---- Section ---- */
+  section.lane { margin-bottom: 48px; scroll-margin-top: 20px; }
+
+  .lane-head { margin-bottom: 20px; }
+  .lane-tag {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+  }
+  .ai .lane-tag { background: var(--tag-ai-soft); color: var(--tag-ai); }
+  .biz .lane-tag { background: var(--tag-biz-soft); color: var(--tag-biz); }
+  .mkt .lane-tag { background: var(--tag-mkt-soft); color: var(--tag-mkt); }
+
+  .lane-head h2 {
+    font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    font-size: 1.65rem;
+    font-weight: 700;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .ai .lane-head h2 { border-left: 4px solid var(--tag-ai); padding-left: 13px; }
+  .biz .lane-head h2 { border-left: 4px solid var(--tag-biz); padding-left: 13px; }
+  .mkt .lane-head h2 { border-left: 4px solid var(--tag-mkt); padding-left: 13px; }
+
+  /* ---- Items ---- */
+  .item {
+    display: grid;
+    grid-template-columns: 20px 1fr;
+    gap: 12px;
+    padding: 15px 0;
+    border-top: 1px solid var(--line);
+  }
+  .item:first-of-type { border-top: none; padding-top: 0; }
+  .item .dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 7px; justify-self: center; }
+  .ai .item .dot { background: var(--tag-ai); }
+  .biz .item .dot { background: var(--tag-biz); }
+  .mkt .item .dot { background: var(--tag-mkt); }
+
+  .item h3 { font-size: 1.03rem; font-weight: 650; margin: 0 0 4px; line-height: 1.35; }
+  .item p { margin: 0; font-size: 0.94rem; line-height: 1.6; color: var(--ink-soft); max-width: 66ch; }
+  .item .src { display: inline-block; margin-top: 8px; font-size: 0.76rem; color: var(--ink-faint); letter-spacing: 0.02em; }
+  .item .src a { color: inherit; text-decoration-color: var(--line); }
+
+  /* ---- Takeaway ---- */
+  .item .takeaway {
+    margin: 10px 0 0;
+    padding: 8px 12px;
+    border-left: 3px solid var(--brand);
+    background: var(--paper-2);
+    border-radius: 0 6px 6px 0;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: var(--ink);
+    max-width: 64ch;
+  }
+  .lane-head .lane-takeaway {
+    margin: 14px 0 0;
+    padding: 8px 12px;
+    border-left: 3px solid var(--brand);
+    background: var(--paper-2);
+    border-radius: 0 6px 6px 0;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: var(--ink);
+    max-width: 64ch;
+  }
+  .item .takeaway-label,
+  .lane-takeaway .takeaway-label {
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    color: var(--brand);
+    margin-right: 6px;
+  }
+
+  /* ---- Comments ---- */
+  .comments-section {
+    margin: 48px 0 0;
+    padding-top: 28px;
+    border-top: 1px solid var(--line);
+  }
+  .comments-section h2 {
+    font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    font-size: 1.3rem;
+    margin: 0 0 6px;
+  }
+  .comments-section .comments-sub {
+    font-size: 0.86rem;
+    color: var(--ink-faint);
+    margin: 0 0 18px;
+  }
+  .comment-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 24px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+  }
+  .comment-form input, .comment-form textarea {
+    padding: 9px 12px;
+    border-radius: 7px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 0.92rem;
+    font-family: inherit;
+    resize: vertical;
+  }
+  .comment-form textarea { min-height: 70px; }
+  .comment-form input:focus-visible, .comment-form textarea:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 1px;
+  }
+  .comment-form button {
+    align-self: flex-start;
+    padding: 9px 18px;
+    border-radius: 7px;
+    border: none;
+    background: var(--brand);
+    color: var(--bg);
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .comment-form button:hover { opacity: 0.9; }
+  .comment-form button:disabled { opacity: 0.6; cursor: default; }
+  .comment-status { font-size: 0.82rem; color: var(--ink-faint); min-height: 1.2em; }
+  .comments-list { display: flex; flex-direction: column; gap: 0; }
+  .comment-item { padding: 12px 0; border-top: 1px solid var(--line); }
+  .comment-item:first-child { border-top: none; padding-top: 0; }
+  .comment-alias { font-weight: 700; font-size: 0.88rem; color: var(--ink); }
+  .comment-time { font-size: 0.74rem; color: var(--ink-faint); margin-left: 8px; }
+  .comment-text { margin: 4px 0 0; font-size: 0.92rem; color: var(--ink-soft); line-height: 1.55; white-space: pre-wrap; }
+  .comments-empty { font-size: 0.88rem; color: var(--ink-faint); font-style: italic; }
+
+  /* ---- Vote row ---- */
+  .vote-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .vote-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--ink-faint);
+    font-size: 0.78rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  }
+  .vote-btn:hover { border-color: var(--ink-soft); color: var(--ink-soft); }
+  .vote-btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+  .vote-btn.voted-like { border-color: var(--up); color: var(--up); background: color-mix(in srgb, var(--up) 12%, var(--paper)); }
+  .vote-btn.voted-dislike { border-color: var(--down); color: var(--down); background: color-mix(in srgb, var(--down) 12%, var(--paper)); }
+  .vote-btn:disabled { cursor: default; opacity: 0.85; }
+  .vote-count { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+
+  /* ---- Locked / subscriber reader's note ---- */
+  .locked {
+    border: 1px dashed color-mix(in srgb, var(--brand) 55%, var(--line));
+    background: var(--brand-soft);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-top: 4px;
+  }
+  .locked .locked-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--brand);
+    margin-bottom: 10px;
+  }
+  .locked ul { margin: 0; padding-left: 18px; }
+  .locked li { font-size: 0.92rem; line-height: 1.6; color: var(--ink-soft); margin-bottom: 6px; }
+  .locked li:last-child { margin-bottom: 0; }
+  .locked a { color: var(--ink); font-weight: 600; }
+  .locked .paid-tag {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--brand);
+    background: var(--paper);
+    border: 1px solid color-mix(in srgb, var(--brand) 40%, var(--line));
+    border-radius: 4px;
+    padding: 1px 6px;
+    vertical-align: middle;
+  }
+  .locked .note { margin-top: 10px; font-size: 0.82rem; color: var(--ink-faint); }
+
+  /* ---- Ticker ---- */
+  .ticker {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 22px;
+    box-shadow: var(--shadow);
+  }
+  .ticker .cell { background: var(--paper); padding: 12px 14px; }
+  .ticker .idx { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); margin-bottom: 4px; }
+  .ticker .val { font-size: 1.15rem; font-weight: 700; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  .ticker .chg { font-size: 0.8rem; margin-left: 6px; }
+  .chg.up { color: var(--up); }
+  .chg.down { color: var(--down); }
+
+  .movers { display: flex; gap: 24px; flex-wrap: wrap; margin: 4px 0 26px; }
+  .movers .label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); margin-bottom: 6px; display: block; }
+  .movers .row { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; padding: 2px 0; font-size: 0.86rem; display: block; }
+
+  .callout {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 16px 18px;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    box-shadow: var(--shadow);
+  }
+  .callout strong { color: var(--ink); }
+
+  footer.colophon {
+    margin-top: 56px;
+    padding-top: 22px;
+    border-top: 1px solid var(--line);
+    font-size: 0.8rem;
+    color: var(--ink-faint);
+    line-height: 1.75;
+  }
+  footer.colophon a { color: var(--ink-soft); }
+  footer.colophon .disclaimer {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+  }
+
+  @media (max-width: 480px) {
+    .wordmark { font-size: 1.6rem; }
+    .masthead-inner { align-items: flex-start; }
+    .edition { text-align: left; }
+  }
+</style>
+<link rel="stylesheet" href="/mobile.css" media="(max-width: 640px)">
+<script defer src="/_vercel/insights/script.js"></script>
+<script defer src="/capacitor-bridge.js"></script>
+<script defer src="/mobile.js"></script>
+<link rel="stylesheet" href="/quiz.css">
+<script defer src="/quiz.js"></script>
+</head>
+<body>
+
+<div class="masthead-band">
+  <div class="masthead-inner">
+    <div>
+      <h1 class="wordmark">The Hour <span>Brief</span></h1>
+      <p class="tagline">Sixty minutes. Three lanes. Everything that actually mattered today.</p>
+    </div>
+    <div class="edition">Edition 076<br>Mon, 2 Nov 2026</div>
+  </div>
+</div>
+
+<div class="pause-band">
+  <div class="pause-inner">
+    <span class="pause-label">Before the news</span>
+    <p class="pause-text">There&rsquo;s a Welsh idea called <span class="pause-word">hiraeth</span> &mdash; a longing for a home, or a version of things, that you can't quite return to, even if it never fully existed the way you remember it. It fits today's edition: Zerodha Varsity's lesson on anchoring bias warns traders against fixating on last week's index highs as if they're a home base due to return; Apple heads into its first earnings call without Tim Cook at the helm; and Ather Energy's first-ever profitable quarter finally closes a gap it's been chasing since it listed.</p>
+  </div>
+</div>
+
+<div class="page" data-edition-date="2026-11-02">
+
+  <div class="archive-banner" style="background:var(--paper-2);border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin-bottom:18px;font-size:0.86rem;color:var(--ink-soft);">🗄️ You are viewing an archived edition from <strong>Nov 2, 2026</strong>. <a href="../" style="color:var(--ink);font-weight:600;">See the latest edition</a></div>
+
+  <div class="main-col">
+
+  <div class="about">
+    <p><strong>The Hour Brief</strong> is a daily read built for one sitting: what moved in AI and technology, what's shaping product and business across India and the rest of the world, and what the Indian stock market did and why. Every item links back to its original source — read the take here, click through for the full story.</p>
+    <p class="free-line">Free to read, no account or sign-up needed. A few items point to stories from paid publications — those are marked and link out; everything else on this page is open.</p>
+  </div>
+
+  <nav class="nav" aria-label="Sections">
+    <a href="#ai">AI &amp; Tech</a>
+    <a href="#biz">Product &amp; Business</a>
+    <a href="#mkt">Stock Market</a>
+    <a href="#quiz">Quiz</a>
+    <a href="./" target="_blank" rel="noopener">Past Editions</a>
+    <a href="/contact.html">Contact</a>
+  </nav>
+  <!-- AI & TECH -->
+  <section class="lane ai" id="ai">
+    <div class="lane-head">
+      <span class="lane-tag">AI &amp; Tech</span>
+      <h2>Nvidia reportedly discusses guaranteeing billions of Nscale's debt to keep building Anthropic's West Virginia data center as CoreWeave's default-insurance costs hit record highs, even as Microsoft's Azure growth accelerates to 48% and Apple heads into its first earnings call under CEO John Ternus, while OpenAI reverses a ChatGPT Pro usage cut, Google ships a cybersecurity-focused Gemini 4 Carbon and Mistral open-sources a trillion-parameter model built for the same fight</h2>
+      <p class="lane-takeaway"><span class="takeaway-label">Takeaway</span> Today&rsquo;s AI story is the financial plumbing starting to show beneath the model headlines &mdash; Nvidia underwriting its own customers&rsquo; debt and CoreWeave&rsquo;s rising default risk say as much about this buildout&rsquo;s health as any new release does.</p>
+    </div>
+
+    <div class="item" data-story-id="ai-1">
+      <span class="dot"></span>
+      <div>
+        <h3>Nvidia is reportedly in talks to guarantee billions in debt for Nscale's West Virginia buildout for Anthropic</h3>
+        <p>Nvidia is discussing guaranteeing billions of dollars of debt that UK-based cloud provider Nscale would raise to build a second, 460-megawatt phase of its Monarch data-center campus in West Virginia, The Information reported October 29, with Reuters picking up the report the same day. Anthropic agreed in August to pay roughly $45 billion to use the site; nothing has been signed, the guarantee size hasn't been disclosed, and terms could still change. Nvidia is already an investor in Nscale and reportedly guaranteed about $860 million of its Texas lease obligations back in October 2025.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Nvidia increasingly underwriting the debt of the cloud providers that buy its own chips blurs the line between customer and balance-sheet risk in the AI buildout.</p>
+        <span class="src"><a href="https://aiweekly.co/alerts/nvidia-weighs-guaranteeing-billions-in-nscale-debt-for-anthropic" target="_blank" rel="noopener">AI Weekly &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-1">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="ai-2">
+      <span class="dot"></span>
+      <div>
+        <h3>CoreWeave's cost of insuring against default hits record levels amid AI debt worries</h3>
+        <p>The cost of insuring CoreWeave's debt hit record highs in mid-October, with five-year credit-default-swap spreads implying roughly a 60%-plus probability of default within five years, up from about 30% a year earlier, Reuters reported. An October 27 update found the spread had narrowed somewhat from its peak but remained elevated, with analysts describing CoreWeave as facing expensive credit rather than an imminent liquidity crisis; its total debt load is estimated at $35&ndash;51 billion depending on the source.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Credit markets, not just stock prices, are now where the first real cracks in AI infrastructure economics would show up.</p>
+        <span class="src"><a href="https://www.roic.ai/news/coreweave-cds-narrows-to-lowest-in-over-a-week-but-credit-stress-persists-10-27-2026" target="_blank" rel="noopener">roic.ai &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-2">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="ai-3">
+      <span class="dot"></span>
+      <div>
+        <h3>Microsoft discloses Azure's dollar revenue for the first time as its growth hits 48%</h3>
+        <p>Microsoft's fiscal Q1 2027 results, covering the quarter ended September 30 and reported October 28, showed Azure revenue growth accelerating to 48% from 43% the prior quarter, beating the company's own roughly 45% guidance, with Microsoft disclosing Azure's standalone revenue &mdash; about $33.2 billion &mdash; for the first time, according to Windows Report. Commercial bookings backlog rose 73% year-over-year to $677 billion, and capex hit $39.4 billion for the quarter, roughly double a year earlier.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Breaking out Azure's actual dollar figure right as growth hits a multi-year high looks like a deliberate move to show cloud strength that percentages alone could no longer fully convey.</p>
+        <span class="src"><a href="https://windowsreport.com/?p=1513640" target="_blank" rel="noopener">Windows Report &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-3">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="ai-4">
+      <span class="dot"></span>
+      <div>
+        <h3>Apple heads into today's Q4 call as John Ternus's first earnings report as CEO</h3>
+        <p>Apple reports fiscal fourth-quarter 2026 results today, Monday November 2, at 2pm PT/5pm ET &mdash; its first earnings call under CEO John Ternus, who took over from Tim Cook on September 1 after an April board-approved transition, according to 9to5Mac. Apple's own guidance points to 9&ndash;11% revenue growth and 47&ndash;48% gross margin; as of this writing, the call has not yet happened and no results are available.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> This is Apple's real leadership-transition test &mdash; the market's first chance to judge Ternus, not just the quarter's numbers.</p>
+        <span class="src"><a href="https://9to5mac.com/2026/10/06/apple-sets-q4-2026-earnings-release-for-november-2/" target="_blank" rel="noopener">9to5Mac &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-4">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="ai-5">
+      <span class="dot"></span>
+      <div>
+        <h3>OpenAI reverses planned ChatGPT Pro usage cuts after subscriber backlash</h3>
+        <p>OpenAI had planned to shrink included usage allowances for existing ChatGPT Pro 200 subscribers after October 29 while keeping the $200-a-month price, but reversed course after backlash, instead doubling usage limits across its Pro 100, Pro 200, Pro 500 and Business Premium tiers at the same prices, according to Android Headlines. The changes primarily affect ChatGPT Work and Codex; OpenAI has not published exact numerical allowances per tier.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> OpenAI burning through user goodwill while it searches for a pricing model that covers inference costs without alienating its highest-paying customers shows how unresolved AI's unit economics still are, even at the top of the market.</p>
+        <span class="src"><a href="https://www.androidheadlines.com/2026/10/openai-doubles-chatgpt-pro-usage-limits.html" target="_blank" rel="noopener">Android Headlines &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-5">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="ai-6">
+      <span class="dot"></span>
+      <div>
+        <h3>Google launches Gemini 4 Carbon, a frontier model built for cybersecurity</h3>
+        <p>Google announced Gemini 4 Carbon on October 28, pitching it as its strongest model yet for finding, exploiting in controlled testing, and patching software vulnerabilities, citing self-reported scores of 88.2% on SEC-bench Pro and 54.8% on ExploitGym, according to 9to5Google. Rollout is staggered, with cyber defenders getting access first ahead of developers and consumers, and Google says it's running voluntary pre-release testing with the US government.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Marketing a frontier model explicitly on its ability to find and exploit vulnerabilities is a notable shift in how labs are now framing their biggest releases.</p>
+        <span class="src"><a href="https://9to5google.com/2026/10/28/gemini-4-carbon-announcement/" target="_blank" rel="noopener">9to5Google &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-6">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="ai-7">
+      <span class="dot"></span>
+      <div>
+        <h3>Mistral open-sources a trillion-parameter model built for cybersecurity defense</h3>
+        <p>Mistral AI released open weights for Mistral Large 4, a sparse mixture-of-experts model with roughly 1 trillion total parameters (about 49 billion active during inference), positioned for cybersecurity use cases, according to CSO Online. The company moved to a custom license rather than the Apache 2.0 license used for Large 3, saying it red-teamed the model with cybersecurity specialists and state authorities before release &mdash; while acknowledging the open release could also help attackers, since published weights can't be revoked.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Betting that open weights nobody can revoke beat safety-through-control as a pitch to European enterprises is a direct contrast with how Google and OpenAI are gating their own cyber-capable models.</p>
+        <span class="src"><a href="https://csoonline.com/article/4242648/mistral-releases-large-4-weights-despite-warning-of-cyberattack-uplift.html" target="_blank" rel="noopener">CSO Online &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-7">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+  </section>
+  <!-- PRODUCT & BUSINESS -->
+  <section class="lane biz" id="biz">
+    <div class="lane-head">
+      <span class="lane-tag">Product &amp; Business</span>
+      <h2>Meesho's loss narrows 68% and Delhivery swings back to profit in their first quarters testing public-market patience, as Ather Energy notches its first-ever profit and PB Fintech's net profit rises 43%, even as Urban Company's loss triples on a new bet and Alphabet, Meta and Amazon's Q3 earnings show Big Tech's AI capex now visibly outrunning free cash flow</h2>
+      <p class="lane-takeaway"><span class="takeaway-label">Takeaway</span> Today&rsquo;s business story is profitability becoming the test everywhere at once &mdash; India&rsquo;s newly public consumer-internet names are narrowing losses just as Alphabet, Meta and Amazon get punished for AI spending outrunning their own cash flow.</p>
+    </div>
+
+    <div class="item" data-story-id="biz-1">
+      <span class="dot"></span>
+      <div>
+        <h3>Meesho's loss narrows 68% to &#8377;132 crore in its first quarter as a listed company</h3>
+        <p>Meesho reported Q2 FY27 results on October 28: consolidated revenue rose about 34% year-over-year to roughly &#8377;4,132 crore, while net loss narrowed 68% to &#8377;132.4 crore from &#8377;411 crore a year earlier, according to Inc42 and YourStory. Net merchandise value grew 23% to &#8377;12,911 crore and annual transacting users hit 284 million, though some brokerage commentary flagged slowing order growth as a watch-item.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> The market rewarding margin discipline over raw growth in Meesho's first results as a public company sets the bar other loss-making consumer-internet IPO hopefuls will now be measured against.</p>
+        <span class="src"><a href="https://inc42.com/buzz/meesho-q2-loss-narrows-68-yoy-to-%E2%82%B9132-cr-revenue-jumps-34-yoy/" target="_blank" rel="noopener">Inc42 &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-1">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="biz-2">
+      <span class="dot"></span>
+      <div>
+        <h3>Delhivery swings back to profit as revenue crosses &#8377;3,000 crore for the first time</h3>
+        <p>Delhivery's unaudited Q2 FY27 results, announced October 30, showed revenue from services up 19.8% year-over-year to &#8377;3,066.4 crore, with consolidated net profit of &#8377;40.6 crore versus a &#8377;50.5 crore loss a year earlier, according to Free Press Journal and YourStory. EBITDA nearly tripled to about &#8377;205 crore from &#8377;68 crore, with express parcel volumes up 32% to 325 million shipments.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Delhivery's return to profit, a year after a surprise loss, suggests the logistics price war with Amazon- and Flipkart-backed rivals has eased enough for scale to finally show up in margins.</p>
+        <span class="src"><a href="https://www.freepressjournal.in/business/delhivery-reports-3066-crore-q2fy27-revenue-ebitda-triples-to-205-crore-pat-at-41-crore" target="_blank" rel="noopener">Free Press Journal &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-2">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="biz-3">
+      <span class="dot"></span>
+      <div>
+        <h3>Ather Energy posts its first-ever quarterly profit as scooter sales jump 42%</h3>
+        <p>Ather Energy's board approved Q2 FY27 results on October 26: consolidated net profit came in at &#8377;1.26 crore, versus a &#8377;154.07 crore loss a year earlier &mdash; the company's first profitable quarter since listing, according to Business Today. Revenue rose about 63% to &#8377;1,464 crore on scooter sales of 93,211 units, up 42% year-over-year; shares jumped roughly 14-15% on the news, with HSBC and Nomura raising price targets.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Ather turning profitable before larger rival Ola Electric reframes the EV-scooter race as being won on unit economics, not just market share.</p>
+        <span class="src"><a href="https://www.businesstoday.in/markets/stocks/story/ather-energy-shares-zoom-15-as-q2-fy27-profit-turns-positive-rs-122-crore-capex-planned-563666-2026-10-26" target="_blank" rel="noopener">Business Today &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-3">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="biz-4">
+      <span class="dot"></span>
+      <div>
+        <h3>PB Fintech's net profit rises 43% as insurance premiums grow 38%</h3>
+        <p>PB Fintech, the parent of Policybazaar and Paisabazaar, reported Q2 FY27 consolidated net profit of about &#8377;192 crore, up 43% year-over-year from &#8377;135 crore, on revenue of roughly &#8377;2,178 crore, according to YourStory's coverage of the October 30 results. Total insurance premiums processed grew 38% to about &#8377;9,385 crore, with active partners up 55% to roughly 131,000.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Insurance distribution is proving to be PB Fintech's most durable profit engine, even as its smaller lending arm stays the choppier piece of the business.</p>
+        <span class="src"><a href="https://yourstory.com/2026/10/pb-fintech-net-profit-rises-43-rise-in-net-profit" target="_blank" rel="noopener">YourStory &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-4">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="biz-5">
+      <span class="dot"></span>
+      <div>
+        <h3>Urban Company's loss triples to &#8377;182.5 crore even as revenue grows 41%; board clears &#8377;2,500-crore fundraise</h3>
+        <p>Urban Company's board approved Q2 FY27 results on October 16: revenue from operations rose 41% to &#8377;537 crore, but consolidated net loss widened to &#8377;182.5 crore from &#8377;59.3 crore a year earlier, according to Inc42. The company said the swing was largely a &#8377;174 crore investment in its InstaHelp vertical; excluding that, adjusted EBITDA was positive at &#8377;30 crore. The board also cleared a fundraise of up to &#8377;2,500 crore, and shares fell about 9.5% on the news.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Urban Company deliberately trading near-term profitability for a new bet, and topping up its war chest at the same time, suggests it sees its home-services core as mature enough to fund an adjacent expansion.</p>
+        <span class="src"><a href="https://inc42.com/buzz/urban-company-slumps-9-5-after-q2-loss-widens-board-clears-%E2%82%B92500-cr-fundraise/" target="_blank" rel="noopener">Inc42 &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-5">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="biz-6">
+      <span class="dot"></span>
+      <div>
+        <h3>Alphabet's cloud revenue more than doubles to $30.7 billion, but a profit miss sends shares down 8%</h3>
+        <p>Alphabet's Q3 2026 results, reported October 28, showed total revenue up 25% to about $127.6 billion, with Google Cloud revenue up 103% to $30.7 billion, according to NewsBytes and AI Weekly. Net income still fell about 25% to roughly $26.2 billion, with diluted EPS of $2.12 well below the roughly $3.00 expected, which Alphabet attributed to unspecified equity-investment losses; capex hit $51.4 billion, pushing free cash flow negative. Shares fell about 8% in after-hours trading despite the cloud beat.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Even Google's best-ever cloud quarter wasn't enough to offset investor nerves about capex outrunning cash flow &mdash; a sign the market's patience with "spend now, profit later" AI narratives is thinning.</p>
+        <span class="src"><a href="https://www.newsbytesapp.com/news/business/alphabet-posts-25-revenue-jump-to-1276-billion-q3-2026/tldr" target="_blank" rel="noopener">NewsBytes &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-6">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="biz-7">
+      <span class="dot"></span>
+      <div>
+        <h3>Meta's AI capex tips its quarterly free cash flow negative despite a 26% revenue beat</h3>
+        <p>Meta's Q3 2026 revenue, reported October 21, rose 26% to $64.6 billion, above its own guidance range, but capex of $34.9 billion tipped quarterly free cash flow negative by about $2.1 billion, according to Fourweekmba's breakdown. Meta narrowed its 2026 capex guidance to $135&ndash;145 billion, signaling the spending pace isn't easing even as it tightens the range.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A revenue beat this clean still burning more cash than it brings in shows how far ahead of returns the AI capex cycle has gotten, even at a company with Meta's core-ad-business margins.</p>
+        <span class="src"><a href="https://fourweekmba.com/ai-metas-q3-explained-capex-outran-its-cash-by-2-1-billion/" target="_blank" rel="noopener">FourWeekMBA &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-7">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="biz-8">
+      <span class="dot"></span>
+      <div>
+        <h3>Amazon's AWS grows 39% &mdash; its fastest in nearly five years &mdash; but shares fall on capex guidance</h3>
+        <p>Amazon's Q3 2026 results, reported October 29, showed total revenue of $201.9 billion, up 12%, with AWS revenue up 39% to roughly $46 billion and AWS operating income up 55% to $17.8 billion, according to AI Weekly. CEO Andy Jassy projected AWS growth above 40% in both 2027 and 2028, but Amazon still guided to about $220 billion in 2026 capex with 2027 spending even higher, and shares fell about 7% after hours.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> AWS's fastest growth in five years is the strongest proof yet that enterprise AI demand is real, not just hype &mdash; but Wall Street is now pricing in the multi-year capex bill that comes with capturing it.</p>
+        <span class="src"><a href="https://aiweekly.co/alerts/amazons-aws-growth-hits-39-in-q3-as-capex-guide-jolts-stock" target="_blank" rel="noopener">AI Weekly &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-8">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+  </section>
+  <!-- STOCK MARKET -->
+  <section class="lane mkt" id="mkt">
+    <div class="lane-head">
+      <span class="lane-tag">Stock Market</span>
+      <h2>Sensex and Nifty's Friday close still stands hours before Monday's reopen as the Fed holds rates in a hawkish 10-2 vote and Wall Street logs its worst day since June on an Intel-led tech selloff, even as Brent crude holds near multi-month highs on Houthi strikes and a heavy week of India earnings &mdash; Bajaj Finserv, Apollo Hospitals, Dabur and Hindalco among them &mdash; gets under way</h2>
+      <p class="lane-takeaway"><span class="takeaway-label">Takeaway</span> Today&rsquo;s market story is global pressure building ahead of an Indian open that hasn't happened yet &mdash; a hawkish Fed, Wall Street's worst day since June and elevated crude all land before trading resumes, with this week's earnings now the swing factor.</p>
+    </div>
+
+    <div class="ticker">
+      <div class="cell">
+        <div class="idx">Sensex &mdash; last close, Fri 30 Oct</div>
+        <div class="val mono">74,459.53<span class="chg up">+308.49 &middot; +0.42%</span></div>
+      </div>
+      <div class="cell">
+        <div class="idx">Nifty 50 &mdash; last close, Fri 30 Oct</div>
+        <div class="val mono">23,053.10<span class="chg up">+116.35 &middot; +0.51%</span></div>
+      </div>
+      <div class="cell">
+        <div class="idx">S&amp;P 500 &mdash; last close, Fri 30 Oct</div>
+        <div class="val mono">7,580.07<span class="chg down">&minus;1.82%</span></div>
+      </div>
+    </div>
+
+    <div class="movers">
+      <div class="col">
+        <span class="label">India &mdash; Friday's close, Oct 30</span>
+        <span class="row mono">Trent / Infosys <span style="color:var(--up)">+5.44% / +3.36%, Nifty's top gainers</span></span>
+        <span class="row mono">Shriram Finance <span style="color:var(--down)">down over 2%, among the day's losers</span></span>
+      </div>
+      <div class="col">
+        <span class="label">Global &mdash; Friday's close</span>
+        <span class="row mono">Nasdaq Composite <span style="color:var(--down)">&minus;2.86%, worst day since June</span></span>
+        <span class="row mono">Intel <span style="color:var(--down)">&minus;28% on weak guidance</span></span>
+      </div>
+    </div>
+
+    <div class="item" data-story-id="mkt-1">
+      <span class="dot"></span>
+      <div>
+        <h3>The Fed holds rates in a hawkish 10-2 vote, with both dissents pushing for a hike</h3>
+        <p>The Federal Reserve kept its target rate at 3.75&ndash;4.00% on October 28, with two policymakers &mdash; Governor Lisa Cook and Cleveland Fed President Beth Hammack &mdash; dissenting in favor of a 25-basis-point hike rather than a cut, according to Admiral Markets' coverage of the decision. Commentary widely framed it as a "hawkish hold," with markets now pricing meaningful odds of a hike, not a cut, at the Fed's December 8-9 meeting.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A central bank holding steady while its loudest dissent pushes for higher, not lower, rates is the kind of split that keeps bond-yield pressure on richly priced stocks elevated longer than a simple hold would suggest.</p>
+        <span class="src"><a href="https://admiralmarkets.com/analytics/traders-blog/fomc-october-2026-fed-holds-rates" target="_blank" rel="noopener">Admiral Markets &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="mkt-1">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="mkt-2">
+      <span class="dot"></span>
+      <div>
+        <h3>Wall Street logs its worst day since June as an Intel-led tech selloff deepens</h3>
+        <p>The S&amp;P 500 fell 1.82% to 7,580.07 and the Nasdaq Composite dropped 2.86% to 25,437.00 on October 30, their worst session since June, as a selloff triggered by Thursday's Amazon and Intel earnings widened, according to BNN Bloomberg's report. Intel shares plunged roughly 28% on weak guidance, with Nvidia cited as the single heaviest drag on the S&amp;P 500 even as the broader market briefly pared losses.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Two of this earnings season's most-watched AI suppliers having their worst days for very different reasons &mdash; Intel on demand, Nvidia on sheer index weight &mdash; shows how concentrated the market's AI bet has become.</p>
+        <span class="src"><a href="https://www.bnnbloomberg.ca/markets/2026/10/30/the-sell-off-for-tech-stocks-deepens-and-drags-wall-street-toward-its-worst-day-since-june/" target="_blank" rel="noopener">BNN Bloomberg &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="mkt-2">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="mkt-3">
+      <span class="dot"></span>
+      <div>
+        <h3>Monday's Indian reopening lands hours before Apple's first earnings call under CEO John Ternus</h3>
+        <p>Indian markets reopen at 9:15am IST Monday, hours ahead of Apple's fiscal Q4 earnings call at 5pm ET &mdash; its first under new CEO John Ternus, who took over from Tim Cook on September 1, according to 9to5Mac's preview. Apple had guided to 9&ndash;11% revenue growth and 47&ndash;48% gross margin; any surprise, good or bad, lands on Indian IT and supply-chain sentiment only after Tuesday's open.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> India's market gets a full trading day before the one earnings call most likely to move global tech sentiment this week even reaches the tape &mdash; Tuesday, not Monday, is when that reaction actually shows up here.</p>
+        <span class="src"><a href="https://9to5mac.com/2026/10/06/apple-sets-q4-2026-earnings-release-for-november-2/" target="_blank" rel="noopener">9to5Mac &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="mkt-3">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="mkt-4">
+      <span class="dot"></span>
+      <div>
+        <h3>Brent crude holds near $115 a barrel after Houthi strikes on Saudi oil infrastructure</h3>
+        <p>Brent crude was quoted near $115.11 a barrel and WTI near $101.65 in the most recent verified reading, from October 28, after Yemen's Houthis claimed missile strikes on Saudi Aramco's Ras Tanura refinery and other Aramco sites in late October, according to 5paisa's price tracker and The Print's report on the strikes. Saudi authorities haven't confirmed damage, and no settlement figure more recent than October 28 could be independently verified.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> With crude still this elevated days after the last confirmed reading, India's oil-import bill and the rupee are carrying a live risk that has nothing to do with anything on an earnings calendar.</p>
+        <span class="src"><a href="https://www.5paisa.com/blog/crude-oil-price-today-28-oct-2026" target="_blank" rel="noopener">5paisa &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="mkt-4">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="mkt-5">
+      <span class="dot"></span>
+      <div>
+        <h3>A heavy week of India Inc results opens with Bajaj Finserv, Apollo Hospitals and Dabur all due by Wednesday</h3>
+        <p>Bajaj Finserv reports Q2 FY27 results on November 3, with Apollo Hospitals and Dabur India following on November 4, Hindalco Industries on November 6, and ITC, Marico, BSE and Berger Paints also on the week's calendar, according to Kotak Neo's earnings-week preview. Analysts will watch lending and asset quality at Bajaj Finserv, hospital occupancy and margins at Apollo, and metal prices and Novelis performance at Hindalco.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> With global cues turning choppy on the Fed and Wall Street's selloff, this cluster of domestic results &mdash; not the index level &mdash; is what's likely to actually move individual stocks this week.</p>
+        <span class="src"><a href="https://www.kotakneo.com/news/market-news/q2-results-this-week" target="_blank" rel="noopener">Kotak Neo &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="mkt-5">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>Anchoring bias, via Zerodha Varsity:</strong> Varsity's trading-biases module describes anchoring (or "focalism") as fixating on an initial reference point &mdash; a price first seen, an old high &mdash; and judging everything after it against that anchor rather than on its own merits; its own conclusion is blunt: there is no real cure for anchoring bias, only awareness of it. After Friday's selloff left the Sensex and Nifty off their recent highs, the risk is anchoring to last week's levels as "normal" when this week's real anchor should be Wednesday's wave of earnings and Apple's own guidance update, not wherever the index happened to sit a few sessions ago.
+      <br><span class="src"><a href="https://zerodha.com/varsity/chapter/tradingbiases-p2/" target="_blank" rel="noopener">Zerodha Varsity &rarr;</a></span>
+    </div>
+  </section>
+    <!-- DAILY QUIZ -->
+  <section class="lane quiz" id="quiz" aria-labelledby="quiz-title">
+    <div class="lane-head">
+      <span class="lane-tag">Daily quiz</span>
+      <h2 id="quiz-title">Five questions on today&rsquo;s edition</h2>
+    </div>
+    <div id="quiz-root"></div>
+    <script type="application/json" id="quiz-data">
+      {
+        "v": 1,
+        "date": "2026-11-02",
+        "questions": [
+          {
+            "q": "Which company is reportedly in talks to guarantee billions in debt for Anthropic's West Virginia data-center campus?",
+            "options": [
+              "Microsoft",
+              "Nvidia",
+              "SoftBank",
+              "Oracle"
+            ],
+            "answer": 1,
+            "why": "The Information reported Nvidia is in talks to guarantee billions of Nscale's debt for the West Virginia campus Anthropic is paying roughly $45 billion to use.",
+            "story": "ai-1"
+          },
+          {
+            "q": "What is Google's new Gemini 4 Carbon model built to excel at?",
+            "options": [
+              "Finding and patching software vulnerabilities",
+              "Autonomous drone navigation",
+              "Protein folding",
+              "Market forecasting"
+            ],
+            "answer": 0,
+            "why": "Google pitched Gemini 4 Carbon as its strongest model yet for finding, exploiting in testing, and patching software vulnerabilities.",
+            "story": "ai-6"
+          },
+          {
+            "q": "By how much did Ather Energy's scooter sales grow YoY in the quarter it turned its first profit?",
+            "options": [
+              "15%",
+              "28%",
+              "42%",
+              "63%"
+            ],
+            "answer": 2,
+            "why": "Ather Energy's scooter sales rose 42% YoY to 93,211 units in Q2 FY27, the quarter it posted its first-ever profit.",
+            "story": "biz-3"
+          },
+          {
+            "q": "What happened to Alphabet's Q3 2026 net income even as cloud revenue surged 103%?",
+            "options": [
+              "It rose 25%",
+              "It fell about 25%",
+              "It stayed flat",
+              "It turned negative"
+            ],
+            "answer": 1,
+            "why": "Alphabet's Q3 2026 net income fell about 25% to roughly $26.2 billion even as Google Cloud revenue more than doubled to $30.7 billion.",
+            "story": "biz-6"
+          },
+          {
+            "q": "In the Fed's October 2026 rate decision, what did the two dissenting votes push for?",
+            "options": [
+              "A 25bp rate cut",
+              "Holding rates unchanged",
+              "A 25bp rate hike",
+              "A 50bp rate hike"
+            ],
+            "answer": 2,
+            "why": "Two Fed officials dissented in October's 10-2 vote, preferring a 25bp hike, not a cut, while the Fed held rates at 3.75%-4%.",
+            "story": "mkt-1"
+          }
+        ]
+      }
+    </script>
+    <noscript><p>The daily quiz needs JavaScript.</p></noscript>
+  </section>
+  <section class="comments-section" id="comments" data-edition-date="2026-11-02">
+    <h2>Discuss today's edition</h2>
+    <p class="comments-sub">Leave a name (or make one up) and join the conversation. Comments are public and lightly moderated.</p>
+
+    <form class="comment-form" id="comment-form">
+      <input type="text" id="comment-alias" placeholder="Name or alias" maxlength="40" required>
+      <textarea id="comment-text" placeholder="What stood out to you today?" maxlength="500" required></textarea>
+      <button type="submit">Post comment</button>
+      <div class="comment-status" id="comment-status"></div>
+    </form>
+
+    <div class="comments-list" id="comments-list">
+      <p class="comments-empty">Loading comments…</p>
+    </div>
+  </section>
+
+  <footer class="colophon">
+    The Hour Brief is compiled daily from public reporting, newsletters and market data, with every summary linked back to its original source. AI &amp; Tech and Product &amp; Business draw on general technology and business press; Stock Market data covers NSE/BSE and US indices via public market reports. <a href="../about.html" target="_blank" rel="noopener">How this is made →</a> · <a href="../privacy.html" target="_blank" rel="noopener">Privacy</a>
+    <div class="disclaimer contact-us">
+      <strong style="color:var(--ink)">Contact us:</strong> corrections, feedback or app support &mdash; <a href="mailto:milindroy101292@gmail.com">milindroy101292@gmail.com</a> &middot; <a href="/contact.html">Contact page</a>
+    </div>
+    <div class="disclaimer">
+      New edition every morning. <a href="../feed.xml" target="_blank" rel="noopener">Subscribe via RSS</a> to get each edition in your reader of choice (Feedly, NetNewsWire, Reeder, Inoreader, etc.) — no email or account needed.
+    </div>
+    <div class="disclaimer">
+      Nothing here is investment advice. Market figures are for information and discussion only — verify with a live data source before acting, and consult a licensed advisor for anything you're putting money behind.
+    </div>
+  </footer>
+
+  </div>
+
+  <aside class="side-col">
+    <div class="subscribe-box">
+      <span class="sub-label">Get it by email</span>
+      <p>One email a day, every morning. Unsubscribe anytime — no spam, just the day's edition.</p>
+      <form id="subscribe-form" class="subscribe-form">
+        <input type="email" name="email" id="sub-email" placeholder="you@example.com" required>
+        <button type="submit">Subscribe</button>
+      </form>
+      <div class="subscribe-status" id="subscribe-status"></div>
+      <p class="subscribe-note">Prefer no inbox clutter? <a href="../feed.xml" target="_blank" rel="noopener">Use RSS instead</a>.</p>
+    </div>
+  </aside>
+</div>
+<script>
+(function () {
+  var page = document.querySelector('.page');
+  var editionDate = page ? page.getAttribute('data-edition-date') : '';
+
+  // ---- Archive banner accuracy check ----
+  // Only present on archive/<date>.html pages. If this date turns out to still
+  // be the latest edition (not yet superseded), the "archived" framing is
+  // misleading — swap it for a neutral permalink note instead.
+  var archiveBanner = document.querySelector('.archive-banner');
+  if (archiveBanner && editionDate) {
+    fetch('../editions.json')
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data || !data.editions || !data.editions.length) return;
+        var latest = data.editions[data.editions.length - 1];
+        if (latest && latest.date === editionDate) {
+          archiveBanner.innerHTML = '📌 This is also today’s latest edition — permanently linked here. <a href="./" target="_blank" rel="noopener">Browse all editions</a>';
+        }
+      })
+      .catch(function () {});
+  }
+
+  // ---- Scrollspy tabs ----
+  var navLinks = Array.prototype.slice.call(document.querySelectorAll('.nav a[href^="#"]'));
+  var spySections = ['ai', 'biz', 'mkt']
+    .map(function (id) { return document.getElementById(id); })
+    .filter(Boolean);
+  if (navLinks.length && spySections.length && 'IntersectionObserver' in window) {
+    var spy = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          navLinks.forEach(function (link) {
+            link.classList.toggle('active', link.getAttribute('href') === '#' + entry.target.id);
+          });
+        }
+      });
+    }, { rootMargin: '-88px 0px -70% 0px', threshold: 0 });
+    spySections.forEach(function (s) { spy.observe(s); });
+  }
+
+  function voteKey(storyId) { return editionDate + ':' + storyId; }
+  function votedFlagKey(storyId) { return 'hb-voted-' + voteKey(storyId); }
+
+  // ---- Votes ----
+  var voteRows = Array.prototype.slice.call(document.querySelectorAll('.vote-row[data-vote-key]'));
+  if (voteRows.length) {
+    var ids = voteRows.map(function (r) { return voteKey(r.getAttribute('data-vote-key')); });
+    fetch('/api/vote?ids=' + encodeURIComponent(ids.join(',')))
+      .then(function (r) { return r.ok ? r.json() : {}; })
+      .then(function (counts) {
+        voteRows.forEach(function (row) {
+          var storyId = row.getAttribute('data-vote-key');
+          var c = counts[voteKey(storyId)] || { like: 0, dislike: 0 };
+          setCounts(row, c.like, c.dislike);
+          applyVotedState(row, storyId);
+        });
+      })
+      .catch(function () {});
+
+    voteRows.forEach(function (row) {
+      var storyId = row.getAttribute('data-vote-key');
+      applyVotedState(row, storyId);
+      row.querySelectorAll('.vote-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          if (localStorage.getItem(votedFlagKey(storyId))) return;
+          var type = btn.getAttribute('data-vote');
+          btn.disabled = true;
+          fetch('/api/vote', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: voteKey(storyId), type: type })
+          })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+              setCounts(row, data.like, data.dislike);
+              localStorage.setItem(votedFlagKey(storyId), type);
+              applyVotedState(row, storyId);
+            })
+            .catch(function () { btn.disabled = false; });
+        });
+      });
+    });
+  }
+
+  function setCounts(row, like, dislike) {
+    var likeEl = row.querySelector('.vote-like .vote-count');
+    var dislikeEl = row.querySelector('.vote-dislike .vote-count');
+    if (likeEl) likeEl.textContent = like != null ? like : 0;
+    if (dislikeEl) dislikeEl.textContent = dislike != null ? dislike : 0;
+  }
+
+  function applyVotedState(row, storyId) {
+    var voted = localStorage.getItem(votedFlagKey(storyId));
+    row.querySelectorAll('.vote-btn').forEach(function (btn) {
+      var type = btn.getAttribute('data-vote');
+      btn.classList.toggle('voted-' + type, voted === type);
+      btn.disabled = !!voted;
+    });
+  }
+
+  // ---- Email subscribe ----
+  var subForm = document.getElementById('subscribe-form');
+  var subStatus = document.getElementById('subscribe-status');
+  if (subForm) {
+    subForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var emailInput = document.getElementById('sub-email');
+      var email = emailInput.value.trim();
+      if (!email) return;
+      var btn = subForm.querySelector('button');
+      btn.disabled = true;
+      subStatus.className = 'subscribe-status';
+      subStatus.textContent = 'Subscribing…';
+      fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email })
+      })
+        .then(function (r) { return r.ok ? r.json() : Promise.reject(r); })
+        .then(function () {
+          subStatus.className = 'subscribe-status ok';
+          subStatus.textContent = "You're in — first edition lands next morning.";
+          emailInput.value = '';
+        })
+        .catch(function () {
+          subStatus.className = 'subscribe-status err';
+          subStatus.textContent = 'Something went wrong — try again.';
+        })
+        .finally(function () { btn.disabled = false; });
+    });
+  }
+
+  // ---- Comments ----
+  var list = document.getElementById('comments-list');
+  var form = document.getElementById('comment-form');
+  var status = document.getElementById('comment-status');
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function renderComments(comments) {
+    if (!list) return;
+    if (!comments || !comments.length) {
+      list.innerHTML = '<p class="comments-empty">No comments yet — be the first.</p>';
+      return;
+    }
+    list.innerHTML = comments.map(function (c) {
+      var when = '';
+      try { when = new Date(c.ts).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch (e) {}
+      return '<div class="comment-item"><span class="comment-alias">' + escapeHtml(c.alias) +
+        '</span><span class="comment-time">' + when + '</span>' +
+        '<p class="comment-text">' + escapeHtml(c.text) + '</p></div>';
+    }).join('');
+  }
+
+  if (list && editionDate) {
+    fetch('/api/comments?date=' + encodeURIComponent(editionDate))
+      .then(function (r) { return r.ok ? r.json() : { comments: [] }; })
+      .then(function (data) { renderComments(data.comments); })
+      .catch(function () { list.innerHTML = '<p class="comments-empty">Couldn\'t load comments right now.</p>'; });
+  }
+
+  if (form) {
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var alias = document.getElementById('comment-alias').value.trim();
+      var text = document.getElementById('comment-text').value.trim();
+      if (!text) return;
+      var btn = form.querySelector('button');
+      btn.disabled = true;
+      status.textContent = 'Posting…';
+      fetch('/api/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: editionDate, alias: alias, text: text })
+      })
+        .then(function (r) {
+          if (r.status === 429) { status.textContent = "You're commenting a bit fast — try again in a bit."; throw new Error('rate limited'); }
+          if (!r.ok) { status.textContent = 'Something went wrong — try again.'; throw new Error('failed'); }
+          return r.json();
+        })
+        .then(function (data) {
+          status.textContent = '';
+          document.getElementById('comment-text').value = '';
+          var empty = list.querySelector('.comments-empty');
+          if (empty) list.innerHTML = '';
+          var when = '';
+          try { when = new Date(data.comment.ts).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch (e) {}
+          var el = document.createElement('div');
+          el.className = 'comment-item';
+          el.innerHTML = '<span class="comment-alias">' + escapeHtml(data.comment.alias) +
+            '</span><span class="comment-time">' + when + '</span>' +
+            '<p class="comment-text">' + escapeHtml(data.comment.text) + '</p>';
+          list.insertBefore(el, list.firstChild);
+        })
+        .catch(function () {})
+        .finally(function () { btn.disabled = false; });
+    });
+  }
+})();
+</script>
+</body>
+</html>
