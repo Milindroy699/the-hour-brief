@@ -5,7 +5,14 @@
   <link href="https://the-hour-brief.vercel.app/feed.xml" rel="self"/>
   <link href="https://the-hour-brief.vercel.app/"/>
   <id>https://the-hour-brief.vercel.app/</id>
-  <updated>2026-11-02T02:55:00Z</updated>
+  <updated>2026-11-03T02:55:00Z</updated>
+  <entry>
+    <title>Edition 077 — 3 November 2026</title>
+    <link href="https://the-hour-brief.vercel.app/archive/2026-11-03.html"/>
+    <id>https://the-hour-brief.vercel.app/archive/2026-11-03.html</id>
+    <updated>2026-11-03T02:55:00Z</updated>
+    <summary type="text">AI &amp; Tech: Apple posts a clean 12% revenue beat in CEO John Ternus's first earnings call as OpenAI reportedly moves to buy Google's TPU chips to diversify beyond Nvidia, even as Google DeepMind's Genie 4 adds native audio to real-time AI-generated worlds, a trojanized Claude Code extension plants an SSH backdoor on Cursor's marketplace, Apple hands Siri in China to Alibaba's Qwen, and a prominent Wall Street bull sells most of his Nvidia stake over AI-spending worries. Product &amp; Business: Affle's $420 million all-cash bid for Nasdaq-listed Perion marks a rare Indian outbound tech acquisition as Adani Ports raises its full-year guidance on an 18% profit jump and Nestlé India's profit surges 36%, even as Sun Pharma's profit falls sharply despite double-digit revenue growth, SAIL's profit more than quadruples on a low base, Bengaluru's Clinics On Cloud raises ₹120 crore for global expansion, and Shopify and Pfizer both report third-quarter results today. Stock Market: Sensex and Nifty log a third straight gain as tumbling crude lifts oil-and-gas and metal stocks, even as Wall Street's S&amp;P 500 falls for a third straight session on an Nvidia-led tech reversal that outweighed that same oil plunge, Apple's clean earnings beat lands hours before Tuesday's Indian open, and the NSE's rare Sunday Muhurat session edges five days closer.</summary>
+  </entry>
   <entry>
     <title>Edition 076 — 2 November 2026</title>
     <link href="https://the-hour-brief.vercel.app/archive/2026-11-02.html"/>
@@ -208,12 +215,5 @@
     <id>https://the-hour-brief.vercel.app/archive/2026-10-03.html</id>
     <updated>2026-10-03T02:55:00Z</updated>
     <summary type="text">AI &amp; Tech: xAI closes a $20 billion round at a $230 billion valuation with Nvidia and Cisco among its backers as OpenAI prices GPT-6.1 Sol at one-fifth of its flagship model, even as California's attorney general opens a formal probe into OpenAI over July's Hugging Face sandbox breach, Meta reportedly preps a paid AI agent called Hatch for release this month, and Tesla posts record third-quarter deliveries of more than 486,000 vehicles. Product &amp; Business: Reliance's Jio Platforms and Tata Capital both queue up blockbuster IPOs as Swiggy and Eternal shed a combined $15 billion even while quick-commerce volumes keep growing, Flipkart weighs entering food delivery against the same rivals it would challenge, Indore's Arivihan raises $10 million to bring AI tutoring to smaller cities, and product leader Julie Zhuo writes on what AI can and can't hand the next generation. Stock Market: Dalal Street stays shut through a second straight non-trading day as Gandhi Jayanti and the weekend extend Thursday's eighth-straight losing week into Monday, even as Wall Street rallies Friday on a September jobs report that badly missed estimates, Fed rate-hike odds tumble, and Brent crude holds above $100 on a three-carrier US presence in the Middle East.</summary>
-  </entry>
-  <entry>
-    <title>Edition 047 — 2 October 2026</title>
-    <link href="https://the-hour-brief.vercel.app/archive/2026-10-02.html"/>
-    <id>https://the-hour-brief.vercel.app/archive/2026-10-02.html</id>
-    <updated>2026-10-02T02:55:00Z</updated>
-    <summary type="text">AI &amp; Tech: Anthropic targets a November IPO at close to a $2 trillion valuation as Broadcom offers to lend it up to $42 billion to lease its own chips, even as OpenAI seeks $30 billion in bridge financing at a $1.4 trillion valuation to put off going public, Google ships its most powerful model yet in Gemini 4 Argon, AMD pays $8.2 billion for Fei-Fei Li's World Labs to push into physical AI, and a New York Times investigation finds Meta's "experimental" AI data centers have cut its tax bill by $3.9 billion. Product &amp; Business: Moneyview lists at a roughly 62% premium on its NSE and BSE debut as Accenture's earnings beat sends its stock up 22% in its best day ever, even as Nike warns of fresh layoffs inside a new restructuring plan that also expands its India technology hub, Seeds Fincap raises ₹100 crore from the Michael &amp; Susan Dell Foundation, Bessemer Venture Partners adds a new India partner, a Jaipur healthtech startup's ₹4 crore seed round aims at 100,000 autism screenings, and Reliance keeps Jio Platforms' record IPO on track for a Navratri-to-Diwali listing window. Stock Market: Nifty and Sensex confirm their eighth straight weekly decline — now officially the longest losing streak since 2001 — as Bajaj Auto and Maruti Suzuki slide on a weak festive-season sales mix, even as Brent crude jumps past $102 on a third US aircraft carrier heading to the Middle East, GIFT Nifty signals another negative Friday open, DIIs keep absorbing FII selling, and Wall Street ekes out modest gains ahead of Friday's US jobs report.</summary>
   </entry>
 </feed>
