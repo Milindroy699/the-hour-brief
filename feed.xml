@@ -5,7 +5,14 @@
   <link href="https://the-hour-brief.vercel.app/feed.xml" rel="self"/>
   <link href="https://the-hour-brief.vercel.app/"/>
   <id>https://the-hour-brief.vercel.app/</id>
-  <updated>2026-11-05T02:55:00Z</updated>
+  <updated>2026-11-06T02:55:00Z</updated>
+  <entry>
+    <title>Edition 080 — 6 November 2026</title>
+    <link href="https://the-hour-brief.vercel.app/archive/2026-11-06.html"/>
+    <id>https://the-hour-brief.vercel.app/archive/2026-11-06.html</id>
+    <updated>2026-11-06T02:55:00Z</updated>
+    <summary type="text">AI &amp; Tech: Wall Street's Nasdaq slides into correction as an AI-regulation scare wipes out Wednesday's post-midterm rally, even as Anthropic's amended IPO filing shows Q3 revenue surging to $17 billion while swinging to an operating loss, Microsoft offers buyouts to roughly 60,000 employees as AI spending takes priority, and Meta narrows its 2026 AI capex to $135–145 billion after a $9.89 billion legal charge. Product &amp; Business: SBI's Q2 profit rises 14% to a record ₹23,038 crore as bad loans shrink and SBI Cards' profit jumps 75%, Hero MotoCorp's profit climbs 41% on a one-time gain and Tata Motors swings back into the black, even as Noel Tata prepares to step down from six Tata Group boards amid an unresolved fight over N. Chandrasekaran's reappointment, and Stratechery's eight-month-old case against an AI bubble meets its sharpest test yet. Stock Market: Sensex and Nifty surge over 2.5% as Democrats' midterm sweep and falling crude lift autos and financials, even as Wall Street's own post-election rally reverses into its worst session since April 2025 on an AI-chip selloff that pushed the Nasdaq into correction territory.</summary>
+  </entry>
   <entry>
     <title>Edition 079 — 5 November 2026</title>
     <link href="https://the-hour-brief.vercel.app/archive/2026-11-05.html"/>
@@ -208,13 +215,6 @@
     <id>https://the-hour-brief.vercel.app/archive/2026-10-06.html</id>
     <updated>2026-10-06T02:55:00Z</updated>
     <summary type="text">AI &amp; Tech: New York City's Council puts OpenAI, Anthropic, Google and Meta executives under oath over rogue AI agents as a suspected AI-assisted breach exposes some 25,000 Shinhan Bank customers in South Korea, even as Barclays expands its Claude Code rollout bankwide, Marvell and Cisco lean further into AI infrastructure at dueling investor events, and Apple preps a multilingual expansion for its still-new AI Siri. Product &amp; Business: Snapdeal parent AceVector opens at an 11.5% discount on its stock-market debut as Tata Capital's own ₹15,500 crore IPO opens for subscription to a muted start, even as Jio Platforms wraps global investor roadshows ahead of India's largest-ever offering and Myntra opens early access to its Big Fashion Festival a day ahead of Flipkart's own festive sale. Stock Market: Sensex and Nifty snap their eight-week losing streak with a modest Monday bounce as a Reuters poll finds the RBI's Wednesday rate call now a genuine toss-up between a hike and a hold, even as Brent eases back from last week's $102 spike and persistent FII selling keeps this year's outflows at a record pace.</summary>
-  </entry>
-  <entry>
-    <title>Edition 050 — 5 October 2026</title>
-    <link href="https://the-hour-brief.vercel.app/archive/2026-10-05.html"/>
-    <id>https://the-hour-brief.vercel.app/archive/2026-10-05.html</id>
-    <updated>2026-10-05T02:55:00Z</updated>
-    <summary type="text">AI &amp; Tech: Trump creates a White House "Super Intelligence Force" chaired by intelligence chief Jay Clayton as OpenAI fires three researchers for sharing sensitive information outside the company, even as Meta's Muse Spark chatbot co-authors six math papers and Anthropic's own Mythos model uncovers a critical bug exploited within a day of disclosure, while Google squeezes free Gemini users onto its weakest model, Amazon pledges $1 billion to data-center host communities, and an Arizona court vacates a sentence after a judge leaned on an AI-generated "victim" video. Product &amp; Business: Jio Platforms' IPO timeline firms up for a late-October listing as Snapdeal parent AceVector lists on the NSE and BSE today, even as Ather Energy extends its lead over a fading Ola Electric, Flipkart sets October 9 for its Big Fashion Festival rival Big Billion Days, fresh funding lands for interiors platform Gravity and paediatric-health startup Primerry, and India's overall IPO fundraising slides 21% for the year. Stock Market: Sensex and Nifty head into Monday's reopen on GIFT Nifty's positive cue after an eighth-straight losing week, as a Reuters poll finds most economists now expect the RBI to hike rates Wednesday rather than hold, even as Bajaj Auto slumps 7% on weak festive two-wheeler sales, Brent holds near $102 on a third US carrier group's Middle East deployment, and Wall Street closes out the week at fresh records on a soft jobs report.</summary>
   </entry>
 
 </feed>
