@@ -1,3 +1,34 @@
 {
-  "briefs": []
+  "briefs": [
+    {
+      "id": "product-2026-11-10",
+      "category": "product",
+      "styleAuthor": "",
+      "title": "When Building Is Cheap, Judgment Is the Product",
+      "body": "Two conversations on Lenny's Podcast this week, one with Google's head of frontier-model product and one with the 22-year-old behind Wispr Flow's growth engine, look unrelated. One is about shaping models nobody fully controls; the other is about marketing a voice-dictation app. Read together, they make the same argument: when building and shipping get cheap, the scarce thing is judgment about what is real, and the best operators protect that judgment with unglamorous human habits.\n\nStart with Tulsee Doshi, who runs product for Gemini, the Gen Media models (Nano Banana, Lyria), the open Gemma family and Google's audio models. Her first claim is that model product management breaks the usual contract. In a conventional product you set goals and the team delivers them. A model, she says, is \"like Snape's potions class\": you choose the ingredients carefully, but you must expect some magic you didn't plan. The PM's job is therefore twofold. Shape what goes in, then study what comes out, find where the model unexpectedly shines, and build the product around that. She wants PMs who \"understand the vibes\" of models, who play with them daily and stress-test them on things they care about.\n\nThat shapes her build philosophy, the \"60/20/20 rule.\" Classic startup advice says to ship an MVP that works. Doshi's version is that 60% of what you build should work today, 20% should work well enough to hint at where the models are going, and the last 20% is a bet on capabilities you've only glimpsed. You ship something real now, and the product can grow as the models do. It is more practical than the common advice to \"build three months ahead,\" because it doesn't ask you to bet everything on a forecast.\n\nOn the PM role itself she is blunt about the slogans. \"Prototype is the new PRD,\" \"evals are the new PRD,\" \"data is the new PRD\": what these really show, she argues, is that the work has moved from documents to artifacts you can interact with. AI has made prototyping and data analysis nearly free for PMs. So what is left? Taste, meaning the ability to separate signal from noise and find the insight that unlocks an experience, and the ability to turn chaos into order. When everyone can build fast, speed alone produces chaos, and someone has to bring clarity and consensus. That is her case for why PMs are \"suddenly valuable again.\" She also offers a useful heuristic for delegating to AI: if you have to do something twice, ask whether you need to do it yourself. Writing a strategy twice, yes. Most other things, probably not.\n\nNow Hector Serrano. He joined Wispr Flow at 19 as a UGC creator, asked for equity on day two, and now runs its paid UGC program while the company's revenue has reportedly grown 30x in a year. His starting point echoes Doshi's: the product comes first. There is no growth hack, he says, only a product good enough to grow on its own, to which you then add levers. If it isn't growing organically, go back and rethink positioning rather than forcing it.\n\nFrom there his advice is tactical, and counterintuitive in places. Turn on paid early, with an e-commerce mindset, because paid tells you fast whether your messaging converts cold traffic. Wispr's first attempt, organic UGC paid by CPM, produced around 500 million views in two and a half months but not many conversions; it chased vanity metrics. The paid program that followed works the other way: recruit talented, small-following creators, leave them free to experiment, and do not cap their earnings. Some now make around $13,000 a month with only a thousand or two followers of their own. His argument is that audiences distrust famous faces who have sold products for ten years, and an unknown creator's partnership ad feels more genuine.\n\nHis hiring advice is just as deliberately low-tech. Don't post high-salary listings on LinkedIn; you attract the wrong people. Look for hungry people who have grown an account, even to 10,000 followers, and who understand trends, editing and consistency. Young people living in the feeds understand the channels better than a 35-year-old founder does, he argues, and a flat team of roughly 15 marketers, with no middle management, lets them act on that.\n\nThe sharpest overlap is about AI. Doshi says AI makes building trivial and so makes judgment the differentiator. Serrano says \"the best marketers are allergic to AI\" for final creative output. Slop ads are noise, quality over quantity cuts through, and even the most automation-heavy person he knows keeps a human on the last 10%, because a brand cannot afford a visible mistake. Both are describing the same discipline: let machines expand what you can produce, but keep a person accountable for what actually ships.\n\nOne more short but telling voice supports this. A snippet on design partners warns that they usually \"buy into your vision,\" give lots of feedback and never buy. People with a real, urgent problem want it solved, not to co-design your product. Enthusiastic input is not demand. Whether you're evaluating model behavior, a creator's video or a design partner's praise, the lesson is to look for the signal that costs the other side something: usage, conversions, money.\n\nThe takeaway for product leaders is uncomfortable but simple. Tools have made the cheap parts of the job cheaper. What remains is deciding what's worth building, noticing when a result is surprising rather than merely plausible, hiring for hunger over credentials, and refusing to confuse feedback and views with traction.",
+      "generatedAt": "2026-11-10T12:14:13.000Z",
+      "sources": [
+        {
+          "creator": "Lenny's Podcast",
+          "title": "Why PMs are suddenly valuable again | Tulsee Doshi (Head of Product, Gemini)"
+        },
+        {
+          "creator": "Lenny's Podcast",
+          "title": "Why 0 Followers Are Better Than 100k Followers"
+        },
+        {
+          "creator": "Lenny's Podcast",
+          "title": "The #1 Mistake Brands are Making with UGC"
+        },
+        {
+          "creator": "Lenny's Podcast",
+          "title": "A UGC masterclass from the 22-year-old who built Wispr Flow’s growth machine | Hector Serrano"
+        },
+        {
+          "creator": "Lenny's Podcast",
+          "title": "Why Design Partners Don't Work"
+        }
+      ]
+    }
+  ]
 }
