@@ -26,6 +26,9 @@ const GH_COMMIT_TOKEN = process.env.GH_COMMIT_TOKEN;
 const GH_REPO = 'Milindroy699/the-hour-brief';
 const TIME_BUDGET_MS = 50000;
 const CONFIG_PATH = path.join(__dirname, '..', 'leaders.config.json');
+// youtube-transcript.io's free plan is 25 transcripts a month, and the API doesn't report usage, so we count our own
+// (one credit per video id requested). Raise YTT_MONTHLY_LIMIT in Vercel if the plan changes.
+const YTT_MONTHLY_LIMIT = parseInt(process.env.YTT_MONTHLY_LIMIT, 10) || 25;
 
 async function kv(command) {
   const p = command.map((c) => encodeURIComponent(c)).join('/');
@@ -186,6 +189,36 @@ async function candidates(creator) {
   return unseen.filter((e) => !cutoff || e.time > cutoff).slice(0, creator.limit || 2);
 }
 
+// ---- Monthly transcript budget ----
+// Spread what's left evenly over the Mondays remaining this month (UTC), so a month is never spent in its first week.
+function mondaysLeft(now) {
+  let n = 0;
+  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  for (const m = d.getUTCMonth(); d.getUTCMonth() === m; d.setUTCDate(d.getUTCDate() + 1)) if (d.getUTCDay() === 1) n += 1;
+  return Math.max(1, n);
+}
+async function transcriptBudget() {
+  const now = new Date();
+  const key = `leader:ytt:${now.toISOString().slice(0, 7)}`;
+  const used = parseInt(await kv(['GET', key]), 10) || 0;
+  const remaining = Math.max(0, YTT_MONTHLY_LIMIT - used);
+  return { key, limit: YTT_MONTHLY_LIMIT, used, remaining, thisRun: Math.ceil(remaining / mondaysLeft(now)) };
+}
+// When the budget is short, take one video per pillar before a second from any (newest first within a pillar), so
+// every category keeps getting covered.
+function pickByPillar(videos, n) {
+  const groups = {};
+  videos.forEach((v) => { (groups[v.creator.category] = groups[v.creator.category] || []).push(v); });
+  Object.values(groups).forEach((g) => g.sort((a, b) => b.e.time - a.e.time));
+  const picked = [];
+  for (let round = 0; picked.length < n; round++) {
+    const layer = Object.values(groups).map((g) => g[round]).filter(Boolean);
+    if (!layer.length) break;
+    picked.push(...layer.slice(0, n - picked.length));
+  }
+  return picked;
+}
+
 async function runFetch({ dry = false } = {}) {
   const start = Date.now();
   const { creators } = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
@@ -199,6 +232,8 @@ async function runFetch({ dry = false } = {}) {
           items: fresh.map((e) => ({ title: e.title, published: e.time ? new Date(e.time).toISOString() : e.date, url: e.link })) });
       } catch (e) { report.errors.push(`${creator.name}: ${e.message}`); }
     }
+    const { key, ...budget } = await transcriptBudget();
+    report.transcriptBudget = budget;
     report.durationMs = Date.now() - start;
     return report;
   }
@@ -233,10 +268,22 @@ async function runFetch({ dry = false } = {}) {
     }
   }
 
-  // Pass 2: transcripts for every new video in one batch.
+  // Pass 2: transcripts in one batch, within this run's share of the monthly budget. Videos over budget are left
+  // unseen, not marked done.
   if (videos.length) {
-    const transcripts = await fetchTranscripts(videos.map((v) => v.e.videoId));
-    for (const { creator, e } of videos) {
+    const { key, ...budget } = await transcriptBudget();
+    report.transcriptBudget = budget;
+    const batch = pickByPillar(videos, budget.thisRun);
+    videos.filter((v) => !batch.includes(v)).forEach(({ creator, e }) => {
+      report.skipped.push(`${creator.name}: "${e.title}" (deferred: monthly transcript budget, ${budget.used}/${budget.limit} used)`);
+    });
+    if (batch.length) {
+      await kv(['INCRBY', key, String(batch.length)]);
+      await kv(['EXPIRE', key, String(40 * 86400)]);
+      report.transcriptBudget.used += batch.length;
+    }
+    const transcripts = batch.length ? await fetchTranscripts(batch.map((v) => v.e.videoId)) : {};
+    for (const { creator, e } of batch) {
       await kv(['SADD', `leader:seen:${creator.source}`, e.guid]); // attempted once either way
       const content = transcripts[e.videoId] || '';
       if (content.length < MIN_TRANSCRIPT_CHARS) { report.skipped.push(`${creator.name}: "${e.title}" (${content ? 'too short' : 'no transcript'})`); continue; }
