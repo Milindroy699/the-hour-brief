@@ -29,6 +29,84 @@
           "title": "Why Design Partners Don't Work"
         }
       ]
+    },
+    {
+      "id": "tech-ai-2026-11-10",
+      "category": "tech-ai",
+      "styleAuthor": "",
+      "title": "The Last Constraint on AI Is a Vote",
+      "body": "The AI industry has spent three years explaining its bottlenecks in engineering terms: first compute, then memory, then power. This week three very different voices pointed at the same thing from three angles, and it was not an engineering problem.\n\nBen Thompson of Stratechery opened with the election. Democrats took both chambers of Congress, but what Thompson noticed, watching a season of baseball ads in Wisconsin, was that data centers were the most common campaign topic, and both parties ran against them. In Texas, Gina Hinojosa won the governorship pledging a moratorium on construction, even though incumbent Greg Abbott had already frozen new data-center permits in September. Nearly every local ballot measure against data centers has won, with North Dakota the lone exception. His thesis: the constraint on AI's spread has moved again. Compute ramped, memory will ramp, power will be fixed. The final constraint is political, and it interferes with solving the other three.\n\nHis explanation is sharp. Globalization hit Rust Belt towns without asking them. Data centers require permission, so people who had no say in the last disruption finally have one, and the industry's own pitch, that AI replaces labor, gives them a reason to use it. Thompson then runs ten scenarios for a world with a permanently impaired ability to build. Neoclouds suffer because they now need permits as well as capital. Hyperscalers win share, and political cover to moderate spending. Nvidia loses volume near term but gains pricing power, since tokens per megawatt matters more when power is scarce. China gains, because it has electricity and can brute-force its way past weaker chips. Frontier labs benefit because the public is effectively pacing a race that was bankrupting them. Startups suffer, and Apple gains.\n\nAswath Damodaran, the NYU valuation professor, arrives at the same place from the money side. Asked about a $20 trillion addressable market, his answer is \"tell me why, tell me how, tell me where.\" Over $2 trillion is already in the ground, which he notes exceeds the railroads and the dot-com build-out. His worry is not Meta or Alphabet, whose advertising businesses can absorb a write-down. It is the CoreWeaves, which have no cash cow and so fund data centers with debt and private credit. When the correction comes, he argues, those facilities default, and debt default becomes everyone's pain, as it did in 2008, when the losses reached depositors and the real economy rather than staying with equity holders. He says that correction \"has to come sometime.\"\n\nDamodaran adds two cautions that cut against easy bearishness. First, selling everything to sit in cash at four or five percent has a hidden cost: the people who dodged 2008 often ended up poorer than those who rode it out, because getting back in is hard. Second, if you avoid the AI names entirely you can escape much of the damage, as non-dot-com holders did in 2001, but this time it is harder because AI touches everything. He also says to watch what markets price rather than what experts say, noting that markets beat experts in 2020.\n\nMatt Wolfe's look at Anthropic's new Fable 5.2 is the counterpoint, and it is useful precisely because it shows how much capability is still arriving. The benchmarks show real but not monumental gains: agentic scientific research rose from 58.7 to 74.6 percent, while agentic coding moved from 45.5 to 49.1. Anthropic's own demos include a prototype operating system built by over 1,000 sub-agents over eight days. But Wolfe stresses the economics. At $8 per million input tokens and $40 per million output, it costs double Opus 5.5, and the average task on Artificial Analysis cost $26.54 at max reasoning. More striking, thinking longer actually scored worse than \"extra high\" on one coding benchmark while costing more. His own game-building test took 16 minutes and worked on the first try, yet his recommendation was that Opus 5.5 remains the daily driver for most people.\n\nRead together, these are one story. Models are getting smarter at a rate that justifies enormous spending, but each step costs more, the money is increasingly borrowed, and the physical sites to spend it on now require a public that is saying no. Thompson thinks scarcity may last far longer than commodity-minded forecasts assumed. Damodaran thinks the financing structure turns any stumble into a credit event. Wolfe's numbers show why labs and buyers will care about efficiency over raw power.\n\nThe practical takeaway is that the winners of this phase are probably not whoever has the best model, but whoever has permitted capacity, cheap tokens per watt, and a balance sheet that doesn't depend on refinancing. AI wasn't formally on the ballot, as Thompson put it, but it will be from now on.",
+      "generatedAt": "2026-11-10T20:20:56.000Z",
+      "sourceDate": "2026-11-09T23:16:34.000Z",
+      "sources": [
+        {
+          "creator": "Stratechery (Ben Thompson)",
+          "title": "AI on the Ballot",
+          "url": "https://stratechery.com/2026/ai-on-the-ballot/"
+        },
+        {
+          "creator": "Matt Wolfe",
+          "title": "Anthropic's Fable 5.2 is the World’s Best AI Model",
+          "url": "https://www.youtube.com/watch?v=2TM8W66NI_8"
+        },
+        {
+          "creator": "Disruptor Confessions",
+          "title": "The AI Bubble Lesson Is Coming | NYU Professor Aswath Damodaran",
+          "url": "https://www.youtube.com/watch?v=dOIFazFlvlc"
+        }
+      ]
+    },
+    {
+      "id": "business-2026-11-10",
+      "category": "business",
+      "styleAuthor": "",
+      "title": "Building the Rails Inside Someone Else's Rules",
+      "body": "Three conversations this week, about India's payments network, India's oldest IT services giant, and America's leading robotaxi company, tell the same story. Infrastructure businesses are not won by the best technology. They are won by whoever learns to operate inside regulators, incumbents and public suspicion.\n\nStart with UPI. On Nikhil Kamath's show, NPCI's Sohini, Razorpay co-founder Harshil Mathur and PhonePe CEO Sameer Nigam spent hours explaining something they agree nobody has properly written down: how a hundred-rupee transfer actually moves. The app sends a message through a sponsor bank to NPCI, which resolves the virtual payment address to a bank account, confirms with the recipient's bank, checks funds at the sender's bank, and nets settlements out at the end of the cycle. The app never touches the money. The point they kept returning to was how much hidden complexity sits under something that feels like a sound. Mathur's origin story makes the same case from the other side: he and his co-founder built a crowdfunding side project, found accepting payments nearly impossible through banks with 1990s-era interfaces, and discovered that everyone around them just took cash on delivery.\n\nThe economics are the uncomfortable part, and the title question, who pays for free UPI, is left partly open. Nigam described how PhonePe had around 30 million QR codes on the person-to-person rail before the government announced zero merchant fees, and how the regulator eventually agreed to a formal P2PM category so small shops would not be charged up to one lakh rupees. India, he noted, is the only market with such a code. Both founders also pushed back on regulatory paternalism, a \"very avuncular\" instinct that assumes users must be protected from products. Mathur's Flipkart sale story, in which millions of card attempts failed, banks' core systems went down, and tens of thousands of televisions were sold with no payment record, shows what scaling on someone else's rails looks like. They closed by expecting real-time networks to interconnect faster than central bank digital currencies ever will.\n\nThe Ken's Intermission episode on TCS is the older version of this lesson. TCS began in 1968 as a division of Tata Sons running data processing on leased mainframes, and its defining move was flexibility. Its partnership with Burroughs turned into a crisis when Tata Sons wanted to fold TCS into a joint venture that would control all Burroughs work. The Indian government, in the licence-raj era, told the Tatas to keep the crown jewel independent, and that forced TCS to find its own customers. It also took the government to court after computers were classified alongside toasters and electric razors, taxed above 100 percent, and won a refund in 1980. Later, Y2K opened doors to clients who would never have outsourced to an unknown Indian firm. The episode's useful number is the 2007 comparison: Accenture earned 2.5 times TCS's revenue per employee, but the operating profit per employee was comparable.\n\nThen there is Waymo. Co-CEO Tekedra Mawakana told Bloomberg's Emily Chang that the company counts a Waymo roughly every minute in San Francisco. She cites an insurance-institute study showing 68 percent fewer crashes than human drivers, yet a 2026 Pew poll shows 71 percent of adults uncomfortable in a driverless car. The company is dealing with school-bus signals, flooded streets, a Senate hearing where it emerged that remote assistants work from the Philippines, and a senator's complaint about Zeekr-built vehicles. Mawakana's answer on a fatal accident is notable for its humility: there will be one, and it will be a hard day. Her reframing is that society already accepts many deaths from human drivers. On price, rides average about $9.58 per mile versus $6.88 for Uber and $6.41 for Lyft, and she says price is not the first priority.\n\nWhat connects the three is that the technology was never the scarce thing. NPCI and the private apps had to negotiate who bears the cost of free payments. TCS survived licensing, joint-venture politics and tariff categories. Waymo has to convince a nervous public, city officials and senators while its mistakes go viral. Each firm describes its edge as adaptability, and the TCS episode even quotes Bruce Lee on being like water.\n\nFor builders, the lesson is that the product is only half the work. The moat is the relationship with the institution that can switch you off.",
+      "generatedAt": "2026-11-10T20:20:56.000Z",
+      "sourceDate": "2026-11-04T13:00:37.000Z",
+      "sources": [
+        {
+          "creator": "Nikhil Kamath",
+          "title": "If UPI Is Free, Who Pays for It? | PhonePe, Razorpay & NPCI | WTF is Payments?",
+          "url": "https://www.youtube.com/watch?v=hBvInWQWpZ0"
+        },
+        {
+          "creator": "The Ken: Intermission",
+          "title": "TCS: The company that saved the World, India and Tata Sons | Intermission E05 | The Ken",
+          "url": "https://www.youtube.com/watch?v=giV753ILiAo"
+        },
+        {
+          "creator": "The Circuit with Emily Chang (Bloomberg)",
+          "title": "Waymo’s Bet on a Driverless Future | The Circuit with Emily Chang",
+          "url": "https://www.youtube.com/watch?v=1Lebd8OzWeo"
+        }
+      ]
+    },
+    {
+      "id": "finance-2026-11-10",
+      "category": "finance",
+      "styleAuthor": "",
+      "title": "When the Story Changes, Trust the Rules",
+      "body": "Every market narrative eventually asks you to believe a story. Three Indian investing voices this week, each from a different angle, argue that the way to survive is to have a process that doesn't care what the story is.\n\nManish Dhawan of Mystic Wealth is the clearest on method. He started in 2007, built a strategy around demergers and spin-offs, left a corporate job in 2011 with about 22 lakh rupees plus money from family and friends, and says early on he was lucky, since at times 30 percent of net worth sat in one stock. His realization is that everything in markets is a story someone is selling, and that once your buying and selling are driven by a process, you stop listening to television. His momentum system is simple to state. Take the top 750 stocks, rank them by speed of price rise, penalize volatility, and also rank by distance from the 52-week high. Buy the top 20 at equal weight, so 4 percent each if 80 percent invested. Rebalance monthly, keep a stock until it falls below rank 50, and replace it with a newcomer. A hundred-year backtest, he says, shows better returns than the Nifty or Nifty 500.\n\nHe is candid about the cost. Plain momentum can draw down 30 to 35 percent, and a typical mutual fund fell 70 percent in 2008. His arithmetic on recovery is why that matters: a 50 percent loss needs a 100 percent gain, and a 70 percent loss needs 300 percent. Roughly 60 percent of his picks lose money, so \"we are worse than a coin toss,\" but the winners are large. Because his partner runs a value strategy and he runs momentum, he combines the two, inspired by Ray Dalio's advice on uncorrelated strategies, though he concedes both remain tied to the market. He also names today's story: AI, then data centers, and now, as AI sours, IT stocks as an \"anti-AI\" trade.\n\nThat makes the SOIC video's timing notable. Its host argues that the US midterms, where Democrats are leaning anti-data-center and floating moratoria, could puncture the AI trade and send foreign institutional money back to India. He expects Indian AI-export names such as optical fiber and gas-engine makers, which have traded at around 110 times earnings, to re-rate toward 50 to 60 times, since they depend on hyperscaler spending. He also points out that emerging markets have been flat for over a decade, with the Brazilian ETF going nowhere and Africa's 2011 breakout delivering nothing. His claim is that this has made India look like an attractive place to park capital. That is a forecast, not a fact, and it is exactly the type of narrative Dhawan would tell you to treat with caution.\n\nFinancially Free's study of quick-service restaurants shows how a story can be tested against numbers. Domino's operator Jubilant was a darling from 2012 to 2020, but KFC's operator Devyani is roughly flat at around 120 rupees after four years, and Pizza Hut-linked names have been the weakest on nearly every metric. The creator's diagnosis: pre-Covid the business was dine-in, now it is delivery, and Domino's old 20-minute delivery advantage disappeared once Zomato and others arrived. Inflation hit costs while sales per store stagnated, so volume must have suffered. Now the numbers are turning. Break-even per store that once took years now takes two to two and a half. Same-store sales growth is positive again for KFC and accelerating, Burger King is recovering, and the stocks are moving above their 200-day averages. He is careful to ask whether this is permanent, not to assume it, and he flags that after the accounting change, rent no longer sits inside EBITDA, so you should check the pre-IndAS number.\n\nWhat links the three is discipline about evidence. Dhawan buys what is rising and sells what stops. SOIC reads macro events as triggers for rotation but admits he is forecasting. The QSR analyst waits for same-store sales to actually turn. None of them say the story doesn't matter; they say it shouldn't be the reason you act.\n\nFor an individual investor, the practical advice is unglamorous: decide your rules before the narrative arrives, size positions so a 30 percent drawdown is survivable, and treat any confident prediction, including the ones above, as input rather than instruction.",
+      "generatedAt": "2026-11-10T20:20:56.000Z",
+      "sourceDate": "2026-11-08T06:00:03.000Z",
+      "sources": [
+        {
+          "creator": "Moneytalks by Groww",
+          "title": "The Momentum Rule That Delivered 5X Multibaggers ft. Manish Dhawan",
+          "url": "https://www.youtube.com/watch?v=r_9vKMaEPeM"
+        },
+        {
+          "creator": "Financially Free",
+          "title": "The End of Fast Food Giants? | Stocks Case Study",
+          "url": "https://www.youtube.com/watch?v=WqFaQ4FC8bc"
+        },
+        {
+          "creator": "SOIC",
+          "title": "The Next Rally Could Leave Your Stocks Behind",
+          "url": "https://www.youtube.com/watch?v=FOly5mSQlc4"
+        }
+      ]
     }
   ]
 }
