@@ -164,10 +164,10 @@
     }).join('');
   }
 
-  fetch('/api/leaders?limit=30')
+  fetch('/leaders-data.json', { cache: 'no-store' })
     .then(function (r) { return r.json(); })
     .then(function (data) {
-      all = data.briefs || [];
+      all = (data.briefs || []).slice().reverse(); // file is oldest-first (routine appends); show newest first
       renderCats();
       renderList();
     })
