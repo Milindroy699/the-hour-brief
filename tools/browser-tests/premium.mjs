@@ -85,7 +85,7 @@ check('within the lane head, the takeaway appears before the "Today\'s highlight
 t = await J(`(() => { const h2 = document.querySelector('#quiz .lane-head h2'); return { text: h2.textContent, visible: !!h2.offsetParent, display: getComputedStyle(h2).display }; })()`);
 check('the quiz section\'s own short, deliberately-styled <h2> is unaffected by the rule — still shown normally', t.visible && t.display !== 'none' && t.text.length > 0, JSON.stringify(t));
 t = await J(`(() => { const bar = document.querySelector('.tab-bar'), r = bar.getBoundingClientRect(); const tabs = [...bar.querySelectorAll('.tab')].map((x) => ({ n: x.dataset.tab, cur: x.getAttribute('aria-current'), h: Math.round(x.getBoundingClientRect().height), tag: x.tagName, href: x.getAttribute('href') })); return { fixed: getComputedStyle(bar).position, bottom: Math.round(innerHeight - r.bottom), tabs }; })()`);
-check('bottom tab bar: Today, Audio, Leaders, Challenge, Archive; fixed to the bottom; Today is current; every tab is at least 44px tall', t.fixed === 'fixed' && t.bottom === 0 && eq(t.tabs.map((x) => x.n), ['today', 'audio', 'leaders', 'quiz', 'archive']) && t.tabs[0].cur === 'page' && t.tabs.every((x) => x.h >= 44) && t.tabs[2].tag === 'A' && t.tabs[2].href === '/leaders.html' && t.tabs[4].tag === 'A' && t.tabs[4].href === '/archive/', JSON.stringify(t));
+check('bottom tab bar: Today, Audio, Leaders, Challenge (Archive lives in the Menu); fixed to the bottom; Today is current; every tab is at least 44px tall', t.fixed === 'fixed' && t.bottom === 0 && eq(t.tabs.map((x) => x.n), ['today', 'audio', 'leaders', 'quiz']) && t.tabs[0].cur === 'page' && t.tabs.every((x) => x.h >= 44) && t.tabs[2].tag === 'A' && t.tabs[2].href === '/leaders.html', JSON.stringify(t));
 check('no sideways scrolling at 390px', (await overflow()) === false);
 t = await J(`({ scroll: document.querySelector('.nav').scrollLeft, all: Math.round(document.querySelector('.nav-all').getBoundingClientRect().left), snap: getComputedStyle(document.querySelector('.nav')).scrollSnapType })`);
 check('the chip row opens at its start with the normal margin (no scroll-snap jump), "All" first', t.scroll === 0 && t.all === 16 && t.snap === 'none', JSON.stringify(t));
@@ -394,7 +394,7 @@ await c.shot(`${OUT}/p_desktop_hub.png`);
 await c.ev(`document.querySelector('.hub-close').click()`);
 await c.ev(`document.querySelector('.ab-menu').click()`); await waitFor(`!!document.querySelector('.rd-menu')`);
 t = await J(`(() => { const r = document.querySelector('.rd-sheet').getBoundingClientRect(); return { centred: Math.abs(r.left + r.width / 2 - innerWidth / 2) < 2, mid: r.top > 40 && r.bottom < innerHeight - 40, items: [...document.querySelectorAll('.rd-item')].map((b) => b.dataset.act) }; })()`);
-check('desktop: the menu opens as a centred dialog, with "Get it by email" (the signup box is now below the feed)', t.centred && t.mid && eq(t.items, ['sections', 'textsize', 'share', 'email']), JSON.stringify(t));
+check('desktop: the menu opens as a centred dialog, with "Get it by email" (the signup box is now below the feed)', t.centred && t.mid && eq(t.items, ['archive', 'sections', 'textsize', 'share', 'email']), JSON.stringify(t));
 await c.ev(`document.querySelector('.rd-item[data-act=email]').click()`); await c.sleep(900);
 check('"Get it by email" scrolls to the signup box and focuses its email field', (await c.ev(`document.activeElement && document.activeElement.type === 'email'`)) === true);
 await c.shot(`${OUT}/p_desktop.png`);
@@ -408,7 +408,7 @@ check('tablet (820px): the same column, no sideways scrolling, tab pill fixed', 
 // ---------- 8. the info pages ----------
 await open({ path: '/about.html' });
 t = await J(`({ screen: document.querySelector('.ab-screen').textContent, tabs: [...document.querySelectorAll('.tab')].map((x) => x.tagName + ' ' + x.getAttribute('href')), back: getComputedStyle(document.querySelector('.back-link')).display, oneRow: document.querySelector('.masthead-inner').getBoundingClientRect().height < 80 })`);
-check('About page: the same app bar ("About"), tabs that are plain links back to the feed, the old "back" link hidden, one tidy row', t.screen === 'About' && eq(t.tabs, ['A /', 'A /?audio=1', 'A /leaders.html', 'A /#quiz', 'A /archive/']) && t.back === 'none' && t.oneRow, JSON.stringify(t));
+check('About page: the same app bar ("About"), tabs that are plain links back to the feed, the old "back" link hidden, one tidy row', t.screen === 'About' && eq(t.tabs, ['A /', 'A /?audio=1', 'A /leaders.html', 'A /#quiz']) && t.back === 'none' && t.oneRow, JSON.stringify(t));
 await c.ev(`document.querySelector('.ab-menu').click()`); await waitFor(`!!document.querySelector('.rd-menu')`);
 check('its menu has no "Sections" item (there are none here)', (await c.ev(`[...document.querySelectorAll('.rd-item')].map((b) => b.dataset.act).includes('sections')`)) === false);
 await open({ path: '/?audio=1', tts: true });
@@ -419,7 +419,7 @@ await open({ native: true, prefs: { order: ['ai', 'biz', 'mkt', 'quiz'], off: []
 await c.ev(`(document.querySelector('.rd-sheet') && document.querySelector('.rd-sheet .rd-close').click(), 'ok')`); await c.sleep(300);
 await c.ev(`document.querySelector('.ab-menu').click()`); await waitFor(`!!document.querySelector('.rd-menu')`);
 t = await J(`[...document.querySelectorAll('.rd-item')].map((b) => b.dataset.act)`);
-check('in the apps the menu also offers the daily reminder and sharing (the existing native buttons are reused)', eq(t, ['sections', 'cards', 'textsize', 'reminder', 'share', 'email']), JSON.stringify(t));
+check('in the apps the menu also offers the daily reminder and sharing (the existing native buttons are reused)', eq(t, ['archive', 'sections', 'cards', 'textsize', 'reminder', 'share', 'email']), JSON.stringify(t));
 await c.ev(`document.querySelector('.rd-item[data-act=reminder]').click()`); await c.sleep(150);
 await c.ev(`document.querySelector('.ab-menu').click()`); await waitFor(`!!document.querySelector('.rd-menu')`);
 await c.ev(`document.querySelector('.rd-item[data-act=share]').click()`); await c.sleep(150);

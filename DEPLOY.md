@@ -25,7 +25,7 @@ widths and `mobile.js` injects at wider widths (apps and desktop). Wide screens 
 floating pill, the Audio screen and dialogs centre, the signup box sits below the feed and is reachable from the menu's "Get it by email").
 `?classic=1` on any URL shows the old wide layout (a safety valve; also the fastest rollback test). To switch the desktop redesign off for everyone,
 make `reader()` in `mobile.js` and `listen.js` return `mq.matches || NATIVE`. Pieces: app bar (the masthead, reworked: logo,
-wordmark, screen name, text size, saved, menu), bottom tabs (Today / Audio / Leaders / Challenge / Archive), an "All" chip plus the section chips (the one in
+wordmark, screen name, text size, saved, menu), bottom tabs (Today / Audio / Leaders / Challenge; Past editions is the first item in the Menu), an "All" chip plus the section chips (the one in
 view is filled), the "Before the news" card, the quiz chip and Listen card, green section badges, numbered highlights, takeaway callouts, the Audio hub
 (`listen.js`: progress from the recording's real timings, chapters, narrator; opens from the Audio tab, the mini player, or `/?audio=1`), and the quiz
 (`quiz.js`: streak card with a real Monday-Sunday strip, topic badge, segmented progress, insight callout, past quizzes from the reader's own results).

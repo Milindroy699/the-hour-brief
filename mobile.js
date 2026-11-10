@@ -861,7 +861,7 @@
       sv.addEventListener('click', function () { openSaved(sv); });
       var mn = mk('button', 'ab-btn ab-menu');
       mn.type = 'button';
-      mn.setAttribute('aria-label', 'Menu: sections, text size, reminder, share');
+      mn.setAttribute('aria-label', 'Menu: past editions, sections, text size, reminder, share');
       mn.innerHTML = SLIDERS_SVG;
       mn.addEventListener('click', function () { openMenu(mn); });
       bar.appendChild(aa);
@@ -909,6 +909,7 @@
         li.appendChild(b);
         ul.appendChild(li);
       }
+      if (screenName() !== 'Archive') item('archive', ICON.archive, 'Past editions', 'Every edition, newest first', function () { closeSheet(); location.href = '/archive/'; });
       if (laneBase) item('sections', SLIDERS_SVG, 'Sections', 'Show, hide and reorder', function () { openPrefs(returnTo); });
       if (cardsOk() && !deckOpen()) item('cards', CARDS_SVG, 'Swipe cards', 'Read one story at a time', function () { closeSheet(); openCards(); });
       item('textsize', ICON.aa, 'Text size', SIZE_NAMES[getSize()], function () { openTextSize(returnTo); });
@@ -928,9 +929,10 @@
     }, returnTo);
   }
 
-  // Bottom tabs: Today (the feed), Audio (the Listen hub), Leaders (thought-leader roundups), Challenge (the quiz),
-  // Archive (past editions) — the five-tab order from the Stitch "Thought Leaders" designs.
-  var TABS = [['today', 'Today'], ['audio', 'Audio'], ['leaders', 'Leaders'], ['quiz', 'Challenge'], ['archive', 'Archive']];
+  // Bottom tabs: Today (the feed), Audio (the Listen hub), Leaders (thought-leader roundups), Challenge (the quiz).
+  // Archive (past editions) is the first item in the top-right Menu instead — five tabs read as cramped, and the app
+  // bar itself has no room for a fourth icon next to the wordmark.
+  var TABS = [['today', 'Today'], ['audio', 'Audio'], ['leaders', 'Leaders'], ['quiz', 'Challenge']];
   function isFeed() { return !!document.querySelector('section.lane'); }          // an edition page (today's or an archived one)
   var INFO_TITLES = { '/about.html': 'About', '/privacy.html': 'Privacy', '/contact.html': 'Contact us' };
   function screenName() {
@@ -941,7 +943,7 @@
     return 'Feed';
   }
   // On pages that are not editions the tabs are plain links back to the right place.
-  var TAB_HREF = { today: '/', audio: '/?audio=1', quiz: '/?quiz=1', leaders: '/leaders.html', archive: '/archive/' };
+  var TAB_HREF = { today: '/', audio: '/?audio=1', quiz: '/?quiz=1', leaders: '/leaders.html' };
   function tabGo(name) {
     var L = window.HBListen;
     // Tapping the tab you are already on reopens/stays on it — it does not toggle closed (tried that after removing
@@ -1075,7 +1077,7 @@
       document.body.appendChild(sw);
       var row = mk('div', 'tab-row');
       TABS.forEach(function (t) {
-        var link = t[0] === 'leaders' || t[0] === 'archive' || !feed;
+        var link = t[0] === 'leaders' || !feed;
         var el = link ? mk('a', 'tab') : mk('button', 'tab');
         el.setAttribute('data-tab', t[0]);
         el.innerHTML = '<span class="tab-ic">' + ICON[t[0]] + '</span><span class="tab-lb">' + t[1] + '</span>';
@@ -1110,8 +1112,7 @@
     if (!isFeed()) {                                           // About, Privacy, Contact, the archive list
       var here = screenName();
       bar.querySelectorAll('.tab').forEach(function (t) {
-        var tab = t.getAttribute('data-tab');
-        if ((tab === 'leaders' && here === 'Leaders') || (tab === 'archive' && here === 'Archive')) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
+        if (t.getAttribute('data-tab') === 'leaders' && here === 'Leaders') t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
         if (t.getAttribute('data-tab') === 'quiz') t.hidden = false;
       });
       return;
