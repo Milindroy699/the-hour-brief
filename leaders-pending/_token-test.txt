@@ -1,1 +1,0 @@
-test — safe to delete, verifying GH_COMMIT_TOKEN write access
