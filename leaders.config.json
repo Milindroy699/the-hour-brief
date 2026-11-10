@@ -1,5 +1,17 @@
 {
   "creators": [
-    { "name": "Lenny's Podcast", "category": "product", "sourceType": "youtube", "source": "UC6t1O76G0jYXOAoYCm153dA" }
+    { "name": "Lenny's Podcast", "category": "product", "sourceType": "youtube", "source": "UC6t1O76G0jYXOAoYCm153dA", "limit": 1 },
+
+    { "name": "Stratechery (Ben Thompson)", "category": "tech-ai", "sourceType": "rss", "source": "https://stratechery.com/feed/", "categoryFilter": "Articles", "limit": 1 },
+    { "name": "Matt Wolfe", "category": "tech-ai", "sourceType": "youtube", "source": "UChpleBmo18P08aKCIgti38g", "limit": 1 },
+    { "name": "Disruptor Confessions", "category": "tech-ai", "sourceType": "youtube", "source": "UCT5LCDS8fzgQoubGkJFIKcA", "limit": 1 },
+
+    { "name": "Nikhil Kamath", "category": "business", "sourceType": "youtube", "source": "UCnC8SAZzQiBGYVSKZ_S3y4Q", "limit": 1 },
+    { "name": "The Ken: Intermission", "category": "business", "sourceType": "youtube", "source": "PLGoCQBlsj_-4Y5Ute9zTxVdvAcwo2QhFI", "limit": 1 },
+    { "name": "The Circuit with Emily Chang (Bloomberg)", "category": "business", "sourceType": "youtube", "source": "PLqq4LnWs3olV2nw7GgFjXHvxVc3T5hXXT", "limit": 1 },
+
+    { "name": "Moneytalks by Groww", "category": "finance", "sourceType": "youtube", "source": "UCuA2G-T1WmPRCHwDb713pVQ", "limit": 1 },
+    { "name": "Financially Free", "category": "finance", "sourceType": "youtube", "source": "UCkGjGT2B7LoDyL2T4pHsUqw", "limit": 1 },
+    { "name": "SOIC", "category": "finance", "sourceType": "youtube", "source": "UCB7GnQlJPIL6rBBqEoX87vA", "limit": 1 }
   ]
 }

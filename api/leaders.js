@@ -52,12 +52,16 @@ function parseFeed(xml) {
     const date = (b.match(/<pubDate>([^<]+)<\/pubDate>/) || b.match(/<published>([^<]+)<\/published>/) || [])[1] || '';
     const guid = (b.match(/<guid[^>]*>([^<]+)<\/guid>/) || b.match(/<id>([^<]+)<\/id>/) || [])[1] || link;
     const videoId = (b.match(/<yt:videoId>([^<]+)<\/yt:videoId>/) || [])[1];
+    const categories = (b.match(/<category[^>]*>[\s\S]*?<\/category>/g) || [])
+      .map((c) => decodeEntities(c.replace(/<\/?category[^>]*>/g, '').replace(/<!\[CDATA\[([\s\S]*?)\]\]>/, '$1').trim()));
     return {
       title: decodeEntities(title.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/, '$1').trim()),
       link,
       date,
+      time: Date.parse(date) || 0,
       guid: videoId || guid,
       videoId,
+      categories,
     };
   }).filter((e) => e.title && (e.link || e.videoId));
 }
@@ -145,62 +149,98 @@ async function commitPending(categories) {
   return pathInRepo;
 }
 
-async function runFetch() {
+// A creator's `source` is a YouTube channel id (UC…), a YouTube playlist id (PL…, for one show on a busy channel,
+// e.g. The Circuit on Bloomberg), or — for sourceType "rss" — a feed URL.
+// Channels are read through YouTube's auto-generated long-form-uploads playlist ("UULF" + the id after "UC"): newest
+// first and no Shorts. The plain channel feed is the last 15 uploads of any kind, which for several of these channels
+// is entirely Shorts — Nikhil Kamath's had no full episode in it at all.
+function feedUrl(creator) {
+  if (creator.sourceType !== 'youtube') return creator.source;
+  const playlist = /^UC/.test(creator.source) ? `UULF${creator.source.slice(2)}` : creator.source;
+  return `https://www.youtube.com/feeds/videos.xml?playlist_id=${encodeURIComponent(playlist)}`;
+}
+
+const MIN_TRANSCRIPT_CHARS = 1500; // below this it's a clip/short, not something worth a roundup slot
+const MAX_CONTENT_CHARS = 80000; // ~2h of speech; keeps pending files and the writer's reading bounded
+
+// Newest-first candidates for one creator this run. Feeds aren't reliably newest-first (playlist feeds follow
+// playlist order — Intermission's is oldest-first), so sort by date. Only items newer than the newest one already
+// ingested count: otherwise a quiet week would quietly backfill the channel's older videos into this week's roundup.
+// A creator's first run has nothing seen yet, so it takes the latest `limit` (default 2) regardless of age.
+async function candidates(creator) {
+  const xml = await (await fetch(feedUrl(creator))).text();
+  let entries = parseFeed(xml);
+  if (creator.titleFilter) entries = entries.filter((e) => e.title.toLowerCase().includes(creator.titleFilter.toLowerCase()));
+  if (creator.categoryFilter) entries = entries.filter((e) => e.categories.includes(creator.categoryFilter));
+  // Shorts dominate several channels' feeds (all 15 of Nikhil Kamath's latest, at one point) and are never worth a slot.
+  entries = entries.filter((e) => !/\/shorts\//.test(e.link) && !/#shorts?\b/i.test(e.title)).sort((a, b) => b.time - a.time);
+
+  if (!entries.length) return [];
+  const seen = (await kv(['SMISMEMBER', `leader:seen:${creator.source}`, ...entries.map((e) => e.guid)])) || [];
+  let cutoff = 0;
+  const unseen = [];
+  entries.forEach((e, i) => {
+    if (seen[i] === 1) cutoff = Math.max(cutoff, e.time);
+    else unseen.push(e);
+  });
+  return unseen.filter((e) => !cutoff || e.time > cutoff).slice(0, creator.limit || 2);
+}
+
+async function runFetch({ dry = false } = {}) {
   const start = Date.now();
   const { creators } = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
-  const report = { creatorsChecked: 0, newItems: 0, errors: [] };
+  const report = { creatorsChecked: 0, newItems: 0, skipped: [], errors: [] };
+  if (dry) {
+    report.wouldFetch = [];
+    for (const creator of creators) {
+      try {
+        const fresh = await candidates(creator);
+        report.wouldFetch.push({ creator: creator.name, category: creator.category,
+          items: fresh.map((e) => ({ title: e.title, published: e.time ? new Date(e.time).toISOString() : e.date, url: e.link })) });
+      } catch (e) { report.errors.push(`${creator.name}: ${e.message}`); }
+    }
+    report.durationMs = Date.now() - start;
+    return report;
+  }
   const byCategory = {};
+  const add = (creator, e, content) => {
+    report.newItems += 1;
+    (byCategory[creator.category] = byCategory[creator.category] || []).push({
+      creator: creator.name, title: e.title, url: e.link || `https://www.youtube.com/watch?v=${e.videoId}`,
+      publishedAt: e.time ? new Date(e.time).toISOString() : e.date,
+      content: content.slice(0, MAX_CONTENT_CHARS), styleAuthor: creator.styleAuthor || null,
+    });
+  };
 
+  // Pass 1: find what's new per creator. YouTube transcripts are fetched afterwards in one batch, so several
+  // channels don't each make their own request and trip youtube-transcript.io's 5-requests-per-10s limit.
+  const videos = [];
   for (const creator of creators) {
     if (Date.now() - start > TIME_BUDGET_MS) { report.errors.push('time budget hit before finishing all creators'); break; }
     report.creatorsChecked += 1;
     try {
-      let entries = [];
-      if (creator.sourceType === 'youtube') {
-        const xml = await (await fetch(`https://www.youtube.com/feeds/videos.xml?channel_id=${creator.source}`)).text();
-        entries = parseFeed(xml).slice(0, 5);
-      } else if (creator.sourceType === 'rss') {
-        const xml = await (await fetch(creator.source)).text();
-        entries = parseFeed(xml).slice(0, 5);
-      }
-
-      const fresh = [];
-      for (const e of entries) {
-        const already = await kv(['SISMEMBER', `leader:seen:${creator.source}`, e.guid]);
-        if (already !== 1) fresh.push(e);
-      }
-      if (!fresh.length) continue;
-
-      if (creator.sourceType === 'youtube') {
-        const transcripts = await fetchTranscripts(fresh.map((e) => e.videoId));
-        for (const e of fresh) {
-          const content = transcripts[e.videoId];
-          await kv(['SADD', `leader:seen:${creator.source}`, e.guid]); // attempted once either way
-          if (!content) continue;
-          report.newItems += 1;
-          (byCategory[creator.category] = byCategory[creator.category] || []).push({
-            creator: creator.name, title: e.title, url: e.link || `https://www.youtube.com/watch?v=${e.videoId}`,
-            publishedAt: e.date, content, styleAuthor: creator.styleAuthor || null,
-          });
-        }
-      } else {
-        for (const e of fresh) {
-          let content = '';
-          try {
-            const html = await (await fetch(e.link)).text();
-            content = extractArticleText(html);
-          } catch (err) { /* leave empty, skip below */ }
-          await kv(['SADD', `leader:seen:${creator.source}`, e.guid]);
-          if (!content || content.length < 300) continue;
-          report.newItems += 1;
-          (byCategory[creator.category] = byCategory[creator.category] || []).push({
-            creator: creator.name, title: e.title, url: e.link,
-            publishedAt: e.date, content, styleAuthor: creator.styleAuthor || null,
-          });
-        }
+      const fresh = await candidates(creator);
+      for (const e of fresh) {
+        if (creator.sourceType === 'youtube') { videos.push({ creator, e }); continue; }
+        let content = '';
+        try { content = extractArticleText(await (await fetch(e.link)).text()); } catch (err) { /* skipped below */ }
+        await kv(['SADD', `leader:seen:${creator.source}`, e.guid]);
+        if (content.length < 300) { report.skipped.push(`${creator.name}: "${e.title}" (no readable text)`); continue; }
+        add(creator, e, content);
       }
     } catch (e) {
       report.errors.push(`${creator.name}: ${e.message}`);
+    }
+  }
+
+  // Pass 2: transcripts for every new video in one batch.
+  if (videos.length) {
+    const transcripts = await fetchTranscripts(videos.map((v) => v.e.videoId));
+    for (const { creator, e } of videos) {
+      await kv(['SADD', `leader:seen:${creator.source}`, e.guid]); // attempted once either way
+      const content = transcripts[e.videoId] || '';
+      if (content.length < MIN_TRANSCRIPT_CHARS) { report.skipped.push(`${creator.name}: "${e.title}" (${content ? 'too short' : 'no transcript'})`); continue; }
+      add(creator, e, content);
     }
   }
 
@@ -227,7 +267,7 @@ module.exports = async (req, res) => {
     return;
   }
   try {
-    const report = await runFetch();
+    const report = await runFetch({ dry: (req.query || {}).dry === '1' });
     res.status(200).json({ ok: true, ...report });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });

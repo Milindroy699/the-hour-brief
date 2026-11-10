@@ -918,7 +918,7 @@
       if (sub) item('email', ICON.mail, 'Get it by email', 'One email every morning', function () { closeSheet(); if (deckOpen()) window.HBCards.close({ keep: true, to: sub, center: true }); else sub.scrollIntoView({ block: 'center', behavior: 'smooth' }); var i = sub.querySelector('input'); if (i) setTimeout(function () { try { i.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }, 500); });
       body.appendChild(ul);
       var foot = mk('div', 'rd-menu-foot');
-      [['Past editions', '/archive/'], ['Contact us', '/contact.html'], ['About', '/about.html'], ['Privacy', '/privacy.html']].forEach(function (l, i) {
+      [['Contact us', '/contact.html'], ['About', '/about.html'], ['Privacy', '/privacy.html']].forEach(function (l, i) {
         if (i) foot.appendChild(document.createTextNode(' · '));
         var a = mk('a', '', l[0]);
         a.href = l[1];
@@ -928,10 +928,9 @@
     }, returnTo);
   }
 
-  // Bottom tabs: Today (the feed), Audio (the Listen hub), Challenge (the quiz), Leaders (thought-leader
-  // roundups). Archive lost its dedicated tab slot to Leaders — it's still a real page, just reachable via
-  // the "Past editions" link in the "..." menu footer and in leaders.html's own footer, not a top-level tab.
-  var TABS = [['today', 'Today'], ['audio', 'Audio'], ['quiz', 'Challenge'], ['leaders', 'Leaders']];
+  // Bottom tabs: Today (the feed), Audio (the Listen hub), Leaders (thought-leader roundups), Challenge (the quiz),
+  // Archive (past editions) — the five-tab order from the Stitch "Thought Leaders" designs.
+  var TABS = [['today', 'Today'], ['audio', 'Audio'], ['leaders', 'Leaders'], ['quiz', 'Challenge'], ['archive', 'Archive']];
   function isFeed() { return !!document.querySelector('section.lane'); }          // an edition page (today's or an archived one)
   var INFO_TITLES = { '/about.html': 'About', '/privacy.html': 'Privacy', '/contact.html': 'Contact us' };
   function screenName() {
@@ -942,7 +941,7 @@
     return 'Feed';
   }
   // On pages that are not editions the tabs are plain links back to the right place.
-  var TAB_HREF = { today: '/', audio: '/?audio=1', quiz: '/?quiz=1', leaders: '/leaders.html' };
+  var TAB_HREF = { today: '/', audio: '/?audio=1', quiz: '/?quiz=1', leaders: '/leaders.html', archive: '/archive/' };
   function tabGo(name) {
     var L = window.HBListen;
     // Tapping the tab you are already on reopens/stays on it — it does not toggle closed (tried that after removing
@@ -1076,7 +1075,7 @@
       document.body.appendChild(sw);
       var row = mk('div', 'tab-row');
       TABS.forEach(function (t) {
-        var link = t[0] === 'leaders' || !feed;
+        var link = t[0] === 'leaders' || t[0] === 'archive' || !feed;
         var el = link ? mk('a', 'tab') : mk('button', 'tab');
         el.setAttribute('data-tab', t[0]);
         el.innerHTML = '<span class="tab-ic">' + ICON[t[0]] + '</span><span class="tab-lb">' + t[1] + '</span>';
@@ -1111,7 +1110,8 @@
     if (!isFeed()) {                                           // About, Privacy, Contact, the archive list
       var here = screenName();
       bar.querySelectorAll('.tab').forEach(function (t) {
-        if (t.getAttribute('data-tab') === 'leaders' && here === 'Leaders') t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
+        var tab = t.getAttribute('data-tab');
+        if ((tab === 'leaders' && here === 'Leaders') || (tab === 'archive' && here === 'Archive')) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
         if (t.getAttribute('data-tab') === 'quiz') t.hidden = false;
       });
       return;

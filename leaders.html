@@ -5,138 +5,297 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <script>if ("scrollRestoration" in history) history.scrollRestoration = "manual";</script>
 <title>Thought Leaders — The Hour Brief</title>
-<meta name="description" content="Weekly roundups of the week's most substantive posts and videos from tracked business, tech, AI, product and finance thought leaders — some written in a reference author's own voice.">
+<meta name="description" content="Weekly roundups of the week's most substantive posts and videos from tracked product, business, tech & AI, finance and principles thinkers — some written in a reference author's own voice.">
 <link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/brand/icon-192.png">
 <link rel="apple-touch-icon" href="/brand/apple-touch-icon.png">
 <style>
+  /* Fallback tokens for ?classic=1 / no-JS. When app.css loads (mobile.css at phone widths, mobile.js elsewhere) it
+     re-points these same names, so this page follows the app's palette and light/dark setting like every other screen. */
   :root {
-    --bg: #f2f3ee; --paper: #ffffff; --paper-2: #e7e9e1;
-    --ink: #17191c; --ink-soft: #52585a; --ink-faint: #838a8a; --line: #d7dad2;
-    --brand: #5b3e96; --brand-soft: #efe9f7;
-    --shadow: 0 1px 2px rgba(23,25,28,0.06), 0 10px 28px rgba(23,25,28,0.06);
+    --bg: #faf9fd; --paper: #ffffff; --paper-2: #efedf1;
+    --ink: #1b1b1f; --ink-soft: #474556; --ink-faint: #6d6a7c; --line: rgba(18, 19, 22, 0.1);
+    --brand: #451edb; --hb-primary: #5e43f3; --hb-primary-2: #451edb; --hb-lav: #f4f1fd;
+    --hb-primary-rgb: 94, 67, 243;
+    --hb-serif: "Newsreader", Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --hb-sans: "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
+    --hb-label: "Space Grotesk", "Inter", -apple-system, system-ui, sans-serif;
+
+    /* Thought Leaders glass (not in app.css) */
+    --tl-glass: rgba(255, 255, 255, 0.74);
+    --tl-glass-2: rgba(255, 255, 255, 0.55);
+    --tl-rim: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    --tl-shadow: 0 1px 2px rgba(18, 19, 22, 0.04), 0 14px 34px -16px rgba(18, 19, 22, 0.22);
+    --tl-seg-on: #ffffff;
+    --tl-seg-on-ink: #451edb;
+    --tl-bloom: rgba(94, 67, 243, 0.10);
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #131417; --paper: #1b1d21; --paper-2: #24262b;
-      --ink: #edeeec; --ink-soft: #a9adaf; --ink-faint: #757a7c; --line: #2c2f34;
-      --brand: #a487d9; --brand-soft: #241f34;
-      --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.4);
+      --bg: #121316; --paper: #1a1b20; --paper-2: #24242b;
+      --ink: #ececf1; --ink-soft: #bab8c9; --ink-faint: #8f8ca0; --line: rgba(255, 255, 255, 0.1);
+      --brand: #b9acff; --hb-primary: #6c53f5; --hb-primary-2: #b9acff; --hb-lav: #1e1b33;
+      --hb-primary-rgb: 108, 83, 245;
+      --tl-glass: rgba(31, 31, 39, 0.72);
+      --tl-glass-2: rgba(41, 41, 50, 0.6);
+      --tl-rim: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+      --tl-shadow: 0 20px 40px -18px rgba(0, 0, 0, 0.85);
+      --tl-seg-on: #cabeff;
+      --tl-seg-on-ink: #1c0062;
+      --tl-bloom: rgba(148, 125, 255, 0.14);
     }
   }
   :root[data-theme="dark"] {
-    --bg: #131417; --paper: #1b1d21; --paper-2: #24262b;
-    --ink: #edeeec; --ink-soft: #a9adaf; --ink-faint: #757a7c; --line: #2c2f34;
-    --brand: #a487d9; --brand-soft: #241f34;
-    --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.4);
+    --bg: #121316; --paper: #1a1b20; --paper-2: #24242b;
+    --ink: #ececf1; --ink-soft: #bab8c9; --ink-faint: #8f8ca0; --line: rgba(255, 255, 255, 0.1);
+    --brand: #b9acff; --hb-primary: #6c53f5; --hb-primary-2: #b9acff; --hb-lav: #1e1b33;
+    --hb-primary-rgb: 108, 83, 245;
+    --tl-glass: rgba(31, 31, 39, 0.72);
+    --tl-glass-2: rgba(41, 41, 50, 0.6);
+    --tl-rim: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+    --tl-shadow: 0 20px 40px -18px rgba(0, 0, 0, 0.85);
+    --tl-seg-on: #cabeff;
+    --tl-seg-on-ink: #1c0062;
+    --tl-bloom: rgba(148, 125, 255, 0.14);
   }
+
   * { box-sizing: border-box; }
   html { background: var(--bg); }
   body {
     margin: 0; background: var(--bg); color: var(--ink);
-    font-family: -apple-system, "Inter", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+    font-family: var(--hb-sans);
     -webkit-font-smoothing: antialiased;
   }
+  /* Fallback masthead for ?classic=1 / before mobile.js swaps in the app bar (hidden until then, see below). */
   .masthead-band { background: var(--ink); color: var(--bg); padding: 30px 24px 26px; }
   .masthead-inner { max-width: 760px; margin: 0 auto; display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; }
   .wordmark { font-weight: 800; font-size: 2.1rem; letter-spacing: -0.01em; margin: 0; text-transform: uppercase; }
-  .wordmark span { color: var(--brand); }
-  .back-link { font-size: 0.78rem; letter-spacing: 0.03em; text-transform: uppercase; color: color-mix(in srgb, var(--bg) 70%, transparent); text-decoration: none; white-space: nowrap; }
-  .back-link:hover { color: var(--bg); }
+  .wordmark span { color: var(--hb-primary); }
+  .back-link { font-size: 0.78rem; letter-spacing: 0.03em; text-transform: uppercase; color: var(--bg); opacity: 0.7; text-decoration: none; white-space: nowrap; }
 
-  .page { max-width: 760px; margin: 0 auto; padding: 40px 24px 96px; }
-  h1 { font-family: Georgia, "Iowan Old Style", "Times New Roman", serif; font-size: 1.8rem; margin: 0 0 8px; }
-  .lede { color: var(--ink-soft); font-size: 1.02rem; line-height: 1.6; margin: 0 0 32px; }
+  .page { position: relative; max-width: 720px; margin: 0 auto; padding: 24px 20px 96px; }
+  .tl-bloom { position: fixed; top: 40px; left: 50%; width: 360px; height: 360px; transform: translateX(-50%); border-radius: 50%; background: var(--tl-bloom); filter: blur(110px); pointer-events: none; z-index: 0; }
+  .tl-view { position: relative; z-index: 1; }
+  .tl-view[hidden] { display: none; }
+  .tl-state { color: var(--ink-faint); font-size: 0.92rem; padding: 32px 0; text-align: center; }
 
-  .state { color: var(--ink-faint); font-size: 0.92rem; padding: 24px 0; }
-
-  /* ---- Category tiles ---- */
-  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-bottom: 8px; }
-  .tiles[hidden] { display: none; }
-  .tile {
-    background: var(--paper); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow);
-    padding: 20px 18px; text-align: left; cursor: pointer; font-family: inherit;
-    transition: border-color 0.15s ease, transform 0.1s ease;
+  /* ---- Shared bits ---- */
+  .tl-ic { width: 1em; height: 1em; flex-shrink: 0; }
+  .tl-eyebrow {
+    display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px; border-radius: 999px;
+    background: var(--hb-lav); color: var(--hb-primary-2); box-shadow: var(--tl-rim);
+    font: 600 11px/14px var(--hb-label); letter-spacing: 0.1em; text-transform: uppercase;
   }
-  .tile:hover { border-color: var(--brand); }
-  .tile:active { transform: scale(0.98); }
-  .tile-label { font-size: 1.05rem; font-weight: 700; color: var(--ink); }
-  .tile-count { font-size: 0.82rem; color: var(--ink-faint); margin-top: 4px; }
+  .tl-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 8px currentColor; flex-shrink: 0; }
+  .tl-eyebrow .tl-dot { animation: tl-pulse 2.4s ease-in-out infinite; }
+  @keyframes tl-pulse { 50% { opacity: 0.35; } }
+  .tl-h1 { font-family: var(--hb-serif); font-weight: 400; font-size: 2.3rem; line-height: 1.15; letter-spacing: -0.015em; margin: 12px 0 8px; color: var(--ink); }
+  .tl-lede { font-size: 0.98rem; line-height: 1.6; color: var(--ink-soft); margin: 0 0 16px; text-wrap: pretty; }
+  .tl-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tl-chip {
+    display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px;
+    background: var(--tl-glass); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+    box-shadow: var(--tl-rim), 0 1px 2px rgba(0, 0, 0, 0.05);
+    font: 600 12px/16px var(--hb-label); letter-spacing: 0.02em; color: var(--ink-soft);
+  }
+  .tl-chip .tl-ic { color: var(--hb-primary-2); font-size: 14px; }
+  .tl-glass {
+    background: var(--tl-glass); -webkit-backdrop-filter: blur(20px) saturate(140%); backdrop-filter: blur(20px) saturate(140%);
+    border: 1px solid var(--line); box-shadow: var(--tl-rim), var(--tl-shadow); border-radius: 20px;
+  }
+  .tl-backbtn {
+    display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px 7px 10px; border-radius: 999px;
+    background: var(--tl-glass); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+    border: 1px solid var(--line); box-shadow: var(--tl-rim);
+    font: 600 13px/18px var(--hb-sans); color: var(--ink); text-decoration: none;
+  }
+  .tl-backbtn .tl-ic { font-size: 16px; }
+  .tl-tag {
+    display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px;
+    background: var(--tl-glass-2); box-shadow: var(--tl-rim); color: var(--ink-soft);
+    font: 600 11px/14px var(--hb-label); letter-spacing: 0.04em;
+  }
+  .tl-tag--primary { background: var(--hb-lav); color: var(--hb-primary-2); text-transform: uppercase; letter-spacing: 0.08em; }
+
+  /* ---- Home: masthead ---- */
+  .tl-mast { padding: 4px 0 22px; }
+
+  /* ---- Tiles: image art under a fixed dark scrim, light text in both themes (the art is what carries them) ---- */
+  .tl-tiles { display: flex; flex-direction: column; gap: 12px; }
+  .tl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tl-tile {
+    position: relative; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden;
+    height: 230px; border-radius: 16px; background: #1b1b23; color: #ececf1; text-decoration: none;
+    box-shadow: 0 12px 28px -10px rgba(10, 10, 18, 0.55);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  a.tl-tile:active { transform: scale(0.975); }
+  .tl-tile-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.7s ease-out; }
+  a.tl-tile:hover .tl-tile-art { transform: scale(1.05); }
+  /* Layering: art (0) < scrim (1) < text (2) < glass rim (3). The scrim must sit above the <img>, which comes later in
+     the DOM than ::before and would otherwise paint over it. */
+  .tl-tile::before { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(to top, #0d0d16 0%, rgba(13, 13, 22, 0.86) 42%, rgba(13, 13, 22, 0) 100%); }
+  .tl-tile::after { content: ""; position: absolute; inset: 0; z-index: 3; border-radius: inherit; box-shadow: inset 0 1px 1.5px rgba(255, 255, 255, 0.3); pointer-events: none; }
+  .tl-tile-top, .tl-tile-bottom { position: relative; z-index: 2; padding: 11px; }
+  .tl-tile-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .tl-tile-bottom { display: flex; flex-direction: column; gap: 3px; }
+  .tl-gpill {
+    display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 999px;
+    background: rgba(52, 52, 61, 0.8); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.22);
+    font: 600 11px/15px var(--hb-label); letter-spacing: 0.03em; color: #c9c4d8; white-space: nowrap;
+  }
+  .tl-gpill--primary { color: #cabeff; letter-spacing: 0.08em; text-transform: uppercase; }
+  .tl-gicon {
+    width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    background: rgba(52, 52, 61, 0.8); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.22); color: #cabeff; font-size: 14px;
+  }
+  .tl-tile-voice { font: 600 11px/15px var(--hb-label); letter-spacing: 0.04em; color: #c8bfff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tl-tile-title { font-family: var(--hb-serif); font-weight: 500; font-size: 1.55rem; line-height: 1.15; margin: 0; color: #ececf1; }
+  .tl-tile-tag { font: 500 12px/16px var(--hb-sans); color: #c9c4d8; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tl-tile[aria-disabled="true"] .tl-tile-art { filter: grayscale(0.55) brightness(0.72); }
+  .tl-tile[aria-disabled="true"] .tl-tile-title { color: #c9c4d8; }
+
+  .tl-hero { height: 370px; border-radius: 24px; box-shadow: 0 20px 40px -15px rgba(10, 10, 18, 0.75), 0 0 28px rgba(124, 92, 255, 0.16); }
+  .tl-hero .tl-tile-top, .tl-hero .tl-tile-bottom { padding: 16px; }
+  .tl-hero .tl-tile-bottom { gap: 6px; }
+  .tl-hero .tl-tile-title { font-size: 2.1rem; }
+  .tl-hero-desc { font: 400 14px/21px var(--hb-sans); color: #c9c4d8; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .tl-voicechip {
+    align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 3px 10px; border-radius: 999px;
+    background: rgba(52, 52, 61, 0.72); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+    font: 600 11px/15px var(--hb-label); letter-spacing: 0.03em; color: #c8bfff;
+  }
+  .tl-voicechip span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tl-hero-cta { display: flex; align-items: center; justify-content: space-between; padding-top: 6px; }
+  .tl-hero-cta > span:first-child { display: inline-flex; align-items: center; gap: 4px; font: 600 13px/18px var(--hb-sans); color: #cabeff; }
+  .tl-roundic { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(202, 190, 255, 0.18); color: #cabeff; font-size: 17px; }
+
+  .tl-engine {
+    display: flex; align-items: center; gap: 12px; padding: 14px 16px; margin-top: 14px; text-decoration: none; color: var(--ink);
+  }
+  .tl-engine-ic { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: var(--hb-lav); color: var(--hb-primary-2); font-size: 19px; }
+  .tl-engine-text { flex: 1; min-width: 0; }
+  .tl-engine-text b { display: block; font: 600 11px/14px var(--hb-label); letter-spacing: 0.1em; text-transform: uppercase; color: var(--hb-primary-2); }
+  .tl-engine-text span { display: block; font-size: 0.86rem; line-height: 1.4; color: var(--ink-soft); margin-top: 2px; }
+  .tl-engine > .tl-ic { color: var(--ink-faint); font-size: 18px; }
 
   /* ---- Category view ---- */
-  .cat-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
-  .back-to-cats {
-    font-size: 0.86rem; color: var(--ink-soft); text-decoration: none; background: none; border: none;
-    cursor: pointer; font-family: inherit; padding: 0; display: inline-flex; align-items: center; gap: 4px;
-  }
-  .back-to-cats:hover { color: var(--ink); }
-  .cat-view-title { font-family: Georgia, "Iowan Old Style", "Times New Roman", serif; font-size: 1.4rem; margin: 0; }
-  .sort-row { display: flex; align-items: center; gap: 8px; font-size: 0.84rem; color: var(--ink-faint); margin-bottom: 20px; }
-  .sort-row select {
-    font-size: 0.84rem; font-family: inherit; padding: 5px 10px; border-radius: 7px; border: 1px solid var(--line);
-    background: var(--paper); color: var(--ink);
-  }
+  .tl-cat-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
+  .tl-cat-head .tl-h1 { margin: 6px 0 0; }
+  .tl-cat-count { font: 600 12px/16px var(--hb-label); color: var(--ink-faint); padding-bottom: 8px; }
+  .tl-summary { padding: 18px 18px 16px; margin: 18px 0 18px; }
+  .tl-summary h2 { font-family: var(--hb-serif); font-weight: 500; font-size: 1.45rem; line-height: 1.25; margin: 10px 0 6px; color: var(--ink); }
+  .tl-summary p { margin: 0; font-size: 0.92rem; line-height: 1.6; color: var(--ink-soft); }
+  .tl-summary-voice { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 0.82rem; color: var(--ink-soft); font-style: italic; }
+  .tl-summary-voice .tl-ic { color: var(--hb-primary-2); font-size: 16px; }
 
-  article.brief {
-    background: var(--paper); border: 1px solid var(--line); border-radius: 12px;
-    box-shadow: var(--shadow); padding: 28px 30px; margin-bottom: 24px;
+  .tl-seg { display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--tl-glass-2); border: 1px solid var(--line); box-shadow: var(--tl-rim); margin-bottom: 16px; }
+  .tl-seg button {
+    flex: 1; padding: 8px 6px; border: 0; border-radius: 999px; background: transparent; color: var(--ink-soft);
+    font: 600 13px/18px var(--hb-sans); cursor: pointer; transition: background 0.18s ease, color 0.18s ease;
   }
-  .brief-cat { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--brand); }
-  .brief-title { font-family: Georgia, "Iowan Old Style", "Times New Roman", serif; font-size: 1.5rem; margin: 6px 0 4px; line-height: 1.3; }
-  .brief-byline { font-size: 0.84rem; color: var(--ink-faint); margin-bottom: 16px; font-style: italic; }
-  .brief-body { font-size: 1rem; line-height: 1.75; color: var(--ink); }
-  .brief-body p { margin: 0 0 16px; }
-  .brief-sources { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 0.82rem; color: var(--ink-faint); }
-  .brief-sources a { color: var(--ink-soft); }
+  .tl-seg button[aria-pressed="true"] { background: var(--tl-seg-on); color: var(--tl-seg-on-ink); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
 
-  /* ---- Like + comments (same vocabulary as the daily edition's vote-row/comments-section) ---- */
-  .brief-actions { display: flex; align-items: center; gap: 10px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
-  .like-btn {
-    display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 999px;
-    border: 1px solid var(--line); background: var(--paper); color: var(--ink-faint); font-size: 0.82rem;
-    font-family: inherit; cursor: pointer; transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
-  }
-  .like-btn:hover { border-color: var(--ink-soft); color: var(--ink-soft); }
-  .like-btn.liked { border-color: var(--up); color: var(--up); background: color-mix(in srgb, var(--up) 12%, var(--paper)); }
-  .like-btn:disabled { cursor: default; opacity: 0.9; }
-  .like-count, .view-count { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
-  .view-stat { font-size: 0.78rem; color: var(--ink-faint); }
-  .comment-toggle {
-    font-size: 0.82rem; color: var(--ink-soft); background: none; border: none; cursor: pointer; font-family: inherit; padding: 0;
-  }
-  .comment-toggle:hover { color: var(--ink); }
-  .brief-comments { margin-top: 18px; display: none; }
-  .brief-comments.open { display: block; }
-  .comment-form { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; background: var(--paper-2); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
-  .comment-form input, .comment-form textarea {
-    padding: 8px 11px; border-radius: 7px; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
-    font-size: 0.9rem; font-family: inherit; resize: vertical;
-  }
-  .comment-form textarea { min-height: 60px; }
-  .comment-form input:focus-visible, .comment-form textarea:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
-  .comment-form button {
-    align-self: flex-start; padding: 8px 16px; border-radius: 7px; border: none; background: var(--brand);
-    color: var(--bg); font-size: 0.88rem; font-weight: 600; cursor: pointer; font-family: inherit;
-  }
-  .comment-form button:hover { opacity: 0.9; }
-  .comment-form button:disabled { opacity: 0.6; cursor: default; }
-  .comment-status { font-size: 0.8rem; color: var(--ink-faint); min-height: 1.1em; }
-  .comments-list { display: flex; flex-direction: column; gap: 0; }
-  .comment-item { padding: 10px 0; border-top: 1px solid var(--line); }
-  .comment-item:first-child { border-top: none; padding-top: 0; }
-  .comment-alias { font-weight: 700; font-size: 0.86rem; color: var(--ink); }
-  .comment-time { font-size: 0.72rem; color: var(--ink-faint); margin-left: 8px; }
-  .comment-text { margin: 4px 0 0; font-size: 0.9rem; color: var(--ink-soft); line-height: 1.5; white-space: pre-wrap; }
-  .comments-empty { font-size: 0.86rem; color: var(--ink-faint); font-style: italic; }
+  .tl-list { display: flex; flex-direction: column; gap: 14px; }
+  .tl-card { display: block; padding: 18px; text-decoration: none; color: var(--ink); transition: transform 0.2s ease; }
+  .tl-card:active { transform: scale(0.985); }
+  .tl-card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .tl-card-title { font-family: var(--hb-serif); font-weight: 500; font-size: 1.5rem; line-height: 1.22; margin: 0 0 8px; color: var(--ink); }
+  .tl-card-excerpt { margin: 0 0 10px; font-size: 0.92rem; line-height: 1.55; color: var(--ink-soft); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .tl-card-meta { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--ink-faint); min-width: 0; }
+  .tl-card-meta .tl-ic { color: var(--hb-primary-2); font-size: 14px; }
+  .tl-card-meta span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tl-card-foot { display: flex; align-items: center; gap: 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 0.84rem; color: var(--ink-soft); }
+  .tl-card-foot span { display: inline-flex; align-items: center; gap: 5px; font-variant-numeric: tabular-nums; }
+  .tl-card-foot .tl-ic { font-size: 16px; }
+  .tl-card-foot .tl-right { margin-left: auto; color: var(--ink-faint); }
 
-  footer.colophon { margin-top: 48px; padding-top: 22px; border-top: 1px solid var(--line); font-size: 0.8rem; color: var(--ink-faint); }
+  .tl-next { text-align: center; padding: 34px 0 6px; }
+  .tl-next-ic { width: 44px; height: 44px; margin: 0 auto 10px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--tl-glass); box-shadow: var(--tl-rim); color: var(--hb-primary-2); font-size: 20px; }
+  .tl-next b { display: block; font: 600 12px/16px var(--hb-label); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink); }
+  .tl-next span { display: block; font-size: 0.86rem; color: var(--ink-faint); margin-top: 4px; }
+
+  /* ---- Article view ---- */
+  .tl-art-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 18px 0 12px; }
+  .tl-art-title { font-family: var(--hb-serif); font-weight: 400; font-size: 2.05rem; line-height: 1.17; letter-spacing: -0.012em; margin: 0 0 16px; color: var(--ink); text-wrap: balance; }
+  .tl-byline { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; margin-bottom: 16px; }
+  .tl-byline-av { width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: var(--hb-lav); color: var(--hb-primary-2); font-size: 18px; }
+  .tl-byline-text b { display: block; font-size: 0.92rem; font-weight: 600; color: var(--ink); }
+  .tl-byline-text span { display: block; font-size: 0.8rem; color: var(--ink-faint); margin-top: 1px; }
+  .tl-banner { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 18px; overflow: hidden; margin-bottom: 22px; background: #1b1b23; box-shadow: var(--tl-shadow); }
+  .tl-banner img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .tl-banner::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 1px 1.5px rgba(255, 255, 255, 0.28); }
+  .tl-body p { margin: 0 0 18px; font-size: 1.03rem; line-height: 1.78; color: var(--ink); text-wrap: pretty; }
+  .tl-body p:first-child::first-letter { float: left; font-family: var(--hb-serif); font-size: 3.5em; line-height: 0.88; padding: 6px 10px 0 0; color: var(--hb-primary-2); }
+
+  .tl-sources { padding: 16px; margin: 26px 0 18px; }
+  .tl-sources-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font: 600 11px/14px var(--hb-label); letter-spacing: 0.1em; text-transform: uppercase; color: var(--hb-primary-2); }
+  .tl-sources-head .tl-ic { font-size: 16px; }
+  .tl-sources ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .tl-src { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; background: var(--tl-glass-2); text-decoration: none; color: var(--ink); }
+  .tl-src-n { width: 26px; height: 26px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: var(--hb-primary); color: #fff; font: 600 12px/1 var(--hb-label); }
+  .tl-src-text { flex: 1; min-width: 0; }
+  .tl-src-text b { display: block; font-size: 0.88rem; font-weight: 600; }
+  .tl-src-text span { display: block; font-size: 0.8rem; color: var(--ink-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tl-src > .tl-ic { color: var(--ink-faint); font-size: 16px; }
+
+  .tl-actions { display: flex; align-items: center; gap: 10px; margin: 6px 0 30px; }
+  .tl-pill {
+    display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--tl-glass); box-shadow: var(--tl-rim);
+    font: 600 14px/18px var(--hb-sans); color: var(--ink); cursor: pointer; font-variant-numeric: tabular-nums;
+    transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+  }
+  .tl-pill .tl-ic { font-size: 18px; }
+  .tl-pill:disabled { cursor: default; }
+  .tl-pill.is-liked { background: var(--hb-lav); color: var(--hb-primary-2); border-color: transparent; }
+  .tl-pill.is-liked .tl-ic { fill: currentColor; }
+  .tl-actions .tl-share { margin-left: auto; }
+  .tl-flash { font-size: 0.8rem; color: var(--ink-faint); }
+
+  .tl-disc-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .tl-disc-head h2 { font-family: var(--hb-serif); font-weight: 500; font-size: 1.45rem; margin: 0; color: var(--ink); }
+  .tl-form { padding: 14px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+  .tl-form textarea, .tl-form input {
+    width: 100%; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--tl-glass-2);
+    color: var(--ink); font: 400 0.95rem/1.5 var(--hb-sans); resize: vertical;
+  }
+  .tl-form textarea { min-height: 76px; }
+  .tl-form textarea:focus-visible, .tl-form input:focus-visible { outline: 2px solid var(--hb-primary); outline-offset: 1px; }
+  .tl-form-row { display: flex; align-items: center; gap: 10px; }
+  .tl-form-row input { flex: 1; min-width: 0; }
+  .tl-form button {
+    flex-shrink: 0; padding: 10px 18px; border: 0; border-radius: 999px; background: var(--hb-primary); color: #fff;
+    font: 600 14px/18px var(--hb-sans); cursor: pointer;
+  }
+  .tl-form button:disabled { opacity: 0.6; cursor: default; }
+  .tl-form-status { font-size: 0.8rem; color: var(--ink-faint); min-height: 1.1em; }
+  .tl-comments { display: flex; flex-direction: column; gap: 10px; }
+  .tl-comment { display: flex; gap: 10px; padding: 12px; border-radius: 16px; }
+  .tl-av { width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font: 600 12px/1 var(--hb-label); color: #fff; }
+  .tl-comment-main { flex: 1; min-width: 0; }
+  .tl-comment-head { display: flex; align-items: baseline; gap: 8px; }
+  .tl-comment-head b { font-size: 0.88rem; font-weight: 600; color: var(--ink); }
+  .tl-comment-head span { font-size: 0.74rem; color: var(--ink-faint); }
+  .tl-comment p { margin: 4px 0 0; font-size: 0.92rem; line-height: 1.55; color: var(--ink-soft); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .tl-comments-empty { font-size: 0.88rem; color: var(--ink-faint); font-style: italic; padding: 4px 2px; }
+  .tl-end { text-align: center; margin: 34px 0 0; font: 600 11px/14px var(--hb-label); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); }
+
+  footer.colophon { position: relative; z-index: 1; margin-top: 48px; padding-top: 22px; border-top: 1px solid var(--line); font-size: 0.8rem; color: var(--ink-faint); }
   footer.colophon a { color: var(--ink-soft); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tl-eyebrow .tl-dot { animation: none; }
+    .tl-tile, .tl-tile-art, .tl-card { transition: none; }
+  }
 
   /* Tapping here from an in-app tab (Today/Audio/Challenge) is a real page load, unlike those three, which
      swap DOM in place — so this page's own raw masthead-band paints first and mobile.js's app-bar skin only
      replaces it a beat later. That swap read as "a weird old UI flashing." Hide until mobile.js has had its
-     turn; reveal.js below runs right after it (same DOMContentLoaded tick either way, so no visible delay),
-     with a short safety timeout in case mobile.js ever fails to load. */
+     turn (the reveal script below polls for its .tab-bar), with a safety timeout in case it never loads. */
   body { visibility: hidden; }
 </style>
 <link rel="stylesheet" href="/mobile.css" media="(max-width: 640px)">
@@ -170,25 +329,45 @@
 </div>
 
 <div class="page">
-  <h1>Thought leaders</h1>
-  <p class="lede">Weekly roundups pulling together the most substantive posts and videos from tracked business, tech, AI, product and finance creators — some written in a reference author's own voice.</p>
+  <div class="tl-bloom" aria-hidden="true"></div>
 
-  <div id="tiles" class="tiles state">Loading…</div>
-  <div id="category-view" hidden>
-    <div class="cat-header">
-      <button type="button" class="back-to-cats" id="back-to-cats">← All categories</button>
-      <h2 class="cat-view-title" id="cat-view-title"></h2>
+  <!-- Home: category tiles -->
+  <div class="tl-view" id="tl-home">
+    <section class="tl-mast">
+      <span class="tl-eyebrow"><span class="tl-dot"></span><span id="tl-week">Weekly synthesis</span></span>
+      <h1 class="tl-h1">Thought Leaders</h1>
+      <p class="tl-lede">Weekly roundups that synthesize what tracked thinkers, creators and operators published — across five pillars.</p>
+      <div class="tl-chips" id="tl-chips"></div>
+    </section>
+    <div class="tl-tiles">
+      <div id="tl-hero"><p class="tl-state">Loading…</p></div>
+      <div class="tl-grid" id="tl-grid"></div>
     </div>
-    <div class="sort-row">
-      Sort by
-      <select id="sort-select">
-        <option value="date">Newest</option>
-        <option value="likes">Most liked</option>
-        <option value="views">Most viewed</option>
-      </select>
-    </div>
-    <div id="list"></div>
+    <a class="tl-engine tl-glass" id="tl-engine" href="about.html" hidden></a>
   </div>
+
+  <!-- Category: the pillar's roundups -->
+  <div class="tl-view" id="tl-cat" hidden>
+    <a class="tl-backbtn" href="#"><span data-ic="back"></span>Categories</a>
+    <div class="tl-cat-head">
+      <div>
+        <span class="tl-eyebrow" id="tl-cat-eyebrow"><span class="tl-dot"></span><span></span></span>
+        <h1 class="tl-h1" id="tl-cat-title"></h1>
+      </div>
+      <span class="tl-cat-count" id="tl-cat-count"></span>
+    </div>
+    <div class="tl-summary tl-glass" id="tl-summary"></div>
+    <div class="tl-seg" role="group" aria-label="Sort roundups">
+      <button type="button" data-sort="date" aria-pressed="true">Newest</button>
+      <button type="button" data-sort="likes" aria-pressed="false">Most liked</button>
+      <button type="button" data-sort="views" aria-pressed="false">Most viewed</button>
+    </div>
+    <div class="tl-list" id="tl-list"></div>
+    <div class="tl-next" id="tl-next"></div>
+  </div>
+
+  <!-- Article -->
+  <div class="tl-view" id="tl-article" hidden></div>
 
   <footer class="colophon">
     Questions or something look wrong? Email us from the <a href="/contact.html">contact page</a>. <a href="archive/" target="_blank" rel="noopener">Past editions</a> · <a href="./" target="_blank" rel="noopener">Back to today's edition</a> · <a href="about.html">How this is made</a> · <a href="privacy.html" target="_blank" rel="noopener">Privacy</a> · <a href="/contact.html">Contact us</a>
@@ -197,245 +376,419 @@
 
 <script>
 (function () {
-  var tilesEl = document.getElementById('tiles');
-  var catViewEl = document.getElementById('category-view');
-  var catTitleEl = document.getElementById('cat-view-title');
-  var listEl = document.getElementById('list');
-  var sortSelect = document.getElementById('sort-select');
-  var backBtn = document.getElementById('back-to-cats');
-  var CAT_LABELS = { business: 'Business', tech: 'Tech', ai: 'AI', product: 'Product', finance: 'Finance' };
-  var CAT_ORDER = ['business', 'tech', 'ai', 'product', 'finance'];
+  // Category keys must match the `category` values in leaders.config.json.
+  var CATS = [
+    { key: 'tech-ai', label: 'Tech & AI', tag: 'Models, infrastructure & agents', icon: 'spark' },
+    { key: 'product', label: 'Product', tag: 'Craft, UX & growth loops', icon: 'grid' },
+    { key: 'business', label: 'Business', tag: 'Strategy, capital & moats', icon: 'trend' },
+    { key: 'finance', label: 'Finance', tag: 'Markets, capital & risk', icon: 'bank' },
+    { key: 'principles', label: 'Principles', tag: 'Mental models & focus', icon: 'infinity' }
+  ];
+  var LEGACY = { tech: 'tech-ai', ai: 'tech-ai' };
+  var BY_KEY = {};
+  CATS.forEach(function (c) { BY_KEY[c.key] = c; });
+
+  var P = {
+    back: '<path d="M19 12H5M11 6l-6 6 6 6"/>',
+    arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+    grid: '<rect x="4" y="4" width="7" height="7" rx="1.6"/><rect x="13" y="4" width="7" height="7" rx="1.6"/><rect x="4" y="13" width="7" height="7" rx="1.6"/><rect x="13" y="13" width="7" height="7" rx="1.6"/>',
+    trend: '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+    spark: '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/>',
+    bank: '<path d="M3 10l9-6 9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20.5h18"/>',
+    infinity: '<path d="M12 12c-2-2.7-3.8-4-5.5-4C4.6 8 3 9.8 3 12s1.6 4 3.5 4c1.7 0 3.5-1.3 5.5-4zm0 0c2 2.7 3.8 4 5.5 4 1.9 0 3.5-1.8 3.5-4s-1.6-4-3.5-4c-1.7 0-3.5 1.3-5.5 4z"/>',
+    heart: '<path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.2a4.3 4.3 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20z"/>',
+    chat: '<path d="M4.5 5.5h15v10.5H9l-4.5 3.5z"/>',
+    eye: '<path d="M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/>',
+    share: '<path d="M12 3.5v12M7.5 8l4.5-4.5L16.5 8"/><path d="M5 13v5.5A2 2 0 0 0 7 20.5h10a2 2 0 0 0 2-2V13"/>',
+    clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+    doc: '<path d="M7 3.5h7l5 5v12H7z"/><path d="M14 3.5v5h5M10 13h6M10 16.5h6"/>',
+    layers: '<path d="M12 3.5l8.5 4.7L12 13 3.5 8.2z"/><path d="M3.5 12.6L12 17.4l8.5-4.8"/>',
+    voices: '<circle cx="9" cy="8.5" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 5a3.5 3.5 0 0 1 0 7M17.5 14.2c2 .8 3.5 3 3.5 5.8"/>',
+    hourglass: '<path d="M6.5 3.5h11M6.5 20.5h11M7.5 3.5v2.2a4.5 4.5 0 0 0 9 0V3.5M7.5 20.5v-2.2a4.5 4.5 0 0 1 9 0v2.2"/>',
+    out: '<path d="M14 4h6v6M20 4l-8.5 8.5"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+    book: '<path d="M3 5.8c2.4-1 5.6-.8 9 .9 3.4-1.7 6.6-1.9 9-.9V19c-2.4-1-5.6-.8-9 .9-3.4-1.7-6.6-1.9-9-.9z"/><path d="M12 6.7v13.2"/>',
+    pen: '<path d="M4 20l4.2-1L19.5 7.7a2.1 2.1 0 0 0-3-3L5.2 16z"/>'
+  };
+  function ic(name) {
+    return '<svg class="tl-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + P[name] + '</svg>';
+  }
+  document.querySelectorAll('[data-ic]').forEach(function (el) { el.outerHTML = ic(el.getAttribute('data-ic')); });
+
+  var home = document.getElementById('tl-home');
+  var catView = document.getElementById('tl-cat');
+  var artView = document.getElementById('tl-article');
   var all = [];
-  var activeCat = null;
+  var sortBy = 'date';
 
   function esc(s) {
-    return (s || '').replace(/[&<>"']/g, function (c) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
-
-  function fmtDate(iso) {
-    if (!iso) return '';
+  function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
+  function dateOf(b) { return b.sourceDate || b.generatedAt || ''; }
+  function fmtDate(iso, opts) {
     var d = new Date(iso);
-    if (isNaN(d.getTime())) return '';
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-US', opts || { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function relTime(iso) {
+    var t = Date.parse(iso);
+    if (isNaN(t)) return '';
+    var m = Math.round((Date.now() - t) / 60000);
+    if (m < 2) return 'just now';
+    if (m < 60) return m + 'm ago';
+    var h = Math.round(m / 60);
+    if (h < 48) return h + 'h ago';
+    return Math.round(h / 24) + 'd ago';
+  }
+  function minRead(body) { return Math.max(1, Math.round(String(body || '').split(/\s+/).length / 220)); }
+  function paras(body) { return String(body || '').split(/\n\n+/).filter(function (p) { return p.trim(); }); }
+  function styleName(slug) {
+    return String(slug || '').split('-').filter(Boolean).map(function (w) { return w.charAt(0).toUpperCase() + w.slice(1); }).join(' ');
+  }
+  function creatorsOf(briefs) {
+    var n = {};
+    briefs.forEach(function (b) { (b.sources || []).forEach(function (s) { if (s.creator) n[s.creator] = (n[s.creator] || 0) + 1; }); });
+    return Object.keys(n).sort(function (a, b) { return n[b] - n[a]; });
+  }
+  function listNames(names) {
+    if (!names.length) return '';
+    if (names.length === 1) return names[0];
+    if (names.length === 2) return names[0] + ' & ' + names[1];
+    if (names.length === 3) return names[0] + ', ' + names[1] + ' & ' + names[2];
+    return names.slice(0, 3).join(', ') + ' & ' + (names.length - 3) + ' others';
+  }
+  function plural(n, one, many) { return n + ' ' + (n === 1 ? one : (many || one + 's')); }
+  function newestFirst(a, b) { return dateOf(b) > dateOf(a) ? 1 : dateOf(b) < dateOf(a) ? -1 : 0; }
+  function inCat(key) { return all.filter(function (b) { return b.category === key; }).sort(newestFirst); }
+  function voiceOf(briefs) {
+    var styled = briefs.filter(function (b) { return b.styleAuthor; })[0];
+    if (styled) return { text: styleName(styled.styleAuthor) + ' style', styled: true };
+    var names = creatorsOf(briefs);
+    return names.length ? { text: listNames(names), styled: false } : null;
+  }
+  // The writer routine publishes Mondays at 08:00 UTC (see the "Thought Leaders writer" routine).
+  function nextRoundup() {
+    var now = new Date();
+    var d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 8, 0, 0));
+    d.setUTCDate(d.getUTCDate() + ((8 - d.getUTCDay()) % 7));
+    if (d <= now) d.setUTCDate(d.getUTCDate() + 7);
+    var mins = Math.round((d - now) / 60000);
+    var days = Math.floor(mins / 1440), hrs = Math.floor((mins % 1440) / 60);
+    return days ? days + 'd ' + hrs + 'h' : hrs + 'h ' + (mins % 60) + 'm';
+  }
+  var AV_COLORS = ['#5e43f3', '#1c6d58', '#a3721f', '#2c5490', '#b23b3b', '#7c3aed'];
+  function avatar(name) {
+    var words = String(name || 'A').trim().split(/\s+/);
+    var initials = (words[0].charAt(0) + (words[1] ? words[1].charAt(0) : '')).toUpperCase();
+    var h = 0;
+    for (var i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+    return '<span class="tl-av" style="background:' + AV_COLORS[h % AV_COLORS.length] + '">' + esc(initials) + '</span>';
   }
 
-  function sortKeyDate(b) { return b.sourceDate || b.generatedAt || ''; }
+  // ---- Home ----
+  function renderHome() {
+    var latest = all.slice().sort(function (a, b) { return (b.generatedAt || '') > (a.generatedAt || '') ? 1 : -1; })[0];
+    document.getElementById('tl-week').textContent = latest
+      ? 'Weekly synthesis · Week of ' + fmtDate(latest.generatedAt, { month: 'short', day: 'numeric' })
+      : 'Weekly synthesis';
 
-  // ---- Tiles ----
-  function renderTiles() {
-    var byCat = {};
-    all.forEach(function (b) { (byCat[b.category] = byCat[b.category] || []).push(b); });
-    var cats = CAT_ORDER.filter(function (c) { return byCat[c] && byCat[c].length; });
-    if (!cats.length) {
-      tilesEl.className = 'state';
-      tilesEl.textContent = 'No roundups yet — check back soon.';
-      return;
+    var sources = all.reduce(function (n, b) { return n + (b.sources || []).length; }, 0);
+    var creators = creatorsOf(all);
+    var chips = [ic('layers') + plural(CATS.length, 'pillar')];
+    if (sources) chips.push(ic('doc') + plural(sources, 'source') + ' synthesized');
+    if (latest) chips.push(ic('clock') + 'Updated ' + relTime(latest.generatedAt));
+    document.getElementById('tl-chips').innerHTML = chips.map(function (c) { return '<span class="tl-chip">' + c + '</span>'; }).join('');
+
+    var heroKey = latest && BY_KEY[latest.category] ? latest.category : 'tech-ai';
+    document.getElementById('tl-hero').innerHTML = tile(BY_KEY[heroKey], true);
+    document.getElementById('tl-grid').innerHTML = CATS.filter(function (c) { return c.key !== heroKey; })
+      .map(function (c) { return tile(c, false); }).join('');
+
+    var engine = document.getElementById('tl-engine');
+    if (sources) {
+      engine.innerHTML = '<span class="tl-engine-ic">' + ic('spark') + '</span>' +
+        '<span class="tl-engine-text"><b>How it’s made</b><span>' + esc(plural(sources, 'post and video', 'posts and videos')) +
+        ' from ' + esc(plural(creators.length, 'tracked creator')) + ', distilled into one long read per pillar every Monday.</span></span>' + ic('arrow');
+      engine.hidden = false;
     }
-    tilesEl.className = 'tiles';
-    tilesEl.innerHTML = cats.map(function (c) {
-      var n = byCat[c].length;
-      return (
-        '<button type="button" class="tile" data-cat="' + esc(c) + '">' +
-          '<div class="tile-label">' + esc(CAT_LABELS[c] || c) + '</div>' +
-          '<div class="tile-count">' + n + ' article' + (n === 1 ? '' : 's') + '</div>' +
-        '</button>'
-      );
-    }).join('');
-    Array.prototype.forEach.call(tilesEl.querySelectorAll('.tile'), function (btn) {
-      btn.addEventListener('click', function () { openCategory(btn.getAttribute('data-cat')); });
+  }
+
+  function tile(c, hero) {
+    var briefs = inCat(c.key);
+    var n = briefs.length;
+    var art = '<img class="tl-tile-art" src="/brand/leaders/' + c.key + '.jpg" alt="" decoding="async"' + (hero ? '' : ' loading="lazy"') + '>';
+    var voice = voiceOf(briefs);
+    var open = n ? '<a class="tl-tile' + (hero ? ' tl-hero' : '') + '" href="#c=' + encodeURIComponent(c.key) + '" aria-label="' + esc(c.label + ', ' + plural(n, 'roundup')) + '">'
+      : '<div class="tl-tile' + (hero ? ' tl-hero' : '') + '" aria-disabled="true" aria-label="' + esc(c.label + ', coming soon') + '">';
+    var close = n ? '</a>' : '</div>';
+
+    if (hero) {
+      return open + art +
+        '<div class="tl-tile-top">' +
+          '<span class="tl-gpill tl-gpill--primary"><span class="tl-dot"></span>' + (n ? 'Latest · ' + esc(plural(n, 'roundup')) : 'Coming soon') + '</span>' +
+          '<span class="tl-gicon">' + ic(c.icon) + '</span>' +
+        '</div>' +
+        '<div class="tl-tile-bottom">' +
+          (voice ? '<span class="tl-voicechip">' + ic(voice.styled ? 'pen' : 'voices') + '<span>' + esc(voice.text) + '</span></span>' : '') +
+          '<h2 class="tl-tile-title">' + esc(c.label) + '</h2>' +
+          '<p class="tl-hero-desc">' + esc(n ? briefs[0].title : c.tag) + '</p>' +
+          (n ? '<div class="tl-hero-cta"><span>Read this week’s roundup ' + ic('arrow') + '</span><span class="tl-roundic">' + ic('book') + '</span></div>' : '') +
+        '</div>' + close;
+    }
+    return open + art +
+      '<div class="tl-tile-top">' +
+        '<span class="tl-gicon">' + ic(c.icon) + '</span>' +
+        '<span class="tl-gpill">' + (n ? esc(plural(n, 'brief')) : 'Coming soon') + '</span>' +
+      '</div>' +
+      '<div class="tl-tile-bottom">' +
+        (voice ? '<span class="tl-tile-voice">' + esc(voice.text) + '</span>' : '') +
+        '<h3 class="tl-tile-title">' + esc(c.label) + '</h3>' +
+        '<p class="tl-tile-tag">' + esc(c.tag) + '</p>' +
+      '</div>' + close;
+  }
+
+  // ---- Category ----
+  function renderCategory(key) {
+    var c = BY_KEY[key];
+    var briefs = c ? inCat(key) : [];
+    if (!briefs.length) { location.replace('#'); return false; }
+    var creators = creatorsOf(briefs);
+    var eyebrow = document.getElementById('tl-cat-eyebrow');
+    eyebrow.lastChild.textContent = creators.length ? 'Tracking ' + plural(creators.length, 'voice') : c.tag;
+    document.getElementById('tl-cat-title').textContent = c.label;
+    document.getElementById('tl-cat-count').textContent = plural(briefs.length, 'roundup');
+
+    var voice = voiceOf(briefs);
+    document.getElementById('tl-summary').innerHTML =
+      '<span class="tl-tag tl-tag--primary">' + ic('spark') + 'Weekly roundup · Updated ' + esc(relTime(briefs[0].generatedAt)) + '</span>' +
+      '<h2>' + esc(c.label) + ' weekly roundup</h2>' +
+      '<p>Every Monday, one long read synthesizing what ' + esc(creators.length ? listNames(creators) : 'tracked creators') +
+      ' published that week — ' + esc(c.tag.charAt(0).toLowerCase() + c.tag.slice(1)) + '.</p>' +
+      (voice && voice.styled ? '<div class="tl-summary-voice">' + ic('pen') + 'Written in ' + esc(voice.text) + '</div>' : '');
+
+    document.querySelectorAll('.tl-seg button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-sort') === sortBy)); });
+    renderList(briefs);
+    document.getElementById('tl-next').innerHTML = '<div class="tl-next-ic">' + ic('hourglass') + '</div>' +
+      '<b>Next roundup in ' + esc(nextRoundup()) + '</b><span>New roundups publish every Monday.</span>';
+    return true;
+  }
+
+  function renderList(briefs) {
+    var newestId = briefs[0] && briefs[0].id;
+    var sorted = briefs.slice().sort(function (a, b) {
+      if (sortBy === 'likes') return (b.stats.likes - a.stats.likes) || newestFirst(a, b);
+      if (sortBy === 'views') return (b.stats.views - a.stats.views) || newestFirst(a, b);
+      return newestFirst(a, b);
     });
+    document.getElementById('tl-list').innerHTML = sorted.map(function (b) {
+      var p = paras(b.body);
+      var voice = b.styleAuthor ? 'In ' + styleName(b.styleAuthor) + ' style'
+        : 'From ' + (listNames(creatorsOf([b])) || 'tracked creators');
+      return '<a class="tl-card tl-glass" href="#a=' + encodeURIComponent(b.id) + '">' +
+        '<div class="tl-card-tags">' +
+          (b.id === newestId ? '<span class="tl-tag tl-tag--primary"><span class="tl-dot"></span>Latest</span>' : '') +
+          '<span class="tl-tag">' + minRead(b.body) + ' min read</span>' +
+          '<span class="tl-tag">' + esc(plural((b.sources || []).length, 'source')) + '</span>' +
+        '</div>' +
+        '<h3 class="tl-card-title">' + esc(b.title) + '</h3>' +
+        '<p class="tl-card-excerpt">' + esc(p[0] || '') + '</p>' +
+        '<div class="tl-card-meta">' + ic(b.styleAuthor ? 'pen' : 'voices') + '<span>' + esc(voice) + ' • ' + esc(fmtDate(dateOf(b))) + '</span></div>' +
+        '<div class="tl-card-foot">' +
+          '<span>' + ic('heart') + b.stats.likes + '</span>' +
+          '<span>' + ic('chat') + b.stats.comments + '</span>' +
+          '<span class="tl-right">' + ic('eye') + b.stats.views + '</span>' +
+        '</div>' +
+      '</a>';
+    }).join('');
   }
 
-  function openCategory(cat) {
-    activeCat = cat;
-    catTitleEl.textContent = CAT_LABELS[cat] || cat;
-    tilesEl.hidden = true;
-    catViewEl.hidden = false;
-    sortSelect.value = 'date';
-    renderList();
-    window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
-  }
-
-  backBtn.addEventListener('click', function () {
-    activeCat = null;
-    catViewEl.hidden = true;
-    tilesEl.hidden = false;
+  document.querySelectorAll('.tl-seg button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      sortBy = btn.getAttribute('data-sort');
+      var m = /^c=(.+)$/.exec(location.hash.slice(1));
+      if (m) renderCategory(decodeURIComponent(m[1]));
+    });
   });
-  sortSelect.addEventListener('change', renderList);
 
-  // ---- Article list (within a category) ----
-  function renderList() {
-    var briefs = all.filter(function (b) { return b.category === activeCat; });
-    var sortBy = sortSelect.value;
-    briefs.sort(function (a, b) {
-      if (sortBy === 'likes') return (b.stats.likes - a.stats.likes) || (sortKeyDate(b) > sortKeyDate(a) ? 1 : -1);
-      if (sortBy === 'views') return (b.stats.views - a.stats.views) || (sortKeyDate(b) > sortKeyDate(a) ? 1 : -1);
-      return sortKeyDate(b) > sortKeyDate(a) ? 1 : (sortKeyDate(b) < sortKeyDate(a) ? -1 : 0);
-    });
+  // ---- Article ----
+  function renderArticle(id) {
+    var b = all.filter(function (x) { return x.id === id; })[0];
+    if (!b) { location.replace('#'); return false; }
+    var c = BY_KEY[b.category] || { key: b.category, label: b.category };
+    var p = paras(b.body);
+    var nSources = (b.sources || []).length;
+    var liked = !!store('hb-liked-leader-' + b.id);
+    var byTitle = b.styleAuthor ? 'Written in ' + styleName(b.styleAuthor) + ' style' : 'Synthesized from ' + plural(nSources, 'source');
+    var byLine = fmtDate(dateOf(b)) + ' • ' + minRead(b.body) + ' min read';
 
-    if (!briefs.length) {
-      listEl.innerHTML = '<p class="state">No roundups yet in this category.</p>';
-      return;
-    }
-    listEl.innerHTML = briefs.map(function (b) {
-      var byline = b.styleAuthor
-        ? 'In the style of ' + esc(b.styleAuthor.replace(/-/g, ' ')) + ' · ' + fmtDate(sortKeyDate(b))
-        : fmtDate(sortKeyDate(b));
-      var body = (b.body || '').split(/\n\n+/).map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('');
-      var sources = (b.sources || []).map(function (s) { return esc(s.creator) + ' — ' + esc(s.title); }).join(' · ');
-      var liked = !!localStorage.getItem('hb-liked-leader-' + b.id);
-      return (
-        '<article class="brief" data-id="' + esc(b.id) + '">' +
-          '<div class="brief-cat">' + esc(CAT_LABELS[b.category] || b.category) + '</div>' +
-          '<h2 class="brief-title">' + esc(b.title) + '</h2>' +
-          '<div class="brief-byline">' + byline + '</div>' +
-          '<div class="brief-body">' + body + '</div>' +
-          (sources ? '<div class="brief-sources">Sourced from: ' + sources + '</div>' : '') +
-          '<div class="brief-actions">' +
-            '<button type="button" class="like-btn' + (liked ? ' liked' : '') + '" data-like' + (liked ? ' disabled' : '') + '>' +
-              '👍 <span class="like-count">' + b.stats.likes + '</span>' +
-            '</button>' +
-            '<span class="view-stat"><span class="view-count">' + b.stats.views + '</span> views</span>' +
-            '<button type="button" class="comment-toggle" data-comment-toggle>💬 <span class="comment-count">' + b.stats.comments + '</span> comments</button>' +
-          '</div>' +
-          '<div class="brief-comments">' +
-            '<form class="comment-form">' +
-              '<input type="text" class="c-alias" placeholder="Name (optional)" maxlength="40">' +
-              '<textarea class="c-text" placeholder="Add a comment…" maxlength="500" required></textarea>' +
-              '<button type="submit">Post</button>' +
-              '<div class="comment-status"></div>' +
-            '</form>' +
-            '<div class="comments-list"></div>' +
-          '</div>' +
-        '</article>'
-      );
-    }).join('');
+    artView.innerHTML =
+      '<a class="tl-backbtn" href="#c=' + encodeURIComponent(c.key) + '">' + ic('back') + esc(c.label) + '</a>' +
+      '<div class="tl-art-tags"><span class="tl-tag tl-tag--primary">' + esc(c.label) + ' · Weekly roundup</span></div>' +
+      '<h1 class="tl-art-title">' + esc(b.title) + '</h1>' +
+      '<div class="tl-byline tl-glass"><span class="tl-byline-av">' + ic(b.styleAuthor ? 'pen' : 'spark') + '</span>' +
+        '<div class="tl-byline-text"><b>' + esc(byTitle) + '</b><span>' + esc(byLine) + '</span></div></div>' +
+      (BY_KEY[b.category] ? '<div class="tl-banner"><img src="/brand/leaders/' + c.key + '.jpg" alt="" decoding="async"></div>' : '') +
+      '<div class="tl-body">' + p.map(function (x) { return '<p>' + esc(x) + '</p>'; }).join('') + '</div>' +
+      (nSources ? '<div class="tl-sources tl-glass"><div class="tl-sources-head">' + ic('layers') + 'Synthesized from ' + esc(plural(nSources, 'source')) + '</div><ol>' +
+        b.sources.map(function (s, i) {
+          var inner = '<span class="tl-src-n">' + (i + 1) + '</span><span class="tl-src-text"><b>' + esc(s.creator) + '</b><span>' + esc(s.title) + '</span></span>';
+          return '<li>' + (s.url ? '<a class="tl-src" href="' + esc(s.url) + '" target="_blank" rel="noopener">' + inner + ic('out') + '</a>' : '<div class="tl-src">' + inner + '</div>') + '</li>';
+        }).join('') + '</ol></div>' : '') +
+      '<div class="tl-actions">' +
+        '<button type="button" class="tl-pill' + (liked ? ' is-liked' : '') + '" id="tl-like"' + (liked ? ' disabled' : '') + '>' + ic('heart') +
+          '<span id="tl-like-n">' + b.stats.likes + '</span> ' + (b.stats.likes === 1 ? 'Like' : 'Likes') + '</button>' +
+        '<span class="tl-flash" id="tl-flash"></span>' +
+        '<button type="button" class="tl-pill tl-share" id="tl-share">' + ic('share') + 'Share</button>' +
+      '</div>' +
+      '<div class="tl-disc-head"><h2>Discussion</h2><span class="tl-tag" id="tl-ccount">' + esc(plural(b.stats.comments, 'comment')) + '</span></div>' +
+      '<form class="tl-form tl-glass" id="tl-form">' +
+        '<textarea id="tl-ctext" placeholder="Share your perspective…" maxlength="500" required></textarea>' +
+        '<div class="tl-form-row"><input type="text" id="tl-calias" placeholder="Name (optional)" maxlength="40"><button type="submit">Post</button></div>' +
+        '<div class="tl-form-status" id="tl-cstatus"></div>' +
+      '</form>' +
+      '<div class="tl-comments" id="tl-comments"><p class="tl-comments-empty">Loading comments…</p></div>' +
+      '<p class="tl-end">End of roundup · The Hour Brief</p>';
 
-    Array.prototype.forEach.call(listEl.querySelectorAll('article.brief'), wireArticle);
-    pingViews(briefs);
+    countView(b);
+    wireArticle(b);
+    return true;
   }
 
-  function pingViews(briefs) {
-    briefs.forEach(function (b) {
-      var key = 'hb-viewedleader-' + b.id;
-      if (localStorage.getItem(key)) return;
-      localStorage.setItem(key, '1');
-      fetch('/api/interactions?action=leader-view', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: b.id })
-      }).catch(function () {});
-    });
+  function countView(b) {
+    var key = 'hb-viewedleader-' + b.id;
+    if (store(key)) return;
+    store(key, '1');
+    b.stats.views += 1;
+    fetch('/api/interactions?action=leader-view', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: b.id })
+    }).catch(function () {});
   }
 
-  function wireArticle(articleEl) {
-    var id = articleEl.getAttribute('data-id');
-
-    // Like
-    var likeBtn = articleEl.querySelector('[data-like]');
+  function wireArticle(b) {
+    var likeBtn = document.getElementById('tl-like');
     likeBtn.addEventListener('click', function () {
-      if (localStorage.getItem('hb-liked-leader-' + id)) return;
+      if (store('hb-liked-leader-' + b.id)) return;
       likeBtn.disabled = true;
       fetch('/api/interactions?action=leader-like', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: id })
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: b.id })
       })
         .then(function (r) { return r.json(); })
         .then(function (data) {
-          articleEl.querySelector('.like-count').textContent = data.likes != null ? data.likes : 0;
-          localStorage.setItem('hb-liked-leader-' + id, '1');
-          likeBtn.classList.add('liked');
+          b.stats.likes = data.likes != null ? data.likes : b.stats.likes;
+          document.getElementById('tl-like-n').textContent = b.stats.likes;
+          store('hb-liked-leader-' + b.id, '1');
+          likeBtn.classList.add('is-liked');
         })
         .catch(function () { likeBtn.disabled = false; });
     });
 
-    // Comments: lazy-load on first expand
-    var toggle = articleEl.querySelector('[data-comment-toggle]');
-    var panel = articleEl.querySelector('.brief-comments');
-    var commentsList = articleEl.querySelector('.comments-list');
-    var loaded = false;
-    toggle.addEventListener('click', function () {
-      var open = panel.classList.toggle('open');
-      if (open && !loaded) {
-        loaded = true;
-        fetch('/api/interactions?action=leader-comments&id=' + encodeURIComponent(id))
-          .then(function (r) { return r.ok ? r.json() : { comments: [] }; })
-          .then(function (data) { renderComments(commentsList, data.comments); })
-          .catch(function () { commentsList.innerHTML = '<p class="comments-empty">Couldn\'t load comments right now.</p>'; });
+    document.getElementById('tl-share').addEventListener('click', function () {
+      var url = location.origin + '/leaders.html#a=' + encodeURIComponent(b.id);
+      var flash = document.getElementById('tl-flash');
+      if (navigator.share) { navigator.share({ title: b.title, url: url }).catch(function () {}); return; }
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(function () { flash.textContent = 'Link copied'; setTimeout(function () { flash.textContent = ''; }, 2000); });
       }
     });
 
-    var form = articleEl.querySelector('.comment-form');
-    var status = form.querySelector('.comment-status');
+    var list = document.getElementById('tl-comments');
+    fetch('/api/interactions?action=leader-comments&id=' + encodeURIComponent(b.id))
+      .then(function (r) { return r.ok ? r.json() : { comments: [] }; })
+      .then(function (data) {
+        var cs = data.comments || [];
+        list.innerHTML = cs.length ? '' : '<p class="tl-comments-empty">No comments yet — start the discussion.</p>';
+        cs.forEach(function (x) { addComment(list, x); });
+      })
+      .catch(function () { list.innerHTML = '<p class="tl-comments-empty">Couldn’t load comments right now.</p>'; });
+
+    var form = document.getElementById('tl-form');
+    var status = document.getElementById('tl-cstatus');
     form.addEventListener('submit', function (e) {
       e.preventDefault();
-      var alias = form.querySelector('.c-alias').value.trim();
-      var text = form.querySelector('.c-text').value.trim();
+      var text = document.getElementById('tl-ctext').value.trim();
+      var alias = document.getElementById('tl-calias').value.trim();
       if (!text) return;
       var btn = form.querySelector('button');
       btn.disabled = true;
       status.textContent = 'Posting…';
       fetch('/api/interactions?action=leader-comments', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: id, alias: alias, text: text })
+        body: JSON.stringify({ id: b.id, alias: alias, text: text })
       })
         .then(function (r) {
-          if (r.status === 429) { status.textContent = "You're commenting a bit fast — try again in a bit."; throw new Error('rate limited'); }
+          if (r.status === 429) { status.textContent = 'You’re commenting a bit fast — try again in a bit.'; throw new Error('rate limited'); }
           if (!r.ok) { status.textContent = 'Something went wrong — try again.'; throw new Error('failed'); }
           return r.json();
         })
         .then(function (data) {
           status.textContent = '';
-          form.querySelector('.c-text').value = '';
-          var empty = commentsList.querySelector('.comments-empty');
-          if (empty) commentsList.innerHTML = '';
-          appendComment(commentsList, data.comment);
-          var countEl = articleEl.querySelector('.comment-count');
-          countEl.textContent = (parseInt(countEl.textContent, 10) || 0) + 1;
+          document.getElementById('tl-ctext').value = '';
+          if (list.querySelector('.tl-comments-empty')) list.innerHTML = '';
+          addComment(list, data.comment);
+          b.stats.comments += 1;
+          document.getElementById('tl-ccount').textContent = plural(b.stats.comments, 'comment');
         })
         .catch(function () {})
-        .finally(function () { btn.disabled = false; });
+        .then(function () { btn.disabled = false; });
     });
   }
 
-  function renderComments(listNode, comments) {
-    if (!comments || !comments.length) {
-      listNode.innerHTML = '<p class="comments-empty">No comments yet — be the first.</p>';
-      return;
-    }
-    listNode.innerHTML = '';
-    comments.forEach(function (c) { appendComment(listNode, c); });
+  function addComment(list, x) {
+    var when = '';
+    try { when = new Date(x.ts).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch (e) { /* ignore */ }
+    var el = document.createElement('div');
+    el.className = 'tl-comment tl-glass';
+    // alias/text are HTML-escaped server-side already; esc() again is harmless for already-escaped entities only if we
+    // decode first, so render via textContent instead of double-escaping.
+    el.innerHTML = avatar(decodeHtml(x.alias)) + '<div class="tl-comment-main"><div class="tl-comment-head"><b></b><span></span></div><p></p></div>';
+    el.querySelector('b').textContent = decodeHtml(x.alias);
+    el.querySelector('.tl-comment-head span').textContent = when;
+    el.querySelector('p').textContent = decodeHtml(x.text);
+    list.appendChild(el);
+  }
+  function decodeHtml(s) {
+    var t = document.createElement('textarea');
+    t.innerHTML = String(s || '');
+    return t.value;
   }
 
-  function appendComment(listNode, c) {
-    var empty = listNode.querySelector('.comments-empty');
-    if (empty) listNode.innerHTML = '';
-    var when = '';
-    try { when = new Date(c.ts).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch (e) {}
-    var el = document.createElement('div');
-    el.className = 'comment-item';
-    el.innerHTML = '<span class="comment-alias">' + esc(c.alias) + '</span><span class="comment-time">' + when +
-      '</span><p class="comment-text">' + esc(c.text) + '</p>';
-    listNode.appendChild(el);
+  // ---- Router: #c=<category>, #a=<article id>, anything else is home ----
+  function route() {
+    var h = location.hash.slice(1), m, shown = 'home';
+    if ((m = /^a=(.+)$/.exec(h)) && renderArticle(decodeURIComponent(m[1]))) shown = 'article';
+    else if ((m = /^c=(.+)$/.exec(h)) && renderCategory(decodeURIComponent(m[1]))) shown = 'cat';
+    else renderHome();
+    home.hidden = shown !== 'home';
+    catView.hidden = shown !== 'cat';
+    artView.hidden = shown !== 'article';
+    window.scrollTo(0, 0);
   }
 
   // ---- Load ----
+  function statsFor(ids) {
+    var chunks = [];
+    for (var i = 0; i < ids.length; i += 60) chunks.push(ids.slice(i, i + 60));
+    return Promise.all(chunks.map(function (chunk) {
+      return fetch('/api/interactions?action=leader-stats&ids=' + encodeURIComponent(chunk.join(',')))
+        .then(function (r) { return r.ok ? r.json() : {}; })
+        .catch(function () { return {}; });
+    })).then(function (parts) { return Object.assign.apply(Object, [{}].concat(parts)); });
+  }
+
   fetch('/leaders-data.json', { cache: 'no-store' })
     .then(function (r) { return r.json(); })
     .then(function (data) {
-      all = data.briefs || [];
-      if (!all.length) { renderTiles(); return; }
-      var ids = all.map(function (b) { return b.id; });
-      return fetch('/api/interactions?action=leader-stats&ids=' + encodeURIComponent(ids.join(',')))
-        .then(function (r) { return r.ok ? r.json() : {}; })
-        .catch(function () { return {}; })
-        .then(function (stats) {
-          all.forEach(function (b) { b.stats = stats[b.id] || { likes: 0, views: 0, comments: 0 }; });
-          renderTiles();
-        });
+      all = (data.briefs || []).map(function (b) { b.category = LEGACY[b.category] || b.category; return b; });
+      return statsFor(all.map(function (b) { return b.id; }));
+    })
+    .then(function (stats) {
+      all.forEach(function (b) { b.stats = stats[b.id] || { likes: 0, views: 0, comments: 0 }; });
+      window.addEventListener('hashchange', route);
+      route();
     })
     .catch(function () {
-      tilesEl.className = 'state';
-      tilesEl.textContent = 'Could not load roundups right now.';
+      document.getElementById('tl-hero').innerHTML = '<p class="tl-state">Couldn’t load roundups right now.</p>';
     });
 })();
 </script>
