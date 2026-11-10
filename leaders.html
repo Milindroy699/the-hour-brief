@@ -72,11 +72,34 @@
 
   footer.colophon { margin-top: 48px; padding-top: 22px; border-top: 1px solid var(--line); font-size: 0.8rem; color: var(--ink-faint); }
   footer.colophon a { color: var(--ink-soft); }
+
+  /* Tapping here from an in-app tab (Today/Audio/Challenge) is a real page load, unlike those three, which
+     swap DOM in place — so this page's own raw masthead-band paints first and mobile.js's app-bar skin only
+     replaces it a beat later. That swap read as "a weird old UI flashing." Hide until mobile.js has had its
+     turn; reveal.js below runs right after it (same DOMContentLoaded tick either way, so no visible delay),
+     with a short safety timeout in case mobile.js ever fails to load. */
+  body { visibility: hidden; }
 </style>
 <link rel="stylesheet" href="/mobile.css" media="(max-width: 640px)">
 <script defer src="/_vercel/insights/script.js"></script>
 <script defer src="/capacitor-bridge.js"></script>
 <script defer src="/mobile.js"></script>
+<script defer>
+  (function () {
+    // Poll for the real signal that mobile.js has finished its DOM transform (it builds .tab-bar
+    // synchronously in apply(), right after DOMContentLoaded) rather than guessing at script/listener
+    // ordering. Falls back to a flat timeout for ?classic=1 (no premium skin, so no .tab-bar ever appears)
+    // or if mobile.js fails to load at all.
+    var tries = 0;
+    function reveal() { document.body.style.visibility = 'visible'; }
+    function poll() {
+      if (document.querySelector('.tab-bar') || ++tries > 40) { reveal(); return; }
+      setTimeout(poll, 20);
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', poll);
+    else poll();
+  })();
+</script>
 </head>
 <body>
 
