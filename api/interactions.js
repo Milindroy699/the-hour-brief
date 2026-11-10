@@ -1,3 +1,7 @@
+// Merges the comments and vote endpoints into one file — this project is on
+// Vercel's Hobby plan, capped at 12 Serverless Functions per deployment, and
+// api/leaders.js needs the slot this frees up. Old paths (/api/comments,
+// /api/vote) still work via rewrites in vercel.json, so no caller changes.
 const crypto = require('crypto');
 
 const KV_URL = process.env.KV_REST_API_URL;
@@ -30,17 +34,55 @@ function num(v) {
   return Number.isFinite(n) ? n : 0;
 }
 
-module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') { res.status(204).end(); return; }
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[c]));
+}
 
-  if (!KV_URL || !KV_TOKEN) {
-    res.status(500).json({ error: 'storage not configured' });
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+async function comments(req, res) {
+  if (req.method === 'GET') {
+    const date = req.query && req.query.date;
+    if (!date || !DATE_RE.test(date)) { res.status(400).json({ error: 'invalid date' }); return; }
+    const listRes = await kv(['LRANGE', `comments:${date}`, '0', '199']);
+    const items = (listRes.result || [])
+      .map((s) => { try { return JSON.parse(s); } catch (e) { return null; } })
+      .filter(Boolean);
+    res.status(200).json({ comments: items });
     return;
   }
 
+  if (req.method === 'POST') {
+    let body = req.body;
+    if (typeof body === 'string') { try { body = JSON.parse(body); } catch (e) { body = {}; } }
+    const date = body && body.date;
+    if (!date || !DATE_RE.test(date)) { res.status(400).json({ error: 'invalid date' }); return; }
+
+    let alias = ((body && body.alias) || '').toString().trim().slice(0, 40) || 'Anonymous';
+    let text = ((body && body.text) || '').toString().trim().slice(0, 500);
+    if (!text) { res.status(400).json({ error: 'empty comment' }); return; }
+
+    const ip = clientIp(req);
+    const ipHash = crypto.createHash('sha256').update(ip).digest('hex').slice(0, 16);
+    const rlKey = `commentrl:${ipHash}`;
+    const rl = await kv(['INCR', rlKey]);
+    const rlCount = parseInt(rl.result, 10) || 0;
+    if (rlCount === 1) { await kv(['EXPIRE', rlKey, '3600']); }
+    if (rlCount > 8) { res.status(429).json({ error: 'rate limited' }); return; }
+
+    const entry = { alias: escapeHtml(alias), text: escapeHtml(text), ts: new Date().toISOString() };
+    await kv(['RPUSH', `comments:${date}`, JSON.stringify(entry)]);
+    await kv(['LTRIM', `comments:${date}`, '-500', '-1']);
+    res.status(200).json({ ok: true, comment: entry });
+    return;
+  }
+
+  res.status(405).json({ error: 'method not allowed' });
+}
+
+async function vote(req, res) {
   if (req.method === 'GET') {
     const raw = (req.query && req.query.ids) || '';
     const ids = raw.split(',').map((s) => s.trim()).filter(Boolean).slice(0, 60);
@@ -104,4 +146,21 @@ module.exports = async (req, res) => {
   }
 
   res.status(405).json({ error: 'method not allowed' });
+}
+
+module.exports = async (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') { res.status(204).end(); return; }
+
+  if (!KV_URL || !KV_TOKEN) {
+    res.status(500).json({ error: 'storage not configured' });
+    return;
+  }
+
+  const action = (req.query || {}).action;
+  if (action === 'comments') return comments(req, res);
+  if (action === 'vote') return vote(req, res);
+  res.status(400).json({ error: 'unknown action' });
 };

@@ -801,6 +801,7 @@
     audio: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><path d="M4 15h3v5H5a1 1 0 0 1-1-1v-4z"/><path d="M20 15h-3v5h2a1 1 0 0 0 1-1v-4z"/></svg>',
     quiz: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/></svg>',
     archive: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.8c2.4-1 5.6-.8 9 .9 3.4-1.7 6.6-1.9 9-.9V19c-2.4-1-5.6-.8-9 .9-3.4-1.7-6.6-1.9-9-.9V5.8z"/><path d="M12 6.7v13.2"/></svg>',
+    leaders: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.45 1 1.1 1 1.85V16h5v-.25c0-.75.4-1.4 1-1.85A6 6 0 0 0 12 3z"/></svg>',
   };
   var LOGO_SRC = '/brand/logo-128.png';
 
@@ -917,7 +918,7 @@
       if (sub) item('email', ICON.mail, 'Get it by email', 'One email every morning', function () { closeSheet(); if (deckOpen()) window.HBCards.close({ keep: true, to: sub, center: true }); else sub.scrollIntoView({ block: 'center', behavior: 'smooth' }); var i = sub.querySelector('input'); if (i) setTimeout(function () { try { i.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }, 500); });
       body.appendChild(ul);
       var foot = mk('div', 'rd-menu-foot');
-      [['Contact us', '/contact.html'], ['About', '/about.html'], ['Privacy', '/privacy.html']].forEach(function (l, i) {
+      [['Past editions', '/archive/'], ['Contact us', '/contact.html'], ['About', '/about.html'], ['Privacy', '/privacy.html']].forEach(function (l, i) {
         if (i) foot.appendChild(document.createTextNode(' · '));
         var a = mk('a', '', l[0]);
         a.href = l[1];
@@ -927,18 +928,21 @@
     }, returnTo);
   }
 
-  // Bottom tabs: Today (the feed), Audio (the Listen hub), Challenge (the quiz), Archive (past editions)
-  var TABS = [['today', 'Today'], ['audio', 'Audio'], ['quiz', 'Challenge'], ['archive', 'Archive']];
+  // Bottom tabs: Today (the feed), Audio (the Listen hub), Challenge (the quiz), Leaders (thought-leader
+  // roundups). Archive lost its dedicated tab slot to Leaders — it's still a real page, just reachable via
+  // the "Past editions" link in the "..." menu footer and in leaders.html's own footer, not a top-level tab.
+  var TABS = [['today', 'Today'], ['audio', 'Audio'], ['quiz', 'Challenge'], ['leaders', 'Leaders']];
   function isFeed() { return !!document.querySelector('section.lane'); }          // an edition page (today's or an archived one)
   var INFO_TITLES = { '/about.html': 'About', '/privacy.html': 'Privacy', '/contact.html': 'Contact us' };
   function screenName() {
     var p = location.pathname;
     if (INFO_TITLES[p]) return INFO_TITLES[p];
     if (/^\/archive\/(index\.html)?$/.test(p)) return 'Archive';
+    if (/^\/leaders\.html$/.test(p)) return 'Leaders';
     return 'Feed';
   }
   // On pages that are not editions the tabs are plain links back to the right place.
-  var TAB_HREF = { today: '/', audio: '/?audio=1', quiz: '/?quiz=1', archive: '/archive/' };
+  var TAB_HREF = { today: '/', audio: '/?audio=1', quiz: '/?quiz=1', leaders: '/leaders.html' };
   function tabGo(name) {
     var L = window.HBListen;
     // Tapping the tab you are already on reopens/stays on it — it does not toggle closed (tried that after removing
@@ -1072,7 +1076,7 @@
       document.body.appendChild(sw);
       var row = mk('div', 'tab-row');
       TABS.forEach(function (t) {
-        var link = t[0] === 'archive' || !feed;
+        var link = t[0] === 'leaders' || !feed;
         var el = link ? mk('a', 'tab') : mk('button', 'tab');
         el.setAttribute('data-tab', t[0]);
         el.innerHTML = '<span class="tab-ic">' + ICON[t[0]] + '</span><span class="tab-lb">' + t[1] + '</span>';
@@ -1107,7 +1111,7 @@
     if (!isFeed()) {                                           // About, Privacy, Contact, the archive list
       var here = screenName();
       bar.querySelectorAll('.tab').forEach(function (t) {
-        if (t.getAttribute('data-tab') === 'archive' && here === 'Archive') t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
+        if (t.getAttribute('data-tab') === 'leaders' && here === 'Leaders') t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
         if (t.getAttribute('data-tab') === 'quiz') t.hidden = false;
       });
       return;

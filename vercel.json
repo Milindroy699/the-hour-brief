@@ -28,6 +28,14 @@
     {
       "source": "/api/create-draft",
       "destination": "/api/newsletter?action=create-draft"
+    },
+    {
+      "source": "/api/comments",
+      "destination": "/api/interactions?action=comments"
+    },
+    {
+      "source": "/api/vote",
+      "destination": "/api/interactions?action=vote"
     }
   ],
   "headers": [
@@ -48,6 +56,10 @@
     {
       "path": "/api/post-digest",
       "schedule": "30 5 * * *"
+    },
+    {
+      "path": "/api/leaders",
+      "schedule": "0 6 * * 1"
     }
   ]
 }
