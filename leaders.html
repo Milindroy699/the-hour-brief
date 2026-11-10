@@ -230,6 +230,7 @@
   .tl-banner::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 1px 1.5px rgba(255, 255, 255, 0.28); }
   .tl-body p { margin: 0 0 18px; font-size: 1.03rem; line-height: 1.78; color: var(--ink); text-wrap: pretty; }
   .tl-body p:first-child::first-letter { float: left; font-family: var(--hb-serif); font-size: 3.5em; line-height: 0.88; padding: 6px 10px 0 0; color: var(--hb-primary-2); }
+  .tl-body .tl-sub { font-family: var(--hb-serif); font-weight: 400; font-size: 1.5rem; line-height: 1.25; letter-spacing: -0.008em; margin: 32px 0 14px; color: var(--ink); text-wrap: balance; }
 
   .tl-sources { padding: 16px; margin: 26px 0 18px; }
   .tl-sources-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font: 600 11px/14px var(--hb-label); letter-spacing: 0.1em; text-transform: uppercase; color: var(--hb-primary-2); }
@@ -443,6 +444,12 @@
   }
   function minRead(body) { return Math.max(1, Math.round(String(body || '').split(/\s+/).length / 220)); }
   function paras(body) { return String(body || '').split(/\n\n+/).filter(function (p) { return p.trim(); }); }
+  // A body paragraph starting "## " is a subheading (e.g. separating a summary from our own analysis).
+  function isSub(p) { return /^##\s/.test(p); }
+  function excerpt(body) { return paras(body).filter(function (p) { return !isSub(p); })[0] || ''; }
+  // kind "essay": one hand-picked talk or article, summarized with our own analysis, added outside the Monday
+  // roundup pipeline, so it is labelled as an essay and never presented as "this week's roundup".
+  function isEssay(b) { return b.kind === 'essay'; }
   function styleName(slug) {
     return String(slug || '').split('-').filter(Boolean).map(function (w) { return w.charAt(0).toUpperCase() + w.slice(1); }).join(' ');
   }
@@ -488,27 +495,32 @@
 
   // ---- Home ----
   function renderHome() {
-    var latest = all.slice().sort(function (a, b) { return (b.generatedAt || '') > (a.generatedAt || '') ? 1 : -1; })[0];
-    document.getElementById('tl-week').textContent = latest
-      ? 'Weekly synthesis · Week of ' + fmtDate(latest.generatedAt, { month: 'short', day: 'numeric' })
+    function newestGenerated(list) { return list.slice().sort(function (a, b) { return (b.generatedAt || '') > (a.generatedAt || '') ? 1 : -1; })[0]; }
+    var latest = newestGenerated(all);
+    // The week label, hero and "How it's made" describe the Monday roundups only; essays are added by hand.
+    var roundups = all.filter(function (b) { return !isEssay(b); });
+    var latestRoundup = newestGenerated(roundups);
+    document.getElementById('tl-week').textContent = latestRoundup
+      ? 'Weekly synthesis · Week of ' + fmtDate(latestRoundup.generatedAt, { month: 'short', day: 'numeric' })
       : 'Weekly synthesis';
 
     var sources = all.reduce(function (n, b) { return n + (b.sources || []).length; }, 0);
-    var creators = creatorsOf(all);
+    var roundupSources = roundups.reduce(function (n, b) { return n + (b.sources || []).length; }, 0);
+    var creators = creatorsOf(roundups);
     var chips = [ic('layers') + plural(CATS.length, 'pillar')];
     if (sources) chips.push(ic('doc') + plural(sources, 'source') + ' synthesized');
     if (latest) chips.push(ic('clock') + 'Updated ' + relTime(latest.generatedAt));
     document.getElementById('tl-chips').innerHTML = chips.map(function (c) { return '<span class="tl-chip">' + c + '</span>'; }).join('');
 
-    var heroKey = latest && BY_KEY[latest.category] ? latest.category : 'tech-ai';
+    var heroKey = latestRoundup && BY_KEY[latestRoundup.category] ? latestRoundup.category : 'tech-ai';
     document.getElementById('tl-hero').innerHTML = tile(BY_KEY[heroKey], true);
     document.getElementById('tl-grid').innerHTML = CATS.filter(function (c) { return c.key !== heroKey; })
       .map(function (c) { return tile(c, false); }).join('');
 
     var engine = document.getElementById('tl-engine');
-    if (sources) {
+    if (roundupSources) {
       engine.innerHTML = '<span class="tl-engine-ic">' + ic('spark') + '</span>' +
-        '<span class="tl-engine-text"><b>How it’s made</b><span>' + esc(plural(sources, 'post and video', 'posts and videos')) +
+        '<span class="tl-engine-text"><b>How it’s made</b><span>' + esc(plural(roundupSources, 'post and video', 'posts and videos')) +
         ' from ' + esc(plural(creators.length, 'tracked creator')) + ', distilled into one long read per pillar every Monday.</span></span>' + ic('arrow');
       engine.hidden = false;
     }
@@ -554,22 +566,30 @@
     var briefs = c ? inCat(key) : [];
     if (!briefs.length) { location.replace('#'); return false; }
     var creators = creatorsOf(briefs);
+    var essaysOnly = briefs.every(isEssay);                       // a pillar with no Monday roundup yet, only essays
+    var lowerTag = c.tag.charAt(0).toLowerCase() + c.tag.slice(1);
     var eyebrow = document.getElementById('tl-cat-eyebrow');
-    eyebrow.lastChild.textContent = creators.length ? 'Tracking ' + plural(creators.length, 'voice') : c.tag;
+    eyebrow.lastChild.textContent = creators.length && !essaysOnly ? 'Tracking ' + plural(creators.length, 'voice') : c.tag;
     document.getElementById('tl-cat-title').textContent = c.label;
-    document.getElementById('tl-cat-count').textContent = plural(briefs.length, 'roundup');
+    document.getElementById('tl-cat-count').textContent = essaysOnly ? plural(briefs.length, 'essay') : plural(briefs.length, 'roundup');
 
     var voice = voiceOf(briefs);
-    document.getElementById('tl-summary').innerHTML =
-      '<span class="tl-tag tl-tag--primary">' + ic('spark') + 'Weekly roundup · Updated ' + esc(relTime(briefs[0].generatedAt)) + '</span>' +
-      '<h2>' + esc(c.label) + ' weekly roundup</h2>' +
-      '<p>Every Monday, one long read synthesizing what ' + esc(creators.length ? listNames(creators) : 'tracked creators') +
-      ' published that week — ' + esc(c.tag.charAt(0).toLowerCase() + c.tag.slice(1)) + '.</p>' +
-      (voice && voice.styled ? '<div class="tl-summary-voice">' + ic('pen') + 'Written in ' + esc(voice.text) + '</div>' : '');
+    document.getElementById('tl-summary').innerHTML = essaysOnly
+      ? '<span class="tl-tag tl-tag--primary">' + ic('spark') + 'Essays · Updated ' + esc(relTime(briefs[0].generatedAt)) + '</span>' +
+        '<h2>' + esc(c.label) + ' essays</h2>' +
+        '<p>Hand-picked talks and essays' + (creators.length ? ' from ' + esc(listNames(creators)) : '') +
+        ', each summarized with our own analysis — ' + esc(lowerTag) + '.</p>'
+      : '<span class="tl-tag tl-tag--primary">' + ic('spark') + 'Weekly roundup · Updated ' + esc(relTime(briefs[0].generatedAt)) + '</span>' +
+        '<h2>' + esc(c.label) + ' weekly roundup</h2>' +
+        '<p>Every Monday, one long read synthesizing what ' + esc(creators.length ? listNames(creators) : 'tracked creators') +
+        ' published that week — ' + esc(lowerTag) + '.</p>' +
+        (voice && voice.styled ? '<div class="tl-summary-voice">' + ic('pen') + 'Written in ' + esc(voice.text) + '</div>' : '');
 
     document.querySelectorAll('.tl-seg button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-sort') === sortBy)); });
     renderList(briefs);
-    document.getElementById('tl-next').innerHTML = '<div class="tl-next-ic">' + ic('hourglass') + '</div>' +
+    var next = document.getElementById('tl-next');
+    next.hidden = essaysOnly;
+    next.innerHTML = essaysOnly ? '' : '<div class="tl-next-ic">' + ic('hourglass') + '</div>' +
       '<b>Next roundup in ' + esc(nextRoundup()) + '</b><span>New roundups publish every Monday.</span>';
     return true;
   }
@@ -582,8 +602,8 @@
       return newestFirst(a, b);
     });
     document.getElementById('tl-list').innerHTML = sorted.map(function (b) {
-      var p = paras(b.body);
       var voice = b.styleAuthor ? 'In ' + styleName(b.styleAuthor) + ' style'
+        : isEssay(b) ? (listNames(creatorsOf([b])) || 'One source') + ' + analysis'
         : 'From ' + (listNames(creatorsOf([b])) || 'tracked creators');
       return '<a class="tl-card tl-glass" href="#a=' + encodeURIComponent(b.id) + '">' +
         '<div class="tl-card-tags">' +
@@ -592,7 +612,7 @@
           '<span class="tl-tag">' + esc(plural((b.sources || []).length, 'source')) + '</span>' +
         '</div>' +
         '<h3 class="tl-card-title">' + esc(b.title) + '</h3>' +
-        '<p class="tl-card-excerpt">' + esc(p[0] || '') + '</p>' +
+        '<p class="tl-card-excerpt">' + esc(excerpt(b.body)) + '</p>' +
         '<div class="tl-card-meta">' + ic(b.styleAuthor ? 'pen' : 'voices') + '<span>' + esc(voice) + ' • ' + esc(fmtDate(dateOf(b))) + '</span></div>' +
         '<div class="tl-card-foot">' +
           '<span>' + ic('heart') + b.stats.likes + '</span>' +
@@ -619,18 +639,22 @@
     var p = paras(b.body);
     var nSources = (b.sources || []).length;
     var liked = !!store('hb-liked-leader-' + b.id);
-    var byTitle = b.styleAuthor ? 'Written in ' + styleName(b.styleAuthor) + ' style' : 'Synthesized from ' + plural(nSources, 'source');
+    var essay = isEssay(b);
+    var byTitle = b.styleAuthor ? 'Written in ' + styleName(b.styleAuthor) + ' style'
+      : essay ? 'Summary + our analysis' : 'Synthesized from ' + plural(nSources, 'source');
     var byLine = fmtDate(dateOf(b)) + ' • ' + minRead(b.body) + ' min read';
 
     artView.innerHTML =
       '<a class="tl-backbtn" href="#c=' + encodeURIComponent(c.key) + '">' + ic('back') + esc(c.label) + '</a>' +
-      '<div class="tl-art-tags"><span class="tl-tag tl-tag--primary">' + esc(c.label) + ' · Weekly roundup</span></div>' +
+      '<div class="tl-art-tags"><span class="tl-tag tl-tag--primary">' + esc(c.label) + (essay ? ' · Essay' : ' · Weekly roundup') + '</span></div>' +
       '<h1 class="tl-art-title">' + esc(b.title) + '</h1>' +
       '<div class="tl-byline tl-glass"><span class="tl-byline-av">' + ic(b.styleAuthor ? 'pen' : 'spark') + '</span>' +
         '<div class="tl-byline-text"><b>' + esc(byTitle) + '</b><span>' + esc(byLine) + '</span></div></div>' +
       (BY_KEY[b.category] ? '<div class="tl-banner"><img src="/brand/leaders/' + c.key + '.jpg" alt="" decoding="async"></div>' : '') +
-      '<div class="tl-body">' + p.map(function (x) { return '<p>' + esc(x) + '</p>'; }).join('') + '</div>' +
-      (nSources ? '<div class="tl-sources tl-glass"><div class="tl-sources-head">' + ic('layers') + 'Synthesized from ' + esc(plural(nSources, 'source')) + '</div><ol>' +
+      '<div class="tl-body">' + p.map(function (x) {
+        return isSub(x) ? '<h2 class="tl-sub">' + esc(x.replace(/^##\s+/, '')) + '</h2>' : '<p>' + esc(x) + '</p>';
+      }).join('') + '</div>' +
+      (nSources ? '<div class="tl-sources tl-glass"><div class="tl-sources-head">' + ic('layers') + (essay ? 'Based on ' : 'Synthesized from ') + esc(plural(nSources, 'source')) + '</div><ol>' +
         b.sources.map(function (s, i) {
           var inner = '<span class="tl-src-n">' + (i + 1) + '</span><span class="tl-src-text"><b>' + esc(s.creator) + '</b><span>' + esc(s.title) + '</span></span>';
           return '<li>' + (s.url ? '<a class="tl-src" href="' + esc(s.url) + '" target="_blank" rel="noopener">' + inner + ic('out') + '</a>' : '<div class="tl-src">' + inner + '</div>') + '</li>';

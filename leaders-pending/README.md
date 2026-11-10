@@ -15,3 +15,8 @@ category, styleAuthor, title, body, generatedAt, sources: [{creator, title}] }`
 — then deletes the pending file(s) it consumed and commits/pushes, same as a
 daily edition publishes. `leaders.html` reads `leaders-data.json` directly; no
 API call, no Anthropic key anywhere in this flow.
+
+Briefs with `"kind": "essay"` were added by hand (one source plus our own
+analysis, outside this pipeline). Leave them in place when appending
+roundups. In any `body`, paragraphs are separated by a blank line, and a
+paragraph starting with `## ` renders as a subheading.
