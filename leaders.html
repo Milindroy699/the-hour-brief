@@ -50,13 +50,32 @@
 
   .state { color: var(--ink-faint); font-size: 0.92rem; padding: 24px 0; }
 
-  .categories { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 28px; }
-  .cat-pill {
-    font-size: 0.78rem; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase;
-    padding: 6px 12px; border-radius: 999px; background: var(--paper-2); color: var(--ink-soft);
-    border: 1px solid var(--line); cursor: pointer;
+  /* ---- Category tiles ---- */
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-bottom: 8px; }
+  .tiles[hidden] { display: none; }
+  .tile {
+    background: var(--paper); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow);
+    padding: 20px 18px; text-align: left; cursor: pointer; font-family: inherit;
+    transition: border-color 0.15s ease, transform 0.1s ease;
   }
-  .cat-pill.active { background: var(--brand); color: #fff; border-color: var(--brand); }
+  .tile:hover { border-color: var(--brand); }
+  .tile:active { transform: scale(0.98); }
+  .tile-label { font-size: 1.05rem; font-weight: 700; color: var(--ink); }
+  .tile-count { font-size: 0.82rem; color: var(--ink-faint); margin-top: 4px; }
+
+  /* ---- Category view ---- */
+  .cat-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+  .back-to-cats {
+    font-size: 0.86rem; color: var(--ink-soft); text-decoration: none; background: none; border: none;
+    cursor: pointer; font-family: inherit; padding: 0; display: inline-flex; align-items: center; gap: 4px;
+  }
+  .back-to-cats:hover { color: var(--ink); }
+  .cat-view-title { font-family: Georgia, "Iowan Old Style", "Times New Roman", serif; font-size: 1.4rem; margin: 0; }
+  .sort-row { display: flex; align-items: center; gap: 8px; font-size: 0.84rem; color: var(--ink-faint); margin-bottom: 20px; }
+  .sort-row select {
+    font-size: 0.84rem; font-family: inherit; padding: 5px 10px; border-radius: 7px; border: 1px solid var(--line);
+    background: var(--paper); color: var(--ink);
+  }
 
   article.brief {
     background: var(--paper); border: 1px solid var(--line); border-radius: 12px;
@@ -69,6 +88,46 @@
   .brief-body p { margin: 0 0 16px; }
   .brief-sources { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 0.82rem; color: var(--ink-faint); }
   .brief-sources a { color: var(--ink-soft); }
+
+  /* ---- Like + comments (same vocabulary as the daily edition's vote-row/comments-section) ---- */
+  .brief-actions { display: flex; align-items: center; gap: 10px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
+  .like-btn {
+    display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--paper); color: var(--ink-faint); font-size: 0.82rem;
+    font-family: inherit; cursor: pointer; transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  }
+  .like-btn:hover { border-color: var(--ink-soft); color: var(--ink-soft); }
+  .like-btn.liked { border-color: var(--up); color: var(--up); background: color-mix(in srgb, var(--up) 12%, var(--paper)); }
+  .like-btn:disabled { cursor: default; opacity: 0.9; }
+  .like-count, .view-count { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+  .view-stat { font-size: 0.78rem; color: var(--ink-faint); }
+  .comment-toggle {
+    font-size: 0.82rem; color: var(--ink-soft); background: none; border: none; cursor: pointer; font-family: inherit; padding: 0;
+  }
+  .comment-toggle:hover { color: var(--ink); }
+  .brief-comments { margin-top: 18px; display: none; }
+  .brief-comments.open { display: block; }
+  .comment-form { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; background: var(--paper-2); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .comment-form input, .comment-form textarea {
+    padding: 8px 11px; border-radius: 7px; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+    font-size: 0.9rem; font-family: inherit; resize: vertical;
+  }
+  .comment-form textarea { min-height: 60px; }
+  .comment-form input:focus-visible, .comment-form textarea:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+  .comment-form button {
+    align-self: flex-start; padding: 8px 16px; border-radius: 7px; border: none; background: var(--brand);
+    color: var(--bg); font-size: 0.88rem; font-weight: 600; cursor: pointer; font-family: inherit;
+  }
+  .comment-form button:hover { opacity: 0.9; }
+  .comment-form button:disabled { opacity: 0.6; cursor: default; }
+  .comment-status { font-size: 0.8rem; color: var(--ink-faint); min-height: 1.1em; }
+  .comments-list { display: flex; flex-direction: column; gap: 0; }
+  .comment-item { padding: 10px 0; border-top: 1px solid var(--line); }
+  .comment-item:first-child { border-top: none; padding-top: 0; }
+  .comment-alias { font-weight: 700; font-size: 0.86rem; color: var(--ink); }
+  .comment-time { font-size: 0.72rem; color: var(--ink-faint); margin-left: 8px; }
+  .comment-text { margin: 4px 0 0; font-size: 0.9rem; color: var(--ink-soft); line-height: 1.5; white-space: pre-wrap; }
+  .comments-empty { font-size: 0.86rem; color: var(--ink-faint); font-style: italic; }
 
   footer.colophon { margin-top: 48px; padding-top: 22px; border-top: 1px solid var(--line); font-size: 0.8rem; color: var(--ink-faint); }
   footer.colophon a { color: var(--ink-soft); }
@@ -114,8 +173,22 @@
   <h1>Thought leaders</h1>
   <p class="lede">Weekly roundups pulling together the most substantive posts and videos from tracked business, tech, AI, product and finance creators — some written in a reference author's own voice.</p>
 
-  <div id="cats" class="categories"></div>
-  <div id="list" class="state">Loading…</div>
+  <div id="tiles" class="tiles state">Loading…</div>
+  <div id="category-view" hidden>
+    <div class="cat-header">
+      <button type="button" class="back-to-cats" id="back-to-cats">← All categories</button>
+      <h2 class="cat-view-title" id="cat-view-title"></h2>
+    </div>
+    <div class="sort-row">
+      Sort by
+      <select id="sort-select">
+        <option value="date">Newest</option>
+        <option value="likes">Most liked</option>
+        <option value="views">Most viewed</option>
+      </select>
+    </div>
+    <div id="list"></div>
+  </div>
 
   <footer class="colophon">
     Questions or something look wrong? Email us from the <a href="/contact.html">contact page</a>. <a href="archive/" target="_blank" rel="noopener">Past editions</a> · <a href="./" target="_blank" rel="noopener">Back to today's edition</a> · <a href="about.html">How this is made</a> · <a href="privacy.html" target="_blank" rel="noopener">Privacy</a> · <a href="/contact.html">Contact us</a>
@@ -124,9 +197,14 @@
 
 <script>
 (function () {
+  var tilesEl = document.getElementById('tiles');
+  var catViewEl = document.getElementById('category-view');
+  var catTitleEl = document.getElementById('cat-view-title');
   var listEl = document.getElementById('list');
-  var catsEl = document.getElementById('cats');
+  var sortSelect = document.getElementById('sort-select');
+  var backBtn = document.getElementById('back-to-cats');
   var CAT_LABELS = { business: 'Business', tech: 'Tech', ai: 'AI', product: 'Product', finance: 'Finance' };
+  var CAT_ORDER = ['business', 'tech', 'ai', 'product', 'finance'];
   var all = [];
   var activeCat = null;
 
@@ -143,60 +221,221 @@
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
-  function renderCats() {
-    var present = {};
-    all.forEach(function (b) { if (b.category) present[b.category] = true; });
-    var cats = Object.keys(present);
-    if (cats.length < 2) { catsEl.innerHTML = ''; return; }
-    catsEl.innerHTML = ['<button class="cat-pill' + (activeCat === null ? ' active' : '') + '" data-cat="">All</button>']
-      .concat(cats.map(function (c) {
-        return '<button class="cat-pill' + (activeCat === c ? ' active' : '') + '" data-cat="' + esc(c) + '">' + esc(CAT_LABELS[c] || c) + '</button>';
-      })).join('');
-    Array.prototype.forEach.call(catsEl.querySelectorAll('.cat-pill'), function (btn) {
-      btn.addEventListener('click', function () {
-        activeCat = btn.getAttribute('data-cat') || null;
-        renderCats();
-        renderList();
-      });
+  function sortKeyDate(b) { return b.sourceDate || b.generatedAt || ''; }
+
+  // ---- Tiles ----
+  function renderTiles() {
+    var byCat = {};
+    all.forEach(function (b) { (byCat[b.category] = byCat[b.category] || []).push(b); });
+    var cats = CAT_ORDER.filter(function (c) { return byCat[c] && byCat[c].length; });
+    if (!cats.length) {
+      tilesEl.className = 'state';
+      tilesEl.textContent = 'No roundups yet — check back soon.';
+      return;
+    }
+    tilesEl.className = 'tiles';
+    tilesEl.innerHTML = cats.map(function (c) {
+      var n = byCat[c].length;
+      return (
+        '<button type="button" class="tile" data-cat="' + esc(c) + '">' +
+          '<div class="tile-label">' + esc(CAT_LABELS[c] || c) + '</div>' +
+          '<div class="tile-count">' + n + ' article' + (n === 1 ? '' : 's') + '</div>' +
+        '</button>'
+      );
+    }).join('');
+    Array.prototype.forEach.call(tilesEl.querySelectorAll('.tile'), function (btn) {
+      btn.addEventListener('click', function () { openCategory(btn.getAttribute('data-cat')); });
     });
   }
 
+  function openCategory(cat) {
+    activeCat = cat;
+    catTitleEl.textContent = CAT_LABELS[cat] || cat;
+    tilesEl.hidden = true;
+    catViewEl.hidden = false;
+    sortSelect.value = 'date';
+    renderList();
+    window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+  }
+
+  backBtn.addEventListener('click', function () {
+    activeCat = null;
+    catViewEl.hidden = true;
+    tilesEl.hidden = false;
+  });
+  sortSelect.addEventListener('change', renderList);
+
+  // ---- Article list (within a category) ----
   function renderList() {
-    var briefs = activeCat ? all.filter(function (b) { return b.category === activeCat; }) : all;
+    var briefs = all.filter(function (b) { return b.category === activeCat; });
+    var sortBy = sortSelect.value;
+    briefs.sort(function (a, b) {
+      if (sortBy === 'likes') return (b.stats.likes - a.stats.likes) || (sortKeyDate(b) > sortKeyDate(a) ? 1 : -1);
+      if (sortBy === 'views') return (b.stats.views - a.stats.views) || (sortKeyDate(b) > sortKeyDate(a) ? 1 : -1);
+      return sortKeyDate(b) > sortKeyDate(a) ? 1 : (sortKeyDate(b) < sortKeyDate(a) ? -1 : 0);
+    });
+
     if (!briefs.length) {
-      listEl.className = 'state';
-      listEl.textContent = 'No roundups yet — check back soon.';
+      listEl.innerHTML = '<p class="state">No roundups yet in this category.</p>';
       return;
     }
-    listEl.className = '';
     listEl.innerHTML = briefs.map(function (b) {
       var byline = b.styleAuthor
-        ? 'In the style of ' + esc(b.styleAuthor.replace(/-/g, ' ')) + ' · ' + fmtDate(b.generatedAt)
-        : fmtDate(b.generatedAt);
+        ? 'In the style of ' + esc(b.styleAuthor.replace(/-/g, ' ')) + ' · ' + fmtDate(sortKeyDate(b))
+        : fmtDate(sortKeyDate(b));
       var body = (b.body || '').split(/\n\n+/).map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('');
       var sources = (b.sources || []).map(function (s) { return esc(s.creator) + ' — ' + esc(s.title); }).join(' · ');
+      var liked = !!localStorage.getItem('hb-liked-leader-' + b.id);
       return (
-        '<article class="brief">' +
+        '<article class="brief" data-id="' + esc(b.id) + '">' +
           '<div class="brief-cat">' + esc(CAT_LABELS[b.category] || b.category) + '</div>' +
           '<h2 class="brief-title">' + esc(b.title) + '</h2>' +
           '<div class="brief-byline">' + byline + '</div>' +
           '<div class="brief-body">' + body + '</div>' +
           (sources ? '<div class="brief-sources">Sourced from: ' + sources + '</div>' : '') +
+          '<div class="brief-actions">' +
+            '<button type="button" class="like-btn' + (liked ? ' liked' : '') + '" data-like' + (liked ? ' disabled' : '') + '>' +
+              '👍 <span class="like-count">' + b.stats.likes + '</span>' +
+            '</button>' +
+            '<span class="view-stat"><span class="view-count">' + b.stats.views + '</span> views</span>' +
+            '<button type="button" class="comment-toggle" data-comment-toggle>💬 <span class="comment-count">' + b.stats.comments + '</span> comments</button>' +
+          '</div>' +
+          '<div class="brief-comments">' +
+            '<form class="comment-form">' +
+              '<input type="text" class="c-alias" placeholder="Name (optional)" maxlength="40">' +
+              '<textarea class="c-text" placeholder="Add a comment…" maxlength="500" required></textarea>' +
+              '<button type="submit">Post</button>' +
+              '<div class="comment-status"></div>' +
+            '</form>' +
+            '<div class="comments-list"></div>' +
+          '</div>' +
         '</article>'
       );
     }).join('');
+
+    Array.prototype.forEach.call(listEl.querySelectorAll('article.brief'), wireArticle);
+    pingViews(briefs);
   }
 
+  function pingViews(briefs) {
+    briefs.forEach(function (b) {
+      var key = 'hb-viewedleader-' + b.id;
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(key, '1');
+      fetch('/api/interactions?action=leader-view', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: b.id })
+      }).catch(function () {});
+    });
+  }
+
+  function wireArticle(articleEl) {
+    var id = articleEl.getAttribute('data-id');
+
+    // Like
+    var likeBtn = articleEl.querySelector('[data-like]');
+    likeBtn.addEventListener('click', function () {
+      if (localStorage.getItem('hb-liked-leader-' + id)) return;
+      likeBtn.disabled = true;
+      fetch('/api/interactions?action=leader-like', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: id })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          articleEl.querySelector('.like-count').textContent = data.likes != null ? data.likes : 0;
+          localStorage.setItem('hb-liked-leader-' + id, '1');
+          likeBtn.classList.add('liked');
+        })
+        .catch(function () { likeBtn.disabled = false; });
+    });
+
+    // Comments: lazy-load on first expand
+    var toggle = articleEl.querySelector('[data-comment-toggle]');
+    var panel = articleEl.querySelector('.brief-comments');
+    var commentsList = articleEl.querySelector('.comments-list');
+    var loaded = false;
+    toggle.addEventListener('click', function () {
+      var open = panel.classList.toggle('open');
+      if (open && !loaded) {
+        loaded = true;
+        fetch('/api/interactions?action=leader-comments&id=' + encodeURIComponent(id))
+          .then(function (r) { return r.ok ? r.json() : { comments: [] }; })
+          .then(function (data) { renderComments(commentsList, data.comments); })
+          .catch(function () { commentsList.innerHTML = '<p class="comments-empty">Couldn\'t load comments right now.</p>'; });
+      }
+    });
+
+    var form = articleEl.querySelector('.comment-form');
+    var status = form.querySelector('.comment-status');
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var alias = form.querySelector('.c-alias').value.trim();
+      var text = form.querySelector('.c-text').value.trim();
+      if (!text) return;
+      var btn = form.querySelector('button');
+      btn.disabled = true;
+      status.textContent = 'Posting…';
+      fetch('/api/interactions?action=leader-comments', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: id, alias: alias, text: text })
+      })
+        .then(function (r) {
+          if (r.status === 429) { status.textContent = "You're commenting a bit fast — try again in a bit."; throw new Error('rate limited'); }
+          if (!r.ok) { status.textContent = 'Something went wrong — try again.'; throw new Error('failed'); }
+          return r.json();
+        })
+        .then(function (data) {
+          status.textContent = '';
+          form.querySelector('.c-text').value = '';
+          var empty = commentsList.querySelector('.comments-empty');
+          if (empty) commentsList.innerHTML = '';
+          appendComment(commentsList, data.comment);
+          var countEl = articleEl.querySelector('.comment-count');
+          countEl.textContent = (parseInt(countEl.textContent, 10) || 0) + 1;
+        })
+        .catch(function () {})
+        .finally(function () { btn.disabled = false; });
+    });
+  }
+
+  function renderComments(listNode, comments) {
+    if (!comments || !comments.length) {
+      listNode.innerHTML = '<p class="comments-empty">No comments yet — be the first.</p>';
+      return;
+    }
+    listNode.innerHTML = '';
+    comments.forEach(function (c) { appendComment(listNode, c); });
+  }
+
+  function appendComment(listNode, c) {
+    var empty = listNode.querySelector('.comments-empty');
+    if (empty) listNode.innerHTML = '';
+    var when = '';
+    try { when = new Date(c.ts).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch (e) {}
+    var el = document.createElement('div');
+    el.className = 'comment-item';
+    el.innerHTML = '<span class="comment-alias">' + esc(c.alias) + '</span><span class="comment-time">' + when +
+      '</span><p class="comment-text">' + esc(c.text) + '</p>';
+    listNode.appendChild(el);
+  }
+
+  // ---- Load ----
   fetch('/leaders-data.json', { cache: 'no-store' })
     .then(function (r) { return r.json(); })
     .then(function (data) {
-      all = (data.briefs || []).slice().reverse(); // file is oldest-first (routine appends); show newest first
-      renderCats();
-      renderList();
+      all = data.briefs || [];
+      if (!all.length) { renderTiles(); return; }
+      var ids = all.map(function (b) { return b.id; });
+      return fetch('/api/interactions?action=leader-stats&ids=' + encodeURIComponent(ids.join(',')))
+        .then(function (r) { return r.ok ? r.json() : {}; })
+        .catch(function () { return {}; })
+        .then(function (stats) {
+          all.forEach(function (b) { b.stats = stats[b.id] || { likes: 0, views: 0, comments: 0 }; });
+          renderTiles();
+        });
     })
     .catch(function () {
-      listEl.className = 'state';
-      listEl.textContent = 'Could not load roundups right now.';
+      tilesEl.className = 'state';
+      tilesEl.textContent = 'Could not load roundups right now.';
     });
 })();
 </script>

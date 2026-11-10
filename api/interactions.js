@@ -148,6 +148,102 @@ async function vote(req, res) {
   res.status(405).json({ error: 'method not allowed' });
 }
 
+// ---- Thought Leaders: likes, views, comments per article id ----
+// Same patterns as the daily edition's votes/comments above, just keyed by article
+// id instead of date — articles don't need a dislike button or a date namespace.
+async function leaderStats(req, res) {
+  if (req.method !== 'GET') { res.status(405).json({ error: 'method not allowed' }); return; }
+  const raw = (req.query && req.query.ids) || '';
+  const ids = raw.split(',').map((s) => s.trim()).filter(Boolean).slice(0, 60);
+  if (!ids.length) { res.status(200).json({}); return; }
+  const commands = [];
+  ids.forEach((id) => {
+    commands.push(['GET', `leader:likes:${id}`]);
+    commands.push(['GET', `leader:views:${id}`]);
+    commands.push(['LLEN', `leader:comments:${id}`]);
+  });
+  const results = await kvPipeline(commands);
+  const out = {};
+  ids.forEach((id, i) => {
+    out[id] = {
+      likes: num(results[i * 3] && results[i * 3].result),
+      views: num(results[i * 3 + 1] && results[i * 3 + 1].result),
+      comments: num(results[i * 3 + 2] && results[i * 3 + 2].result),
+    };
+  });
+  res.status(200).json(out);
+}
+
+async function leaderLike(req, res) {
+  if (req.method !== 'POST') { res.status(405).json({ error: 'method not allowed' }); return; }
+  let body = req.body;
+  if (typeof body === 'string') { try { body = JSON.parse(body); } catch (e) { body = {}; } }
+  const id = body && typeof body.id === 'string' && body.id.slice(0, 120);
+  if (!id) { res.status(400).json({ error: 'invalid request' }); return; }
+
+  const ip = clientIp(req);
+  const ipHash = crypto.createHash('sha256').update(ip).digest('hex').slice(0, 16);
+  const dedupeKey = `likedleader:${id}:${ipHash}`;
+  const setResult = await kv(['SET', dedupeKey, '1', 'EX', '86400', 'NX']);
+  if (setResult.result === null) {
+    const likes = await kv(['GET', `leader:likes:${id}`]);
+    res.status(200).json({ ok: false, reason: 'already_liked', likes: num(likes.result) });
+    return;
+  }
+  const incr = await kv(['INCR', `leader:likes:${id}`]);
+  res.status(200).json({ ok: true, likes: num(incr.result) });
+}
+
+async function leaderView(req, res) {
+  if (req.method !== 'POST') { res.status(405).json({ error: 'method not allowed' }); return; }
+  let body = req.body;
+  if (typeof body === 'string') { try { body = JSON.parse(body); } catch (e) { body = {}; } }
+  const id = body && typeof body.id === 'string' && body.id.slice(0, 120);
+  if (!id) { res.status(400).json({ error: 'invalid request' }); return; }
+  await kv(['INCR', `leader:views:${id}`]);
+  res.status(200).json({ ok: true });
+}
+
+async function leaderComments(req, res) {
+  if (req.method === 'GET') {
+    const id = ((req.query && req.query.id) || '').slice(0, 120);
+    if (!id) { res.status(400).json({ error: 'invalid request' }); return; }
+    const listRes = await kv(['LRANGE', `leader:comments:${id}`, '0', '199']);
+    const items = (listRes.result || [])
+      .map((s) => { try { return JSON.parse(s); } catch (e) { return null; } })
+      .filter(Boolean);
+    res.status(200).json({ comments: items });
+    return;
+  }
+
+  if (req.method === 'POST') {
+    let body = req.body;
+    if (typeof body === 'string') { try { body = JSON.parse(body); } catch (e) { body = {}; } }
+    const id = body && typeof body.id === 'string' && body.id.slice(0, 120);
+    if (!id) { res.status(400).json({ error: 'invalid request' }); return; }
+
+    let alias = ((body && body.alias) || '').toString().trim().slice(0, 40) || 'Anonymous';
+    let text = ((body && body.text) || '').toString().trim().slice(0, 500);
+    if (!text) { res.status(400).json({ error: 'empty comment' }); return; }
+
+    const ip = clientIp(req);
+    const ipHash = crypto.createHash('sha256').update(ip).digest('hex').slice(0, 16);
+    const rlKey = `commentrl:${ipHash}`; // shared site-wide comment rate limit, same bucket as daily-edition comments
+    const rl = await kv(['INCR', rlKey]);
+    const rlCount = parseInt(rl.result, 10) || 0;
+    if (rlCount === 1) { await kv(['EXPIRE', rlKey, '3600']); }
+    if (rlCount > 8) { res.status(429).json({ error: 'rate limited' }); return; }
+
+    const entry = { alias: escapeHtml(alias), text: escapeHtml(text), ts: new Date().toISOString() };
+    await kv(['RPUSH', `leader:comments:${id}`, JSON.stringify(entry)]);
+    await kv(['LTRIM', `leader:comments:${id}`, '-500', '-1']);
+    res.status(200).json({ ok: true, comment: entry });
+    return;
+  }
+
+  res.status(405).json({ error: 'method not allowed' });
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -162,5 +258,9 @@ module.exports = async (req, res) => {
   const action = (req.query || {}).action;
   if (action === 'comments') return comments(req, res);
   if (action === 'vote') return vote(req, res);
+  if (action === 'leader-stats') return leaderStats(req, res);
+  if (action === 'leader-like') return leaderLike(req, res);
+  if (action === 'leader-view') return leaderView(req, res);
+  if (action === 'leader-comments') return leaderComments(req, res);
   res.status(400).json({ error: 'unknown action' });
 };
