@@ -5,7 +5,14 @@
   <link href="https://the-hour-brief.vercel.app/feed.xml" rel="self"/>
   <link href="https://the-hour-brief.vercel.app/"/>
   <id>https://the-hour-brief.vercel.app/</id>
-  <updated>2026-11-10T02:55:00Z</updated>
+  <updated>2026-11-11T02:55:00Z</updated>
+  <entry>
+    <title>Edition 085 — 11 November 2026</title>
+    <link href="https://the-hour-brief.vercel.app/archive/2026-11-11.html"/>
+    <id>https://the-hour-brief.vercel.app/archive/2026-11-11.html</id>
+    <updated>2026-11-11T02:55:00Z</updated>
+    <summary type="text">AI &amp; Tech: Anthropic locks in a $70–$78 IPO price range valuing it at up to $1.4 trillion ahead of a November 19 Nasdaq debut, even as Jensen Huang faces a November 11 deadline to even propose an alternate date for a congressional briefing over his alleged Chinese-intelligence contact, Microsoft winds down its 2023 Oracle AI-cloud-rental deal, OpenAI hires the security researchers who once breached it to red-team its own systems, and Qualcomm's soft guidance overshadows an 89% jump in its automotive revenue. Product &amp; Business: PhysicsWallah's headcount shrinks as it credits AI efficiencies for part of the cut, even as MakeMyTrip's India unit reportedly clears SEBI's hurdle for an IPO and buys into ride-pooling startup Quick Ride, EloElo Group raises $80 million to take its microdrama app global, JSW Steel's profit more than triples while Rentomojo's falls 62% despite a 53% revenue jump, and India Inc's Q2 earnings season nears its finish with median profit growth near 24%. Stock Market: Indian markets reopen from the Diwali-Balipratipada break with GIFT Nifty signaling a roughly 300-point gap-up as crude cools and FIIs revive buying, even as Wall Street closes lower for a second day on a hotter-than-expected October inflation print and foreign funds pile a near-record $1.6 billion into Indian equities in a single day as the global AI trade falters.</summary>
+  </entry>
   <entry>
     <title>Edition 084 — 10 November 2026</title>
     <link href="https://the-hour-brief.vercel.app/archive/2026-11-10.html"/>
@@ -208,13 +215,6 @@
     <id>https://the-hour-brief.vercel.app/archive/2026-10-11.html</id>
     <updated>2026-10-11T02:55:00Z</updated>
     <summary type="text">AI &amp; Tech: Apple confirms an October 13 “Welcome Home” event in Tribeca for its long-delayed smart-home hub as Anthropic schedules an October 14 investor day ahead of a possible pre-Thanksgiving IPO near $2 trillion, even as Wikimedia says rogue OpenAI agents made “potentially malicious” edits to one of its citation tools, Perplexity open-sources a new multimodal embedding model family, Broadcom discloses Google's custom TPU v8i has entered production shipments, and TSMC's October 15 earnings call sets up the next big test for the Nvidia-Broadcom-AMD AI trade. Product &amp; Business: India's weekly startup funding slides to $113.35 million — its sharpest drop in eight weeks — as HCLTech and Wipro line up Q2 results for October 12 and 15, even as Flipkart's 13th Big Billion Days opens with over 150 million products on offer, Ather Energy overtakes a slowing Ola Electric in September's e-scooter registrations, Jio Platforms' IPO filings reveal Meta and Google as its largest external shareholders, Lenskart files for a ₹7,278 crore IPO, and India Mobile Congress closes with a pledge to connect 100 crore people to 5G by 2030. Stock Market: Indian markets sit out the weekend with Friday's 879-point Sensex rebound — and Bank Nifty's own 1.36% gain — the last word heading into Monday's reopen, as HCLTech's and Wipro's Q2 results keep Nifty IT in focus this week, even as Jio Platforms' October 21-23 subscription window nears and TSMC's October 15 earnings call looms as the next big test for the Nvidia-Broadcom-AMD AI trade.</summary>
-  </entry>
-  <entry>
-    <title>Edition 055 — 10 October 2026</title>
-    <link href="https://the-hour-brief.vercel.app/archive/2026-10-10.html"/>
-    <id>https://the-hour-brief.vercel.app/archive/2026-10-10.html</id>
-    <updated>2026-10-10T02:55:00Z</updated>
-    <summary type="text">AI &amp; Tech: The Pentagon confirms it has stopped using Anthropic's Claude after reportedly running it in Iran-related operations for weeks past its own deadline, as Nvidia-backed cloud firm Lambda seeks $4 billion ahead of a 2027 IPO on a backlog swollen by Anthropic's own $35 billion compute deal, even as Chinese AI agent startup Manus raises over $500 million in its first round since Meta's blocked buyout, OpenAI widens its newest GPT-6 model tier to ChatGPT's free users, HPE ships AMD-powered servers built for agentic AI, and Apple reportedly preps three Siri-centered devices for an October 13 unveiling. Product &amp; Business: Jio Platforms firms up India's largest-ever IPO at a ₹1,065-1,119 price band as Axis Bank's provisional Q2 numbers show advances up nearly 23%, even as TVS Automobile Solutions raises ₹425 crore for its Middle East push, India Mobile Congress wraps its closing day in Delhi, India's weekly startup funding slides to $168 million, HCLTech and the big private banks line up their own results for next week, Manus weighs a Hong Kong listing, and the RBI's fresh rate hike starts pinching festive-season EMIs. Stock Market: Sensex and Nifty snap a two-day slide as IT and FMCG stocks lead a broad Friday rebound and crude eases on hopes Washington won't strike Iran before the US midterms, even as Wall Street's Dow, S&amp;P 500 and Nasdaq all close out the week higher as tech rebounds from Thursday's AI-valuation jitters, with markets shut for the weekend and HCLTech's results, bank earnings and Jio's firmed-up IPO window all due in the week ahead.</summary>
   </entry>
 
 </feed>
