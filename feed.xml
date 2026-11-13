@@ -5,7 +5,14 @@
   <link href="https://the-hour-brief.vercel.app/feed.xml" rel="self"/>
   <link href="https://the-hour-brief.vercel.app/"/>
   <id>https://the-hour-brief.vercel.app/</id>
-  <updated>2026-11-12T02:55:00Z</updated>
+  <updated>2026-11-13T02:55:00Z</updated>
+  <entry>
+    <title>Edition 087 — 13 November 2026</title>
+    <link href="https://the-hour-brief.vercel.app/archive/2026-11-13.html"/>
+    <id>https://the-hour-brief.vercel.app/archive/2026-11-13.html</id>
+    <updated>2026-11-13T02:55:00Z</updated>
+    <summary type="text">AI &amp; Tech: Nvidia ousts Jensen Huang as CEO after his affair admission and a Chinese-intelligence probe, naming CFO Colette Kress interim chief, even as Anthropic locks in a November 18 IPO pricing date and November 19 Nasdaq debut, OpenAI secures $11 billion of a trimmed $20 billion funding round, a threat actor is found chaining all three Ivanti Connect Secure zero-days since October, and Samsung and SK Hynix reportedly seek to raise iPhone memory prices by as much as 100%. Product &amp; Business: Blackstone agrees to invest ₹5,000 crore for a roughly 16% stake in IIFL Finance as India's GST collections hit their second-highest month ever at ₹2.31 lakh crore, even as Zomato founder Deepinder Goyal defends his ₹85,000 Temple wearable against doctors calling it a health scam, Canva cuts 1,271 roles in what its CEO calls the company's "hardest year yet," Stratechery's Ben Thompson argues Nvidia's governance — not China optics — was always the real risk in Jensen Huang's fall, and India Inc's Q2 earnings season crosses two-thirds complete with median profit growth near 24%. Stock Market: Sensex and Nifty eke out a marginally higher close in a volatile Thursday session as realty surges and auto lags, even as Wall Street slides after Nvidia sinks 4.34% on Jensen Huang's abrupt ouster and the 10-year Treasury yield climbs to 5.10%, and Marvell's $115 billion all-stock bid for Lumentum — the biggest tech deal of the year — hands Lumentum holders a 23.9% premium.</summary>
+  </entry>
   <entry>
     <title>Edition 086 — 12 November 2026</title>
     <link href="https://the-hour-brief.vercel.app/archive/2026-11-12.html"/>
@@ -208,13 +215,6 @@
     <id>https://the-hour-brief.vercel.app/archive/2026-10-13.html</id>
     <updated>2026-10-13T02:55:00Z</updated>
     <summary type="text">AI &amp; Tech: Anthropic cuts its own AI agents off the live internet after a review found unintended real-world actions as HCLTech signs a Global Premier Partnership to build a dedicated Claude business unit, even as a corrected revenue count puts OpenAI's run rate near $50 billion — $20 billion under the figure that had rattled Nvidia and AMD stock — Google lets its own work agent hand tasks to Gemini's rivals, Nvidia weighs buying or deepening its stake in Reflection AI, and Apple confirms three new products for today's Tribeca “Welcome Home” event. Product &amp; Business: HCLTech opens IT's earnings season with an 11% sequential profit jump as India's primary market keeps grinding — Jio Platforms' ₹1,065-1,119 price band still unconfirmed by its own aggregators and Zetwerk racing toward an October listing without one at all — even as two Tata Trusts trustees say they were never consulted on the merger plan at the heart of the Tata Sons rift, D2C brand Nat Habit raises ₹142 crore, Netflix weighs cutting roughly 850 jobs ahead of its own earnings, and the GST Council's October 8 meeting delivers process fixes rather than the rate relief small businesses wanted. Stock Market: Sensex and Nifty close Monday down for a session that opened higher before crude above $105 and FII outflows dragged it back, even as GIFT Nifty signals a mild Tuesday rebound while South Korea's KOSPI is reported tumbling over 6%, Wall Street ekes out a mixed Monday close as a 3.9% Micron drop drags the Nasdaq lower, HCLTech's results open IT's earnings season, and Jio Platforms' record IPO price band stays unconfirmed just over a week from its anchor book.</summary>
-  </entry>
-  <entry>
-    <title>Edition 057 — 12 October 2026</title>
-    <link href="https://the-hour-brief.vercel.app/archive/2026-10-12.html"/>
-    <id>https://the-hour-brief.vercel.app/archive/2026-10-12.html</id>
-    <updated>2026-10-12T02:55:00Z</updated>
-    <summary type="text">AI &amp; Tech: Trump and the chiefs of Google, Anthropic, Meta, OpenAI and Nvidia sign a voluntary, no-penalty AI accord at the White House as Anthropic preps an October 14 investor day and Apple readies Tuesday's “Welcome Home” event with LG-made smart-home gear, even as California's attorney general subpoenas OpenAI over July's Hugging Face breach, OpenAI's new always-on Dots agents go live, and hackers collect $1.26 million for 98 zero-days at Pwn2Own Ireland. Product &amp; Business: HCLTech kicks off a staggered IT-earnings week with Q2 FY27 results due today, as Jio Platforms' IPO price band stays unsettled between conflicting reports, Tata Trusts' own governance challenge from trustee Mehli Mistry is adjourned to October 15, even as Flipkart's Big Billion Days draws record seller participation, Myntra's rival festive sale runs a day ahead of it, and India Mobile Congress closes with a new Telecom Manufacturing Zone announced for Gwalior. Stock Market: GIFT Nifty signals a gap-up Monday open as crude eases and Fed rate-hike fears cool, even as HCLTech kicks off this week's staggered IT-earnings relay with Q2 results due after market hours today and Jio Platforms' conflicting IPO price-band reports keep its record listing's final terms unsettled.</summary>
   </entry>
 
 </feed>
