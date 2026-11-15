@@ -703,6 +703,14 @@
       "headline_ai": "Anthropic formally opens its $70–$78 IPO roadshow with Google and Nvidia among $26 billion of strategic buyers and reportedly locks in a separate $3.4 billion deal for its own gas generators, even as Google DeepMind ships both Gemini Robotics 2.5 and AlphaGenome 2 in the same week, China’s draft export curbs covering 23 AI technologies near a November 15 comment deadline, and Microsoft’s November Patch Tuesday fixes roughly 1,094 flaws including an actively exploited Outlook zero-day",
       "headline_biz": "Manappuram Finance’s Q2 profit more than triples to ₹701 crore and Hitachi Energy India’s surges 63.5% on an order-inflow boom, as SoftBank’s Meesho-backing vehicle moves to sell a ₹1,174 crore stake and Bodhi Tree Systems buys a majority stake in Adyar Ananda Bhavan for $180 million, even as Lenskart’s profit more than doubles to ₹232 crore, Crystal Crop Protection files for a ₹450.9 crore IPO, NATCO Pharma posts a ₹203 crore Q2 profit, and product veteran Marty Cagan argues the feature-roadmap era is over",
       "headline_mkt": "Sensex and Nifty snap a three-day winning streak as rising crude and a hotter-than-expected October inflation print drag Dalal Street lower on Friday, even as Wall Street closes out its best week since August despite Nvidia sliding roughly 13% off its November 6 peak, and a Q2-earnings-driven session sends Hitachi Energy up over 10% and MSTC to a 20% upper circuit while Raksan Transformers drops 12.75%"
+    },
+    {
+      "date": "2026-11-15",
+      "edition": 89,
+      "path": "archive/2026-11-15.html",
+      "headline_ai": "Nvidia still has no named successor to CEO Jensen Huang a month into open scrutiny of his conduct, as Anthropic launches Claude Meetings into open beta on Google Meet and China’s public-comment window on export curbs covering 23 AI technologies closes today, even as Zyxel patches a zero-day that let attackers quietly compromise nearly 1,000 network switches across 48 countries, a second actively exploited Ivanti Connect Secure flaw’s federal patch deadline passes, and a decade-old OpenSSH bug gets weaponized within two days of its fix",
+      "headline_biz": "China blocks SoftBank’s $5.4 billion bid for ABB’s robotics division as Revolut confirms a $115 billion valuation after completing a secondary share sale, even as India’s Q2 earnings season rolls on with Coal India’s profit up 53% to ₹6,516 crore, Nykaa’s more than tripling to ₹101 crore, PB Fintech’s rising 43% to ₹192 crore, Bajaj Finance’s climbing 29% to ₹6,367 crore, and Hero MotoCorp’s up 41% to ₹1,861 crore",
+      "headline_mkt": "India’s October retail inflation breaches the RBI’s 6% ceiling for the first time in two years at 6.09%, as Brent crude logs its sharpest weekly drop since the pandemic to settle near $92, even as Bitcoin falls to a three-month low near $73,100 on hot US inflation data and rising Fed rate-hike bets"
     }
   ]
 }
