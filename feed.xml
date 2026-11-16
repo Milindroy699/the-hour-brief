@@ -5,7 +5,14 @@
   <link href="https://the-hour-brief.vercel.app/feed.xml" rel="self"/>
   <link href="https://the-hour-brief.vercel.app/"/>
   <id>https://the-hour-brief.vercel.app/</id>
-  <updated>2026-11-15T02:55:00Z</updated>
+  <updated>2026-11-16T02:55:00Z</updated>
+  <entry>
+    <title>Edition 090 — 16 November 2026</title>
+    <link href="https://the-hour-brief.vercel.app/archive/2026-11-16.html"/>
+    <id>https://the-hour-brief.vercel.app/archive/2026-11-16.html</id>
+    <updated>2026-11-16T02:55:00Z</updated>
+    <summary type="text">AI &amp; Tech: Nvidia heads into Tuesday's first earnings call since Jensen Huang's resignation with interim CEO Colette Kress at the helm, as Anthropic's IPO roadshow enters its final two days with up to 20% of shares reserved for retail investors ahead of Wednesday's pricing and Thursday's Nasdaq debut, even as Google, Samsung, Warby Parker and Gentle Monster all open preorders for Gemini-powered smart eyewear, Microsoft's November Patch Tuesday fixes roughly 1,090 flaws including an actively exploited Outlook zero-day, CISA adds an actively exploited Cisco BroadWorks flaw to its federal must-patch list, and OpenAI strikes a deal with PayPal to let ChatGPT agents complete purchases. Product &amp; Business: Oil India's Q2 profit rises 53% to ₹2,521 crore and Godrej Industries' more than doubles to ₹560 crore as India's Q2 earnings season winds down, Sun Pharma's profit holds near ₹1,990 crore on an 11.8% sales rise, Adani Enterprises' headline profit falls 55% even as its core business books record half-year EBITDA, and Shipping Corporation of India's profit more than triples to ₹577.8 crore, even as Indian startups raise just $162.9 million this week — down 32% — Coforge joins SpaceX's Grok enterprise network, and Stratechery's Ben Thompson argues the real risk in Jensen Huang's unraveling is governance, not national security. Stock Market: GIFT Nifty signals a positive Monday open near 25,242 as Brent crude eases toward $95 a barrel, even as Wall Street's own week of recovery sputtered to a halt on Friday with major indices closing mostly lower, Qualcomm's post-earnings guidance wobble still weighs on chip sentiment, and investors brace for Nvidia's Tuesday earnings and Anthropic's Wednesday IPO pricing to set the week's tone.</summary>
+  </entry>
   <entry>
     <title>Edition 089 — 15 November 2026</title>
     <link href="https://the-hour-brief.vercel.app/archive/2026-11-15.html"/>
@@ -208,13 +215,6 @@
     <id>https://the-hour-brief.vercel.app/archive/2026-10-18.html</id>
     <updated>2026-10-18T02:55:00Z</updated>
     <summary type="text">AI &amp; Tech: TSMC posts a record Q3 as AI chip demand keeps outrunning its own guidance even as ASML's own blowout quarter still gets punished by investors, while Apple's first foldable iPhone sells out within minutes despite a factory yield barely above 60%, Google quietly rations free Gemini users down to its smallest model, xAI ships Grok Voice 3.0 at flat pricing, and Microsoft undercuts OpenAI's brand-new Decisions API with a far cheaper rival built on a Chinese open-weight model. Product &amp; Business: Netflix cuts roughly 1,000 jobs in its biggest round since 2022 as Amazon trims about 1,000 more corporate roles during its own Prime sale, even as India's Boldfit raises over ₹400 crore to fund a retail push and Flipkart's Big Billion Days draws 6.3 million concurrent users at its opening, while Zetwerk's ₹5,012 crore IPO books head toward Monday's close, Jio Platforms' anchor book readies to open for what could be India's largest-ever listing, and Tata Trusts chair Noel Tata files a Bombay High Court caveat as the Tata Sons succession fight drags on. Stock Market: Indian markets sit out the weekend with Friday's third straight gain — Sensex up 0.56%, Nifty up 0.65%, led by IT after Tech Mahindra's and Wipro's results — the last word heading into Monday's reopen, as FIIs turn net buyers for a change even as Wall Street's chip-stock selloff stretches to an eighth session, its longest since 2008, and Jio Platforms' and Zetwerk's overlapping IPOs bear down on the week ahead.</summary>
-  </entry>
-  <entry>
-    <title>Edition 060 — 15 October 2026</title>
-    <link href="https://the-hour-brief.vercel.app/archive/2026-10-15.html"/>
-    <id>https://the-hour-brief.vercel.app/archive/2026-10-15.html</id>
-    <updated>2026-10-15T02:55:00Z</updated>
-    <summary type="text">AI &amp; Tech: OpenAI accuses a former employee who later rejoined Apple of taking more than 100 files on an unreleased device as a hotter-than-expected September inflation reading drags the Nasdaq to its worst day since July, even as TSMC posts a record Q3 on AI chip demand ahead of today's earnings call, Samsung guides to a nearly ninefold jump in quarterly profit on AI memory demand, and Indian AI startup funding surges 265% year-on-year to $438 million in the July-September quarter. Product &amp; Business: Zetwerk's ₹5,012 crore IPO opens for public bidding today as NPCI's 0.4% UPI merchant fee takes effect despite industry lobbying for a delay, even as HCLTech posts a record Q2 profit on 78% advanced-AI revenue growth, the RBI approves Anup Bagchi as HDFC Bank's next chief executive, Wipro and Jio Financial Services both head into tonight's results after today's board meetings, Bank of America's Q3 profit takes a $1.2 billion regulatory-settlement hit, and Morgan Stanley's quarterly growth still trails some analysts' expectations. Stock Market: Sensex and Nifty slip as pharma drags even as IT cushions the fall and DIIs keep buying what FIIs sell, even as Wall Street tumbles on a hotter-than-expected September inflation reading that hands the Nasdaq its worst day since July, GIFT Nifty signals a cautious Thursday open, Zetwerk's ₹5,012 crore IPO opens for public bidding, and Wipro heads into tonight's results after today's board meeting.</summary>
   </entry>
 
 </feed>
