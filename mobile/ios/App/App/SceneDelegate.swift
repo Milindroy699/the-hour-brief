@@ -34,6 +34,17 @@ class MainViewController: CAPBridgeViewController {
 
     override func capacitorDidLoad() {
         super.capacitorDidLoad()
+        // Between one page and the next, WebKit briefly shows nothing but the web view's own background. That was the
+        // splash's near-black (#0c0d15, backgroundColor in capacitor.config.json), so every switch to or from Voices
+        // flashed black (owner, 2026-11-18). Use the pages' own background instead, light or dark with the phone
+        // (app.css --bg: #faf9fd / #121316). The launch splash is unaffected: it sits on top until the page is up.
+        let pageBackground = UIColor { traits in
+            traits.userInterfaceStyle == .dark
+                ? UIColor(red: 0x12 / 255.0, green: 0x13 / 255.0, blue: 0x16 / 255.0, alpha: 1)
+                : UIColor(red: 0xfa / 255.0, green: 0xf9 / 255.0, blue: 0xfd / 255.0, alpha: 1)
+        }
+        webView?.backgroundColor = pageBackground
+        webView?.scrollView.backgroundColor = pageBackground
         guard let webView = webView, let capacitorDelegate = webView.navigationDelegate else { return }
         let guardDelegate = NavigationGuard(wrapping: capacitorDelegate)
         navigationGuard = guardDelegate                  // the web view holds its navigation delegate weakly
