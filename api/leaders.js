@@ -29,11 +29,23 @@ const CONFIG_PATH = path.join(__dirname, '..', 'leaders.config.json');
 // youtube-transcript.io's free plan is 25 transcripts a month, and the API doesn't report usage, so we count our own
 // (one credit per video id requested). Raise YTT_MONTHLY_LIMIT in Vercel if the plan changes.
 const YTT_MONTHLY_LIMIT = parseInt(process.env.YTT_MONTHLY_LIMIT, 10) || 25;
+const FETCH_TIMEOUT_MS = 15000;
+const RUN_LOG_KEY = 'leader:runs';   // last 20 real runs, newest first — read them with ?dry=1
+const LOCK_KEY = 'leader:lock';
 
 async function kv(command) {
   const p = command.map((c) => encodeURIComponent(c)).join('/');
-  const res = await fetch(`${KV_URL}/${p}`, { headers: { Authorization: `Bearer ${KV_TOKEN}` } });
+  const res = await fetch(`${KV_URL}/${p}`, { headers: { Authorization: `Bearer ${KV_TOKEN}` }, signal: AbortSignal.timeout(10000) });
   return (await res.json()).result;
+}
+
+// Every outbound read gets a timeout and a status check. Without them a feed that errors parses as zero entries —
+// indistinguishable from "nothing new this week" — and a hung request can eat the whole function duration. Either
+// way the run used to end without a trace (the Nov 16, 2026 run left nothing behind to diagnose).
+async function getText(url) {
+  const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+  if (!res.ok) throw new Error(`HTTP ${res.status} from ${new URL(url).hostname}`);
+  return res.text();
 }
 
 function authorized(req) {
@@ -104,6 +116,7 @@ async function fetchTranscripts(videoIds) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ ids: batch }),
+        signal: AbortSignal.timeout(40000),
       });
       const data = await r.json();
       // Confirmed shape (live-tested): a plain array, each item {id, text, tracks: [{transcript:[{text,...}]}], ...}.
@@ -144,6 +157,7 @@ async function commitPending(categories) {
       content: Buffer.from(JSON.stringify(body, null, 2)).toString('base64'),
       branch: 'main',
     }),
+    signal: AbortSignal.timeout(20000),
   });
   if (!res.ok) {
     const detail = await res.text().catch(() => '');
@@ -171,7 +185,8 @@ const MAX_CONTENT_CHARS = 80000; // ~2h of speech; keeps pending files and the w
 // ingested count: otherwise a quiet week would quietly backfill the channel's older videos into this week's roundup.
 // A creator's first run has nothing seen yet, so it takes the latest `limit` (default 2) regardless of age.
 async function candidates(creator) {
-  const xml = await (await fetch(feedUrl(creator))).text();
+  const xml = await getText(feedUrl(creator));
+  if (!/<(rss|feed)\b/.test(xml)) throw new Error('feed returned something that is not RSS/Atom');
   let entries = parseFeed(xml);
   if (creator.titleFilter) entries = entries.filter((e) => e.title.toLowerCase().includes(creator.titleFilter.toLowerCase()));
   if (creator.categoryFilter) entries = entries.filter((e) => e.categories.includes(creator.categoryFilter));
@@ -197,12 +212,17 @@ function mondaysLeft(now) {
   for (const m = d.getUTCMonth(); d.getUTCMonth() === m; d.setUTCDate(d.getUTCDate() + 1)) if (d.getUTCDay() === 1) n += 1;
   return Math.max(1, n);
 }
+// Monday has several cron slots (retries), so the share is fixed per day: a later slot only gets what an earlier one
+// that same day left of the day's share, not a fresh share of its own.
 async function transcriptBudget() {
   const now = new Date();
   const key = `leader:ytt:${now.toISOString().slice(0, 7)}`;
+  const dayKey = `leader:ytt:${now.toISOString().slice(0, 10)}`;
   const used = parseInt(await kv(['GET', key]), 10) || 0;
+  const today = parseInt(await kv(['GET', dayKey]), 10) || 0;
   const remaining = Math.max(0, YTT_MONTHLY_LIMIT - used);
-  return { key, limit: YTT_MONTHLY_LIMIT, used, remaining, thisRun: Math.ceil(remaining / mondaysLeft(now)) };
+  const share = Math.ceil((remaining + today) / mondaysLeft(now));
+  return { key, dayKey, limit: YTT_MONTHLY_LIMIT, used, remaining, usedToday: today, thisRun: Math.max(0, Math.min(remaining, share - today)) };
 }
 // When the budget is short, take one video per pillar before a second from any (newest first within a pillar), so
 // every category keeps getting covered.
@@ -232,8 +252,9 @@ async function runFetch({ dry = false } = {}) {
           items: fresh.map((e) => ({ title: e.title, published: e.time ? new Date(e.time).toISOString() : e.date, url: e.link })) });
       } catch (e) { report.errors.push(`${creator.name}: ${e.message}`); }
     }
-    const { key, ...budget } = await transcriptBudget();
+    const { key, dayKey, ...budget } = await transcriptBudget();
     report.transcriptBudget = budget;
+    report.recentRuns = ((await kv(['LRANGE', RUN_LOG_KEY, '0', '9'])) || []).map((r) => { try { return JSON.parse(r); } catch (e) { return r; } });
     report.durationMs = Date.now() - start;
     return report;
   }
@@ -246,6 +267,10 @@ async function runFetch({ dry = false } = {}) {
       content: content.slice(0, MAX_CONTENT_CHARS), styleAuthor: creator.styleAuthor || null,
     });
   };
+  // Items are only marked seen once this run's pending file is safely committed (or was attempted and judged not
+  // worth a slot). If the commit fails, nothing is marked, so the next slot or run picks the same items up again.
+  const attempted = [];
+  const markAttempted = (creator, e) => attempted.push([creator.source, e.guid]);
 
   // Pass 1: find what's new per creator. YouTube transcripts are fetched afterwards in one batch, so several
   // channels don't each make their own request and trip youtube-transcript.io's 5-requests-per-10s limit.
@@ -258,8 +283,8 @@ async function runFetch({ dry = false } = {}) {
       for (const e of fresh) {
         if (creator.sourceType === 'youtube') { videos.push({ creator, e }); continue; }
         let content = '';
-        try { content = extractArticleText(await (await fetch(e.link)).text()); } catch (err) { /* skipped below */ }
-        await kv(['SADD', `leader:seen:${creator.source}`, e.guid]);
+        try { content = extractArticleText(await getText(e.link)); } catch (err) { report.errors.push(`${creator.name}: article fetch failed (${err.message})`); continue; }
+        markAttempted(creator, e);
         if (content.length < 300) { report.skipped.push(`${creator.name}: "${e.title}" (no readable text)`); continue; }
         add(creator, e, content);
       }
@@ -271,7 +296,7 @@ async function runFetch({ dry = false } = {}) {
   // Pass 2: transcripts in one batch, within this run's share of the monthly budget. Videos over budget are left
   // unseen, not marked done.
   if (videos.length) {
-    const { key, ...budget } = await transcriptBudget();
+    const { key, dayKey, ...budget } = await transcriptBudget();
     report.transcriptBudget = budget;
     const batch = pickByPillar(videos, budget.thisRun);
     videos.filter((v) => !batch.includes(v)).forEach(({ creator, e }) => {
@@ -280,26 +305,42 @@ async function runFetch({ dry = false } = {}) {
     if (batch.length) {
       await kv(['INCRBY', key, String(batch.length)]);
       await kv(['EXPIRE', key, String(40 * 86400)]);
+      await kv(['INCRBY', dayKey, String(batch.length)]);
+      await kv(['EXPIRE', dayKey, String(2 * 86400)]);
       report.transcriptBudget.used += batch.length;
     }
     const transcripts = batch.length ? await fetchTranscripts(batch.map((v) => v.e.videoId)) : {};
     for (const { creator, e } of batch) {
-      await kv(['SADD', `leader:seen:${creator.source}`, e.guid]); // attempted once either way
+      markAttempted(creator, e); // attempted once either way
       const content = transcripts[e.videoId] || '';
       if (content.length < MIN_TRANSCRIPT_CHARS) { report.skipped.push(`${creator.name}: "${e.title}" (${content ? 'too short' : 'no transcript'})`); continue; }
       add(creator, e, content);
     }
   }
 
+  report.committed = null;
+  let commitOk = true;
   if (Object.keys(byCategory).length) {
-    const committedPath = await commitPending(byCategory);
-    report.committed = committedPath;
-  } else {
-    report.committed = null;
+    try {
+      report.committed = await commitPending(byCategory);
+    } catch (e) {
+      commitOk = false;
+      report.errors.push(e.message);
+    }
   }
+  if (commitOk) for (const [source, guid] of attempted) await kv(['SADD', `leader:seen:${source}`, guid]);
 
   report.durationMs = Date.now() - start;
   return report;
+}
+
+// One line per real run (cron or manual), newest first, so a quiet Monday can be told apart from a run that never
+// happened: Vercel Cron delivery is best effort, and a dropped delivery leaves no runtime log at all.
+async function logRun(entry) {
+  try {
+    await kv(['LPUSH', RUN_LOG_KEY, JSON.stringify(entry)]);
+    await kv(['LTRIM', RUN_LOG_KEY, '0', '19']);
+  } catch (e) { /* logging must never fail the run */ }
 }
 
 module.exports = async (req, res) => {
@@ -313,10 +354,39 @@ module.exports = async (req, res) => {
     res.status(500).json({ error: 'YTT_IO_API_TOKEN or GH_COMMIT_TOKEN not configured' });
     return;
   }
-  try {
-    const report = await runFetch({ dry: (req.query || {}).dry === '1' });
-    res.status(200).json({ ok: true, ...report });
-  } catch (e) {
-    res.status(500).json({ ok: false, error: e.message });
+  const dry = (req.query || {}).dry === '1';
+  if (dry) {
+    try { res.status(200).json({ ok: true, ...(await runFetch({ dry: true })) }); }
+    catch (e) { res.status(500).json({ ok: false, error: e.message }); }
+    return;
   }
+
+  // Monday has several cron slots, and Vercel can deliver one slot twice; the lock keeps two runs from committing the
+  // same items. Each run is otherwise safe to repeat: it only takes what is still unseen.
+  const schedule = req.headers['x-vercel-cron-schedule'];
+  const trigger = schedule ? `cron ${schedule}` : 'manual';
+  const at = new Date().toISOString();
+  const runId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const locked = await kv(['SET', LOCK_KEY, runId, 'NX', 'EX', '300']);
+  if (locked !== 'OK') {
+    await logRun({ at, trigger, ok: true, skipped: 'another run was in progress' });
+    res.status(200).json({ ok: true, skipped: 'another run is in progress' });
+    return;
+  }
+  // Log and unlock before responding: work after the response is sent may never run on Vercel. (If unlocking fails,
+  // the lock expires on its own after 5 minutes, well before the next slot.)
+  let status = 200, body;
+  try {
+    const report = await runFetch();
+    await logRun({ at, trigger, ok: !report.errors.length, newItems: report.newItems, committed: report.committed,
+      transcripts: report.transcriptBudget ? `${report.transcriptBudget.used}/${report.transcriptBudget.limit}` : undefined,
+      skipped: report.skipped.length, errors: report.errors.slice(0, 10), durationMs: report.durationMs });
+    body = { ok: true, ...report };
+  } catch (e) {
+    await logRun({ at, trigger, ok: false, errors: [e.message] });
+    status = 500;
+    body = { ok: false, error: e.message };
+  }
+  try { if ((await kv(['GET', LOCK_KEY])) === runId) await kv(['DEL', LOCK_KEY]); } catch (e) { /* expires on its own */ }
+  res.status(status).json(body);
 };

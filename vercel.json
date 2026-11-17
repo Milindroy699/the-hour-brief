@@ -59,7 +59,15 @@
     },
     {
       "path": "/api/leaders",
+      "schedule": "0 5 * * 1"
+    },
+    {
+      "path": "/api/leaders",
       "schedule": "0 6 * * 1"
+    },
+    {
+      "path": "/api/leaders",
+      "schedule": "0 7 * * 1"
     }
   ]
 }
