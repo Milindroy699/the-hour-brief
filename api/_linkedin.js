@@ -31,7 +31,13 @@ const MODES = {
   org: { id: 'LINKEDIN_CLIENT_ID', secret: 'LINKEDIN_CLIENT_SECRET', scopes: 'w_organization_social r_organization_social', key: 'li:auth' },
   member: { id: 'LINKEDIN_MEMBER_CLIENT_ID', secret: 'LINKEDIN_MEMBER_CLIENT_SECRET', scopes: 'openid profile w_member_social', key: 'li:member-auth' },
 };
-const creds = (mode) => ({ id: process.env[MODES[mode].id], secret: process.env[MODES[mode].secret] });
+// The personal-profile app falls back to LINKEDIN_CLIENT_ID/SECRET when its own pair isn't set (the owner may run just
+// one self-serve app until the Page's Community Management API app is approved). Always a matching id+secret pair.
+const creds = (mode) => {
+  const m = MODES[mode];
+  if (mode === 'member' && !(process.env[m.id] && process.env[m.secret])) return { id: process.env.LINKEDIN_CLIENT_ID, secret: process.env.LINKEDIN_CLIENT_SECRET };
+  return { id: process.env[m.id], secret: process.env[m.secret] };
+};
 const memberConfigured = () => !!(creds('member').id && creds('member').secret);
 const VERSION = process.env.LINKEDIN_VERSION || '202610';
 const PILLAR_ORDER = ['tech-ai', 'business', 'product', 'finance'];
