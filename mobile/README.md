@@ -23,7 +23,7 @@ The web-side glue lives in the site repo root, not here:
 - [`../capacitor-bridge.js`](../capacitor-bridge.js) — native enhancements, a no-op in a normal browser (in-app nav, share sheet, haptics, pull-to-refresh, "new edition" banner, offline notice, status bar, gated push; hides the comments section in-app for store UGC rules)
 - [`../mobile.css`](../mobile.css) — phone-only (`<link media="(max-width: 640px)">`) layout: compact masthead, single-row lane nav, collapsible-story styling, 44px touch targets, 16px inputs
 - [`../mobile.js`](../mobile.js) — phone-only reading enhancements: collapsible story bodies (headline + Takeaway, tap to expand), the About "More" toggle
-- [`../api/register-push.js`](../api/register-push.js) — stores device push tokens in Redis
+- [`../api/track.js`](../api/track.js) — device pings (app opens), push token registration, and feature-adoption events, all in Redis
 
 Every edition page (`index.html` + `archive/*.html`) must keep the three
 `<head>` lines that load `capacitor-bridge.js`, `mobile.css`, and `mobile.js`.
@@ -181,13 +181,18 @@ linked into the Xcode project via Swift Package Manager.
 `Messaging.messaging().apnsToken`, then forwards the **FCM token** (not the raw APNs
 one) from `MessagingDelegate.didReceiveRegistrationToken` to Capacitor via
 `.capacitorDidRegisterForRemoteNotifications`. This is what `capacitor-bridge.js`'s
-`registration` listener POSTs to `/api/register-push` — an FCM token on both platforms,
+`registration` listener POSTs to `/api/track` — an FCM token on both platforms,
 which is what the server-side Firebase Admin SDK can actually send to.
 
-**Backend (`/api/_push.js`, `/api/push-send.js`):**
-- `register-push.js` stores tokens in Vercel KV (`push:tokens:ios` / `push:tokens:android`
-  sets) and a `push:lastseen` sorted set (updated on every app launch, since the bridge
-  re-registers each time — this doubles as activity tracking for re-engagement).
+**Backend (`/api/_push.js`, `/api/push-send.js`, `/api/track.js`):**
+- `track.js` (2026-10-29, replaced the old single-purpose `register-push.js` to stay within
+  the Hobby plan's 12-function cap) does three things in one endpoint: push token
+  registration (`push:tokens:ios` / `push:tokens:android` sets, `push:lastseen` sorted set —
+  unchanged behavior), app-level engagement pings (`device:lastseen`, `device:firstseen`,
+  `device:platform`, `active:<date>` — independent of push permission, which most readers
+  never grant, so this is the only real DAU/WAU/MAU and retention signal), and
+  allowlisted feature-adoption events (`event:<name>:<date>` counters — `listen_play` is the
+  first, fired from `listen.js` since Listen had no adoption signal at all before this).
 - Both automatic sends piggyback `post-digest.js`'s existing Vercel Cron slots rather than
   spending more of the project's limited cron jobs: the daily "edition is ready" push
   (`sendEditionPush`) runs every firing, and the weekly win-back push to devices not seen

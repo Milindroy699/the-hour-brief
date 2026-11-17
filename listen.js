@@ -483,8 +483,24 @@
     if (typeof startAt === 'number') at = Math.max(0, Math.min(S.list.length - 1, startAt));   // a chapter picked in the hub
     if (S.src === 'tts' && !synth) { S.state = 'error'; render(); return; }
     S.state = 'playing';
+    trackListenPlay();
     enter(at);
     go();
+  }
+
+  // Listen had no adoption/engagement signal at all before this (2026-10-29) — every other
+  // feature (quiz, votes, leagues) already had one. deviceId is only present in the apps
+  // (capacitor-bridge.js); web plays still count toward the daily total, just not uniquely.
+  function trackListenPlay() {
+    var deviceId = null;
+    try { deviceId = localStorage.getItem('hb-device-id-v1'); } catch (e) {}
+    try {
+      fetch('/api/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event: 'listen_play', deviceId: deviceId || undefined })
+      }).catch(function () {});
+    } catch (e) {}
   }
   function toggle() {
     if (S.state === 'playing') { S.state = 'paused'; clearTimers(); S.gen++; haltAll(); render(); }

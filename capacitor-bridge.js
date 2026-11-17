@@ -22,6 +22,29 @@
     try { P.SplashScreen.hide(); } catch (e) {}
   }
 
+  // ---- App-level engagement ping (2026-10-29) ----
+  // A persistent anonymous ID, independent of push (most readers never grant notification
+  // permission, so push:tokens alone massively undercounts real usage). Sent to /api/track on
+  // every native launch so device:lastseen/firstseen and active:<date> in Redis can answer
+  // DAU/WAU/MAU and retention — none of that existed before today, only push-registered devices did.
+  var platform = '';
+  try { platform = Cap.getPlatform(); } catch (e) {}
+  var deviceId;
+  try {
+    deviceId = localStorage.getItem('hb-device-id-v1');
+    if (!deviceId) {
+      deviceId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('d' + Date.now() + Math.random().toString(36).slice(2));
+      localStorage.setItem('hb-device-id-v1', deviceId);
+    }
+  } catch (e) {}
+  if (deviceId && platform) {
+    fetch('/api/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deviceId: deviceId, platform: platform })
+    }).catch(function () {});
+  }
+
   // ---- One-time fresh start on the 1.1.2 app-store release ----
   // Clears saved stories and quiz/streak progress once per device, the first time it reports
   // running 1.1.2, so upgraders get a clean slate on the new app rather than old local state.
@@ -517,16 +540,16 @@
   // ---- Push notifications ----
   // @capacitor/push-notifications + Firebase (google-services.json / GoogleService-Info.plist, plus the
   // APNs key uploaded in the Firebase console) wired in 2026-10-28. The sender jobs are
-  // /api/push-edition.js (daily, Vercel Cron) and /api/push-reengagement.js (weekly), both reading the
-  // token sets this block populates below via /api/register-push.js. No separate site-wide kill switch
-  // is needed: this whole file already no-ops outside Capacitor, and P.PushNotifications only exists
-  // when the plugin is actually compiled into a native build.
+  // sendEditionPush (daily) and sendReengagementPush (weekly), both reading the token sets this
+  // block populates below via /api/track.js. No separate site-wide kill switch is needed: this
+  // whole file already no-ops outside Capacitor, and P.PushNotifications only exists when the
+  // plugin is actually compiled into a native build.
   if (P.PushNotifications) {
     P.PushNotifications.addListener('registration', function (token) {
-      fetch('/api/register-push', {
+      fetch('/api/track', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: token.value, platform: Cap.getPlatform() })
+        body: JSON.stringify({ token: token.value, platform: platform, deviceId: deviceId })
       }).catch(function () {});
     });
     P.PushNotifications.addListener('pushNotificationActionPerformed', function (action) {
