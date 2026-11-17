@@ -749,9 +749,26 @@ html.hb-deck-open #mob-progress, html.hb-deck-open #mob-top { display: none; }
 .dk-pager { justify-content: space-between; gap: 10px; padding: 6px 16px 12px; }
 .dk-pager .dk-nav { position: static; top: auto; flex: none; width: 46px; height: 46px; }
 .dk-pager .dk-count { flex: 1; min-width: 0; text-align: center; font-family: var(--hb-label); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-/* Stacked deck: card faces tilt around a point near their bottom, so a swipe reads as a throw (transforms set in
-   cards.js on .dk-face, never on .dk-card, which is the scroll-snap target). */
+/* Stacked deck: card faces tilt around a point near their bottom, so a swipe reads as a throw. Never transform the
+   .dk-card itself: it's the scroll-snap target, and Chrome snaps to a transformed target's moved box. */
 .dk-face { transform-origin: 50% 85%; }
+/* Scroll-driven version (cards.js adds .dk-sda when supported): each card's face follows its own card's position in the
+   track, run by the browser in lockstep with the swipe. Progress 0% = the card just off the right edge (next up),
+   50% = centred, 100% = just off the left edge. 92cqw = 92% of the track's width (the track is the size container).
+   The face's z-index rises with progress, so a card leaving to the left always sits above the one coming in. */
+@supports (animation-timeline: --dk) and (view-timeline-name: --dk) {
+  .dk-sda .dk-track { container-type: inline-size; }
+  .dk-sda .dk-card { view-timeline: --dk-card x; }
+  .dk-sda .dk-face { animation: dk-stack linear both; animation-timeline: --dk-card; }
+}
+@keyframes dk-stack {
+  0% { transform: translate3d(-92cqw, 14px, 0) scale(0.94); z-index: 1; }
+  50% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); z-index: 50; }
+  100% { transform: translate3d(0, 0, 0) scale(1) rotate(-5deg); z-index: 100; }
+}
+.dk-sda .dk-face { transition: opacity 0.25s ease; }
+.dk-sda .dk-card.dk-far .dk-face { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .dk-sda .dk-face { animation: none; transition: none; } .dk-sda .dk-card.dk-far .dk-face { opacity: 1; } }
 .dk-nav svg { width: 20px; height: 20px; stroke-width: 2.4; }
 .dk-nav:disabled { opacity: 0.25; cursor: default; }
 .dk-nav:not(:disabled):active { transform: scale(0.92); }

@@ -364,7 +364,7 @@
   // ---- The deck ----
   function build() {
     if (deck) return;
-    deck = mk('section', 'hb-deck');
+    deck = mk('section', 'hb-deck' + (sda && !reduceMotion ? ' dk-sda' : ''));
     deck.hidden = true;
     deck.setAttribute('role', 'region');
     deck.setAttribute('aria-roledescription', 'carousel');
@@ -530,6 +530,9 @@
     cards.forEach(function (x, i) {
       if (canInert) x.el.inert = i !== idx;
       else x.el.setAttribute('aria-hidden', String(i !== idx));
+      // Stacked deck: only the next card waits behind the current one; anything further ahead stays out of sight
+      // (its scroll-driven position would otherwise show a sliver at the right edge mid-swipe). Set on card change only.
+      x.el.classList.toggle('dk-far', i > idx + 1);
     });
     syncFab();
     maybeShowSwipeHint();
@@ -544,31 +547,43 @@
 
   // Stacked deck (owner's call, 2026-11-18): the next card waits just behind the current one, a little smaller and lower so
   // it peeks out on the right; swiping slides the current card off with a slight tilt while the one behind rises into
-  // place, and going back brings the earlier card in over the top. Purely visual, read off the track's own scroll
-  // position, so swiping, the arrows and the keyboard work exactly as before. The transforms go on each card's face,
-  // never on the .dk-card itself: that is the scroll-snap target, and Chrome snaps to a transformed target's moved box
-  // (it landed the deck ~31px past each card). The .dk-card only gets a z-index for the layering. Reduced motion: none.
+  // place, and going back brings the earlier card in over the top. Swiping, the arrows and the keyboard work as before.
+  // Where the browser supports scroll-driven animations (Chrome/Android WebView, Safari 26+), the whole effect is CSS
+  // (.dk-sda in app.css), run by the browser in lockstep with the scroll, with no per-frame JavaScript at all. A JS
+  // version driven by scroll events always trailed the finger by a frame, which read as a judder (owner, 2026-11-18).
+  // Older browsers keep the JS version below, kept lean: only the cards near the screen, only values that changed.
+  // Transforms go on each card's face, never on the .dk-card (the scroll-snap target: Chrome snaps to a transformed
+  // target's moved box). Reduced motion: no effect at all.
+  var sda = !!(window.CSS && CSS.supports && CSS.supports('animation-timeline: --dk') && CSS.supports('view-timeline-name: --dk'));
+  var stacked = [];                                   // faces the JS fallback has styled, so it can clear them later
   function stack() {
-    if (!track || !cards.length || reduceMotion) return;
+    if (!track || !cards.length || reduceMotion || sda) return;
     var w = track.clientWidth || 1, pos = track.scrollLeft / w;
-    cards.forEach(function (c, i) {
-      var face = c.face || (c.face = c.el.querySelector('.dk-face'));
-      if (!face) return;
+    var lo = Math.max(0, Math.floor(pos) - 1), hi = Math.min(cards.length - 1, Math.ceil(pos) + 2), now = [];
+    for (var i = lo; i <= hi; i++) {
+      var c = cards[i], face = c.face || (c.face = c.el.querySelector('.dk-face'));
+      if (!face) continue;
       var d = i - pos, t = '', z = '', op = '';
-      if (d > 2 || d < -1.5) { t = ''; }
-      else if (d > 0) {                                   // waiting behind: cancel most of its sideways travel
+      if (d > 0 && d <= 2) {                              // waiting behind: cancel most of its sideways travel
         var k = Math.min(d, 1);
         t = 'translate3d(' + (-k * w * 0.92).toFixed(1) + 'px,' + (k * 14).toFixed(1) + 'px,0) scale(' + (1 - k * 0.06).toFixed(4) + ')';
         z = String(10 - Math.ceil(d));
-        op = d > 1 ? String(Math.max(0, 2 - d).toFixed(3)) : '';
-      } else if (d < 0) {                                 // leaving (or coming back) over the top, tilting a little
-        t = 'rotate(' + (d * 5).toFixed(2) + 'deg)';
+        op = d > 1 ? Math.max(0, 2 - d).toFixed(3) : '';
+      } else if (d < 0 && d >= -1.5) {                    // leaving (or coming back) over the top, tilting a little
+        t = 'translate3d(0,0,0) rotate(' + (d * 5).toFixed(2) + 'deg)';
         z = '12';
-      } else { z = '11'; }
+      } else if (d === 0) { z = '11'; }
       if (face.style.transform !== t) face.style.transform = t;
-      face.style.opacity = op;
-      c.el.style.zIndex = z;
+      if (face.style.opacity !== op) face.style.opacity = op;
+      if (c.el.style.zIndex !== z) c.el.style.zIndex = z;
+      var hint = t ? 'transform' : '';
+      if (face.style.willChange !== hint) face.style.willChange = hint;
+      now.push(face);
+    }
+    stacked.forEach(function (f) {                        // cards that drifted out of range go back to rest
+      if (now.indexOf(f) < 0) { f.style.transform = ''; f.style.opacity = ''; f.style.willChange = ''; if (f.parentNode) f.parentNode.style.zIndex = ''; }
     });
+    stacked = now;
   }
 
   function onScroll() {
