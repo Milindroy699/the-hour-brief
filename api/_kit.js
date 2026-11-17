@@ -113,14 +113,31 @@ async function toTelegram(s, l) {
   await tg('sendPhoto', { chat_id: chat, photo: l.image, caption: `${withApp(s.status)}\n\nPost kit: ${l.kit}`.slice(0, 1024) });
   return { ok: true };
 }
-// The day's LinkedIn post as its own message (its own dedupe key, so it can follow later the same day).
-async function toTelegramPost(s) {
+// The day's LinkedIn post as its own message (its own dedupe key, so it can follow later the same day). When it already
+// went out on the owner's profile automatically, the message says so instead of asking them to post it.
+async function toTelegramPost(s, l, ctx = {}) {
   if (!process.env.TELEGRAM_BOT_TOKEN) return { ok: false, skipped: 'telegram bot not set up' };
   const chat = await telegramChat();
   if (!chat) return { ok: false, skipped: 'telegram not paired yet (message the bot, then pair)' };
   const p = primaryPost(s);
-  await tg('sendMessage', { chat_id: chat, text: `LinkedIn post · ${p.label}\n\n${withApp(p.text)}`.slice(0, 4096), link_preview_options: { is_disabled: true } });
+  const head = ctx.memberPosted ? `✅ Posted to your LinkedIn profile · ${p.label}` : `LinkedIn post · ${p.label}`;
+  await tg('sendMessage', { chat_id: chat, text: `${head}\n\n${withApp(p.text)}`.slice(0, 4096), link_preview_options: { is_disabled: true } });
   return { ok: true, kind: p.kind };
+}
+
+// A one-off note to the owner on Telegram (e.g. the LinkedIn reconnect reminder), once per `key`.
+async function notifyOwner(text, key) {
+  if (!process.env.TELEGRAM_BOT_TOKEN) return { ok: false, skipped: 'telegram bot not set up' };
+  const chat = await telegramChat();
+  if (!chat) return { ok: false, skipped: 'telegram not paired yet' };
+  if (key && !(await claim(key, false))) return { ok: true, skipped: 'already sent' };
+  try {
+    await tg('sendMessage', { chat_id: chat, text: String(text).slice(0, 4096), link_preview_options: { is_disabled: true } });
+    return { ok: true };
+  } catch (e) {
+    if (key) await release(key);
+    return { ok: false, error: e.message };
+  }
 }
 
 // ---- Push to the owner's own phone ----
@@ -152,7 +169,7 @@ async function toOwnerPush(s, l) {
 }
 
 // `only` limits a run to one channel (e.g. resending just the WhatsApp pick by hand with force).
-async function deliverKit({ date = istToday(), force = false, dry = false, only = null } = {}) {
+async function deliverKit({ date = istToday(), force = false, dry = false, only = null, memberPosted = false } = {}) {
   const s = await loadSocial(date);
   if (!s) return { ok: false, date, skipped: 'no social post for this date yet' };
   const l = links(s);
@@ -163,12 +180,14 @@ async function deliverKit({ date = istToday(), force = false, dry = false, only 
     const key = `kit:${name}:${date}`;
     if (!(await claim(key, force))) { result[name] = { ok: true, skipped: 'already sent' }; continue; }
     try {
-      result[name] = await fn(s, l);
+      result[name] = await fn(s, l, { memberPosted });
     } catch (e) {
       result[name] = { ok: false, error: e.message };
     }
-    // Not sent (not set up yet, or failed): free the slot so a later cron run can still send it today.
+    // Not sent (not set up yet, or failed): free the slot so a later cron run can still send it today. A forced
+    // (by-hand) send that worked still counts as today's, so the scheduled run doesn't send it again.
     if (!result[name].ok && !force) await release(key);
+    if (force && result[name].ok && !result[name].skipped) await kv(['SET', key, '1', 'EX', DEDUPE_TTL]).catch(() => {});
   }
   return result;
 }
@@ -185,7 +204,9 @@ async function sendInsightPush({ date = istToday(), force = false, dry = false }
   const key = `push:insight-sent:${date}`;
   if (!(await claim(key, force))) return { ok: true, skipped: 'already pushed', date };
   try {
-    return { ok: true, date, ...(await sendToTokens(tokens, payload)) };
+    const out = { ok: true, date, ...(await sendToTokens(tokens, payload)) };
+    if (force) await kv(['SET', key, '1', 'EX', DEDUPE_TTL]).catch(() => {});
+    return out;
   } catch (e) {
     if (!force) await release(key);
     return { ok: false, error: 'push send failed', detail: e.message };
@@ -220,4 +241,4 @@ async function pairTelegram({ dry = false } = {}) {
   return { ok: true, dry, chat: list[0] };
 }
 
-module.exports = { APP_LINKS, withApp, beforeTags, primaryPost, leadersWhatsApp, istToday, loadSocial, links, deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram };
+module.exports = { APP_LINKS, withApp, beforeTags, primaryPost, leadersWhatsApp, notifyOwner, istToday, loadSocial, links, deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram };

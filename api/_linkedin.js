@@ -11,14 +11,28 @@
 // issues a refresh token (Community Management API apps get one, valid for a year); otherwise reconnect.
 // Env: LINKEDIN_CLIENT_ID, LINKEDIN_CLIENT_SECRET, LINKEDIN_ORG_ID (the number in linkedin.com/company/<n>/admin/),
 //      optional LINKEDIN_VERSION (the REST API version header, YYYYMM).
+//
+// Personal profile (the owner's own LinkedIn, via the self-serve "Share on LinkedIn" product, no review):
+//   postMember()   -> every morning, the day's LinkedIn post from the kit (weekdays the Thought Leaders pick, weekends
+//                     the Principles essay, else the edition insight), with a link card. Its own app and tokens
+//                     (li:member-auth). LinkedIn gives self-serve apps no refresh token, so the connection lasts 60
+//                     days; memberReminder() hands the kit a fresh connect link when a week is left.
+// Env: LINKEDIN_MEMBER_CLIENT_ID, LINKEDIN_MEMBER_CLIENT_SECRET (an app with "Share on LinkedIn" and "Sign In with
+//      LinkedIn using OpenID Connect"; its redirect URL must include /linkedin/callback).
 const crypto = require('crypto');
 const { CANON } = require('./_edition');
 const { kv } = require('./_push');
 const { buildDigest } = require('./_digest');
-const { istToday, loadSocial, withApp, beforeTags } = require('./_kit');
+const { istToday, loadSocial, withApp, beforeTags, primaryPost } = require('./_kit');
 
 const REDIRECT_URI = `${CANON}/linkedin/callback`;
-const SCOPES = 'w_organization_social r_organization_social';
+// Two connections share /linkedin/callback; the one-time state remembers which one is connecting.
+const MODES = {
+  org: { id: 'LINKEDIN_CLIENT_ID', secret: 'LINKEDIN_CLIENT_SECRET', scopes: 'w_organization_social r_organization_social', key: 'li:auth' },
+  member: { id: 'LINKEDIN_MEMBER_CLIENT_ID', secret: 'LINKEDIN_MEMBER_CLIENT_SECRET', scopes: 'openid profile w_member_social', key: 'li:member-auth' },
+};
+const creds = (mode) => ({ id: process.env[MODES[mode].id], secret: process.env[MODES[mode].secret] });
+const memberConfigured = () => !!(creds('member').id && creds('member').secret);
 const VERSION = process.env.LINKEDIN_VERSION || '202610';
 const PILLAR_ORDER = ['tech-ai', 'business', 'product', 'finance'];
 // Saturday and Sunday (in India) are for Principles; weekdays for the other pillars.
@@ -31,21 +45,23 @@ const orgUrn = () => `urn:li:organization:${String(process.env.LINKEDIN_ORG_ID).
 const result = (r) => (r && 'result' in r ? r.result : r);
 
 // ---- OAuth ----
-async function authLink() {
-  if (!configured()) return { ok: false, error: 'LINKEDIN_CLIENT_ID / LINKEDIN_CLIENT_SECRET / LINKEDIN_ORG_ID not set' };
+async function authLink(mode = 'org') {
+  if (mode === 'org' && !configured()) return { ok: false, error: 'LINKEDIN_CLIENT_ID / LINKEDIN_CLIENT_SECRET / LINKEDIN_ORG_ID not set' };
+  if (mode === 'member' && !memberConfigured()) return { ok: false, error: 'LINKEDIN_MEMBER_CLIENT_ID / LINKEDIN_MEMBER_CLIENT_SECRET not set' };
   const state = crypto.randomBytes(18).toString('hex');
-  await kv(['SET', `li:state:${state}`, '1', 'EX', '900']);
+  // Member links live a day (they're sent to the owner's Telegram as a reminder); Page links 15 minutes.
+  await kv(['SET', `li:state:${state}`, mode, 'EX', mode === 'member' ? '86400' : '900']);
   const url = 'https://www.linkedin.com/oauth/v2/authorization?' + new URLSearchParams({
-    response_type: 'code', client_id: process.env.LINKEDIN_CLIENT_ID, redirect_uri: REDIRECT_URI, state, scope: SCOPES,
+    response_type: 'code', client_id: creds(mode).id, redirect_uri: REDIRECT_URI, state, scope: MODES[mode].scopes,
   }).toString();
-  return { ok: true, url, expiresInMinutes: 15 };
+  return { ok: true, mode, url, expiresInMinutes: mode === 'member' ? 1440 : 15 };
 }
 
-async function tokenRequest(params) {
+async function tokenRequest(params, mode = 'org') {
   const r = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ ...params, client_id: process.env.LINKEDIN_CLIENT_ID, client_secret: process.env.LINKEDIN_CLIENT_SECRET }).toString(),
+    body: new URLSearchParams({ ...params, client_id: creds(mode).id, client_secret: creds(mode).secret }).toString(),
     signal: AbortSignal.timeout(15000),
   });
   const data = await r.json().catch(() => ({}));
@@ -66,9 +82,18 @@ async function callback({ code, state, error, error_description: desc }) {
   const known = result(await kv(['GET', `li:state:${state}`]));
   if (!known) return { ok: false, error: 'this connect link expired or was already used; ask for a new one' };
   await kv(['DEL', `li:state:${state}`]);
-  const auth = await tokenRequest({ grant_type: 'authorization_code', code, redirect_uri: REDIRECT_URI });
-  await kv(['SET', 'li:auth', JSON.stringify(auth)]);
-  return { ok: true, refreshable: !!auth.refresh, accessExpires: new Date(auth.accessExp).toISOString() };
+  const mode = known === 'member' ? 'member' : 'org';
+  const auth = await tokenRequest({ grant_type: 'authorization_code', code, redirect_uri: REDIRECT_URI }, mode);
+  if (mode === 'member') {
+    // Posting as a person needs their member id, which LinkedIn only reveals through OpenID Connect's userinfo.
+    const r = await fetch('https://api.linkedin.com/v2/userinfo', { headers: { Authorization: `Bearer ${auth.access}` }, signal: AbortSignal.timeout(15000) });
+    const me = await r.json().catch(() => ({}));
+    if (!r.ok || !me.sub) throw new Error(`linkedin userinfo: ${me.message || `HTTP ${r.status}`}`);
+    auth.sub = me.sub;
+    auth.name = me.name || [me.given_name, me.family_name].filter(Boolean).join(' ');
+  }
+  await kv(['SET', MODES[mode].key, JSON.stringify(auth)]);
+  return { ok: true, mode, name: auth.name || null, refreshable: !!auth.refresh, accessExpires: new Date(auth.accessExp).toISOString() };
 }
 
 async function accessToken() {
@@ -77,7 +102,7 @@ async function accessToken() {
   let auth = JSON.parse(raw);
   if (auth.accessExp - Date.now() > 24 * 3600 * 1000) return auth.access;
   if (auth.refresh && (!auth.refreshExp || auth.refreshExp > Date.now())) {
-    const fresh = await tokenRequest({ grant_type: 'refresh_token', refresh_token: auth.refresh });
+    const fresh = await tokenRequest({ grant_type: 'refresh_token', refresh_token: auth.refresh }, 'org');
     auth = { ...fresh, refresh: fresh.refresh || auth.refresh, refreshExp: fresh.refresh ? fresh.refreshExp : auth.refreshExp };
     await kv(['SET', 'li:auth', JSON.stringify(auth)]);
     return auth.access;
@@ -88,10 +113,72 @@ async function accessToken() {
 
 async function status() {
   const raw = result(await kv(['GET', 'li:auth']));
-  if (!raw) return { connected: false, configured: configured() };
+  const member = await memberStatus();
+  if (!raw) return { connected: false, configured: configured(), member };
   const a = JSON.parse(raw);
   return { connected: true, configured: configured(), connectedAt: a.connectedAt, accessExpires: new Date(a.accessExp).toISOString(),
-    refreshable: !!a.refresh, refreshExpires: a.refreshExp ? new Date(a.refreshExp).toISOString() : null };
+    refreshable: !!a.refresh, refreshExpires: a.refreshExp ? new Date(a.refreshExp).toISOString() : null, member };
+}
+
+// ---- Personal profile ----
+async function memberAuth() {
+  const raw = result(await kv(['GET', MODES.member.key]));
+  return raw ? JSON.parse(raw) : null;
+}
+async function memberStatus() {
+  const a = await memberAuth();
+  if (!a) return { connected: false, configured: memberConfigured() };
+  const daysLeft = Math.floor((a.accessExp - Date.now()) / 86400000);
+  return { connected: a.accessExp > Date.now(), configured: memberConfigured(), name: a.name || null, connectedAt: a.connectedAt,
+    accessExpires: new Date(a.accessExp).toISOString(), daysLeft };
+}
+// When the 60-day connection has a week or less left (or has lapsed), a fresh connect link for the owner's Telegram.
+async function memberReminder() {
+  if (!memberConfigured()) return null;
+  const st = await memberStatus();
+  if (!st.connectedAt || st.daysLeft > 7) return null;
+  const link = await authLink('member');
+  return link.ok ? { daysLeft: st.daysLeft, expires: st.accessExpires, url: link.url } : null;
+}
+
+// Self-serve "Share on LinkedIn" posts through the UGC Posts API; its commentary is plain text (no escaping), and
+// LinkedIn builds the link card from the article fields.
+async function publishMember({ text, link, title, description }) {
+  const a = await memberAuth();
+  if (!a) throw new Error('personal LinkedIn not connected yet');
+  if (a.accessExp <= Date.now()) throw new Error('personal LinkedIn connection expired; reconnect');
+  const r = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${a.access}`, 'X-Restli-Protocol-Version': '2.0.0', 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      author: `urn:li:person:${a.sub}`,
+      lifecycleState: 'PUBLISHED',
+      specificContent: { 'com.linkedin.ugc.ShareContent': {
+        shareCommentary: { text: String(text).slice(0, 2900) },
+        shareMediaCategory: 'ARTICLE',
+        media: [{ status: 'READY', originalUrl: link, title: { text: String(title || '').slice(0, 200) }, description: { text: String(description || '').slice(0, 250) } }],
+      } },
+      visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' },
+    }),
+    signal: AbortSignal.timeout(20000),
+  });
+  if (!r.ok) throw new Error(`linkedin ugcPosts: HTTP ${r.status} ${(await r.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 200)}`);
+  return { ok: true, postUrn: r.headers.get('x-restli-id') || null };
+}
+
+async function postMember({ date = istToday(), force = false, dry = false } = {}) {
+  if (!memberConfigured()) return { ok: false, skipped: 'personal LinkedIn not set up' };
+  const s = await loadSocial(date);
+  if (!s) return { ok: false, skipped: 'no post kit for this date yet', date };
+  const p = primaryPost(s);
+  const post = {
+    text: withApp(p.text),
+    link: p.link,
+    title: p.kind === 'leaders' ? (s.leaders.title || 'Thought Leaders') : (s.storyTitle || `The Hour Brief · Edition ${s.edition}`),
+    description: p.kind === 'leaders' ? `${PILLAR_LABEL[s.leaders.category] || 'Thought Leaders'} · Thought Leaders on The Hour Brief` : 'Today’s edition of The Hour Brief',
+  };
+  if (dry) return { ok: true, dry: true, date, kind: p.kind, post };
+  return { date, kind: p.kind, ...(await once(`li:posted:member:${date}`, () => publishMember(post), { force })) };
 }
 
 // ---- REST helpers ----
@@ -151,7 +238,10 @@ async function once(key, fn, { force }) {
     if (claimed === null) return { ok: true, skipped: 'already posted' };
   }
   try {
-    return await fn();
+    const out = await fn();
+    // A forced (by-hand) post still counts as today's, so the scheduled run doesn't post it again.
+    if (force && out && out.ok) await kv(['SET', key, '1', 'EX', String(8 * 86400)]).catch(() => {});
+    return out;
   } catch (e) {
     if (!force) await kv(['DEL', key]).catch(() => {});
     return { ok: false, error: e.message };
@@ -266,4 +356,4 @@ async function postLeaders({ date = istToday(), force = false, dry = false } = {
   return { date, article: b.id, ...out };
 }
 
-module.exports = { authLink, callback, status, postMorning, postLeaders, littleText, weekStart, pickLeader, leaderPost };
+module.exports = { authLink, callback, status, postMorning, postLeaders, postMember, memberStatus, memberReminder, littleText, weekStart, pickLeader, leaderPost };

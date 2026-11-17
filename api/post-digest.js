@@ -20,11 +20,13 @@
 //   linkedin-status    whether the Page is connected and when its tokens expire
 //   pair-phone         marks the one device that opened the app in the last 3 minutes as the owner's phone
 //   pair-telegram      stores the owner's Telegram chat (after they message the bot)
+//   linkedin-member    the owner's personal LinkedIn: today's post (kit runs it first, every morning)
+//   linkedin-member-auth  returns a connect link for the owner's personal LinkedIn (valid a day)
 //   linkedin-callback  LinkedIn's OAuth redirect (no cron secret; protected by the one-time state instead)
 const crypto = require('crypto');
 const { buildDigest } = require('./_digest');
 const { sendEditionPush, sendReengagementPush } = require('./_push');
-const { deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram } = require('./_kit');
+const { deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram, notifyOwner, istToday: kitDate } = require('./_kit');
 const li = require('./_linkedin');
 
 // Which job each Vercel Cron slot runs (see "crons" in vercel.json).
@@ -58,6 +60,23 @@ function authorized(req) {
   return given.length === want.length && crypto.timingSafeEqual(given, want);
 }
 
+// The morning personal-profile post, then (if its 60-day connection is nearly up) a reconnect link on Telegram.
+async function morningMember({ dry = false, force = false } = {}) {
+  let member;
+  try { member = await li.postMember({ dry, force }); } catch (e) { member = { ok: false, error: e.message }; }
+  if (!dry) {
+    try {
+      const r = await li.memberReminder();
+      if (r) {
+        const when = r.daysLeft < 0 ? 'has expired' : r.daysLeft === 0 ? 'expires today' : `expires in ${r.daysLeft} day${r.daysLeft === 1 ? '' : 's'}`;
+        member.reminder = await notifyOwner(`Your LinkedIn connection for morning posts ${when}. LinkedIn makes it last 60 days; tap to reconnect (valid 24 hours):\n\n${r.url}`, `li:member-reminder:${kitDate()}`);
+      }
+    } catch (e) { member.reminder = { ok: false, error: e.message }; }
+  }
+  return member;
+}
+const posted = (m) => !!(m && (m.ok && !m.dry) || (m && m.skipped === 'already posted'));
+
 function page(title, message) {
   const e = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   return `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>${e(title)}</title>` +
@@ -72,9 +91,10 @@ module.exports = async (req, res) => {
     let out;
     try { out = await li.callback(q); } catch (e) { out = { ok: false, error: e.message }; }
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.status(out.ok ? 200 : 400).send(out.ok
-      ? page('LinkedIn connected', `The Hour Brief can now post to your LinkedIn Page.${out.refreshable ? ' It will stay connected on its own.' : ' LinkedIn did not grant automatic renewal, so you will need to reconnect before ' + out.accessExpires.slice(0, 10) + '.'}`)
-      : page('LinkedIn not connected', out.error));
+    res.status(out.ok ? 200 : 400).send(!out.ok ? page('LinkedIn not connected', out.error)
+      : out.mode === 'member'
+        ? page('LinkedIn connected', `Morning posts will now go out from your profile${out.name ? ` (${out.name})` : ''}. LinkedIn keeps this connection for 60 days, until ${out.accessExpires.slice(0, 10)}; a week before, you'll get a reconnect link on Telegram.`)
+        : page('LinkedIn connected', `The Hour Brief can now post to your LinkedIn Page.${out.refreshable ? ' It will stay connected on its own.' : ' LinkedIn did not grant automatic renewal, so you will need to reconnect before ' + out.accessExpires.slice(0, 10) + '.'}`));
     return;
   }
 
@@ -88,9 +108,13 @@ module.exports = async (req, res) => {
   try {
     switch (job) {
       case 'digest': break;
-      case 'kit': return send(q.only
-        ? { ok: true, kit: await deliverKit({ dry, force, only: String(q.only) }) }
-        : { ok: true, kit: await deliverKit({ dry, force }), linkedin: await li.postMorning({ dry, force }) });
+      case 'kit': {
+        if (q.only) return send({ ok: true, kit: await deliverKit({ dry, force, only: String(q.only) }) });
+        const member = await morningMember({ dry, force });
+        return send({ ok: true, member, kit: await deliverKit({ dry, force, memberPosted: posted(member) }), linkedin: await li.postMorning({ dry, force }) });
+      }
+      case 'linkedin-member': return send(await morningMember({ dry, force }));
+      case 'linkedin-member-auth': return send(await li.authLink('member'));
       case 'insight': return send({ ok: true, push: await sendInsightPush({ dry, force }) });
       case 'linkedin-morning': return send(await li.postMorning({ dry, force }));
       case 'linkedin-leaders': return send(await li.postLeaders({ dry, force }));
@@ -165,9 +189,10 @@ module.exports = async (req, res) => {
 
   // Retries for the morning jobs whose own slot ('0 4 * * *') may have run before today's post kit existed, or not at
   // all (Vercel Cron delivery is best effort). Both are dedupe-keyed, so these are no-ops once sent.
-  let kit, linkedin;
-  try { kit = await deliverKit({}); } catch (e) { kit = { ok: false, error: e.message }; }
+  let kit, linkedin, member;
+  try { member = await morningMember({}); } catch (e) { member = { ok: false, error: e.message }; }
+  try { kit = await deliverKit({ memberPosted: posted(member) }); } catch (e) { kit = { ok: false, error: e.message }; }
   try { linkedin = await li.postMorning({}); } catch (e) { linkedin = { ok: false, error: e.message }; }
 
-  res.status(200).json({ ok: true, date: d.date, edition: d.edition, telegram, push, reengagement, kit, linkedin });
+  res.status(200).json({ ok: true, date: d.date, edition: d.edition, telegram, push, reengagement, member, kit, linkedin });
 };
