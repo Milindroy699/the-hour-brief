@@ -14,14 +14,14 @@
 // here and no Anthropic key anywhere in this flow.
 //   (no GET read path — see leaders-data.json)
 //   GET/POST with Authorization: Bearer $CRON_SECRET -> fetch + commit pending (Vercel Cron)
-// Env: KV_REST_API_URL/TOKEN (seen-tracking only), YTT_IO_API_TOKEN, GH_COMMIT_TOKEN, CRON_SECRET.
+// Env: KV_REST_API_URL/TOKEN (seen-tracking only), YTT_IO_API_TOKEN (+ optional YTT_IO_API_TOKEN_2, _3, …),
+// GH_COMMIT_TOKEN, CRON_SECRET.
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 
 const KV_URL = process.env.KV_REST_API_URL;
 const KV_TOKEN = process.env.KV_REST_API_TOKEN;
-const YTT_IO_API_TOKEN = process.env.YTT_IO_API_TOKEN;
 const GH_COMMIT_TOKEN = process.env.GH_COMMIT_TOKEN;
 const GH_REPO = 'Milindroy699/the-hour-brief';
 const TIME_BUDGET_MS = 50000;
@@ -29,6 +29,13 @@ const CONFIG_PATH = path.join(__dirname, '..', 'leaders.config.json');
 // youtube-transcript.io's free plan is 25 transcripts a month, and the API doesn't report usage, so we count our own
 // (one credit per video id requested). Raise YTT_MONTHLY_LIMIT in Vercel if the plan changes.
 const YTT_MONTHLY_LIMIT = parseInt(process.env.YTT_MONTHLY_LIMIT, 10) || 25;
+// One or more youtube-transcript.io accounts: YTT_IO_API_TOKEN, then YTT_IO_API_TOKEN_2, _3, … Each has its own
+// YTT_MONTHLY_LIMIT and its own counter, and a run fills the first account with room before touching the next. The
+// first account keeps the original counter key (leader:ytt:YYYY-MM) so its usage history carries over.
+const YTT_ACCOUNTS = ['YTT_IO_API_TOKEN', ...Array.from({ length: 9 }, (_, i) => `YTT_IO_API_TOKEN_${i + 2}`)]
+  .map((name, i) => ({ n: i + 1, token: String(process.env[name] || '').trim() }))
+  .filter((a) => a.token);
+function counterKey(account, month) { return account.n === 1 ? `leader:ytt:${month}` : `leader:ytt:${month}:k${account.n}`; }
 const FETCH_TIMEOUT_MS = 15000;
 const RUN_LOG_KEY = 'leader:runs';   // last 20 real runs, newest first — read them with ?dry=1
 const LOCK_KEY = 'leader:lock';
@@ -104,7 +111,7 @@ function extractArticleText(html) {
 }
 
 // ---- youtube-transcript.io: batched transcript fetch ----
-async function fetchTranscripts(videoIds) {
+async function fetchTranscripts(videoIds, token) {
   const out = {};
   for (let i = 0; i < videoIds.length; i += 50) {
     const batch = videoIds.slice(i, i + 50);
@@ -112,7 +119,7 @@ async function fetchTranscripts(videoIds) {
       const r = await fetch('https://www.youtube-transcript.io/api/transcripts', {
         method: 'POST',
         headers: {
-          Authorization: `Basic ${YTT_IO_API_TOKEN}`,
+          Authorization: `Basic ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ ids: batch }),
@@ -213,16 +220,27 @@ function mondaysLeft(now) {
   return Math.max(1, n);
 }
 // Monday has several cron slots (retries), so the share is fixed per day: a later slot only gets what an earlier one
-// that same day left of the day's share, not a fresh share of its own.
+// that same day left of the day's share, not a fresh share of its own. The budget is the sum over all accounts.
 async function transcriptBudget() {
   const now = new Date();
-  const key = `leader:ytt:${now.toISOString().slice(0, 7)}`;
+  const month = now.toISOString().slice(0, 7);
   const dayKey = `leader:ytt:${now.toISOString().slice(0, 10)}`;
-  const used = parseInt(await kv(['GET', key]), 10) || 0;
+  const accounts = [];
+  for (const a of YTT_ACCOUNTS) {
+    const used = parseInt(await kv(['GET', counterKey(a, month)]), 10) || 0;
+    accounts.push({ account: a, counter: counterKey(a, month), used, remaining: Math.max(0, YTT_MONTHLY_LIMIT - used) });
+  }
   const today = parseInt(await kv(['GET', dayKey]), 10) || 0;
-  const remaining = Math.max(0, YTT_MONTHLY_LIMIT - used);
+  const used = accounts.reduce((n, a) => n + a.used, 0);
+  const remaining = accounts.reduce((n, a) => n + a.remaining, 0);
   const share = Math.ceil((remaining + today) / mondaysLeft(now));
-  return { key, dayKey, limit: YTT_MONTHLY_LIMIT, used, remaining, usedToday: today, thisRun: Math.max(0, Math.min(remaining, share - today)) };
+  return { accounts, dayKey, limit: YTT_MONTHLY_LIMIT * accounts.length, used, remaining, usedToday: today,
+    thisRun: Math.max(0, Math.min(remaining, share - today)) };
+}
+// What a report may show: counts only, never the tokens.
+function publicBudget(b) {
+  return { limit: b.limit, used: b.used, remaining: b.remaining, usedToday: b.usedToday, thisRun: b.thisRun,
+    accounts: b.accounts.map((a) => ({ account: a.account.n, used: a.used, limit: YTT_MONTHLY_LIMIT })) };
 }
 // When the budget is short, take one video per pillar before a second from any (newest first within a pillar), so
 // every category keeps getting covered.
@@ -252,8 +270,7 @@ async function runFetch({ dry = false } = {}) {
           items: fresh.map((e) => ({ title: e.title, published: e.time ? new Date(e.time).toISOString() : e.date, url: e.link })) });
       } catch (e) { report.errors.push(`${creator.name}: ${e.message}`); }
     }
-    const { key, dayKey, ...budget } = await transcriptBudget();
-    report.transcriptBudget = budget;
+    report.transcriptBudget = publicBudget(await transcriptBudget());
     report.recentRuns = ((await kv(['LRANGE', RUN_LOG_KEY, '0', '9'])) || []).map((r) => { try { return JSON.parse(r); } catch (e) { return r; } });
     report.durationMs = Date.now() - start;
     return report;
@@ -296,20 +313,32 @@ async function runFetch({ dry = false } = {}) {
   // Pass 2: transcripts in one batch, within this run's share of the monthly budget. Videos over budget are left
   // unseen, not marked done.
   if (videos.length) {
-    const { key, dayKey, ...budget } = await transcriptBudget();
-    report.transcriptBudget = budget;
+    const budget = await transcriptBudget();
+    report.transcriptBudget = publicBudget(budget);
     const batch = pickByPillar(videos, budget.thisRun);
     videos.filter((v) => !batch.includes(v)).forEach(({ creator, e }) => {
       report.skipped.push(`${creator.name}: "${e.title}" (deferred: monthly transcript budget, ${budget.used}/${budget.limit} used)`);
     });
+    // Fill the first account that has room, then the next. thisRun never exceeds the total remaining, so it all fits.
+    const plan = [];
+    let next = 0;
+    for (const a of budget.accounts) {
+      const take = batch.slice(next, next + a.remaining);
+      if (take.length) plan.push({ a, take });
+      next += take.length;
+    }
+    for (const { a, take } of plan) {
+      await kv(['INCRBY', a.counter, String(take.length)]);
+      await kv(['EXPIRE', a.counter, String(40 * 86400)]);
+      report.transcriptBudget.accounts.find((x) => x.account === a.account.n).used += take.length;
+    }
     if (batch.length) {
-      await kv(['INCRBY', key, String(batch.length)]);
-      await kv(['EXPIRE', key, String(40 * 86400)]);
-      await kv(['INCRBY', dayKey, String(batch.length)]);
-      await kv(['EXPIRE', dayKey, String(2 * 86400)]);
+      await kv(['INCRBY', budget.dayKey, String(batch.length)]);
+      await kv(['EXPIRE', budget.dayKey, String(2 * 86400)]);
       report.transcriptBudget.used += batch.length;
     }
-    const transcripts = batch.length ? await fetchTranscripts(batch.map((v) => v.e.videoId)) : {};
+    const transcripts = {};
+    for (const { a, take } of plan) Object.assign(transcripts, await fetchTranscripts(take.map((v) => v.e.videoId), a.account.token));
     for (const { creator, e } of batch) {
       markAttempted(creator, e); // attempted once either way
       const content = transcripts[e.videoId] || '';
@@ -350,7 +379,7 @@ module.exports = async (req, res) => {
 
   if (!authorized(req)) { res.status(401).json({ error: 'unauthorized' }); return; }
   if (!KV_URL || !KV_TOKEN) { res.status(500).json({ error: 'storage not configured' }); return; }
-  if (!YTT_IO_API_TOKEN || !GH_COMMIT_TOKEN) {
+  if (!YTT_ACCOUNTS.length || !GH_COMMIT_TOKEN) {
     res.status(500).json({ error: 'YTT_IO_API_TOKEN or GH_COMMIT_TOKEN not configured' });
     return;
   }
