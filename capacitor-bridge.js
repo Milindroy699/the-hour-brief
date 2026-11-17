@@ -552,6 +552,15 @@
         body: JSON.stringify({ token: token.value, platform: platform, deviceId: deviceId })
       }).catch(function () {});
     });
+    // Diagnostics (2026-11-18): report the permission state and any registration error once per launch, so a phone
+    // that never gets a token can be told apart (notifications switched off vs. the APNs/FCM token step failing).
+    var pushEvent = function (name) {
+      if (!deviceId) return;
+      fetch('/api/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: name, deviceId: deviceId }) }).catch(function () {});
+    };
+    if (P.PushNotifications.addListener) {
+      P.PushNotifications.addListener('registrationError', function () { pushEvent('push_reg_error'); });
+    }
     P.PushNotifications.addListener('pushNotificationActionPerformed', function (action) {
       var data = action && action.notification && action.notification.data;
       if (data && data.url) { location.assign(destFor(data.url)); }
@@ -564,8 +573,10 @@
         return res;
       })
       .then(function (res) {
-        if (res && res.receive === 'granted') {
-          try { P.PushNotifications.register().catch(function () {}); } catch (e) {}
+        var state = res && res.receive;
+        pushEvent(state === 'granted' ? 'push_perm_granted' : state === 'denied' ? 'push_perm_denied' : 'push_perm_other');
+        if (state === 'granted') {
+          try { P.PushNotifications.register().catch(function () { pushEvent('push_reg_error'); }); } catch (e) { pushEvent('push_reg_error'); }
         }
       })
       .catch(function () {});
