@@ -801,7 +801,7 @@
     audio: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><path d="M4 15h3v5H5a1 1 0 0 1-1-1v-4z"/><path d="M20 15h-3v5h2a1 1 0 0 0 1-1v-4z"/></svg>',
     quiz: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/></svg>',
     archive: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.8c2.4-1 5.6-.8 9 .9 3.4-1.7 6.6-1.9 9-.9V19c-2.4-1-5.6-.8-9 .9-3.4-1.7-6.6-1.9-9-.9V5.8z"/><path d="M12 6.7v13.2"/></svg>',
-    leaders: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.45 1 1.1 1 1.85V16h5v-.25c0-.75.4-1.4 1-1.85A6 6 0 0 0 12 3z"/></svg>',
+    leaders: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 4.5h10a2 2 0 0 1 2 2v5.5a2 2 0 0 1-2 2H9l-3.5 3v-3h-1a2 2 0 0 1-2-2V6.5a2 2 0 0 1 2-2z"/><path d="M16.5 8.5h3a2 2 0 0 1 2 2V16a2 2 0 0 1-2 2h-1v2.5L15 18h-3.5a2 2 0 0 1-1.9-1.4"/></svg>',
   };
   var LOGO_SRC = '/brand/logo-128.png';
 
@@ -924,17 +924,18 @@
     }, returnTo);
   }
 
-  // Bottom tabs: Today (the feed), Audio (the Listen hub), Leaders (thought-leader roundups), Challenge (the quiz).
+  // Bottom tabs: Today (the feed), Audio (the Listen hub), Voices (leaders.html: weekly roundups + Principles essays),
+  // Challenge (the quiz). The tab key stays 'leaders' (page URL and tests); only the label is Voices.
   // Archive (past editions) is the first item in the top-right Menu instead — five tabs read as cramped, and the app
   // bar itself has no room for a fourth icon next to the wordmark.
-  var TABS = [['today', 'Today'], ['audio', 'Audio'], ['leaders', 'Leaders'], ['quiz', 'Challenge']];
+  var TABS = [['today', 'Today'], ['audio', 'Audio'], ['leaders', 'Voices'], ['quiz', 'Challenge']];
   function isFeed() { return !!document.querySelector('section.lane'); }          // an edition page (today's or an archived one)
   var INFO_TITLES = { '/about.html': 'About', '/privacy.html': 'Privacy', '/contact.html': 'Contact us' };
   function screenName() {
     var p = location.pathname;
     if (INFO_TITLES[p]) return INFO_TITLES[p];
     if (/^\/archive\/(index\.html)?$/.test(p)) return 'Archive';
-    if (/^\/leaders\.html$/.test(p)) return 'Leaders';
+    if (/^\/leaders\.html$/.test(p)) return 'Voices';
     return 'Feed';
   }
   // On pages that are not editions the tabs are plain links back to the right place.
@@ -1101,7 +1102,7 @@
     if (!isFeed()) {                                           // About, Privacy, Contact, the archive list
       var here = screenName();
       bar.querySelectorAll('.tab').forEach(function (t) {
-        if (t.getAttribute('data-tab') === 'leaders' && here === 'Leaders') t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
+        if (t.getAttribute('data-tab') === 'leaders' && here === 'Voices') t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
         if (t.getAttribute('data-tab') === 'quiz') t.hidden = false;
       });
       return;

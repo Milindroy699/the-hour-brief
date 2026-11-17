@@ -49,7 +49,7 @@ async function loadSocial(date) {
 // The day's LinkedIn post: on weekdays the punchy Thought Leaders pick, otherwise the edition insight's post.
 function primaryPost(s) {
   if (s.leaders && s.leaders.id && s.leaders.post) {
-    return { kind: 'leaders', label: `Thought Leaders pick: ${s.leaders.title || s.leaders.id}`, text: s.leaders.post, link: `${CANON}/leaders.html#a=${encodeURIComponent(s.leaders.id)}` };
+    return { kind: 'leaders', label: `Voices pick: ${s.leaders.title || s.leaders.id}`, text: s.leaders.post, link: `${CANON}/leaders.html#a=${encodeURIComponent(s.leaders.id)}` };
   }
   return { kind: 'insight', label: 'Today’s insight', text: s.linkedin, link: `${CANON}/e/${s.date}` };
 }
@@ -66,7 +66,7 @@ function leadersWhatsApp(s) {
   const points = lines.slice(1).filter((x) => !/^#/.test(x) && !/^Read the full breakdown/i.test(x));
   return {
     hook,
-    image: `${CANON}/api/og?${new URLSearchParams({ type: 'status', k: 'Thought Leaders', i: hook, d: s.date, lane: LANE_OF[L.category] || '' }).toString()}`,
+    image: `${CANON}/api/og?${new URLSearchParams({ type: 'status', k: 'Voices', i: hook, d: s.date, lane: LANE_OF[L.category] || '' }).toString()}`,
     status: `${hook}\n\nRead the full breakdown 👉 ${link}`,
     message: [`*${hook}*`, ...points, `Read the full breakdown 👉 ${link}`, appBlock('whatsapp')].join('\n\n'),
   };
@@ -153,11 +153,11 @@ async function ownerTokens() {
 // message for chats and groups.
 async function toTelegramLeaders(s) {
   const w = leadersWhatsApp(s);
-  if (!w) return { ok: true, skipped: 'no Thought Leaders pick today' };
+  if (!w) return { ok: true, skipped: 'no Voices pick today' };
   if (!process.env.TELEGRAM_BOT_TOKEN) return { ok: false, skipped: 'telegram bot not set up' };
   const chat = await telegramChat();
   if (!chat) return { ok: false, skipped: 'telegram not paired yet (message the bot, then pair)' };
-  await tg('sendPhoto', { chat_id: chat, photo: w.image, caption: `WhatsApp status · Thought Leaders pick\n\n${w.status}`.slice(0, 1024) });
+  await tg('sendPhoto', { chat_id: chat, photo: w.image, caption: `WhatsApp status · Voices pick\n\n${w.status}`.slice(0, 1024) });
   await tg('sendMessage', { chat_id: chat, text: `WhatsApp message for chats & groups:\n\n${w.message}`.slice(0, 4096), link_preview_options: { is_disabled: true } });
   return { ok: true };
 }

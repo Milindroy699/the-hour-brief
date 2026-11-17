@@ -42,6 +42,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/voices",
+      "destination": "/leaders.html"
+    },
+    {
       "source": "/api/register-push",
       "destination": "/api/track"
     },

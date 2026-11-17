@@ -180,8 +180,8 @@ async function postMember({ date = istToday(), force = false, dry = false } = {}
   const post = {
     text: withApp(p.text, 'linkedin'),
     link: p.link,
-    title: p.kind === 'leaders' ? (s.leaders.title || 'Thought Leaders') : (s.storyTitle || `The Hour Brief · Edition ${s.edition}`),
-    description: p.kind === 'leaders' ? `${PILLAR_LABEL[s.leaders.category] || 'Thought Leaders'} · Thought Leaders on The Hour Brief` : 'Today’s edition of The Hour Brief',
+    title: p.kind === 'leaders' ? (s.leaders.title || 'Voices') : (s.storyTitle || `The Hour Brief · Edition ${s.edition}`),
+    description: p.kind === 'leaders' ? `${PILLAR_LABEL[s.leaders.category] || 'Voices'} · Voices on The Hour Brief` : 'Today’s edition of The Hour Brief',
   };
   if (dry) return { ok: true, dry: true, date, kind: p.kind, post };
   return { date, kind: p.kind, ...(await once(`li:posted:member:${date}`, () => publishMember(post), { force })) };
@@ -320,12 +320,12 @@ async function pickLeader(date = istToday()) {
 // `punchy` is the routine's short post for this article (social/<date>.json "leaders.post"); without it, the post is
 // built from the article's highlight.
 function leaderPost(b, punchy) {
-  const label = PILLAR_LABEL[b.category] || 'Thought Leaders';
+  const label = PILLAR_LABEL[b.category] || 'Voices';
   const link = `${CANON}/leaders.html#a=${encodeURIComponent(b.id)}`;
   const from = (b.sources || []).map((s) => s.creator).filter(Boolean);
   return {
     text: punchy ? withApp(punchy, 'linkedin-page') : withApp([
-      `${label} · Thought Leaders`,
+      `${label} · Voices`,
       '',
       b.title,
       '',
@@ -338,7 +338,7 @@ function leaderPost(b, punchy) {
     ].filter((line, i, arr) => !(line === '' && arr[i - 1] === '')).join('\n'), 'linkedin-page'),
     link,
     title: b.title,
-    description: `${label} · Thought Leaders on The Hour Brief`,
+    description: `${label} · Voices on The Hour Brief`,
     imageUrl: `${CANON}/brand/leaders/${PILLAR_LABEL[b.category] ? b.category : 'principles'}.jpg`,
   };
 }
@@ -354,7 +354,7 @@ async function postLeaders({ date = istToday(), force = false, dry = false } = {
   } else {
     b = await pickLeader(date);
   }
-  if (!b) return { ok: false, skipped: 'no Thought Leaders article left to post' };
+  if (!b) return { ok: false, skipped: 'no Voices article left to post' };
   const post = leaderPost(b, punchy);
   if (dry) return { ok: true, dry: true, date, article: b.id, post };
   const out = await once(`li:posted:leaders:${date}`, () => publish(post), { force });
