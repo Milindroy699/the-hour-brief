@@ -18,6 +18,7 @@
 //   linkedin-leaders   LinkedIn Page: the day's Thought Leaders highlight (weekdays: roundups; weekends: Principles)
 //   linkedin-auth      returns a one-time LinkedIn consent link for the Page admin
 //   linkedin-status    whether the Page is connected and when its tokens expire
+//   push-check         read-only: FCM dry-run of every registered token + which daily pushes were sent
 //   pair-phone         marks the one device that opened the app in the last 3 minutes as the owner's phone
 //   pair-telegram      stores the owner's Telegram chat (after they message the bot)
 //   linkedin-member    the owner's personal LinkedIn: today's post (kit runs it first, every morning)
@@ -25,7 +26,7 @@
 //   linkedin-callback  LinkedIn's OAuth redirect (no cron secret; protected by the one-time state instead)
 const crypto = require('crypto');
 const { buildDigest } = require('./_digest');
-const { sendEditionPush, sendReengagementPush } = require('./_push');
+const { sendEditionPush, sendReengagementPush, checkPushHealth } = require('./_push');
 const { deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram, notifyOwner, istToday: kitDate } = require('./_kit');
 const li = require('./_linkedin');
 
@@ -114,6 +115,7 @@ module.exports = async (req, res) => {
         return send({ ok: true, member, kit: await deliverKit({ dry, force, memberPosted: posted(member) }), linkedin: await li.postMorning({ dry, force }) });
       }
       case 'linkedin-member': return send(await morningMember({ dry, force }));
+      case 'push-check': return send(await checkPushHealth());
       case 'linkedin-member-auth': return send(await li.authLink('member'));
       case 'insight': return send({ ok: true, push: await sendInsightPush({ dry, force }) });
       case 'linkedin-morning': return send(await li.postMorning({ dry, force }));

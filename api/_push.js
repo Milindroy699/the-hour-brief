@@ -153,4 +153,36 @@ async function sendReengagementPush({ force, days = 7 } = {}) {
   }
 }
 
-module.exports = { kv, allTokens, lapsedTokens, sendToTokens, sendEditionPush, sendReengagementPush };
+// Read-only health check: asks FCM to validate every registered token in dry-run mode (nothing is delivered), and
+// reports per platform how many are valid and the error codes for the rest, plus which daily pushes were recorded
+// as sent and how recently devices re-registered.
+async function checkPushHealth() {
+  if (!process.env.FIREBASE_PROJECT_ID) return { ok: false, error: 'firebase not configured' };
+  firebaseApp();
+  const out = { ok: true, platforms: {} };
+  for (const platform of ['ios', 'android']) {
+    const tokens = ((await kv(['SMEMBERS', `push:tokens:${platform}`])) || {}).result || [];
+    const p = { tokens: tokens.length, valid: 0, errors: {} };
+    for (let i = 0; i < tokens.length; i += 500) {
+      const chunk = tokens.slice(i, i + 500);
+      const resp = await getMessaging().sendEachForMulticast({ tokens: chunk, notification: { title: 'check', body: 'check' } }, true);
+      p.valid += resp.successCount;
+      resp.responses.forEach((r) => { if (!r.success) { const code = (r.error && r.error.code) || 'unknown'; p.errors[code] = (p.errors[code] || 0) + 1; } });
+    }
+    out.platforms[platform] = p;
+  }
+  const day = (n) => new Date(Date.now() + 5.5 * 3600 * 1000 - n * 86400000).toISOString().slice(0, 10);
+  out.sent = {};
+  for (const n of [0, 1, 2]) {
+    const d = day(n);
+    out.sent[d] = {
+      edition: !!(((await kv(['EXISTS', `push:edition-sent:${d}`])) || {}).result),
+      insight: !!(((await kv(['EXISTS', `push:insight-sent:${d}`])) || {}).result),
+    };
+  }
+  const week = Date.now() - 7 * 86400000;
+  out.tokensSeenLast7Days = ((await kv(['ZCOUNT', 'push:lastseen', String(week), '+inf'])) || {}).result || 0;
+  return out;
+}
+
+module.exports = { kv, allTokens, lapsedTokens, sendToTokens, sendEditionPush, sendReengagementPush, checkPushHealth };
