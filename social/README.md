@@ -22,8 +22,11 @@ Used by:
 - `share-kit.html` (private, noindex): the "Today's post" section with Share image (WhatsApp →
   My Status), Copy & open LinkedIn, and the caption.
 - `/api/og?type=status&i=<insight>&d=<date>&n=<edition>&lane=<lane>`: the 1080x1920 status image.
-- `api/_kit.js`, from Vercel Cron via `api/post-digest.js`: the owner's Notion row, Telegram
-  message and phone push (~09:30-10:30 IST), and the second daily push to every app user
-  (~18:00-19:00 IST, linking to the story).
+- The "Daily post writer" routine itself: right after committing the file, it adds the day's row to
+  the owner's Notion database "The Hour Brief · Daily posts" through the Claude Notion connector
+  (no Notion token anywhere).
+- `api/_kit.js`, from Vercel Cron via `api/post-digest.js`: the owner's Telegram message and phone
+  push (~09:30-10:30 IST), and the second daily push to every app user (~18:00-19:00 IST, linking
+  to the story).
 - `api/_linkedin.js`: the `page` text is the LinkedIn Page's morning post (falls back to the
   edition's three lane headlines when missing).

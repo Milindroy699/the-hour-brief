@@ -1,18 +1,18 @@
 // Daily post kit: one "sharpest insight" per edition, written each morning by the "Daily post writer" routine into
 // social/<date>.json (see social/README.md), then delivered from Vercel Cron via post-digest.js:
-//   deliverKit()       -> the owner: a Notion row, a Telegram message (status image + caption + LinkedIn text), and a
-//                         push to the owner's own phone opening /share-kit.html (one-tap LinkedIn / WhatsApp status)
+//   deliverKit()       -> the owner: a Telegram message (status image + caption + LinkedIn text) and a push to the
+//                         owner's own phone opening /share-kit.html (one-tap LinkedIn / WhatsApp status). The day's
+//                         Notion row is written by the "Daily post writer" routine itself, through the owner's Claude
+//                         Notion connector, so there is no Notion token here.
 //   sendInsightPush()  -> every app user: a second daily push carrying the insight, later in the day
 // Each channel is dedupe-keyed on its own, so one failing (or not being set up yet) never blocks the others, and the
 // several cron slots that call these can't double-send.
 // Env (each optional; a channel without its env is reported as "not set up" and skipped):
-//   NOTION_TOKEN (+ NOTION_DB_ID, defaults to the database created for this), TELEGRAM_BOT_TOKEN (+ the owner's chat id
-//   in Redis kit:telegram-chat or TELEGRAM_OWNER_CHAT_ID), FIREBASE_* (push, shared with _push.js).
+//   TELEGRAM_BOT_TOKEN (+ the owner's chat id in Redis kit:telegram-chat or TELEGRAM_OWNER_CHAT_ID),
+//   FIREBASE_* (push, shared with _push.js).
 const { CANON } = require('./_edition');
 const { kv, allTokens, sendToTokens } = require('./_push');
 
-// "The Hour Brief · Daily posts" in the owner's Notion (created 2026-11-17). Its integration must be connected to it.
-const NOTION_DB_ID = process.env.NOTION_DB_ID || '41b5454835148128912dd31e3d93f149';
 const DEDUPE_TTL = String(3 * 86400);
 
 // App install links, appended to everything that goes out (same URLs as mobile.js STORE_URL and api/share.js).
@@ -60,58 +60,6 @@ async function claim(key, force) {
   return r && r.result !== null;
 }
 const release = (key) => kv(['DEL', key]).catch(() => {});
-
-// ---- Notion ----
-function richText(text) {
-  const s = String(text || '');
-  const parts = [];
-  for (let i = 0; i < s.length; i += 1900) parts.push({ type: 'text', text: { content: s.slice(i, i + 1900) } });
-  return parts.length ? parts : [{ type: 'text', text: { content: '' } }];
-}
-const para = (text) => ({ object: 'block', type: 'paragraph', paragraph: { rich_text: richText(text) } });
-const heading = (text) => ({ object: 'block', type: 'heading_3', heading_3: { rich_text: richText(text) } });
-
-async function toNotion(s, l) {
-  const token = process.env.NOTION_TOKEN;
-  if (!token || !NOTION_DB_ID) return { ok: false, skipped: 'notion not set up' };
-  const laneName = { ai: 'AI & Tech', biz: 'Business', mkt: 'Markets' }[s.lane];
-  const body = {
-    parent: { database_id: NOTION_DB_ID },
-    properties: {
-      Name: { title: richText(`${s.date} · ${s.insight}`.slice(0, 1900)) },
-      Date: { date: { start: s.date } },
-      Edition: { number: Number(s.edition) || null },
-      ...(laneName ? { Lane: { select: { name: laneName } } } : {}),
-      Insight: { rich_text: richText(s.insight) },
-      'Status caption': { rich_text: richText(withApp(s.status)) },
-      'Push': { rich_text: richText(s.push ? `${s.push.title} — ${s.push.body}` : '') },
-      Kit: { url: l.kit },
-      'Status image': { files: [{ name: `status-${s.date}.png`, type: 'external', external: { url: l.image } }] },
-    },
-    children: [
-      { object: 'block', type: 'image', image: { type: 'external', external: { url: l.image } } },
-      heading('WhatsApp status caption'),
-      para(withApp(s.status)),
-      heading('LinkedIn post'),
-      ...withApp(s.linkedin).split(/\n{2,}/).filter((p) => p.trim()).map(para),
-      heading('Links'),
-      para(`Post kit (share buttons): ${l.kit}`),
-      para(`Story: ${l.story}`),
-    ],
-  };
-  const r = await fetch('https://api.notion.com/v1/pages', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Notion-Version': '2022-06-28', 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(15000),
-  });
-  if (!r.ok) {
-    const detail = (await r.text().catch(() => '')).slice(0, 200);
-    return { ok: false, error: `notion HTTP ${r.status}`, detail };
-  }
-  const page = await r.json();
-  return { ok: true, url: page.url };
-}
 
 // ---- Telegram (to the owner, not a channel) ----
 async function telegramChat() {
@@ -161,7 +109,7 @@ async function deliverKit({ date = istToday(), force = false, dry = false } = {}
   const l = links(s);
   if (dry) return { ok: true, dry: true, date, social: s, links: l };
   const result = { ok: true, date };
-  for (const [name, fn] of [['notion', toNotion], ['telegram', toTelegram], ['ownerPush', toOwnerPush]]) {
+  for (const [name, fn] of [['telegram', toTelegram], ['ownerPush', toOwnerPush]]) {
     const key = `kit:${name}:${date}`;
     if (!(await claim(key, force))) { result[name] = { ok: true, skipped: 'already sent' }; continue; }
     try {
