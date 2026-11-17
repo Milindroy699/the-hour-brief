@@ -417,6 +417,7 @@
       idxAtTouch = null;
       setTimeout(function () { if (started !== null && idx !== started) onSwiped(); }, 500);
     }, { passive: true });
+    watchSideSwipes();
     deck.addEventListener('keydown', onKey);
     window.addEventListener('resize', onResize);
     document.addEventListener('hb:prefs', function () { if (shown) refresh(); });
@@ -425,6 +426,47 @@
   }
 
   function touched() { lastTouch = Date.now(); goal = null; }         // the reader has taken over: forget any move in progress
+
+  // A sideways swipe the track never got. On iPhone, while a card's text is still gliding after a flick up or down, the
+  // next touch belongs to that text scroller, so a swipe to the next card made straight after scrolling went nowhere
+  // (owner, 2026-11-18). If a clearly sideways swipe ends and the track didn't move at all, make the move here. Any
+  // scroll of the track since the finger went down means the browser handled it, and then this does nothing.
+  function watchSideSwipes() {
+    var sw = null;
+    function sideScroller(el) {                           // something inside the card that scrolls sideways itself (a wide table)
+      for (; el && el !== track; el = el.parentElement) {
+        if (el.scrollWidth > el.clientWidth + 1 && /(auto|scroll)/.test(getComputedStyle(el).overflowX)) return true;
+      }
+      return false;
+    }
+    track.addEventListener('touchstart', function (e) {
+      var t = e.touches[0];
+      sw = e.touches.length === 1 && t && !sideScroller(e.target) ?
+        { x: t.clientX, y: t.clientY, lx: t.clientX, ly: t.clientY, at: Date.now(), left: track.scrollLeft, from: idx } : null;
+    }, { passive: true });
+    track.addEventListener('touchmove', function (e) {
+      var t = e.touches[0];
+      if (!sw) return;
+      if (e.touches.length > 1 || !t) { sw = null; return; }
+      sw.lx = t.clientX; sw.ly = t.clientY;
+    }, { passive: true });
+    function end() {
+      var s = sw;
+      sw = null;
+      if (!s) return;
+      var dx = s.lx - s.x, dy = s.ly - s.y;
+      if (Math.abs(dx) < 48 || Math.abs(dx) < 2 * Math.abs(dy) || Date.now() - s.at > 900) return;
+      var to = s.from + (dx < 0 ? 1 : -1);
+      if (to < 0 || to >= cards.length) return;
+      setTimeout(function () {                            // let any scroll events from a swipe the track did take arrive first
+        if (lastScrollAt >= s.at || Math.abs(track.scrollLeft - s.left) > 2 || idx !== s.from || !shown) return;
+        goTo(to, true);
+        onSwiped();
+      }, 90);
+    }
+    track.addEventListener('touchend', end, { passive: true });
+    track.addEventListener('touchcancel', end, { passive: true });
+  }
 
   // Swipe is the point of this view, so the prev/next buttons are trained wheels: full and visible until the reader
   // demonstrably swipes once (idx changing from the track's own scroll, not from goTo — see onScroll), at which point
@@ -510,8 +552,9 @@
   function render() {
     cards = collect();
     track.textContent = '';
-    cards.forEach(function (c) {
+    cards.forEach(function (c, i) {
       c.el = c.kind === 'cover' ? buildCover(c) : c.kind === 'intro' ? buildIntro(c) : c.kind === 'story' ? buildStory(c) : buildEnd(c);
+      c.el.style.zIndex = String(cards.length - i);      // stacked deck: every card sits above the ones after it (fixed, never animated)
       track.appendChild(c.el);
     });
     watchMirror();
@@ -530,9 +573,6 @@
     cards.forEach(function (x, i) {
       if (canInert) x.el.inert = i !== idx;
       else x.el.setAttribute('aria-hidden', String(i !== idx));
-      // Stacked deck: only the next card waits behind the current one; anything further ahead stays out of sight
-      // (its scroll-driven position would otherwise show a sliver at the right edge mid-swipe). Set on card change only.
-      x.el.classList.toggle('dk-far', i > idx + 1);
     });
     syncFab();
     maybeShowSwipeHint();
@@ -554,8 +594,11 @@
   // Older browsers keep the JS version below, kept lean: only the cards near the screen, only values that changed.
   // Transforms go on each card's face, never on the .dk-card (the scroll-snap target: Chrome snaps to a transformed
   // target's moved box). Reduced motion: no effect at all.
-  var sda = !!(window.CSS && CSS.supports && CSS.supports('animation-timeline: --dk') && CSS.supports('view-timeline-name: --dk'));
+  var sda = !!(window.CSS && CSS.supports && CSS.supports('animation-timeline: --dk') && CSS.supports('view-timeline-name: --dk') &&
+    CSS.supports('animation-range: cover -50% cover 100%'));
   var stacked = [];                                   // faces the JS fallback has styled, so it can clear them later
+  // Same motion as the CSS keyframes (dk-stack in app.css), as a function of d = how many cards ahead of the screen this
+  // one is. The stacking order is fixed in render(), so only the face's transform and opacity change here.
   function stack() {
     if (!track || !cards.length || reduceMotion || sda) return;
     var w = track.clientWidth || 1, pos = track.scrollLeft / w;
@@ -563,25 +606,24 @@
     for (var i = lo; i <= hi; i++) {
       var c = cards[i], face = c.face || (c.face = c.el.querySelector('.dk-face'));
       if (!face) continue;
-      var d = i - pos, t = '', z = '', op = '';
-      if (d > 0 && d <= 2) {                              // waiting behind: cancel most of its sideways travel
-        var k = Math.min(d, 1);
-        t = 'translate3d(' + (-k * w * 0.92).toFixed(1) + 'px,' + (k * 14).toFixed(1) + 'px,0) scale(' + (1 - k * 0.06).toFixed(4) + ')';
-        z = String(10 - Math.ceil(d));
-        op = d > 1 ? Math.max(0, 2 - d).toFixed(3) : '';
+      var d = i - pos, t = '', op = '', k;
+      if (d > 1 && d <= 2) {                              // two ahead: same spot as the next card, further back, fading in
+        k = d - 1;
+        t = 'translate3d(' + (-(0.92 + k) * w).toFixed(1) + 'px,' + (14 + k * 14).toFixed(1) + 'px,0) scale(' + (0.94 - k * 0.06).toFixed(4) + ')';
+        op = (1 - k).toFixed(3);
+      } else if (d > 0 && d <= 1) {                       // next up, waiting behind: cancel most of its sideways travel
+        t = 'translate3d(' + (-d * w * 0.92).toFixed(1) + 'px,' + (d * 14).toFixed(1) + 'px,0) scale(' + (1 - d * 0.06).toFixed(4) + ')';
       } else if (d < 0 && d >= -1.5) {                    // leaving (or coming back) over the top, tilting a little
         t = 'translate3d(0,0,0) rotate(' + (d * 5).toFixed(2) + 'deg)';
-        z = '12';
-      } else if (d === 0) { z = '11'; }
+      }
       if (face.style.transform !== t) face.style.transform = t;
       if (face.style.opacity !== op) face.style.opacity = op;
-      if (c.el.style.zIndex !== z) c.el.style.zIndex = z;
       var hint = t ? 'transform' : '';
       if (face.style.willChange !== hint) face.style.willChange = hint;
       now.push(face);
     }
     stacked.forEach(function (f) {                        // cards that drifted out of range go back to rest
-      if (now.indexOf(f) < 0) { f.style.transform = ''; f.style.opacity = ''; f.style.willChange = ''; if (f.parentNode) f.parentNode.style.zIndex = ''; }
+      if (now.indexOf(f) < 0) { f.style.transform = ''; f.style.opacity = ''; f.style.willChange = ''; }
     });
     stacked = now;
   }

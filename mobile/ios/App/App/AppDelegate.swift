@@ -30,6 +30,20 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
     // FCM token is something the server-side Firebase Admin SDK can actually send a push to.
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         Messaging.messaging().apnsToken = deviceToken
+        // Firebase only calls messaging(_:didReceiveRegistrationToken:) when the token is new, or once at app start with
+        // the saved one: that is before the web page has loaded and attached its 'registration' listener, so from the
+        // second launch on the page never heard the token and the server never got it (found 2026-11-18: the owner's
+        // iPhone on 1.1.3 granted permission but never registered). The page calls register() on every launch, which
+        // lands here, so answer that request with the current token every time. A duplicate on first launch is harmless.
+        Messaging.messaging().token { token, error in
+            DispatchQueue.main.async {
+                if let token = token {
+                    NotificationCenter.default.post(name: .capacitorDidRegisterForRemoteNotifications, object: token)
+                } else if let error = error {
+                    NotificationCenter.default.post(name: .capacitorDidFailToRegisterForRemoteNotifications, object: error)
+                }
+            }
+        }
     }
 
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
