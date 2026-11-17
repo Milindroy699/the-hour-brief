@@ -13,6 +13,7 @@
 // Push token — {token, platform, deviceId?}, unchanged behavior from register-push.js:
 //   push:tokens:<platform> SET   tokens                              (who push-edition.js/
 //   push:lastseen          ZSET  token -> last-seen ms                push-reengagement.js send to)
+//   push:device-token      HASH  deviceId -> token (when the app sends both; used for the owner-only kit push)
 //
 // Feature event — {event, deviceId?}, fired from any page (web or app) when a reader uses a
 // feature with no adoption signal today. deviceId is optional so web callers (no persistent id)
@@ -73,6 +74,8 @@ module.exports = async (req, res) => {
       kv(['SADD', `push:tokens:${platform}`, token]),
       kv(['ZADD', 'push:lastseen', String(Date.now()), token]),
     );
+    // deviceId -> current token, so one specific device (the owner's, for the daily post kit) can be pushed to alone.
+    if (deviceId) jobs.push(kv(['HSET', 'push:device-token', deviceId, token]));
   }
 
   if (event) {

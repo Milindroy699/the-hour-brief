@@ -1,4 +1,4 @@
-// Link-preview images (1200x630 PNG). Stateless: everything drawn comes from the query string,
+// Link-preview images (1200x630 PNG; type=status is a 1080x1920 status card). Stateless: everything drawn comes from the query string,
 // so results are deterministic and cache forever at the edge. Falls back to the static card on error.
 // Rendered with satori (layout to SVG) + resvg (SVG to PNG); fonts are read from /fonts, the logo from /brand.
 // Look: the app's navy + violet + green (see app.css), Newsreader headlines, Space Grotesk labels, Inter body.
@@ -135,6 +135,33 @@ function leagueCard(q) {
   ]);
 }
 
+// WhatsApp/Instagram status card, 1080x1920 (9:16) — the daily post kit's image (see social/README.md).
+// WhatsApp draws its own UI over roughly the top and bottom 220px, so everything that matters sits between.
+const SW = 1080;
+const SH = 1920;
+function statusCard(q) {
+  const insight = clip(q.get('i'), 190) || 'Everything that mattered today, in one sitting.';
+  const size = insight.length <= 70 ? 92 : insight.length <= 110 ? 80 : insight.length <= 150 ? 70 : 62;
+  const n = q.get('n');
+  const lane = LANES[q.get('lane')] ? q.get('lane') : null;
+  return h({ width: '100%', height: '100%', flexDirection: 'column', background: C.bg, backgroundImage: 'radial-gradient(circle at 15% 8%, rgba(94,67,243,0.38), rgba(12,13,21,0) 55%), radial-gradient(circle at 95% 95%, rgba(127,220,191,0.12), rgba(12,13,21,0) 45%)', padding: '240px 84px 260px 84px', fontFamily: 'Inter, InterExt', color: C.ink }, [
+    h({ alignItems: 'center', gap: 22 }, [logo(92), wordmark(50)]),
+    h({ flexDirection: 'column', flex: 1, justifyContent: 'center' }, [
+      h({ alignItems: 'center', gap: 16 }, [
+        pill('TODAY’S INSIGHT', C.lav, C.lavBg),
+        lane ? chip(lane) : h({}, undefined),
+      ]),
+      h({ marginTop: 44, borderLeft: `10px solid ${C.bar}`, paddingLeft: 40, fontFamily: SERIF, fontSize: size, fontWeight: 500, lineHeight: 1.16, letterSpacing: -1.5 }, insight),
+      h({ marginTop: 48, fontSize: 34, color: C.soft, fontWeight: 400 }, n ? `Edition ${String(n).padStart(3, '0')} · ${pretty(q.get('d'))}` : pretty(q.get('d'))),
+    ]),
+    h({ flexDirection: 'column', gap: 12 }, [
+      h({ fontFamily: LABEL, fontSize: 40, fontWeight: 700, color: C.ink }, 'Read the full brief'),
+      h({ fontSize: 34, color: C.green, fontWeight: 700 }, 'the-hour-brief.vercel.app'),
+      h({ fontSize: 30, color: C.soft, fontWeight: 400 }, 'AI, business & markets · free, daily'),
+    ]),
+  ]);
+}
+
 let fontCache = null;
 function loadFonts() {
   if (!fontCache) {
@@ -160,9 +187,10 @@ export default async function handler(req, res) {
   try {
     const q = new URL(req.url, 'http://localhost').searchParams;
     const type = q.get('type');
-    const card = type === 'story' ? storyCard(q) : type === 'quiz' ? quizCard(q) : type === 'league' ? leagueCard(q) : type === 'brand' ? brandCard() : editionCard(q);
-    const svg = await satori(card, { width: W, height: H, fonts: loadFonts() });
-    const png = new Resvg(svg, { fitTo: { mode: 'width', value: W } }).render().asPng();
+    const card = type === 'story' ? storyCard(q) : type === 'quiz' ? quizCard(q) : type === 'league' ? leagueCard(q) : type === 'brand' ? brandCard() : type === 'status' ? statusCard(q) : editionCard(q);
+    const [w, ht] = type === 'status' ? [SW, SH] : [W, H];
+    const svg = await satori(card, { width: w, height: ht, fonts: loadFonts() });
+    const png = new Resvg(svg, { fitTo: { mode: 'width', value: w } }).render().asPng();
     res.setHeader('Content-Type', 'image/png');
     res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=31536000, immutable');
     res.status(200).send(Buffer.from(png));

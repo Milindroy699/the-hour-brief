@@ -55,6 +55,7 @@ async function buildDigest() {
     edition: info.n,
     date: info.d,
     quizQuestions: n,
+    lanes: info.lanes,
     editionUrl,
     quizUrl,
     image: `${CANON}/api/og?${new URLSearchParams({ type: 'edition', n: info.n, d: info.d, ai: info.lanes.ai || '', biz: info.lanes.biz || '', mkt: info.lanes.mkt || '' }).toString()}`,

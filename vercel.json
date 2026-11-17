@@ -36,6 +36,10 @@
     {
       "source": "/api/vote",
       "destination": "/api/interactions?action=vote"
+    },
+    {
+      "source": "/linkedin/callback",
+      "destination": "/api/post-digest?job=linkedin-callback"
     }
   ],
   "headers": [
@@ -68,6 +72,26 @@
     {
       "path": "/api/leaders",
       "schedule": "0 7 * * 1"
+    },
+    {
+      "path": "/api/post-digest",
+      "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/post-digest",
+      "schedule": "30 9 * * 1-5"
+    },
+    {
+      "path": "/api/post-digest",
+      "schedule": "30 10 * * 1-5"
+    },
+    {
+      "path": "/api/post-digest",
+      "schedule": "30 12 * * *"
+    },
+    {
+      "path": "/api/post-digest",
+      "schedule": "30 13 * * *"
     }
   ]
 }

@@ -15,6 +15,8 @@
   h2 { font-size: 1.1rem; margin: 28px 0 8px; }
   .meta { color: var(--soft); margin: 0 0 16px; }
   img.card { width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--line); display: block; }
+  img.card.status { max-width: 300px; }
+  .lead { font-family: Georgia, serif; font-size: 1.15rem; line-height: 1.45; margin: 4px 0 14px; }
   textarea { width: 100%; min-height: 15em; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); font: inherit; font-size: .92rem; line-height: 1.5; resize: vertical; }
   .row { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 0; }
   button, a.btn { min-height: 46px; padding: 0 18px; border-radius: 10px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); font: inherit; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
@@ -30,7 +32,31 @@
 </head>
 <body>
 <main>
-  <h1>Today’s channel post</h1>
+  <h1>Post kit</h1>
+  <p class="meta" id="meta-social">Loading today’s post…</p>
+  <section id="social" hidden>
+    <p class="lead" id="insight"></p>
+
+    <h2>WhatsApp status</h2>
+    <img class="card status" id="status-img" alt="Status image for today’s insight">
+    <div class="row">
+      <button class="primary" id="share-img" type="button" hidden>Share image…</button>
+      <a class="btn" id="save-img" download>Save image</a>
+    </div>
+    <p class="hint">On your phone, Share image → WhatsApp → My Status. Then paste the caption.</p>
+    <textarea id="status-cap" readonly aria-label="WhatsApp status caption" style="min-height:6em"></textarea>
+    <div class="row"><button id="copy-cap" type="button">Copy caption</button></div>
+
+    <h2>LinkedIn post</h2>
+    <textarea id="li" readonly aria-label="LinkedIn post text"></textarea>
+    <div class="row">
+      <button class="primary" id="copy-li" type="button">Copy &amp; open LinkedIn</button>
+      <button id="share-li" type="button" hidden>Share…</button>
+    </div>
+    <p class="hint">The text is copied first, so if LinkedIn opens without it, just paste.</p>
+  </section>
+
+  <h2 style="margin-top:40px">Channel post</h2>
   <p class="meta" id="meta">Loading…</p>
   <img class="card" id="card" alt="Preview card that appears when the link is posted" hidden>
 
@@ -70,6 +96,41 @@
     try { document.execCommand('copy'); say('Copied'); } catch (e) { say('Select the text and copy it'); }
     ta.remove(); return Promise.resolve();
   }
+  // Today's post kit (social/<date>.json, written each morning by the "Daily post writer" routine).
+  function istDate(daysAgo) { return new Date(Date.now() + 5.5 * 3600 * 1000 - daysAgo * 86400000).toISOString().slice(0, 10); }
+  function loadSocial(daysAgo) {
+    return fetch('/social/' + istDate(daysAgo) + '.json', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : Promise.reject(); });
+  }
+  loadSocial(0).catch(function () { return loadSocial(1); }).then(function (s) {
+    var lane = { ai: 'ai', biz: 'biz', mkt: 'mkt' }[s.lane] || '';
+    var img = '/api/og?' + new URLSearchParams({ type: 'status', i: s.insight, d: s.date, n: String(s.edition || ''), lane: lane }).toString();
+    $('meta-social').textContent = 'Edition ' + s.edition + ' · ' + s.date + (s.date !== istDate(0) ? ' (today’s isn’t ready yet)' : '');
+    $('insight').textContent = s.insight;
+    $('status-img').src = img;
+    $('save-img').href = img;
+    $('save-img').setAttribute('download', 'hour-brief-status-' + s.date + '.png');
+    $('status-cap').value = s.status;
+    $('li').value = s.linkedin;
+    $('social').hidden = false;
+    $('copy-cap').addEventListener('click', function () { copy(s.status); });
+    $('copy-li').addEventListener('click', function () {
+      copy(s.linkedin).then(function () {
+        window.open('https://www.linkedin.com/feed/?shareActive=true&text=' + encodeURIComponent(s.linkedin), '_blank', 'noopener');
+      });
+    });
+    if (navigator.share) {
+      var sl = $('share-li'); sl.hidden = false;
+      sl.addEventListener('click', function () { navigator.share({ text: s.linkedin }).catch(function () {}); });
+      // Sharing the image itself (not a link) is what lets WhatsApp offer "My Status".
+      fetch(img).then(function (r) { return r.blob(); }).then(function (blob) {
+        var file = new File([blob], 'hour-brief-status-' + s.date + '.png', { type: 'image/png' });
+        if (!navigator.canShare || !navigator.canShare({ files: [file] })) return;
+        var b = $('share-img'); b.hidden = false;
+        b.addEventListener('click', function () { navigator.share({ files: [file], text: s.status }).catch(function () {}); });
+      }).catch(function () {});
+    }
+  }).catch(function () { $('meta-social').textContent = 'No post kit yet. It’s written each morning after the edition.'; });
+
   fetch('/api/digest').then(function (r) { return r.ok ? r.json() : Promise.reject(); }).then(function (d) {
     $('meta').textContent = 'Edition ' + d.edition + ' · ' + d.date + (d.quizQuestions ? ' · quiz included' : '');
     $('wa').value = d.whatsapp;
