@@ -17,7 +17,7 @@ alpha = np.clip((0.97 - r) / (0.97 - 0.74), 0, 1)
 alpha = alpha * alpha * (3 - 2 * alpha)                   # smoothstep
 icon = Image.fromarray(np.dstack([crop, alpha * 255]).astype(np.uint8), 'RGBA')
 
-# 2. Brand image (wordmark + tagline), 200x80dp: lift the text off its gradient into a transparent PNG.
+# 2. Wordmark + tagline: lift the text off its gradient into a transparent PNG.
 x0, x1, y0, y1 = 822, 1902, 1519, 1951                    # 1080 x 432 = 2.5:1 around the text
 reg = a[y0:y1, x0:x1]
 lum = reg.max(axis=2)
@@ -40,12 +40,14 @@ brand = Image.fromarray(np.dstack([fg, alpha_t * 255]).astype(np.uint8), 'RGBA')
 for name, scale in [('mdpi', 1), ('hdpi', 1.5), ('xhdpi', 2), ('xxhdpi', 3), ('xxxhdpi', 4)]:
     d = f'{RES}/drawable-{name}'
     icon.resize((round(288 * scale),) * 2, Image.LANCZOS).save(f'{d}/splash_icon.png', optimize=True)
-    brand.resize((round(200 * scale), round(80 * scale)), Image.LANCZOS).save(f'{d}/splash_branding.png', optimize=True)
+    # Shown under the icon by MainActivity's own splash at 240x96dp: the same scale as the icon (0.2225 dp per source
+    # px), so the wordmark and tagline sit exactly as they do on iOS.
+    brand.resize((round(240 * scale), round(96 * scale)), Image.LANCZOS).save(f'{d}/splash_text.png', optimize=True)
 
-# Preview: a 412x915dp phone at 2x, laid out the way Android 12 draws it (icon centred, brand image 60dp off the bottom).
+# Preview: a 412x915dp phone at 2x, laid out the way MainActivity draws it (icon centred, text centred 135dp lower).
 W, H = 824, 1830
 pv = Image.new('RGBA', (W, H), tuple(int(v) for v in BG) + (255,))
 ic = icon.resize((576, 576), Image.LANCZOS); pv.alpha_composite(ic, ((W - 576) // 2, (H - 576) // 2))
-br = brand.resize((400, 160), Image.LANCZOS); pv.alpha_composite(br, ((W - 400) // 2, H - 160 - 120))
+br = brand.resize((480, 192), Image.LANCZOS); pv.alpha_composite(br, ((W - 480) // 2, H // 2 + 270 - 96))
 pv.convert('RGB').save(OUT)
 print('ok')

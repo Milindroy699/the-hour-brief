@@ -21,11 +21,11 @@
         <item name="android:windowSplashScreenBackground" tools:targetApi="s">@color/splash_background</item>
         <!-- Android 12+ draws its own splash: a centred icon (288dp canvas, masked to a 192dp circle) plus an optional
              brand image near the bottom. The launcher foreground (432px) was stretched ~2.7x there and looked pixelated
-             (owner, 2026-11-18). splash_icon is the iOS splash's icon + glow at the right size for each density;
-             splash_branding is its wordmark + tagline. Android 11 and older keep the full drawable/splash.png. -->
+             (owner, 2026-11-18). splash_icon is the iOS splash's icon + glow at the right size for each density.
+             The wordmark + tagline come straight after, in MainActivity's own splash, under the same icon: the
+             system's bottom "branding image" isn't drawn on many phones (it was missing on the owner's). -->
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
         <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="s">@drawable/splash_icon</item>
-        <item name="android:windowSplashScreenBrandingImage" tools:targetApi="s">@drawable/splash_branding</item>
         <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
         <item name="android:background">@color/splash_background</item>
         <item name="android:statusBarColor">@color/splash_background</item>
