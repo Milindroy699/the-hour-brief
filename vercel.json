@@ -42,6 +42,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/api/register-push",
+      "destination": "/api/track"
+    },
+    {
       "source": "/linkedin/callback",
       "destination": "/api/post-digest?job=linkedin-callback"
     }
