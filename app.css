@@ -755,8 +755,13 @@ html.hb-deck-open #mob-progress, html.hb-deck-open #mob-top { display: none; }
 .dk-next { right: 10px; }
 /* Bottom pager: ‹  Section · 3 / 12  ›  (the arrows live here now, not on the card's edges). */
 .dk-pager { justify-content: space-between; gap: 10px; padding: 6px 16px 12px; }
-.dk-pager .dk-nav { position: static; top: auto; flex: none; width: 46px; height: 46px; }
-.dk-pager .dk-count { flex: 1; min-width: 0; text-align: center; font-family: var(--hb-label); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Kept low-key (owner, 2026-11-18: swiping is what we teach; the pager is the fallback): small arrows and a quiet
+   counter. The ::after keeps each arrow's touch area at 44px around the smaller 34px button. */
+.dk-pager { padding: 2px 18px 8px; }
+.dk-pager .dk-nav { position: relative; top: auto; flex: none; width: 34px; height: 34px; border-color: rgba(var(--hb-primary-rgb), 0.18); box-shadow: 0 2px 8px rgba(18, 19, 22, 0.12); }
+.dk-pager .dk-nav::after { content: ""; position: absolute; inset: -5px; border-radius: 50%; }
+.dk-pager .dk-nav svg { width: 16px; height: 16px; stroke-width: 2.2; }
+.dk-pager .dk-count { flex: 1; min-width: 0; text-align: center; font-family: var(--hb-label); font-size: 0.66rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* ---- Stacked deck (owner's call, 2026-11-18): the next card waits directly behind the current one; swiping slides the
    current card off to the left with a slight tilt, and going back brings the earlier card in over the top. ----
    Who stays put is decided by position: sticky, not by transforms: a card's .dk-hold sticks to the right edge of the
