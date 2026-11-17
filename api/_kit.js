@@ -65,6 +65,7 @@ function leadersWhatsApp(s) {
   return {
     hook,
     image: `${CANON}/api/og?${new URLSearchParams({ type: 'status', k: 'Thought Leaders', i: hook, d: s.date, lane: LANE_OF[L.category] || '' }).toString()}`,
+    status: `${hook}\n\nRead the full breakdown 👉 ${link}`,
     message: [`*${hook}*`, ...points, `Read the full breakdown 👉 ${link}`, APP_BLOCK].join('\n\n'),
   };
 }
@@ -129,14 +130,16 @@ async function ownerTokens() {
   const toks = ((await kv(['HMGET', 'push:device-token', ...devices])) || {}).result || [];
   return toks.filter(Boolean);
 }
-// Weekdays: the Thought Leaders pick for WhatsApp, as one Telegram photo whose caption is the chat message.
+// Weekdays: the Thought Leaders pick for WhatsApp: the status image with the concise status caption, then the full
+// message for chats and groups.
 async function toTelegramLeaders(s) {
   const w = leadersWhatsApp(s);
   if (!w) return { ok: true, skipped: 'no Thought Leaders pick today' };
   if (!process.env.TELEGRAM_BOT_TOKEN) return { ok: false, skipped: 'telegram bot not set up' };
   const chat = await telegramChat();
   if (!chat) return { ok: false, skipped: 'telegram not paired yet (message the bot, then pair)' };
-  await tg('sendPhoto', { chat_id: chat, photo: w.image, caption: `WhatsApp · Thought Leaders pick\n\n${w.message}`.slice(0, 1024) });
+  await tg('sendPhoto', { chat_id: chat, photo: w.image, caption: `WhatsApp status · Thought Leaders pick\n\n${w.status}`.slice(0, 1024) });
+  await tg('sendMessage', { chat_id: chat, text: `WhatsApp message for chats & groups:\n\n${w.message}`.slice(0, 4096), link_preview_options: { is_disabled: true } });
   return { ok: true };
 }
 
@@ -148,13 +151,15 @@ async function toOwnerPush(s, l) {
   return { ok: out.successCount > 0, ...out };
 }
 
-async function deliverKit({ date = istToday(), force = false, dry = false } = {}) {
+// `only` limits a run to one channel (e.g. resending just the WhatsApp pick by hand with force).
+async function deliverKit({ date = istToday(), force = false, dry = false, only = null } = {}) {
   const s = await loadSocial(date);
   if (!s) return { ok: false, date, skipped: 'no social post for this date yet' };
   const l = links(s);
   if (dry) return { ok: true, dry: true, date, social: s, links: l };
   const result = { ok: true, date };
   for (const [name, fn] of [['telegram', toTelegram], ['telegramPost', toTelegramPost], ['telegramLeaders', toTelegramLeaders], ['ownerPush', toOwnerPush]]) {
+    if (only && name !== only) continue;
     const key = `kit:${name}:${date}`;
     if (!(await claim(key, force))) { result[name] = { ok: true, skipped: 'already sent' }; continue; }
     try {

@@ -88,7 +88,9 @@ module.exports = async (req, res) => {
   try {
     switch (job) {
       case 'digest': break;
-      case 'kit': return send({ ok: true, kit: await deliverKit({ dry, force }), linkedin: await li.postMorning({ dry, force }) });
+      case 'kit': return send(q.only
+        ? { ok: true, kit: await deliverKit({ dry, force, only: String(q.only) }) }
+        : { ok: true, kit: await deliverKit({ dry, force }), linkedin: await li.postMorning({ dry, force }) });
       case 'insight': return send({ ok: true, push: await sendInsightPush({ dry, force }) });
       case 'linkedin-morning': return send(await li.postMorning({ dry, force }));
       case 'linkedin-leaders': return send(await li.postLeaders({ dry, force }));
