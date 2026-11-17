@@ -1,6 +1,7 @@
-// Daily post kit: one "sharpest insight" per edition, written each morning by the "Daily post writer" routine into
-// social/<date>.json (see social/README.md), then delivered from Vercel Cron via post-digest.js:
-//   deliverKit()       -> the owner: a Telegram message (status image + caption + LinkedIn text) and a push to the
+// Daily post kit: one "sharpest insight" per edition (plus, on weekdays, one Thought Leaders pick), written each morning
+// by the "Daily post writer" routine into social/<date>.json (see social/README.md), then delivered from Vercel Cron via
+// post-digest.js:
+//   deliverKit()       -> the owner: Telegram (the status image + caption, then the day's LinkedIn post) and a push to the
 //                         owner's own phone opening /share-kit.html (one-tap LinkedIn / WhatsApp status). The day's
 //                         Notion row is written by the "Daily post writer" routine itself, through the owner's Claude
 //                         Notion connector, so there is no Notion token here.
@@ -43,6 +44,14 @@ async function loadSocial(date) {
   }
 }
 
+// The day's LinkedIn post: on weekdays the punchy Thought Leaders pick, otherwise the edition insight's post.
+function primaryPost(s) {
+  if (s.leaders && s.leaders.id && s.leaders.post) {
+    return { kind: 'leaders', label: `Thought Leaders pick: ${s.leaders.title || s.leaders.id}`, text: s.leaders.post, link: `${CANON}/leaders.html#a=${encodeURIComponent(s.leaders.id)}` };
+  }
+  return { kind: 'insight', label: 'Today’s insight', text: s.linkedin, link: `${CANON}/e/${s.date}` };
+}
+
 function links(s) {
   const lane = ['ai', 'biz', 'mkt'].includes(s.lane) ? s.lane : '';
   return {
@@ -82,10 +91,18 @@ async function toTelegram(s, l) {
   if (!process.env.TELEGRAM_BOT_TOKEN) return { ok: false, skipped: 'telegram bot not set up' };
   const chat = await telegramChat();
   if (!chat) return { ok: false, skipped: 'telegram not paired yet (message the bot, then pair)' };
-  // Photo first (save it to WhatsApp status), caption ready to paste; then the LinkedIn post as its own message.
+  // The status image to save to WhatsApp status, with its caption ready to paste.
   await tg('sendPhoto', { chat_id: chat, photo: l.image, caption: `${withApp(s.status)}\n\nPost kit: ${l.kit}`.slice(0, 1024) });
-  await tg('sendMessage', { chat_id: chat, text: `LinkedIn post for ${s.date}:\n\n${withApp(s.linkedin)}`.slice(0, 4096), link_preview_options: { is_disabled: true } });
   return { ok: true };
+}
+// The day's LinkedIn post as its own message (its own dedupe key, so it can follow later the same day).
+async function toTelegramPost(s) {
+  if (!process.env.TELEGRAM_BOT_TOKEN) return { ok: false, skipped: 'telegram bot not set up' };
+  const chat = await telegramChat();
+  if (!chat) return { ok: false, skipped: 'telegram not paired yet (message the bot, then pair)' };
+  const p = primaryPost(s);
+  await tg('sendMessage', { chat_id: chat, text: `LinkedIn post · ${p.label}\n\n${withApp(p.text)}`.slice(0, 4096), link_preview_options: { is_disabled: true } });
+  return { ok: true, kind: p.kind };
 }
 
 // ---- Push to the owner's own phone ----
@@ -109,7 +126,7 @@ async function deliverKit({ date = istToday(), force = false, dry = false } = {}
   const l = links(s);
   if (dry) return { ok: true, dry: true, date, social: s, links: l };
   const result = { ok: true, date };
-  for (const [name, fn] of [['telegram', toTelegram], ['ownerPush', toOwnerPush]]) {
+  for (const [name, fn] of [['telegram', toTelegram], ['telegramPost', toTelegramPost], ['ownerPush', toOwnerPush]]) {
     const key = `kit:${name}:${date}`;
     if (!(await claim(key, force))) { result[name] = { ok: true, skipped: 'already sent' }; continue; }
     try {
@@ -170,4 +187,4 @@ async function pairTelegram({ dry = false } = {}) {
   return { ok: true, dry, chat: list[0] };
 }
 
-module.exports = { APP_LINKS, withApp, beforeTags, istToday, loadSocial, links, deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram };
+module.exports = { APP_LINKS, withApp, beforeTags, primaryPost, istToday, loadSocial, links, deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram };

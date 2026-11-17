@@ -48,12 +48,18 @@
     <div class="row"><button id="copy-cap" type="button">Copy caption</button></div>
 
     <h2>LinkedIn post</h2>
+    <p class="meta" id="li-label"></p>
     <textarea id="li" readonly aria-label="LinkedIn post text"></textarea>
     <div class="row">
       <button class="primary" id="copy-li" type="button">Copy &amp; open LinkedIn</button>
       <button id="share-li" type="button" hidden>Share…</button>
     </div>
     <p class="hint">The text is copied first, so if LinkedIn opens without it, just paste.</p>
+    <details id="li-alt" hidden>
+      <summary>Other option: today’s insight post</summary>
+      <textarea id="li2" readonly aria-label="Alternative LinkedIn post" style="margin-top:10px"></textarea>
+      <div class="row"><button id="copy-li2" type="button">Copy this one</button></div>
+    </details>
   </section>
 
   <h2 style="margin-top:40px">Channel post</h2>
@@ -112,6 +118,15 @@
   loadSocial(0).catch(function () { return loadSocial(1); }).then(function (s) {
     s.linkedin = withApp(s.linkedin);
     s.status = withApp(s.status);
+    // Weekdays: the day's post is the punchy Thought Leaders pick; the insight post stays available as an alternative.
+    var pick = s.leaders && s.leaders.post ? s.leaders : null;
+    var post = pick ? withApp(pick.post) : s.linkedin;
+    $('li-label').textContent = pick ? 'Thought Leaders pick: ' + (pick.title || '') : 'Today’s insight';
+    if (pick) {
+      $('li2').value = s.linkedin;
+      $('li-alt').hidden = false;
+      $('copy-li2').addEventListener('click', function () { copy(s.linkedin); });
+    }
     var lane = { ai: 'ai', biz: 'biz', mkt: 'mkt' }[s.lane] || '';
     var img = '/api/og?' + new URLSearchParams({ type: 'status', i: s.insight, d: s.date, n: String(s.edition || ''), lane: lane }).toString();
     $('meta-social').textContent = 'Edition ' + s.edition + ' · ' + s.date + (s.date !== istDate(0) ? ' (today’s isn’t ready yet)' : '');
@@ -120,17 +135,17 @@
     $('save-img').href = img;
     $('save-img').setAttribute('download', 'hour-brief-status-' + s.date + '.png');
     $('status-cap').value = s.status;
-    $('li').value = s.linkedin;
+    $('li').value = post;
     $('social').hidden = false;
     $('copy-cap').addEventListener('click', function () { copy(s.status); });
     $('copy-li').addEventListener('click', function () {
-      copy(s.linkedin).then(function () {
-        window.open('https://www.linkedin.com/feed/?shareActive=true&text=' + encodeURIComponent(s.linkedin), '_blank', 'noopener');
+      copy(post).then(function () {
+        window.open('https://www.linkedin.com/feed/?shareActive=true&text=' + encodeURIComponent(post), '_blank', 'noopener');
       });
     });
     if (navigator.share) {
       var sl = $('share-li'); sl.hidden = false;
-      sl.addEventListener('click', function () { navigator.share({ text: s.linkedin }).catch(function () {}); });
+      sl.addEventListener('click', function () { navigator.share({ text: post }).catch(function () {}); });
       // Sharing the image itself (not a link) is what lets WhatsApp offer "My Status".
       fetch(img).then(function (r) { return r.blob(); }).then(function (blob) {
         var file = new File([blob], 'hour-brief-status-' + s.date + '.png', { type: 'image/png' });

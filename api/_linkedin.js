@@ -200,10 +200,14 @@ function highlightOf(b) {
   return out || (paras[0] || '').slice(0, 650);
 }
 
-async function pickLeader() {
+async function allBriefs() {
   const r = await fetch(`${CANON}/leaders-data.json`, { cache: 'no-store', signal: AbortSignal.timeout(8000) });
   if (!r.ok) throw new Error(`leaders-data.json HTTP ${r.status}`);
-  const briefs = ((await r.json()).briefs || []).filter((b) => b.id && b.title && b.body);
+  return ((await r.json()).briefs || []).filter((b) => b.id && b.title && b.body);
+}
+
+async function pickLeader() {
+  const briefs = await allBriefs();
   const posted = new Set(result(await kv(['SMEMBERS', 'li:leaders-posted'])) || []);
   const fresh = briefs.filter((b) => !posted.has(b.id));
   const order = (b) => { const i = PILLAR_ORDER.indexOf(b.category); return i < 0 ? 99 : i; };
@@ -213,12 +217,14 @@ async function pickLeader() {
   return fresh.sort((a, b) => ((b.generatedAt || '') > (a.generatedAt || '') ? 1 : -1))[0] || null;
 }
 
-function leaderPost(b) {
+// `punchy` is the routine's short post for this article (social/<date>.json "leaders.post"); without it, the post is
+// built from the article's highlight.
+function leaderPost(b, punchy) {
   const label = PILLAR_LABEL[b.category] || 'Thought Leaders';
   const link = `${CANON}/leaders.html#a=${encodeURIComponent(b.id)}`;
   const from = (b.sources || []).map((s) => s.creator).filter(Boolean);
   return {
-    text: withApp([
+    text: punchy ? withApp(punchy) : withApp([
       `${label} · Thought Leaders`,
       '',
       b.title,
@@ -239,9 +245,17 @@ function leaderPost(b) {
 
 async function postLeaders({ date = istToday(), force = false, dry = false } = {}) {
   if (!configured()) return { ok: false, skipped: 'linkedin not set up' };
-  const b = await pickLeader();
+  // Prefer the article the routine picked (and wrote a punchy post for) today, so the Page and the owner's kit match.
+  const s = await loadSocial(date);
+  let b, punchy = null;
+  if (s && s.leaders && s.leaders.id && s.leaders.post) {
+    b = (await allBriefs()).find((x) => x.id === s.leaders.id) || { id: s.leaders.id, title: s.leaders.title || s.leaders.id, category: s.leaders.category, sources: [] };
+    punchy = s.leaders.post;
+  } else {
+    b = await pickLeader();
+  }
   if (!b) return { ok: false, skipped: 'no Thought Leaders article left to post' };
-  const post = leaderPost(b);
+  const post = leaderPost(b, punchy);
   if (dry) return { ok: true, dry: true, date, article: b.id, post };
   const out = await once(`li:posted:leaders:${date}`, () => publish(post), { force });
   if (out.ok && !out.skipped) await kv(['SADD', 'li:leaders-posted', b.id]);

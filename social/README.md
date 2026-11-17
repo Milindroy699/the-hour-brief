@@ -10,13 +10,20 @@ morning (~09:00 IST) by the "Daily post writer" Claude Code routine from that da
   "storyId": "ai-2",
   "storyTitle": "the headline of the story the insight comes from",
   "insight": "the idea in one sentence, <=150 chars (goes on the status image)",
-  "linkedin": "a personal-profile LinkedIn post, 120-220 words, ends with the edition link + hashtags",
+  "linkedin": "short, punchy personal LinkedIn post on the insight (40-80 words): hook, 2-3 lines, CTA link, hashtags",
   "status": "WhatsApp status caption, <=200 chars including the edition link",
   "push": { "title": "<=45 chars", "body": "<=110 chars" },
   "page": "LinkedIn Page morning post (brand voice, 70-130 words, no link; one is added)",
+  "leaders": { "id": "tech-ai-2026-11-17", "category": "tech-ai", "title": "the article's title",
+               "post": "weekdays only: short, punchy LinkedIn post on ONE Thought Leaders article (40-80 words),
+                        hook + 2-3 lines + CTA to https://the-hour-brief.vercel.app/leaders.html#a=<id> + hashtags" },
   "generatedAt": "ISO timestamp"
 }
 ```
+
+On weekdays the day's LinkedIn post is `leaders.post` (Monday to Friday walk the week's Thought
+Leaders articles in pillar order, one per day, never repeating); otherwise it's `linkedin`. App
+Store / Google Play links are added on delivery, never written into the file.
 
 Used by:
 - `share-kit.html` (private, noindex): the "Today's post" section with Share image (WhatsApp →
