@@ -55,6 +55,17 @@
       <button id="share-li" type="button" hidden>Share…</button>
     </div>
     <p class="hint">The text is copied first, so if LinkedIn opens without it, just paste.</p>
+    <div id="wa-leaders" hidden>
+      <h2>WhatsApp · Thought Leaders pick</h2>
+      <img class="card status" id="wl-img" alt="Status image for today’s Thought Leaders pick">
+      <div class="row">
+        <button class="primary" id="wl-share" type="button" hidden>Share image…</button>
+        <a class="btn" id="wl-save" download>Save image</a>
+      </div>
+      <textarea id="wl-msg" readonly aria-label="WhatsApp message for the Thought Leaders pick" style="min-height:12em"></textarea>
+      <div class="row"><button id="wl-copy" type="button">Copy message</button></div>
+      <p class="hint">Status: share the image, then paste the first two lines. Chats and groups: paste the whole message.</p>
+    </div>
     <details id="li-alt" hidden>
       <summary>Other option: today’s insight post</summary>
       <textarea id="li2" readonly aria-label="Alternative LinkedIn post" style="margin-top:10px"></textarea>
@@ -123,6 +134,28 @@
     var post = pick ? withApp(pick.post) : s.linkedin;
     $('li-label').textContent = pick ? 'Thought Leaders pick: ' + (pick.title || '') : 'Today’s insight';
     if (pick) {
+      // WhatsApp version (same as api/_kit.js leadersWhatsApp): status image with the hook + a chat message.
+      var lines = String(pick.post).split(/\n+/).map(function (x) { return x.trim(); }).filter(Boolean);
+      var hook = lines[0];
+      var points = lines.slice(1).filter(function (x) { return !/^#/.test(x) && !/^Read the full breakdown/i.test(x); });
+      var link = location.origin + '/leaders.html#a=' + encodeURIComponent(pick.id);
+      var laneOf = { 'tech-ai': 'ai', business: 'biz', product: 'biz', finance: 'mkt' };
+      var wlImg = '/api/og?' + new URLSearchParams({ type: 'status', k: 'Thought Leaders', i: hook, d: s.date, lane: laneOf[pick.category] || '' }).toString();
+      var wlMsg = ['*' + hook + '*'].concat(points, ['Read the full breakdown 👉 ' + link, APP_BLOCK]).join('\n\n');
+      $('wl-img').src = wlImg;
+      $('wl-save').href = wlImg;
+      $('wl-save').setAttribute('download', 'hour-brief-leaders-' + s.date + '.png');
+      $('wl-msg').value = wlMsg;
+      $('wa-leaders').hidden = false;
+      $('wl-copy').addEventListener('click', function () { copy(wlMsg); });
+      if (navigator.share) {
+        fetch(wlImg).then(function (r) { return r.blob(); }).then(function (blob) {
+          var f = new File([blob], 'hour-brief-leaders-' + s.date + '.png', { type: 'image/png' });
+          if (!navigator.canShare || !navigator.canShare({ files: [f] })) return;
+          var b = $('wl-share'); b.hidden = false;
+          b.addEventListener('click', function () { navigator.share({ files: [f], text: hook + '\n\nRead the full breakdown 👉 ' + link }).catch(function () {}); });
+        }).catch(function () {});
+      }
       $('li2').value = s.linkedin;
       $('li-alt').hidden = false;
       $('copy-li2').addEventListener('click', function () { copy(s.linkedin); });

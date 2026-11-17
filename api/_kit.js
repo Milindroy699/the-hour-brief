@@ -52,6 +52,23 @@ function primaryPost(s) {
   return { kind: 'insight', label: 'Today’s insight', text: s.linkedin, link: `${CANON}/e/${s.date}` };
 }
 
+// WhatsApp version of the weekday Thought Leaders pick, built from its LinkedIn post: a status image with the hook, and
+// a chat message (bold hook, the points, the link, the app links) to forward to chats and groups.
+const LANE_OF = { 'tech-ai': 'ai', business: 'biz', product: 'biz', finance: 'mkt' };
+function leadersWhatsApp(s) {
+  const L = s.leaders;
+  if (!L || !L.id || !L.post) return null;
+  const link = `${CANON}/leaders.html#a=${encodeURIComponent(L.id)}`;
+  const lines = String(L.post).split(/\n+/).map((x) => x.trim()).filter(Boolean);
+  const hook = lines[0];
+  const points = lines.slice(1).filter((x) => !/^#/.test(x) && !/^Read the full breakdown/i.test(x));
+  return {
+    hook,
+    image: `${CANON}/api/og?${new URLSearchParams({ type: 'status', k: 'Thought Leaders', i: hook, d: s.date, lane: LANE_OF[L.category] || '' }).toString()}`,
+    message: [`*${hook}*`, ...points, `Read the full breakdown 👉 ${link}`, APP_BLOCK].join('\n\n'),
+  };
+}
+
 function links(s) {
   const lane = ['ai', 'biz', 'mkt'].includes(s.lane) ? s.lane : '';
   return {
@@ -112,6 +129,17 @@ async function ownerTokens() {
   const toks = ((await kv(['HMGET', 'push:device-token', ...devices])) || {}).result || [];
   return toks.filter(Boolean);
 }
+// Weekdays: the Thought Leaders pick for WhatsApp, as one Telegram photo whose caption is the chat message.
+async function toTelegramLeaders(s) {
+  const w = leadersWhatsApp(s);
+  if (!w) return { ok: true, skipped: 'no Thought Leaders pick today' };
+  if (!process.env.TELEGRAM_BOT_TOKEN) return { ok: false, skipped: 'telegram bot not set up' };
+  const chat = await telegramChat();
+  if (!chat) return { ok: false, skipped: 'telegram not paired yet (message the bot, then pair)' };
+  await tg('sendPhoto', { chat_id: chat, photo: w.image, caption: `WhatsApp · Thought Leaders pick\n\n${w.message}`.slice(0, 1024) });
+  return { ok: true };
+}
+
 async function toOwnerPush(s, l) {
   if (!process.env.FIREBASE_PROJECT_ID) return { ok: false, skipped: 'firebase not configured' };
   const tokens = await ownerTokens();
@@ -126,7 +154,7 @@ async function deliverKit({ date = istToday(), force = false, dry = false } = {}
   const l = links(s);
   if (dry) return { ok: true, dry: true, date, social: s, links: l };
   const result = { ok: true, date };
-  for (const [name, fn] of [['telegram', toTelegram], ['telegramPost', toTelegramPost], ['ownerPush', toOwnerPush]]) {
+  for (const [name, fn] of [['telegram', toTelegram], ['telegramPost', toTelegramPost], ['telegramLeaders', toTelegramLeaders], ['ownerPush', toOwnerPush]]) {
     const key = `kit:${name}:${date}`;
     if (!(await claim(key, force))) { result[name] = { ok: true, skipped: 'already sent' }; continue; }
     try {
@@ -187,4 +215,4 @@ async function pairTelegram({ dry = false } = {}) {
   return { ok: true, dry, chat: list[0] };
 }
 
-module.exports = { APP_LINKS, withApp, beforeTags, primaryPost, istToday, loadSocial, links, deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram };
+module.exports = { APP_LINKS, withApp, beforeTags, primaryPost, leadersWhatsApp, istToday, loadSocial, links, deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram };
