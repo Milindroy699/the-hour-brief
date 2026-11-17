@@ -111,8 +111,12 @@ function extractArticleText(html) {
 }
 
 // ---- youtube-transcript.io: batched transcript fetch ----
+// Returns { texts, failed, status, error }. `failed` lists ids whose request was rejected or never answered (bad or
+// exhausted key, outage): the caller leaves those for the next run instead of treating them as "no transcript".
 async function fetchTranscripts(videoIds, token) {
   const out = {};
+  const failed = [];
+  let status = 0, error = '';
   for (let i = 0; i < videoIds.length; i += 50) {
     const batch = videoIds.slice(i, i + 50);
     try {
@@ -125,6 +129,10 @@ async function fetchTranscripts(videoIds, token) {
         body: JSON.stringify({ ids: batch }),
         signal: AbortSignal.timeout(40000),
       });
+      if (!r.ok) {
+        status = r.status;
+        throw new Error(`HTTP ${r.status} ${(await r.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 80)}`.trim());
+      }
       const data = await r.json();
       // Confirmed shape (live-tested): a plain array, each item {id, text, tracks: [{transcript:[{text,...}]}], ...}.
       // `text` is already the pre-joined plain transcript; `tracks[0].transcript` segments are a fallback only.
@@ -138,11 +146,12 @@ async function fetchTranscripts(videoIds, token) {
         if (id && text) out[id] = String(text).trim();
       });
     } catch (e) {
-      // leave this batch's videos absent from `out`; caller treats as unavailable
+      failed.push(...batch);
+      error = e.message;
     }
     if (i + 50 < videoIds.length) await new Promise((r) => setTimeout(r, 2200)); // stay under 5 req/10s
   }
-  return out;
+  return { texts: out, failed, status, error };
 }
 
 // ---- GitHub Contents API: commit the collected pending file ----
@@ -228,7 +237,10 @@ async function transcriptBudget() {
   const accounts = [];
   for (const a of YTT_ACCOUNTS) {
     const used = parseInt(await kv(['GET', counterKey(a, month)]), 10) || 0;
-    accounts.push({ account: a, counter: counterKey(a, month), used, remaining: Math.max(0, YTT_MONTHLY_LIMIT - used) });
+    // An account whose key was rejected (bad, revoked, out of credit) sits out for a day, so the retry slots use the others.
+    const benched = await kv(['GET', `leader:ytt:benched:${a.n}`]);
+    accounts.push({ account: a, counter: counterKey(a, month), used, benched: benched || null,
+      remaining: benched ? 0 : Math.max(0, YTT_MONTHLY_LIMIT - used) });
   }
   const today = parseInt(await kv(['GET', dayKey]), 10) || 0;
   const used = accounts.reduce((n, a) => n + a.used, 0);
@@ -240,7 +252,7 @@ async function transcriptBudget() {
 // What a report may show: counts only, never the tokens.
 function publicBudget(b) {
   return { limit: b.limit, used: b.used, remaining: b.remaining, usedToday: b.usedToday, thisRun: b.thisRun,
-    accounts: b.accounts.map((a) => ({ account: a.account.n, used: a.used, limit: YTT_MONTHLY_LIMIT })) };
+    accounts: b.accounts.map((a) => ({ account: a.account.n, used: a.used, limit: YTT_MONTHLY_LIMIT, ...(a.benched ? { benched: a.benched } : {}) })) };
 }
 // When the budget is short, take one video per pillar before a second from any (newest first within a pillar), so
 // every category keeps getting covered.
@@ -338,8 +350,22 @@ async function runFetch({ dry = false } = {}) {
       report.transcriptBudget.used += batch.length;
     }
     const transcripts = {};
-    for (const { a, take } of plan) Object.assign(transcripts, await fetchTranscripts(take.map((v) => v.e.videoId), a.account.token));
+    const unanswered = new Set();
+    for (const { a, take } of plan) {
+      const got = await fetchTranscripts(take.map((v) => v.e.videoId), a.account.token);
+      Object.assign(transcripts, got.texts);
+      if (!got.failed.length) continue;
+      // Rejected or unanswered: no credit was spent, so give it back, and leave the videos unseen for the next run.
+      got.failed.forEach((id) => unanswered.add(id));
+      await kv(['DECRBY', a.counter, String(got.failed.length)]);
+      await kv(['DECRBY', budget.dayKey, String(got.failed.length)]);
+      report.transcriptBudget.accounts.find((x) => x.account === a.account.n).used -= got.failed.length;
+      report.transcriptBudget.used -= got.failed.length;
+      if ([401, 402, 403, 429].includes(got.status)) await kv(['SET', `leader:ytt:benched:${a.account.n}`, `HTTP ${got.status}`, 'EX', '86400']);
+      report.errors.push(`transcript account ${a.account.n}: ${got.error} (${got.failed.length} video(s) left for the next run)`);
+    }
     for (const { creator, e } of batch) {
+      if (unanswered.has(e.videoId)) continue;
       markAttempted(creator, e); // attempted once either way
       const content = transcripts[e.videoId] || '';
       if (content.length < MIN_TRANSCRIPT_CHARS) { report.skipped.push(`${creator.name}: "${e.title}" (${content ? 'too short' : 'no transcript'})`); continue; }
