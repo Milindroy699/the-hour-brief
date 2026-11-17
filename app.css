@@ -819,8 +819,6 @@ html.hb-deck-open #mob-progress, html.hb-deck-open #mob-top { display: none; }
 @media (prefers-reduced-motion: reduce) { .dk-bar i, .dk-bar-thumb { transition: none; } }
 
 /* ---- Cover card: the top of the page, first in the deck ---- */
-.dk-wordmark { margin: 0 0 4px; font-family: var(--hb-label); font-weight: 700; letter-spacing: -0.03em; font-size: 1.9rem; line-height: 1.1; color: var(--ink); }
-.dk-wordmark span { color: var(--hb-primary); }
 .dk-tagline { margin: 0 0 20px; font-size: 0.95rem; line-height: 1.5; color: var(--ink-soft); }
 /* "Before the news" fills the rest of the card rather than hugging its own text — the scroll area becomes a column
    and the quote is its one flexed child, so a short quote's card still reads as a quiet, deliberate page instead of

@@ -170,12 +170,8 @@
     var line = editionLine();
     c.line = line;
     b.scroll.appendChild(mk('p', 'dk-kick', line || 'Today'));
-    var wmSrc = document.querySelector('.wordmark');
-    if (wmSrc) {
-      var wm = heading('h1', 'dk-wordmark', '');
-      cloneInto(wm, wmSrc);
-      b.scroll.appendChild(wm);
-    }
+    // No "The Hour Brief" title here any more: the deck's header (see build()) already shows it, right above (owner,
+    // 2026-11-18). The cover opens on the edition line, then the tagline.
     var tgSrc = document.querySelector('.tagline');
     if (tgSrc) b.scroll.appendChild(mk('p', 'dk-tagline', plain(tgSrc)));
     var qt = document.querySelector('.pause-text');
