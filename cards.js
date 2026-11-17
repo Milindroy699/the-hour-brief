@@ -375,10 +375,33 @@
     deck.setAttribute('aria-roledescription', 'carousel');
     deck.setAttribute('aria-label', 'Today’s stories, one card at a time');
 
-    // No header bar any more — every card already names its own section (the cover and each section intro have their
-    // own kicker; story cards get one below), and Saved / Menu moved to being reachable from List (one tap away via
-    // the switch), not duplicated up here. The point is to give the card itself as much of the screen as possible;
-    // see .dk-track's own top padding below for the safe-area clearance this bar used to provide.
+    // The app header, the same one Audio and Challenge show (logo, wordmark, Saved, Menu; mobile.js's HBChrome does
+    // the work). Cards ran without it for a while to give the card the most room; the owner asked to try it back
+    // (2026-11-18), so Today looks like the other screens. The List/Cards switch sits just under it (--dk-head-h).
+    var HC = window.HBChrome;
+    var head = ui.head = mk('header', 'hub-top dk-head');
+    var logo = mk('img', 'ab-logo');
+    logo.src = '/brand/logo-128.png';
+    logo.alt = '';
+    logo.width = logo.height = 34;
+    var brand = mk('div', 'ab-brand');
+    var word = mk('div', 'wordmark');
+    word.innerHTML = 'The Hour <span>Brief</span>';
+    brand.appendChild(word);
+    var acts = mk('div', 'ab-actions');
+    var saved = btn('ab-btn reader-saved', '', 'Saved stories');
+    saved.innerHTML = (HC ? HC.icons.star : '') + '<span class="rd-count"></span>';
+    saved.addEventListener('click', function () { if (HC) HC.saved(saved); });
+    var menu = btn('ab-btn ab-menu', '', 'Menu: sections, text size, reminder, share');
+    menu.innerHTML = HC ? HC.icons.sliders : '';
+    menu.addEventListener('click', function () { if (HC) HC.menu(menu); });
+    acts.appendChild(saved);
+    acts.appendChild(menu);
+    head.appendChild(logo);
+    head.appendChild(brand);
+    head.appendChild(acts);
+    deck.appendChild(head);
+    if (window.ResizeObserver) new ResizeObserver(syncHeadH).observe(head);
 
     track = mk('div', 'dk-track');
     track.tabIndex = 0;
@@ -402,6 +425,7 @@
     deck.appendChild(foot);
     deck.appendChild(ui.live);
     document.body.appendChild(deck);
+    if (HC && HC.refreshSaved) HC.refreshSaved();      // its count badge can only be filled once it's in the document
     buildFab();
 
     ui.prev.addEventListener('click', function () { onManualNav(); goTo(idx - 1, true); });
@@ -431,6 +455,10 @@
   }
 
   function touched() { lastTouch = Date.now(); goal = null; cancelNudge(); }   // the reader has taken over: forget any move in progress
+  // The header's height (safe area included), for placing the floating List/Cards switch just below it (app.css).
+  function syncHeadH() {
+    if (ui.head && ui.head.offsetHeight) document.documentElement.style.setProperty('--dk-head-h', ui.head.offsetHeight + 'px');
+  }
 
   // A sideways swipe the track never got. On iPhone, while a card's text is still gliding after a flick up or down, the
   // next touch belongs to that text scroller, so a swipe to the next card made straight after scrolling went nowhere
@@ -891,6 +919,7 @@
     deck.hidden = false;
     shown = true;
     document.documentElement.classList.add('hb-deck-open');
+    syncHeadH();
     var i = -1;
     if (o.id) { i = indexOfStory(o.id); if (i < 0) i = indexOfLane(o.id); }
     var now = listenNow();

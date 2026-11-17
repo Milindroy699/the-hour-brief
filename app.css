@@ -405,7 +405,7 @@ footer.colophon { border-top-color: var(--line); }
   box-shadow: 0 10px 26px rgba(18, 19, 22, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 .tab-switch[hidden] { display: none; }
-html.hb-deck-open .tab-switch { top: calc(env(safe-area-inset-top, 0px) + 14px); left: auto; right: 16px; bottom: auto; transform: none; }
+html.hb-deck-open .tab-switch { top: calc(var(--dk-head-h, env(safe-area-inset-top, 0px)) + 12px); left: auto; right: 16px; bottom: auto; transform: none; }   /* just under the deck's header */
 .tab-switch button { min-height: 34px; padding: 0 16px; border: 0; border-radius: 999px; background: transparent; color: var(--ink-soft); font-family: var(--hb-label); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .tab-switch button[aria-pressed="true"] { background: var(--hb-primary); color: #fff; }
 .tab-switch button:focus-visible { outline: 2px solid var(--hb-primary); outline-offset: 2px; }
@@ -686,6 +686,7 @@ html.hb-deck-open #mob-progress, html.hb-deck-open #mob-top { display: none; }
 .dk-nav:focus-visible, .dk-act:focus-visible, .dk-cta:focus-visible, .dk-hint:focus-visible, .dk-track:focus-visible { outline: 2px solid var(--hb-primary); outline-offset: 2px; }
 .dk-track { flex: 1; min-height: 0; display: flex; padding-top: env(safe-area-inset-top, 0px); overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
 .dk-track::-webkit-scrollbar { display: none; }
+.dk-head ~ .dk-track { padding-top: 6px; }           /* the header (.hub-top) already clears the safe area */
 /* Each card is three screens wide but only advances the track by one (the -200% margin): its left two thirds are empty
    and overlap the two cards before it. That room is what lets its visible part (.dk-hold, the right third) stay stuck on
    screen behind the current card until its turn: see "Stacked deck" below. .dk-snap marks where it rests. */
