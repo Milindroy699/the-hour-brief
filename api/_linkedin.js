@@ -1,9 +1,10 @@
 // LinkedIn Page auto-posting (posts as the organization, via LinkedIn's Community Management API):
 //   postMorning()  -> every morning: a highlight of the day's edition (social/<date>.json "page" text, or built from
 //                     the edition's three lane headlines), with a link card to the edition
-//   postLeaders()  -> Monday to Friday: one Thought Leaders highlight a day — the week's roundups and essays in pillar
-//                     order, never the same article twice; if the week has fewer than five, the most recent earlier
-//                     article not yet posted fills the gap
+//   postLeaders()  -> every day, one Thought Leaders highlight: Monday to Friday the week's Tech & AI, Business,
+//                     Product and Finance roundups in that order, Saturday and Sunday the week's Principles essays;
+//                     never the same article twice. Prefers the day's pick from social/<date>.json (the same one the
+//                     owner's kit carries); when a day has nothing new, the most recent article not yet posted.
 // One-time connection: authLink() (called with the cron secret) returns a LinkedIn consent URL; the Page admin opens
 // it, LinkedIn redirects to /linkedin/callback (rewritten to post-digest.js?job=linkedin-callback), and callback()
 // stores the tokens in Redis (li:auth). Access tokens last 60 days and are refreshed automatically when LinkedIn
@@ -19,7 +20,9 @@ const { istToday, loadSocial, withApp, beforeTags } = require('./_kit');
 const REDIRECT_URI = `${CANON}/linkedin/callback`;
 const SCOPES = 'w_organization_social r_organization_social';
 const VERSION = process.env.LINKEDIN_VERSION || '202610';
-const PILLAR_ORDER = ['tech-ai', 'business', 'product', 'finance', 'principles'];
+const PILLAR_ORDER = ['tech-ai', 'business', 'product', 'finance'];
+// Saturday and Sunday (in India) are for Principles; weekdays for the other pillars.
+const isWeekendIST = (date) => [0, 6].includes(new Date(`${date}T12:00:00+05:30`).getUTCDay());
 const PILLAR_LABEL = { 'tech-ai': 'Tech & AI', business: 'Business', product: 'Product', finance: 'Finance', principles: 'Principles' };
 const PILLAR_TAGS = { 'tech-ai': '#AI #Technology', business: '#Business #Strategy', product: '#ProductManagement', finance: '#Investing #PersonalFinance', principles: '#MentalModels #CriticalThinking' };
 
@@ -206,8 +209,9 @@ async function allBriefs() {
   return ((await r.json()).briefs || []).filter((b) => b.id && b.title && b.body);
 }
 
-async function pickLeader() {
-  const briefs = await allBriefs();
+async function pickLeader(date = istToday()) {
+  const weekend = isWeekendIST(date);
+  const briefs = (await allBriefs()).filter((b) => (b.category === 'principles') === weekend);
   const posted = new Set(result(await kv(['SMEMBERS', 'li:leaders-posted'])) || []);
   const fresh = briefs.filter((b) => !posted.has(b.id));
   const order = (b) => { const i = PILLAR_ORDER.indexOf(b.category); return i < 0 ? 99 : i; };
@@ -252,7 +256,7 @@ async function postLeaders({ date = istToday(), force = false, dry = false } = {
     b = (await allBriefs()).find((x) => x.id === s.leaders.id) || { id: s.leaders.id, title: s.leaders.title || s.leaders.id, category: s.leaders.category, sources: [] };
     punchy = s.leaders.post;
   } else {
-    b = await pickLeader();
+    b = await pickLeader(date);
   }
   if (!b) return { ok: false, skipped: 'no Thought Leaders article left to post' };
   const post = leaderPost(b, punchy);

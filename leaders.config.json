@@ -12,6 +12,11 @@
 
     { "name": "Moneytalks by Groww", "category": "finance", "sourceType": "youtube", "source": "UCuA2G-T1WmPRCHwDb713pVQ", "limit": 1 },
     { "name": "Financially Free", "category": "finance", "sourceType": "youtube", "source": "UCkGjGT2B7LoDyL2T4pHsUqw", "limit": 1 },
-    { "name": "SOIC", "category": "finance", "sourceType": "youtube", "source": "UCB7GnQlJPIL6rBBqEoX87vA", "limit": 1 }
+    { "name": "SOIC", "category": "finance", "sourceType": "youtube", "source": "UCB7GnQlJPIL6rBBqEoX87vA", "limit": 1 },
+
+    { "name": "The Knowledge Project (Shane Parrish)", "category": "principles", "sourceType": "youtube", "source": "UCLtTf_uKt0Itd0NG7txrwXA", "limit": 1 },
+    { "name": "Daily Stoic (Ryan Holiday)", "category": "principles", "sourceType": "youtube", "source": "UC6N2Vvwh5Pb9F530wDt_fjQ", "limit": 1 },
+    { "name": "Unsolicited advice", "category": "principles", "sourceType": "youtube", "source": "UCW71hQg1kDxmFIfijA8dL0Q", "limit": 1 },
+    { "name": "Morgan Housel (Collaborative Fund)", "category": "principles", "sourceType": "rss", "source": "http://feeds.feedburner.com/collabfund", "authorFilter": "Morgan Housel", "limit": 1 }
   ]
 }

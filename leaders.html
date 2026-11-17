@@ -577,7 +577,7 @@
     document.getElementById('tl-summary').innerHTML = essaysOnly
       ? '<span class="tl-tag tl-tag--primary">' + ic('spark') + 'Essays · Updated ' + esc(relTime(briefs[0].generatedAt)) + '</span>' +
         '<h2>' + esc(c.label) + ' essays</h2>' +
-        '<p>Hand-picked talks and essays' + (creators.length ? ' from ' + esc(listNames(creators)) : '') +
+        '<p>Talks and essays' + (creators.length ? ' from ' + esc(listNames(creators)) : '') +
         ', each summarized with our own analysis — ' + esc(lowerTag) + '.</p>'
       : '<span class="tl-tag tl-tag--primary">' + ic('spark') + 'Weekly roundup · Updated ' + esc(relTime(briefs[0].generatedAt)) + '</span>' +
         '<h2>' + esc(c.label) + ' weekly roundup</h2>' +

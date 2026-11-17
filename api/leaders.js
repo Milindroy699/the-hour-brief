@@ -205,7 +205,19 @@ const MAX_CONTENT_CHARS = 80000; // ~2h of speech; keeps pending files and the w
 // playlist order — Intermission's is oldest-first), so sort by date. Only items newer than the newest one already
 // ingested count: otherwise a quiet week would quietly backfill the channel's older videos into this week's roundup.
 // A creator's first run has nothing seen yet, so it takes the latest `limit` (default 2) regardless of age.
-async function candidates(creator) {
+// A feed shared by several writers (e.g. Collaborative Fund's) can be narrowed to one person with `authorFilter`: the
+// article page's byline (JSON-LD author, <meta name="author">, or rel="author") must name them.
+function bylineMatches(html, name) {
+  const want = String(name).toLowerCase();
+  const found = [
+    ...[...html.matchAll(/"author"\s*:\s*(\{[^}]*\}|\[[^\]]*\])/g)].map((m) => m[1]),
+    ...[...html.matchAll(/<meta[^>]+name=["']author["'][^>]+content=["']([^"']+)/gi)].map((m) => m[1]),
+    ...[...html.matchAll(/rel=["']author["'][^>]*>([^<]{1,80})</gi)].map((m) => m[1]),
+  ];
+  return found.some((t) => decodeEntities(t).toLowerCase().includes(want));
+}
+
+async function candidates(creator, max) {
   const xml = await getText(feedUrl(creator));
   if (!/<(rss|feed)\b/.test(xml)) throw new Error('feed returned something that is not RSS/Atom');
   let entries = parseFeed(xml);
@@ -222,7 +234,7 @@ async function candidates(creator) {
     if (seen[i] === 1) cutoff = Math.max(cutoff, e.time);
     else unseen.push(e);
   });
-  return unseen.filter((e) => !cutoff || e.time > cutoff).slice(0, creator.limit || 2);
+  return unseen.filter((e) => !cutoff || e.time > cutoff).slice(0, max || creator.limit || 2);
 }
 
 // ---- Monthly transcript budget ----
@@ -313,14 +325,20 @@ async function runFetch({ dry = false } = {}) {
     if (Date.now() - start > TIME_BUDGET_MS) { report.errors.push('time budget hit before finishing all creators'); break; }
     report.creatorsChecked += 1;
     try {
-      const fresh = await candidates(creator);
+      // With an author filter, look a few posts deep: the newest ones may be by someone else on a shared feed.
+      const fresh = await candidates(creator, creator.authorFilter ? 6 : undefined);
+      let taken = 0;
       for (const e of fresh) {
         if (creator.sourceType === 'youtube') { videos.push({ creator, e }); continue; }
-        let content = '';
-        try { content = extractArticleText(await getText(e.link)); } catch (err) { report.errors.push(`${creator.name}: article fetch failed (${err.message})`); continue; }
+        if (taken >= (creator.limit || 2)) break;
+        let html = '';
+        try { html = await getText(e.link); } catch (err) { report.errors.push(`${creator.name}: article fetch failed (${err.message})`); continue; }
         markAttempted(creator, e);
+        if (creator.authorFilter && !bylineMatches(html, creator.authorFilter)) { report.skipped.push(`${creator.name}: "${e.title}" (not by ${creator.authorFilter})`); continue; }
+        const content = extractArticleText(html);
         if (content.length < 300) { report.skipped.push(`${creator.name}: "${e.title}" (no readable text)`); continue; }
         add(creator, e, content);
+        taken += 1;
       }
     } catch (e) {
       report.errors.push(`${creator.name}: ${e.message}`);

@@ -15,7 +15,7 @@
 //   kit                daily post kit to the owner (Notion, Telegram, owner push) + LinkedIn Page morning post
 //   insight            the second daily push to every app user (today's insight)
 //   linkedin-morning   LinkedIn Page: today's edition highlight
-//   linkedin-leaders   LinkedIn Page: next Thought Leaders highlight (weekdays)
+//   linkedin-leaders   LinkedIn Page: the day's Thought Leaders highlight (weekdays: roundups; weekends: Principles)
 //   linkedin-auth      returns a one-time LinkedIn consent link for the Page admin
 //   linkedin-status    whether the Page is connected and when its tokens expire
 //   pair-phone         marks the one device that opened the app in the last 3 minutes as the owner's phone
@@ -34,8 +34,8 @@ const JOB_BY_SCHEDULE = {
   '0 4 * * *': 'kit',
   '30 12 * * *': 'insight',
   '30 13 * * *': 'insight',
-  '30 9 * * 1-5': 'linkedin-leaders',
-  '30 10 * * 1-5': 'linkedin-leaders',
+  '30 9 * * *': 'linkedin-leaders',
+  '30 10 * * *': 'linkedin-leaders',
 };
 
 const KV_URL = process.env.KV_REST_API_URL;
