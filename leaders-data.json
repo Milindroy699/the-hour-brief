@@ -182,6 +182,32 @@
           "url": "https://www.youtube.com/watch?v=JW5s9Md4U2U"
         }
       ]
+    },
+    {
+      "id": "finance-2026-11-17",
+      "category": "finance",
+      "styleAuthor": "",
+      "title": "Sit Through the Fall: Why the Recent Chart Is the Wrong Teacher",
+      "body": "Three conversations from the Indian money-video circuit this week look unrelated: an adviser on keeping nerve in a crash, an analyst on high-voltage power transmission, and an ex-banker turned Google engineer on why most people lose money trading. Read together, they make one argument. Returns go to people who understand what they own, and they stay with people who are structurally unable to panic.\n\n## The enemy is the recent chart\n\nNitin Bellara, an adviser with more than twenty years in the business, opens with a scene he has lived many times. A 25-year-old walks in with a bonus and wants all of it in small caps because a friend made 45% last year. Bellara's reply is an allocation, not a lecture. A young investor with stable income and no near-term need for cash can run 30 to 40% in small caps, perhaps 45% at the aggressive end. It should never be everything.\n\nHis reasoning is arithmetic. In 2008, he recalls, small and mid caps lost 60 to 70% in months, and the top-performing funds of the day fell hardest. In the Covid crash, small-cap and mid-cap indices fell more than 50%. If small caps are 40% of a portfolio and fall by half, the portfolio drops about a fifth. That hurts but is survivable. If they are the whole portfolio, the investor exits near the bottom and, in Bellara's experience, rarely returns.\n\nHe sees the same herd behaviour today: record flows into small and mid caps, new clients asking for Chinese, Brazilian or US tech funds because a spreadsheet ranks them first,. IT stocks rose 50 to 60% into 2021 and have since lagged the Nifty, he notes. His rule is to judge a fund on a longer window than the last good year, and to compare like with like. A fund house with a few hundred crore under management is not comparable to one with tens of thousands.\n\n## Time in the market is a service you can buy\n\nBellara's best evidence is a pair of client stories. One investor started a ₹5,000 SIP about fifteen years ago in a top mid-cap fund. Roughly ₹9 lakh invested is now worth about ₹44 to 45 lakh. A second SIP begun five years later, about ₹6 lakh in, is worth ₹14 to 15 lakh. The five-year delay cost roughly ₹28 to 30 lakh, he says.\n\nThe Covid pair is starker. Two clients each held about ₹25 lakh, and both saw it fall to the mid-teens. One sold and locked in the loss. The other, on Bellara's advice, added ₹5.5 lakh, reached ₹31 lakh by December, and now holds about ₹93 lakh. His case for paying an adviser is simple: the fee is a few basis points, and a panic exit costs far more. SIPs should stop only for real reasons such as job loss or a goal met, never because markets fell.\n\n## The opposite discipline: knowing the machine\n\nThe SOIC analysis of India's HVDC (high-voltage direct current) transmission industry shows the other half of the discipline. The analyst starts from a physical problem. India wants 500 GW of non-fossil capacity by 2030, but the best sun and wind sit 900 to 1,200 km from the cities that consume the power. Alternating current loses too much over that distance, so long-haul links convert to direct current and back again. The analyst likens it to water sloshing in a pipe versus a river flowing one way.\n\nThe investable point is concentration. Only three Western firms hold converter-station technology: Hitachi Energy, GE Vernova's T&D arm, and Siemens Energy, plus one Chinese player. Hitachi built most of India's existing links but has not won a project since the end of 2024. GE Vernova T&D has taken the last two awards, one voltage-source and one line-commutated, and Siemens competes only in voltage-source. Orders are lumpy and multi-year, so the order book is the number to watch. The analyst flags that Hitachi Energy already trades at a rich multiple, around 38 to 40 times earnings on the analyst's reading, which makes it a business that is unique but not cheap. That is the kind of knowledge Bellara's client lacked when he chased last year's winner.\n\n## Why trading is the wrong answer\n\nThe Financially Free interview adds the warning. A guest who left Goldman Sachs for Google and now lives in Tbilisi says around 90% of Indians who trade lose money. He compares it to skydiving with a parachute that opens only some of the time, or entering an F1 race on a motorbike among much bigger players. He draws a clean line: researching a stock and holding it for months is investing, while intraday trading on two or three months of chart patterns is a bet that resembles reading shapes in the stars.\n\n## What connects them\n\nAll three reject the same shortcut: letting the recent price tell you what is good. Bellara replaces it with allocation and an adviser's patience, SOIC with a map of who can actually do the work and what it costs, and the Google engineer with a refusal to treat short-term price action as information. The prescription is boring: size positions to survive a 50% fall, learn the business, and start early.",
+      "generatedAt": "2026-11-17T03:30:39.000Z",
+      "sourceDate": "2026-11-15T13:45:15.000Z",
+      "sources": [
+        {
+          "creator": "Moneytalks by Groww",
+          "title": "Why He’d Never Put ₹1 in FD | ft. Nitin Bellara",
+          "url": "https://www.youtube.com/watch?v=1EHnqqt7Muc"
+        },
+        {
+          "creator": "SOIC",
+          "title": "Only 3 Companies in the World Have This Tech | India's HVDC Boom",
+          "url": "https://www.youtube.com/watch?v=Afvnr2MgINk"
+        },
+        {
+          "creator": "Financially Free",
+          "title": "He Quit His Dream Job To Be Financially Free",
+          "url": "https://www.youtube.com/watch?v=jPtPpYQ_I4c"
+        }
+      ]
     }
   ]
 }
