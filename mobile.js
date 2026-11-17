@@ -1071,7 +1071,7 @@
         var el = link ? mk('a', 'tab') : mk('button', 'tab');
         el.setAttribute('data-tab', t[0]);
         el.innerHTML = '<span class="tab-ic">' + ICON[t[0]] + '</span><span class="tab-lb">' + t[1] + '</span>';
-        if (link) el.href = TAB_HREF[t[0]];
+        if (link) { el.href = TAB_HREF[t[0]]; el.addEventListener('click', showLeaving); }
         else { el.type = 'button'; el.addEventListener('click', function () { tabGo(t[0]); }); }
         row.appendChild(el);
       });
@@ -1085,6 +1085,22 @@
     bar.hidden = !reader();
     syncTabs();
   }
+  // A tab that is a real page load (Voices, or Today/Audio/Challenge from Voices): cover the screen at once with the
+  // hourglass loader (html.hb-leaving in app.css), and tell the next page to carry it on (hb-loader-at), so the change
+  // reads as one deliberate moment instead of a freeze, a blank and a pop (owner, 2026-11-18). The turn is timed off
+  // the clock so both pages' hourglasses line up.
+  var leavingT = 0;
+  function showLeaving(e) {
+    if (e && (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button > 0)) return;   // opening in a new tab
+    var h = document.documentElement, tab = e && e.currentTarget;
+    if (tab && tab.parentNode) Array.prototype.forEach.call(tab.parentNode.querySelectorAll('.tab'), function (t) { if (t === tab) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current'); });
+    h.style.setProperty('--hb-spin-delay', -(Date.now() % 2400) + 'ms');
+    h.classList.add('hb-leaving');
+    try { sessionStorage.setItem('hb-loader-at', String(Date.now())); } catch (err) { /* the next page just fades in */ }
+    clearTimeout(leavingT);
+    leavingT = setTimeout(function () { h.classList.remove('hb-leaving'); }, 10000);   // never stuck if the trip fails
+  }
+  window.addEventListener('pageshow', function (e) { if (e.persisted) document.documentElement.classList.remove('hb-leaving'); });
   // --hb-tab-h, kept exactly in sync with .tab-bar's own real rendered height, continuously, for as long as the
   // page lives — not measured once and hoped to stay right. Fires immediately on observe() with the current size,
   // then again on every future change (the tab row's label wrapping, a safe-area change, a late web font).
@@ -1273,12 +1289,14 @@
   // that screen is up, so the reader sees one change of screen instead of the list, then cards, then the screen asked for.
   function bootDone() {
     var h = document.documentElement;
-    if (!h.classList.contains('hb-boot')) return;
-    h.classList.remove('hb-boot');
+    if (!h.classList.contains('hb-boot') || h.classList.contains('hb-reveal')) return;
+    h.classList.add('hb-reveal');                       // page shows; the hourglass loader fades off it (app.css)
+    setTimeout(function () { h.classList.remove('hb-boot', 'hb-reveal', 'hb-from-loader'); syncTabs(); }, 200);
     syncTabs();
   }
   function bootScreen() {                             // the tab to light while hidden, so the bar doesn't flick across
-    if (!document.documentElement.classList.contains('hb-boot')) return '';
+    var cl = document.documentElement.classList;
+    if (!cl.contains('hb-boot') || cl.contains('hb-reveal')) return '';
     return /[?&]audio=1(&|$)/.test(location.search) ? 'audio' : /[?&]quiz=1(&|$)/.test(location.search) ? 'quiz' : '';
   }
   // /?quiz=1 from another page's Challenge tab (Archive, About, Privacy, Contact — all non-feed pages, where the tab

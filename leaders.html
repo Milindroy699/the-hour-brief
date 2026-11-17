@@ -4,6 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <script>if ("scrollRestoration" in history) history.scrollRestoration = "manual";</script>
+<script>
+// The page stays hidden until the app bar is built (see the reveal script below); meanwhile the hourglass loader
+// (html.hb-boot in app.css) shows, straight away and in step if the last page left with one (mobile.js showLeaving).
+(function () {
+  var h = document.documentElement;
+  h.classList.add('hb-boot');
+  h.style.setProperty('--hb-spin-delay', -(Date.now() % 2400) + 'ms');
+  try { var at = +sessionStorage.getItem('hb-loader-at'); sessionStorage.removeItem('hb-loader-at'); if (at && Date.now() - at < 10000) h.classList.add('hb-from-loader'); } catch (e) {}
+})();
+</script>
 <title>Voices — The Hour Brief</title>
 <meta name="description" content="Voices: the week's best thinking from the people worth listening to in tech & AI, business, product and finance, plus weekend essays on principles for work and life.">
 <link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png">
@@ -319,7 +329,13 @@
     // ordering. Falls back to a flat timeout for ?classic=1 (no premium skin, so no .tab-bar ever appears)
     // or if mobile.js fails to load at all.
     var tries = 0;
-    function reveal() { document.body.style.visibility = 'visible'; }
+    function reveal() {
+      var h = document.documentElement;
+      document.body.style.visibility = 'visible';
+      if (!h.classList.contains('hb-boot') || h.classList.contains('hb-reveal')) return;
+      h.classList.add('hb-reveal');                     // the hourglass loader fades off the page (app.css)
+      setTimeout(function () { h.classList.remove('hb-boot', 'hb-reveal', 'hb-from-loader'); }, 200);
+    }
     function poll() {
       if (document.querySelector('.tab-bar') || ++tries > 40) { reveal(); return; }
       setTimeout(poll, 20);

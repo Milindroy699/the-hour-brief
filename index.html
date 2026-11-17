@@ -20,6 +20,10 @@
     var h = document.documentElement;
     h.classList.add('hb-boot');
     setTimeout(function () { h.classList.remove('hb-boot'); }, 4000);
+    // The hourglass loader (app.css) shows while hidden; straight away if the last page left with one (mobile.js
+    // showLeaving), turning in step with it.
+    h.style.setProperty('--hb-spin-delay', -(Date.now() % 2400) + 'ms');
+    try { var at = +sessionStorage.getItem('hb-loader-at'); sessionStorage.removeItem('hb-loader-at'); if (at && Date.now() - at < 10000) h.classList.add('hb-from-loader'); } catch (e) {}
     // Start fetching what that screen needs now, not after the page has loaded: the hidden moment is that much shorter.
     var pre = function (src) { var l = document.createElement('link'); l.rel = 'preload'; l.as = 'script'; l.href = src; document.head.appendChild(l); };
     pre('/cards.js');
@@ -29,7 +33,7 @@
 </script>
 <!-- The root paints the app's background while the body is hidden; without it the app's dark native background showed
      through and switching screens flashed black (owner, 2026-11-18). -->
-<style>html.hb-boot { background-color: var(--bg, #faf9fd); } html.hb-boot body { visibility: hidden; } html.hb-boot .tab-bar { visibility: visible; }</style>
+<style>html.hb-boot { background-color: var(--bg, #faf9fd); } html.hb-boot:not(.hb-reveal) body { visibility: hidden; } html.hb-boot .tab-bar { visibility: visible; }</style>
 <title>The Hour Brief</title>
 <meta name="description" content="A free daily one-hour digest of AI/tech, product & business (India + global), and the Indian stock market — every item links to its original source.">
 <meta property="og:title" content="The Hour Brief">

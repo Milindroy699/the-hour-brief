@@ -884,3 +884,46 @@ html.hb-deck-open .hb-player { display: none; }
 .dk-fp-rv { min-width: 30px; text-align: center; font-size: 0.78rem; font-weight: 700; color: var(--ink-soft); }
 .dk-fp-goto { align-self: flex-start; margin-top: 6px; min-height: 34px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--hb-lav); color: var(--hb-primary-2); font-family: var(--hb-label); font-size: 0.74rem; font-weight: 700; letter-spacing: 0.04em; cursor: pointer; }
 .hb-deck.dk-has-fab .dk-scroll { padding-bottom: 82px; }        /* text can scroll clear of the round button */
+
+/* ---- Screen-change loader (owner, 2026-11-18): an hourglass on the app's background while a page changes ----
+   Going to or from Voices is a real page load. Instead of the old page freezing and the new one appearing blank, the
+   moment a tab link is tapped the screen fades to the background with the logo turning like an hourglass
+   (html.hb-leaving, mobile.js), and the arriving page shows the very same loader until its screen is ready
+   (html.hb-boot: Today in index.html's head, Voices in leaders.html). The two loaders run in step (the turn is timed
+   off the clock via --hb-spin-delay), so the swap between pages is invisible. The tab bar (9985) stays on top. */
+html.hb-leaving::before, html.hb-boot::before {
+  content: ""; position: fixed; left: 0; right: 0; top: 0; bottom: var(--hb-tab-h, 0px); z-index: 9984;
+  background: var(--bg); pointer-events: none;
+}
+html.hb-leaving::after, html.hb-boot::after {
+  content: ""; position: fixed; left: 50%; top: calc(50% - var(--hb-tab-h, 0px) / 2); z-index: 9984;
+  width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 12px;
+  background: url('/brand/logo-128.png') center / contain no-repeat;
+  box-shadow: 0 8px 22px rgba(94, 67, 243, 0.22); pointer-events: none;
+  animation: hb-hourglass 2.4s cubic-bezier(0.65, 0, 0.35, 1) var(--hb-spin-delay, 0s) infinite;
+}
+/* Leaving: fade the cover in at once (the tap is acknowledged immediately), the hourglass turning from the start. */
+html.hb-leaving::before { animation: hb-loader-in 0.16s ease; }
+html.hb-leaving::after {
+  animation-name: hb-loader-in, hb-hourglass; animation-duration: 0.16s, 2.4s; animation-iteration-count: 1, infinite;
+  animation-timing-function: ease, cubic-bezier(0.65, 0, 0.35, 1); animation-delay: 0s, var(--hb-spin-delay, 0s);
+}
+/* Arriving without a loader before it (a cold start, a link from outside): only show it if the wait is noticeable. */
+html.hb-boot:not(.hb-from-loader)::after {
+  opacity: 0; animation-name: hb-hourglass, hb-loader-in; animation-duration: 2.4s, 0.2s; animation-iteration-count: infinite, 1;
+  animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1), ease; animation-delay: var(--hb-spin-delay, 0s), 0.25s;
+  animation-fill-mode: none, forwards;
+}
+/* Lifting it (html.hb-reveal, a 200ms step before hb-boot goes): the page shows underneath and the loader fades off it. */
+html.hb-boot.hb-reveal::before, html.hb-boot.hb-reveal::after, html.hb-boot.hb-reveal:not(.hb-from-loader)::after { animation: hb-loader-out 0.2s ease forwards; }
+html.hb-leaving .tab-switch { visibility: hidden; }
+@keyframes hb-hourglass {
+  0%, 30% { transform: rotate(0deg); }
+  50%, 80% { transform: rotate(180deg); }
+  100% { transform: rotate(360deg); }
+}
+@keyframes hb-loader-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes hb-loader-out { from { opacity: 1; } to { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  html.hb-leaving::before, html.hb-leaving::after, html.hb-boot::after, html.hb-boot:not(.hb-from-loader)::after { animation: none; opacity: 1; }
+}
