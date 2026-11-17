@@ -380,57 +380,22 @@
     track.setAttribute('aria-label', 'Swipe or use the arrow keys to move between cards');
     deck.appendChild(track);
 
-    var foot = ui.foot = mk('footer', 'dk-foot');       // just the progress bar now: full width, no buttons to share it with
-    var bar = mk('div', 'dk-bar');
-    bar.setAttribute('aria-hidden', 'true');   // a pointer-only shortcut; the track itself already has full keyboard support (arrow keys, Home, End) and the real position announcements
-    ui.fill = mk('i');
-    bar.appendChild(ui.fill);
-    ui.thumb = mk('span', 'dk-bar-thumb');
-    bar.appendChild(ui.thumb);
-    // The progress bar doubles as a scrubber: tap or drag anywhere along it (the thumb marks where it is now) to
-    // jump straight to that card, with a light haptic tick each time the drag crosses into a new one.
-    var scrubbing = false, scrubIdx = -1;
-    function barIndexAt(clientX) {
-      var r = bar.getBoundingClientRect();
-      var frac = r.width > 0 ? (clientX - r.left) / r.width : 0;
-      return Math.round(Math.max(0, Math.min(1, frac)) * (cards.length - 1));
-    }
-    function scrubTo(clientX) {
-      var i = barIndexAt(clientX);
-      if (i !== scrubIdx) { scrubIdx = i; haptic(); }
-      goTo(i, false);
-    }
-    bar.addEventListener('pointerdown', function (e) {
-      if (cards.length < 2) return;
-      scrubbing = true;
-      scrubIdx = -1;
-      onManualNav();
-      try { bar.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
-      scrubTo(e.clientX);
-    });
-    bar.addEventListener('pointermove', function (e) { if (scrubbing) scrubTo(e.clientX); });
-    var endScrub = function () { scrubbing = false; };
-    bar.addEventListener('pointerup', endScrub);
-    bar.addEventListener('pointercancel', endScrub);
+    // Bottom pager (owner's call, 2026-11-18): previous arrow, "Section · 3 / 12", next arrow. Replaces the scrubber bar
+    // (a dot sliding from the first card to the last) and the small arrows that used to sit on the card's edges.
+    var foot = ui.foot = mk('footer', 'dk-foot dk-pager');
+    ui.prev = btn('dk-nav dk-prev', '', 'Previous card');
+    ui.prev.appendChild(svg('M15 5l-7 7 7 7'));
     ui.count = mk('span', 'dk-count');
+    ui.next = btn('dk-nav dk-next', '', 'Next card');
+    ui.next.appendChild(svg('M9 5l7 7-7 7'));
     ui.live = mk('div', 'dk-live');
     ui.live.setAttribute('role', 'status');
     ui.live.setAttribute('aria-live', 'polite');
-    foot.appendChild(bar);
+    foot.appendChild(ui.prev);
     foot.appendChild(ui.count);
+    foot.appendChild(ui.next);
     deck.appendChild(foot);
     deck.appendChild(ui.live);
-
-    // Small arrows overlaid on the card itself, at its edges, rather than a separate button bar: the card keeps the
-    // full width and height, and the arrows are a quiet, secondary way to move (see onManualNav/onSwiped below).
-    ui.edgenav = mk('div', 'dk-edgenav');
-    ui.prev = btn('dk-nav dk-prev', '', 'Previous card');
-    ui.prev.appendChild(svg('M15 5l-7 7 7 7'));
-    ui.next = btn('dk-nav dk-next', '', 'Next card');
-    ui.next.appendChild(svg('M9 5l7 7-7 7'));
-    ui.edgenav.appendChild(ui.prev);
-    ui.edgenav.appendChild(ui.next);
-    deck.appendChild(ui.edgenav);
     document.body.appendChild(deck);
     buildFab();
 
@@ -518,7 +483,7 @@
     if (!shown || !track) return;
     if (window.requestAnimationFrame) requestAnimationFrame(function () {
       if (shown && track.clientWidth !== deckW) { deckW = track.clientWidth; track.scrollLeft = cardLeft(idx); }
-      if (shown) { fadeAll(); positionFab(); }
+      if (shown) { fadeAll(); positionFab(); stack(); }
     });
   }
 
@@ -552,21 +517,16 @@
     watchMirror();
     syncClosing();
     markPlaying();
+    stack();
   }
 
   function paint() {
     var c = cards[idx];
     if (!c) return;
-    ui.count.textContent = (idx + 1) + ' / ' + cards.length;
-    var pct = cards.length > 1 ? Math.round(idx / (cards.length - 1) * 100) : 100;
-    ui.fill.style.width = pct + '%';
-    if (ui.thumb) ui.thumb.style.left = pct + '%';
+    var where = c.kind === 'cover' ? 'Cover' : c.kind === 'end' ? 'Wrap-up' : c.name;
+    ui.count.textContent = where + ' · ' + (idx + 1) + ' / ' + cards.length;
     ui.prev.disabled = idx <= 0;
     ui.next.disabled = idx >= cards.length - 1;
-    // The closing card's content is vertically centred (see .dk-end .dk-scroll in app.css), which can put it right
-    // where the overlaid edge arrows sit (top: 32%) — hide them there specifically rather than fight their fixed
-    // position: there's nothing to go "next" to on the last card anyway, and swipe/the scrubber/List still work.
-    if (ui.edgenav) ui.edgenav.hidden = c.kind === 'end';
     cards.forEach(function (x, i) {
       if (canInert) x.el.inert = i !== idx;
       else x.el.setAttribute('aria-hidden', String(i !== idx));
@@ -582,11 +542,41 @@
     ui.live.textContent = (c.el.getAttribute('aria-label') || '') + (h ? '. ' + h.textContent : '');
   }
 
+  // Stacked deck (owner's call, 2026-11-18): the next card waits just behind the current one, a little smaller and lower so
+  // it peeks out on the right; swiping slides the current card off with a slight tilt while the one behind rises into
+  // place, and going back brings the earlier card in over the top. Purely visual, read off the track's own scroll
+  // position, so swiping, the arrows and the keyboard work exactly as before. The transforms go on each card's face,
+  // never on the .dk-card itself: that is the scroll-snap target, and Chrome snaps to a transformed target's moved box
+  // (it landed the deck ~31px past each card). The .dk-card only gets a z-index for the layering. Reduced motion: none.
+  function stack() {
+    if (!track || !cards.length || reduceMotion) return;
+    var w = track.clientWidth || 1, pos = track.scrollLeft / w;
+    cards.forEach(function (c, i) {
+      var face = c.face || (c.face = c.el.querySelector('.dk-face'));
+      if (!face) return;
+      var d = i - pos, t = '', z = '', op = '';
+      if (d > 2 || d < -1.5) { t = ''; }
+      else if (d > 0) {                                   // waiting behind: cancel most of its sideways travel
+        var k = Math.min(d, 1);
+        t = 'translate3d(' + (-k * w * 0.92).toFixed(1) + 'px,' + (k * 14).toFixed(1) + 'px,0) scale(' + (1 - k * 0.06).toFixed(4) + ')';
+        z = String(10 - Math.ceil(d));
+        op = d > 1 ? String(Math.max(0, 2 - d).toFixed(3)) : '';
+      } else if (d < 0) {                                 // leaving (or coming back) over the top, tilting a little
+        t = 'rotate(' + (d * 5).toFixed(2) + 'deg)';
+        z = '12';
+      } else { z = '11'; }
+      if (face.style.transform !== t) face.style.transform = t;
+      face.style.opacity = op;
+      c.el.style.zIndex = z;
+    });
+  }
+
   function onScroll() {
     lastScrollAt = Date.now();
     if (scrollRaf) return;
     scrollRaf = requestAnimationFrame(function () {
       scrollRaf = 0;
+      stack();
       var w = track.clientWidth || 1, i = Math.round(track.scrollLeft / w);
       i = Math.max(0, Math.min(cards.length - 1, i));
       // While a move we started is still animating, the scroll position is between the old card and the new one: keep the
@@ -599,7 +589,9 @@
   }
 
   // Where a card sits in the track (measured, because cards are a fraction of a pixel wider than the screen on some phones).
-  function cardLeft(i) { return cards[i].el.getBoundingClientRect().left - track.getBoundingClientRect().left + track.scrollLeft; }
+  // Layout offsets, not getBoundingClientRect: the stacked-deck transforms (stack()) move cards visually, and a measured
+  // rect would include that shift and land the track between cards.
+  function cardLeft(i) { return cards[i].el.offsetLeft - cards[0].el.offsetLeft; }
   function isDown() { return !!downAt && Date.now() - downAt < 10000; }
   // Chrome on Android sometimes ends a scroll on a snapping track a little past a card, or short of it, and leaves it
   // there. Once scrolling has stopped, sit the track exactly on a card (never while a finger is on it or still moving).
@@ -625,6 +617,7 @@
     track.scrollTo({ left: cardLeft(i), top: 0, behavior: animate ? 'smooth' : 'auto' });
     idx = i;
     paint();
+    if (!animate && window.requestAnimationFrame) requestAnimationFrame(stack);   // an instant jump fires no scroll frames
     goal = i;
     goalAt = Date.now();
     goalMs = animate ? 1100 : 100;

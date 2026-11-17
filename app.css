@@ -725,7 +725,7 @@ html.hb-deck-open #mob-progress, html.hb-deck-open #mob-top { display: none; }
 .dk-bar::before { content: ''; position: absolute; left: 0; right: 0; top: -15px; bottom: -15px; }
 .dk-bar i { display: block; width: 0; height: 100%; border-radius: 5px; background: var(--hb-primary); transition: width 0.2s ease; pointer-events: none; }
 .dk-bar-thumb { position: absolute; top: 50%; left: 0; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; background: var(--hb-primary); box-shadow: 0 1px 4px rgba(18, 19, 22, 0.3), 0 0 0 3px var(--paper); transform: translateY(-50%); pointer-events: none; transition: left 0.2s ease; }
-.dk-count { display: none; }   /* the "N / total" readout read as clutter; the progress bar alone says enough. Stays in the DOM (cards.js still keeps it current) since it's a handy, stable hook for tests to read the current position from. */
+.dk-count { display: block; }   /* the pager's centre label ("AI & Tech · 3 / 12"); it was hidden as clutter beside the old progress bar */
 .dk-foot { width: 100%; max-width: 672px; margin: 0 auto; box-sizing: border-box; }
 
 /* ---- Prev/next: small arrows overlaid on the card's own edges, not a separate button bar ---- */
@@ -745,6 +745,13 @@ html.hb-deck-open #mob-progress, html.hb-deck-open #mob-top { display: none; }
 }
 .dk-prev { left: 10px; }
 .dk-next { right: 10px; }
+/* Bottom pager: ‹  Section · 3 / 12  ›  (the arrows live here now, not on the card's edges). */
+.dk-pager { justify-content: space-between; gap: 10px; padding: 6px 16px 12px; }
+.dk-pager .dk-nav { position: static; top: auto; flex: none; width: 46px; height: 46px; }
+.dk-pager .dk-count { flex: 1; min-width: 0; text-align: center; font-family: var(--hb-label); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Stacked deck: card faces tilt around a point near their bottom, so a swipe reads as a throw (transforms set in
+   cards.js on .dk-face, never on .dk-card, which is the scroll-snap target). */
+.dk-face { transform-origin: 50% 85%; }
 .dk-nav svg { width: 20px; height: 20px; stroke-width: 2.4; }
 .dk-nav:disabled { opacity: 0.25; cursor: default; }
 .dk-nav:not(:disabled):active { transform: scale(0.92); }
