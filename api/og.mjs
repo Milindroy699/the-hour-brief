@@ -157,7 +157,7 @@ function statusCard(q) {
     h({ flexDirection: 'column', gap: 12 }, [
       h({ fontFamily: LABEL, fontSize: 40, fontWeight: 700, color: C.ink }, 'Read the full brief'),
       h({ fontSize: 34, color: C.green, fontWeight: 700 }, 'the-hour-brief.vercel.app'),
-      h({ fontSize: 30, color: C.soft, fontWeight: 400 }, 'Free app on iPhone & Android'),
+      h({ fontSize: 30, color: C.soft, fontWeight: 400 }, 'Get the free app: the-hour-brief.vercel.app/app'),
     ]),
   ]);
 }

@@ -154,7 +154,7 @@
           var f = new File([blob], 'hour-brief-leaders-' + s.date + '.png', { type: 'image/png' });
           if (!navigator.canShare || !navigator.canShare({ files: [f] })) return;
           var b = $('wl-share'); b.hidden = false;
-          b.addEventListener('click', function () { navigator.share({ files: [f], text: hook + '\n\nRead the full breakdown 👉 ' + link }).catch(function () {}); });
+          b.addEventListener('click', function () { navigator.share({ files: [f], text: hook + '\n\nRead the full breakdown 👉 ' + link + '\n\n' + appBlock('whatsapp-status') }).catch(function () {}); });
         }).catch(function () {});
       }
       $('li2').value = s.linkedin;

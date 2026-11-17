@@ -67,7 +67,7 @@ function leadersWhatsApp(s) {
   return {
     hook,
     image: `${CANON}/api/og?${new URLSearchParams({ type: 'status', k: 'Voices', i: hook, d: s.date, lane: LANE_OF[L.category] || '' }).toString()}`,
-    status: `${hook}\n\nRead the full breakdown 👉 ${link}`,
+    status: `${hook}\n\nRead the full breakdown 👉 ${link}\n\n${appBlock('whatsapp-status')}`,
     message: [`*${hook}*`, ...points, `Read the full breakdown 👉 ${link}`, appBlock('whatsapp')].join('\n\n'),
   };
 }
