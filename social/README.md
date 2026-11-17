@@ -22,8 +22,9 @@ morning (~09:00 IST) by the "Daily post writer" Claude Code routine from that da
 ```
 
 On weekdays the day's LinkedIn post is `leaders.post` (Monday to Friday walk the week's Thought
-Leaders articles in pillar order, one per day, never repeating); otherwise it's `linkedin`. App
-Store / Google Play links are added on delivery, never written into the file.
+Leaders articles in pillar order, one per day, never repeating); otherwise it's `linkedin`. The
+app link (the smart link /app, which sends phones to their store and shows desktops a QR code,
+tagged ?src=<channel>) is added on delivery, never written into the file.
 
 Used by:
 - `share-kit.html` (private, noindex): the "Today's post" section with Share image (WhatsApp →

@@ -178,7 +178,7 @@ async function postMember({ date = istToday(), force = false, dry = false } = {}
   if (!s) return { ok: false, skipped: 'no post kit for this date yet', date };
   const p = primaryPost(s);
   const post = {
-    text: withApp(p.text),
+    text: withApp(p.text, 'linkedin'),
     link: p.link,
     title: p.kind === 'leaders' ? (s.leaders.title || 'Thought Leaders') : (s.storyTitle || `The Hour Brief · Edition ${s.edition}`),
     description: p.kind === 'leaders' ? `${PILLAR_LABEL[s.leaders.category] || 'Thought Leaders'} · Thought Leaders on The Hour Brief` : 'Today’s edition of The Hour Brief',
@@ -268,7 +268,7 @@ async function morningPost(date) {
     '#AI #Business #StockMarket',
   ].join('\n');
   return {
-    text: withApp(beforeTags((s && s.page) || fallback, `Read it free: ${d.editionUrl}`)),
+    text: withApp(beforeTags((s && s.page) || fallback, `Read it free: ${d.editionUrl}`), 'linkedin-page'),
     link: d.editionUrl,
     title: `The Hour Brief · Edition ${d.edition}`,
     description: 'AI & tech, product & business, and the markets: today’s brief.',
@@ -324,7 +324,7 @@ function leaderPost(b, punchy) {
   const link = `${CANON}/leaders.html#a=${encodeURIComponent(b.id)}`;
   const from = (b.sources || []).map((s) => s.creator).filter(Boolean);
   return {
-    text: punchy ? withApp(punchy) : withApp([
+    text: punchy ? withApp(punchy, 'linkedin-page') : withApp([
       `${label} · Thought Leaders`,
       '',
       b.title,
@@ -335,7 +335,7 @@ function leaderPost(b, punchy) {
       `Read the full piece: ${link}`,
       '',
       PILLAR_TAGS[b.category] || '#ThoughtLeadership',
-    ].filter((line, i, arr) => !(line === '' && arr[i - 1] === '')).join('\n')),
+    ].filter((line, i, arr) => !(line === '' && arr[i - 1] === '')).join('\n'), 'linkedin-page'),
     link,
     title: b.title,
     description: `${label} · Thought Leaders on The Hour Brief`,

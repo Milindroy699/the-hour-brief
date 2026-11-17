@@ -740,39 +740,39 @@
   }
 
   // ---- Install nudge for browser visitors (never shown inside the app itself) ----
-  var STORE_URL = { ios: 'https://apps.apple.com/app/id6817195056', android: 'https://play.google.com/store/apps/details?id=app.thehourbrief' };
+  // Phones get "Get the free app", desktop "Get the app on your phone"; both go through the smart link /app, which sends a
+  // phone to its own store and shows a desktop a QR code. Shown from the first visit (but not to someone who arrived at
+  // a specific story); "Not now" snoozes it for 14 days, "Get it" for 30.
   function mobileOS() {
     var ua = navigator.userAgent || '';
-    if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) return 'ios';
+    if (/iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return 'ios';
     if (/Android/.test(ua)) return 'android';
     return null;
   }
   // Own key, deliberately separate from TIP_KEY/hb-tip-v1: sharing one "done" flag across two different
   // tips would mean dismissing one silently dismisses the other for good, which is wrong for either of them.
-  var INSTALL_KEY = 'hb-install-v1';
-  function installState() {
-    try {
-      var o = JSON.parse(localStorage.getItem(INSTALL_KEY) || 'null');
-      if (o && typeof o === 'object') return { n: +o.n || 0, last: String(o.last || ''), done: !!o.done };
-    } catch (e) { /* none saved */ }
-    return { n: 0, last: '', done: false };
+  var INSTALL_KEY = 'hb-install-v2';
+  function installUntil() {
+    try { return +JSON.parse(localStorage.getItem(INSTALL_KEY) || 'null').until || 0; } catch (e) { return 0; }
   }
-  function installSave(st) { try { localStorage.setItem(INSTALL_KEY, JSON.stringify(st)); return true; } catch (e) { return false; } }
-  function installDone() {
+  function installSnooze(days) {
     var el = document.querySelector('.hb-tip[data-tip="install"]');
     if (el) el.remove();
-    var st = installState();
-    if (!st.done) { st.done = true; installSave(st); }
+    try { localStorage.setItem(INSTALL_KEY, JSON.stringify({ until: Date.now() + days * 86400000 })); return true; } catch (e) { return false; }
   }
   function maybeSuggestInstall() {
+    if (NATIVE || !laneBase) return;
+    try { localStorage.setItem(INSTALL_KEY + '-probe', '1'); localStorage.removeItem(INSTALL_KEY + '-probe'); }
+    catch (e) { return; }  // can't remember a "Not now" (e.g. Safari private mode): don't nag every visit
+    if (Date.now() < installUntil() || location.hash || document.querySelector('.hb-tip')) return;
     var os = mobileOS();
-    if (NATIVE || !laneBase || !os) return;          // only an actual mobile browser, never inside the app
-    var st = installState(), today = localDay();
-    if (st.last !== today) { st.n += 1; st.last = today; }
-    if (!installSave(st)) return;
-    if (st.done || st.n < 2 || location.hash || /[?&]utm_/.test(location.search) || document.querySelector('.hb-tip')) return;
-    tipCard('install', DOWNLOAD_SVG, 'Get the app', 'Faster, with offline reading and a daily reminder.', 'Get it',
-      function () { installDone(); location.href = STORE_URL[os]; }, installDone);
+    tipCard('install', DOWNLOAD_SVG,
+      os ? 'Get the free app' : 'Get the app on your phone',
+      os ? 'The daily brief in your pocket: offline reading, audio and a morning reminder.'
+         : 'Scan a QR code for iPhone or Android: offline reading, audio and a morning reminder.',
+      os ? 'Get it' : 'Show QR code',
+      function () { installSnooze(30); location.href = '/app?src=web-' + (os || 'desktop'); },
+      function () { installSnooze(14); });
   }
 
   // ---- Tools row under the chips: hosts the quiz chip (and, in Listen, the listen card follows it) ----

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Get The Hour Brief app</title>
+<meta name="description" content="AI & tech, business and the markets: the day's brief in one sitting. Free on iPhone and Android.">
+<meta property="og:title" content="Get The Hour Brief app">
+<meta property="og:description" content="AI & tech, business and the markets: the day's brief in one sitting. Free on iPhone and Android.">
+<meta property="og:image" content="https://the-hour-brief.vercel.app/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://the-hour-brief.vercel.app/app">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0c0d15">
+<link rel="icon" href="/brand/logo-256.png">
+<script>
+// Smart app link (/app): phones go straight to their store; everyone else sees this page (QR + both stores).
+// ?src=<where the link was shared> rides along as Google Play's install referrer, and each visit is counted by platform.
+(function () {
+  var IOS = 'https://apps.apple.com/app/id6817195056';
+  var PLAY = 'https://play.google.com/store/apps/details?id=app.thehourbrief';
+  var ua = navigator.userAgent || '';
+  // iPadOS reports a Mac user agent; touch support tells them apart.
+  var ios = /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  var android = !ios && /Android/.test(ua);
+  var src = '';
+  try { src = (new URLSearchParams(location.search).get('src') || '').replace(/[^a-z0-9_-]/gi, '').slice(0, 40); } catch (e) {}
+  var play = PLAY + '&referrer=' + encodeURIComponent('utm_source=' + (src || 'app_link') + '&utm_medium=app_link');
+  var kind = ios ? 'ios' : android ? 'android' : 'desktop';
+  try {
+    var body = JSON.stringify({ event: 'app_link_' + kind });
+    if (navigator.sendBeacon) navigator.sendBeacon('/api/track', new Blob([body], { type: 'application/json' }));
+    else fetch('/api/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, keepalive: true });
+  } catch (e) {}
+  window.HB_STORE = { ios: IOS, android: play, kind: kind };
+  if (ios) location.replace(IOS);
+  else if (android) location.replace(play);
+})();
+</script>
+<style>
+  :root { --bg: #f4f3fb; --card: #ffffff; --ink: #14151f; --soft: #5b5d72; --line: #e3e1f0; --violet: #5e43f3; --violet-ink: #ffffff; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #0c0d15; --card: #161827; --ink: #f2f2f8; --soft: #a6a8c4; --line: #262840; --violet: #8b6cf6; --violet-ink: #0c0d15; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg); color: var(--ink); font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif; padding: 24px 16px; }
+  main { width: 100%; max-width: 440px; text-align: center; }
+  .logo { width: 72px; height: 72px; border-radius: 18px; display: block; margin: 0 auto 18px; }
+  h1 { font-size: 1.6rem; line-height: 1.2; margin: 0 0 8px; letter-spacing: -0.01em; }
+  p.lead { color: var(--soft); margin: 0 0 24px; }
+  .qr { display: inline-block; background: #fff; padding: 14px; border-radius: 18px; border: 1px solid var(--line); }
+  .qr img { width: 180px; height: 180px; display: block; }
+  .qr-cap { font-size: 0.88rem; color: var(--soft); margin: 10px 0 22px; }
+  .stores { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .stores a { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 18px; border-radius: 12px; background: var(--violet); color: var(--violet-ink); font-weight: 650; text-decoration: none; }
+  .stores a:focus-visible, .web a:focus-visible { outline: 2px solid var(--violet); outline-offset: 3px; }
+  .stores svg { width: 20px; height: 20px; }
+  .web { margin-top: 22px; font-size: 0.92rem; }
+  .web a { color: var(--soft); }
+  .opening { display: none; color: var(--soft); margin-bottom: 18px; }
+  html.phone .opening { display: block; }
+  html.phone .qr, html.phone .qr-cap { display: none; }
+</style>
+</head>
+<body>
+<main>
+  <img class="logo" src="/brand/logo-256.png" alt="The Hour Brief">
+  <h1>Get The Hour Brief app</h1>
+  <p class="lead">AI &amp; tech, business and the markets: the day’s brief in one sitting. Free, with offline reading, audio and a morning reminder.</p>
+  <p class="opening" id="opening" role="status">Opening your app store…</p>
+  <div class="qr"><img src="/brand/app-qr.svg" alt="QR code that opens this page on your phone"></div>
+  <p class="qr-cap">Scan with your phone’s camera to get the app.</p>
+  <div class="stores">
+    <a id="ios" href="https://apps.apple.com/app/id6817195056"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.4 12.6c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9s-1.9-.8-3.1-.8C6.8 7.4 5.3 8.3 4.5 9.8c-1.7 2.9-.4 7.2 1.2 9.6.8 1.2 1.8 2.5 3 2.4 1.2 0 1.7-.8 3.1-.8s1.9.8 3.1.8c1.3 0 2.1-1.2 2.9-2.4.9-1.3 1.3-2.6 1.3-2.7-.1 0-2.7-1-2.7-4.1zM14.2 5.6c.6-.8 1.1-1.9 1-3-1 0-2.1.6-2.8 1.4-.6.7-1.1 1.8-1 2.9 1.1.1 2.1-.5 2.8-1.3z"/></svg>App Store</a>
+    <a id="android" href="https://play.google.com/store/apps/details?id=app.thehourbrief"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.6 2.3c-.3.3-.4.7-.4 1.2v17c0 .5.1.9.4 1.2l9.6-9.7-9.6-9.7zm10.6 10.7l2.9 2.9-11.2 6.4c-.4.2-.8.3-1.1.2l9.4-9.5zm4-4l3 1.7c.9.5.9 1.3 0 1.8l-3 1.7-3.2-3.2 3.2-2zM5.1 1.9c.4-.1.7 0 1.1.2l11.2 6.4-2.9 2.9-9.4-9.5z"/></svg>Google Play</a>
+  </div>
+  <p class="web"><a href="/">Or read today’s brief on the web</a></p>
+</main>
+<script>
+  // On a phone the redirect is already under way; this only matters if an in-app browser blocks it.
+  if (window.HB_STORE) {
+    if (window.HB_STORE.kind !== 'desktop') document.documentElement.classList.add('phone');
+    document.getElementById('android').href = window.HB_STORE.android;
+  }
+</script>
+</body>
+</html>

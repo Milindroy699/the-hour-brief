@@ -24,7 +24,8 @@
 const KV_URL = process.env.KV_REST_API_URL;
 const KV_TOKEN = process.env.KV_REST_API_TOKEN;
 
-const ALLOWED_EVENTS = new Set(['listen_play']);
+// app_link_*: visits to the smart app link (/app), by platform it sent them to.
+const ALLOWED_EVENTS = new Set(['listen_play', 'app_link_ios', 'app_link_android', 'app_link_desktop']);
 
 async function kv(command) {
   const path = command.map((c) => encodeURIComponent(c)).join('/');

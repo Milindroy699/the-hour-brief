@@ -119,19 +119,20 @@
     return fetch('/social/' + istDate(daysAgo) + '.json', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : Promise.reject(); });
   }
   // App install links, added the same way the server adds them (api/_kit.js withApp): above the closing hashtags.
-  var APP_BLOCK = '📱 Get the free app\niPhone: https://apps.apple.com/app/id6817195056\nAndroid: https://play.google.com/store/apps/details?id=app.thehourbrief';
-  function withApp(text) {
+  function appBlock(src) { return '📱 Get the free app (iPhone & Android): ' + location.origin + '/app?src=' + src; }
+  function withApp(text, src) {
+    var block = appBlock(src);
     var t = String(text || '').replace(/\s+$/, '');
     var m = /^([\s\S]*?)\s*((?:#[A-Za-z]\w*\s*)+)$/.exec(t);
-    if (m && m[1].trim()) return m[1].replace(/\s+$/, '') + '\n\n' + APP_BLOCK + '\n\n' + m[2].trim();
-    return t + '\n\n' + APP_BLOCK;
+    if (m && m[1].trim()) return m[1].replace(/\s+$/, '') + '\n\n' + block + '\n\n' + m[2].trim();
+    return t + '\n\n' + block;
   }
   loadSocial(0).catch(function () { return loadSocial(1); }).then(function (s) {
-    s.linkedin = withApp(s.linkedin);
-    s.status = withApp(s.status);
+    s.linkedin = withApp(s.linkedin, 'linkedin');
+    s.status = withApp(s.status, 'whatsapp-status');
     // Weekdays: the day's post is the punchy Thought Leaders pick; the insight post stays available as an alternative.
     var pick = s.leaders && s.leaders.post ? s.leaders : null;
-    var post = pick ? withApp(pick.post) : s.linkedin;
+    var post = pick ? withApp(pick.post, 'linkedin') : s.linkedin;
     $('li-label').textContent = pick ? 'Thought Leaders pick: ' + (pick.title || '') : 'Today’s insight';
     if (pick) {
       // WhatsApp version (same as api/_kit.js leadersWhatsApp): status image with the hook + a chat message.
@@ -141,7 +142,7 @@
       var link = location.origin + '/leaders.html#a=' + encodeURIComponent(pick.id);
       var laneOf = { 'tech-ai': 'ai', business: 'biz', product: 'biz', finance: 'mkt' };
       var wlImg = '/api/og?' + new URLSearchParams({ type: 'status', k: 'Thought Leaders', i: hook, d: s.date, lane: laneOf[pick.category] || '' }).toString();
-      var wlMsg = ['*' + hook + '*'].concat(points, ['Read the full breakdown 👉 ' + link, APP_BLOCK]).join('\n\n');
+      var wlMsg = ['*' + hook + '*'].concat(points, ['Read the full breakdown 👉 ' + link, appBlock('whatsapp')]).join('\n\n');
       $('wl-img').src = wlImg;
       $('wl-save').href = wlImg;
       $('wl-save').setAttribute('download', 'hour-brief-leaders-' + s.date + '.png');

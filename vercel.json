@@ -38,6 +38,10 @@
       "destination": "/api/interactions?action=vote"
     },
     {
+      "source": "/app",
+      "destination": "/app.html"
+    },
+    {
       "source": "/linkedin/callback",
       "destination": "/api/post-digest?job=linkedin-callback"
     }

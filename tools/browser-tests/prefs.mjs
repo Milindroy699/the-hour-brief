@@ -166,9 +166,9 @@ check('a reader who already customised: no sections card, and the saved order ap
 await open({ native: true, tip: { n: 1, last: LONG_AGO, done: false }, blockTip: true, wait: 600 }); await c.sleep(1800);
 check('if the answer cannot be remembered (storage blocked) it is not shown, rather than asking every time', !(await hasTip()));
 await open({ native: false, tip: { n: 5, last: LONG_AGO, done: false }, wait: 600 }); await c.sleep(1800);
-check('the phone website is never interrupted this way, and nothing is counted there', !(await hasTip()) && eq(await tipStored(), { n: 5, last: LONG_AGO, done: false }), JSON.stringify(await tipStored()));
+check('the phone website never gets the sections tip, and nothing is counted there (the install card is a separate tip, §14)', !(await hasTip('sections')) && eq(await tipStored(), { n: 5, last: LONG_AGO, done: false }), JSON.stringify(await tipStored()));
 await open({ native: false, tip: { n: 5, last: LONG_AGO, done: false }, width: 1280, wait: 600 }); await c.sleep(1800);
-check('the desktop website neither', !(await hasTip()) && (await tipStored()).n === 5);
+check('the desktop website neither', !(await hasTip('sections')) && (await tipStored()).n === 5);
 
 for (const w of [360, 412]) {
   await open({ native: true, tip: { n: 1, last: LONG_AGO, done: false }, width: w, wait: 600 }); await c.sleep(1600);
@@ -293,46 +293,49 @@ t = await J(`(() => { const norm = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g,
   return { done: HBListen.state(), ai: said.includes(head('ai-1')), biz: said.includes(head('biz-1')), mkt: said.includes(head('mkt-1')), mktBeforeAi: said.indexOf(head('mkt-1')) >= 0 && said.indexOf(head('mkt-1')) < said.indexOf(head('ai-1')) }; })()`);
 check('device voice: hidden section is not read, the others are read in the reader’s order', t.done === 'done' && t.ai && t.mkt && !t.biz && t.mktBeforeAi, JSON.stringify(t));
 
-// ---------- 14. install nudge: a browser visitor (not the app) is offered the app, OS-aware ----------
-const installStored = () => J(`JSON.parse(localStorage.getItem('hb-install-v1') || 'null')`);
+// ---------- 14. install nudge: a browser visitor (not the app) is offered the app, via the smart link /app ----------
+const installStored = () => J(`JSON.parse(localStorage.getItem('hb-install-v2') || 'null')`);
+const installCard = () => J(`(() => { const k = document.querySelector('.hb-tip[data-tip="install"]'); if (!k) return null; return { title: k.querySelector('strong').textContent, go: k.querySelector('.hb-tip-go').textContent }; })()`);
 const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
 const ANDROID_UA = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36';
 const setUA = (ua) => c.send('Emulation.setUserAgentOverride', { userAgent: ua });
 
 await setUA(IPHONE_UA);
 await open({ wait: 600 }); await c.sleep(1800);
-check('browser visitor, first visit: no install card yet (same day-2-or-later restraint as the sections tip)', !(await hasTip('install')) && (await installStored()).n === 1);
+t = await installCard();
+check('iPhone browser, first visit: the install card appears straight away ("Get the free app" / "Get it")', t && t.title === 'Get the free app' && t.go === 'Get it', JSON.stringify(t));
+await c.ev(`document.querySelector('.hb-tip[data-tip="install"] .hb-tip-no').click()`); await c.sleep(200);
+t = await installStored();
+check('"Not now" hides it and snoozes it for about 14 days, independently of the sections tip', !(await hasTip('install')) && t && t.until > Date.now() + 13 * 86400000 && t.until < Date.now() + 15 * 86400000 && (await tipStored()) === null, JSON.stringify(t));
+await c.ev(`(location.reload(), 'ok')`); await c.sleep(1800);
+check('...and stays hidden on the next visit while snoozed', !(await hasTip('install')));
+await c.ev(`(localStorage.setItem('hb-install-v2', JSON.stringify({ until: Date.now() - 1000 })), 'ok')`);
+await c.ev(`(location.reload(), 'ok')`); await c.sleep(1800);
+check('once the snooze is over, it comes back', await hasTip('install'));
 
-await c.ev(`(() => { const o = JSON.parse(localStorage.getItem('hb-install-v1')); o.last = '${LONG_AGO}'; localStorage.setItem('hb-install-v1', JSON.stringify(o)); return 'ok'; })()`);
-await c.ev(`(location.reload(), 'ok')`); await c.sleep(1800);
-t = await J(`(() => { const k = document.querySelector('.hb-tip[data-tip="install"]'); if (!k) return null; return { title: k.querySelector('strong').textContent, go: k.querySelector('.hb-tip-go').textContent, href: document.getElementById && null }; })()`);
-check('on iPhone Safari, second day: the install card appears with "Get the app" / "Get it"', t && t.title === 'Get the app' && t.go === 'Get it', JSON.stringify(t));
-await c.ev(`document.querySelector('.hb-tip-no').click()`); await c.sleep(200);
-check('"Not now" dismisses it and remembers that, independently of the sections tip\'s own done flag', !(await hasTip('install')) && (await installStored()).done === true && (await tipStored()) === null, JSON.stringify({ install: await installStored(), tip: await tipStored() }));
-await c.ev(`(() => { const o = JSON.parse(localStorage.getItem('hb-install-v1')); o.last = '${LONG_AGO}'; localStorage.setItem('hb-install-v1', JSON.stringify(o)); return 'ok'; })()`);
-await c.ev(`(location.reload(), 'ok')`); await c.sleep(1800);
-check('a dismissed install nudge never comes back on a later day', !(await hasTip('install')));
+await c.ev(`(localStorage.removeItem('hb-install-v2'), 'ok')`);
+await open({ hash: '#ai-2', wait: 600 }); await c.sleep(1800);
+check('not shown to someone who arrived at a specific story (#story link)', !(await hasTip('install')));
 
 await setUA(ANDROID_UA);
+await c.ev(`(localStorage.removeItem('hb-install-v2'), 'ok')`);
 await open({ wait: 600 }); await c.sleep(1800);
-check('Android Chrome counts as a mobile browser too (not iOS-only)', (await installStored()).n === 1);
-// "Get it" also calls installDone() before assigning location.href to the (OS-specific) store URL — same
-// done/removal side effect already proven above via "Not now", so there's nothing further to prove here
-// without triggering a real outbound navigation, which a headless test should never actually let happen
-// (reliably intercepting a same-window location assignment is its own source of flakiness, not attempted).
-// The OS -> STORE_URL mapping itself is a plain two-entry object literal in mobile.js, easy to eyeball correct.
+t = await installCard();
+check('Android Chrome gets the phone version too', t && t.title === 'Get the free app', JSON.stringify(t));
+// "Get it" snoozes for 30 days and navigates to /app?src=web-<os>; the smart link page then picks the store. A
+// same-window navigation isn't intercepted here (flaky in headless Chrome); /app itself is checked by hand.
 
 await setUA(IPHONE_UA);
+await c.ev(`(localStorage.removeItem('hb-install-v2'), 'ok')`);
 await open({ native: true, wait: 600 }); await c.sleep(1800);
-await c.ev(`(() => { const o = JSON.parse(localStorage.getItem('hb-install-v1') || '{"n":1,"last":"2020-01-01","done":false}'); o.last = '${LONG_AGO}'; localStorage.setItem('hb-install-v1', JSON.stringify(o)); return 'ok'; })()`);
-await c.ev(`(location.reload(), 'ok')`); await c.sleep(1800);
-check('never shown inside the app itself, no matter the device/day', !(await hasTip('install')));
+check('never shown inside the app itself', !(await hasTip('install')));
 
 await setUA('');  // restore a normal desktop UA for the rest of the suite
+await c.ev(`(localStorage.removeItem('hb-install-v2'), 'ok')`);
 await open({ wait: 600 }); await c.sleep(1800);
-await c.ev(`(() => { const o = JSON.parse(localStorage.getItem('hb-install-v1') || '{"n":1,"last":"2020-01-01","done":false}'); o.last = '${LONG_AGO}'; localStorage.setItem('hb-install-v1', JSON.stringify(o)); return 'ok'; })()`);
-await c.ev(`(location.reload(), 'ok')`); await c.sleep(1800);
-check('on a plain desktop browser, never shown (nothing to install there)', !(await hasTip('install')));
+t = await installCard();
+check('desktop browser: "Get the app on your phone" with a QR-code button', t && t.title === 'Get the app on your phone' && t.go === 'Show QR code', JSON.stringify(t));
+await c.ev(`document.querySelector('.hb-tip[data-tip="install"] .hb-tip-no').click()`); await c.sleep(200);
 
 // ---------- visuals ----------
 await open({ prefs: { order: ['mkt', 'ai', 'biz', 'quiz'], off: ['biz'] }, dark: true, width: 360, wait: 1500 });

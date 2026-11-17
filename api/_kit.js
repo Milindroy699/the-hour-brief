@@ -16,9 +16,11 @@ const { kv, allTokens, sendToTokens } = require('./_push');
 
 const DEDUPE_TTL = String(3 * 86400);
 
-// App install links, appended to everything that goes out (same URLs as mobile.js STORE_URL and api/share.js).
+// App install link appended to everything that goes out: the smart link /app (app.html) sends phones to their own store
+// and shows desktops a QR code. `src` says where the link was shared; it reaches Google Play as the install referrer.
 const APP_LINKS = { ios: 'https://apps.apple.com/app/id6817195056', android: 'https://play.google.com/store/apps/details?id=app.thehourbrief' };
-const APP_BLOCK = `📱 Get the free app\niPhone: ${APP_LINKS.ios}\nAndroid: ${APP_LINKS.android}`;
+const appLink = (src) => `${CANON}/app${src ? `?src=${encodeURIComponent(src)}` : ''}`;
+const appBlock = (src) => `📱 Get the free app (iPhone & Android): ${appLink(src)}`;
 // Insert a block just above a post's closing hashtags (whether on their own line or ending the last sentence), or at
 // the end if it has none.
 function beforeTags(text, block) {
@@ -27,7 +29,7 @@ function beforeTags(text, block) {
   if (m && m[1].trim()) return `${m[1].replace(/\s+$/, '')}\n\n${block}\n\n${m[2].trim()}`;
   return `${t}\n\n${block}`;
 }
-const withApp = (text) => beforeTags(text, APP_BLOCK);
+const withApp = (text, src) => beforeTags(text, appBlock(src));
 
 function istToday() {
   return new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
@@ -66,7 +68,7 @@ function leadersWhatsApp(s) {
     hook,
     image: `${CANON}/api/og?${new URLSearchParams({ type: 'status', k: 'Thought Leaders', i: hook, d: s.date, lane: LANE_OF[L.category] || '' }).toString()}`,
     status: `${hook}\n\nRead the full breakdown 👉 ${link}`,
-    message: [`*${hook}*`, ...points, `Read the full breakdown 👉 ${link}`, APP_BLOCK].join('\n\n'),
+    message: [`*${hook}*`, ...points, `Read the full breakdown 👉 ${link}`, appBlock('whatsapp')].join('\n\n'),
   };
 }
 
@@ -110,7 +112,7 @@ async function toTelegram(s, l) {
   const chat = await telegramChat();
   if (!chat) return { ok: false, skipped: 'telegram not paired yet (message the bot, then pair)' };
   // The status image to save to WhatsApp status, with its caption ready to paste.
-  await tg('sendPhoto', { chat_id: chat, photo: l.image, caption: `${withApp(s.status)}\n\nPost kit: ${l.kit}`.slice(0, 1024) });
+  await tg('sendPhoto', { chat_id: chat, photo: l.image, caption: `${withApp(s.status, 'whatsapp-status')}\n\nPost kit: ${l.kit}`.slice(0, 1024) });
   return { ok: true };
 }
 // The day's LinkedIn post as its own message (its own dedupe key, so it can follow later the same day). When it already
@@ -121,7 +123,7 @@ async function toTelegramPost(s, l, ctx = {}) {
   if (!chat) return { ok: false, skipped: 'telegram not paired yet (message the bot, then pair)' };
   const p = primaryPost(s);
   const head = ctx.memberPosted ? `✅ Posted to your LinkedIn profile · ${p.label}` : `LinkedIn post · ${p.label}`;
-  await tg('sendMessage', { chat_id: chat, text: `${head}\n\n${withApp(p.text)}`.slice(0, 4096), link_preview_options: { is_disabled: true } });
+  await tg('sendMessage', { chat_id: chat, text: `${head}\n\n${withApp(p.text, 'linkedin')}`.slice(0, 4096), link_preview_options: { is_disabled: true } });
   return { ok: true, kind: p.kind };
 }
 
@@ -241,4 +243,4 @@ async function pairTelegram({ dry = false } = {}) {
   return { ok: true, dry, chat: list[0] };
 }
 
-module.exports = { APP_LINKS, withApp, beforeTags, primaryPost, leadersWhatsApp, notifyOwner, istToday, loadSocial, links, deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram };
+module.exports = { APP_LINKS, appLink, withApp, beforeTags, primaryPost, leadersWhatsApp, notifyOwner, istToday, loadSocial, links, deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram };
