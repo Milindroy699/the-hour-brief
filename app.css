@@ -505,7 +505,7 @@ html.hb-hub-open .hb-player { display: none; }
 .hub-rate-btn { min-width: 40px; min-height: 40px; padding: 0; border-radius: 20px; font-size: 1.3rem; line-height: 1; }
 .hub-rate-val { min-width: 46px; padding: 0 2px; text-align: center; font-size: 0.92rem; font-weight: 700; }
 .hub-b svg { width: 26px; height: 26px; }
-.hub-play { width: 70px; height: 70px; border-radius: 50%; background: var(--hb-primary); color: #fff; box-shadow: 0 8px 20px rgba(var(--hb-primary-rgb), 0.38); }
+.hub-play { width: 70px; height: 70px; padding: 0; box-sizing: border-box; flex: none; aspect-ratio: 1 / 1; border-radius: 50%; background: var(--hb-primary); color: #fff; box-shadow: 0 8px 20px rgba(var(--hb-primary-rgb), 0.38); }
 .hub-play svg { width: 30px; height: 30px; }
 .hub-voice { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 18px; background: var(--paper); border: 1px solid var(--line); }
 .hub-mic { flex: none; display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 50%; background: var(--hb-lav); color: var(--hb-primary-2); }
@@ -732,18 +732,22 @@ html.hb-deck-open #mob-progress, html.hb-deck-open #mob-top { display: none; }
 /* Matches .dk-card > .dk-face's own box model exactly (16px card padding, then a 640px box centred inside that), so
    the arrows land precisely on the face's real edges at any width, including the centred column on tablets/desktop. */
 .dk-edgenav { position: absolute; top: 0; left: 16px; right: 16px; bottom: 0; max-width: 640px; margin: 0 auto; z-index: 4; pointer-events: none; }
+/* Text size lives in the Menu only (owner's call, 2026-11-18); this also covers the Audio header listen.js builds. */
+.ab-actions .reader-size { display: none; }
+
+/* Solid and fully opaque: the old translucent 34px arrows at 55% opacity vanished against busy cards. */
 .dk-nav {
-  position: absolute; top: 32%; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center;
-  padding: 0; border: 1px solid rgba(var(--hb-ink-rgb), 0.08); border-radius: 50%;
-  background: rgba(var(--hb-paper-rgb), 0.8); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
-  color: var(--ink); box-shadow: 0 2px 8px rgba(18, 19, 22, 0.12); cursor: pointer; pointer-events: auto;
-  opacity: 0.55; transition: opacity 0.25s ease; -webkit-tap-highlight-color: transparent;
+  position: absolute; top: 32%; width: 42px; height: 42px; display: inline-flex; align-items: center; justify-content: center;
+  padding: 0; box-sizing: border-box; border: 1px solid rgba(var(--hb-primary-rgb), 0.28); border-radius: 50%;
+  background: var(--paper); color: var(--hb-primary-2);
+  box-shadow: 0 4px 14px rgba(18, 19, 22, 0.22); cursor: pointer; pointer-events: auto;
+  opacity: 1; transition: opacity 0.25s ease, transform 0.15s ease; -webkit-tap-highlight-color: transparent;
 }
 .dk-prev { left: 10px; }
 .dk-next { right: 10px; }
-.dk-nav svg { width: 16px; height: 16px; }
-.dk-nav:disabled { opacity: 0.18; cursor: default; }
-.dk-nav:not(:disabled):hover, .dk-nav:not(:disabled):focus-visible { opacity: 1; }
+.dk-nav svg { width: 20px; height: 20px; stroke-width: 2.4; }
+.dk-nav:disabled { opacity: 0.25; cursor: default; }
+.dk-nav:not(:disabled):active { transform: scale(0.92); }
 /* Swipe is the point: once the reader has done it once, the arrows fade further rather than sit there as clutter — a
    tap, a key press, hovering/focusing, or just sitting on a card a while brings them back (cards.js quietNav/showNav). */
 .dk-edgenav.dk-quiet .dk-nav:not(:disabled) { opacity: 0.2; }
@@ -820,7 +824,7 @@ html.hb-deck-open .hb-player { display: none; }
 .dk-fp-b svg { width: 22px; height: 22px; }
 .dk-fp-b:disabled { opacity: 0.35; cursor: default; }
 .dk-fp-collapse { min-width: 36px; min-height: 36px; color: var(--ink-soft); }
-.dk-fp-play { min-width: 52px; min-height: 52px; background: var(--hb-primary); color: #fff; }
+.dk-fp-play { width: 52px; height: 52px; min-width: 52px; min-height: 52px; padding: 0; box-sizing: border-box; flex: none; aspect-ratio: 1 / 1; border-radius: 50%; background: var(--hb-primary); color: #fff; }
 .dk-fp-stop { margin-left: auto; color: var(--ink-faint); }
 .dk-fp-rate { display: inline-flex; align-items: center; margin-left: 6px; padding: 1px; border: 1px solid var(--line); border-radius: 17px; }
 .dk-fp-r { min-width: 30px; min-height: 30px; padding: 0; border: 0; border-radius: 15px; background: transparent; color: var(--ink); font-size: 1rem; line-height: 1; cursor: pointer; }

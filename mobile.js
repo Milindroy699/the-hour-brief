@@ -850,11 +850,6 @@
       inner.insertBefore(logo, inner.firstChild);
 
       bar = mk('div', 'ab-actions');
-      var aa = mk('button', 'ab-btn reader-size');
-      aa.type = 'button';
-      aa.setAttribute('aria-label', 'Text size');
-      aa.innerHTML = ICON.aa;
-      aa.addEventListener('click', function () { openTextSize(aa); });
       var sv = mk('button', 'ab-btn reader-saved');
       sv.type = 'button';
       sv.innerHTML = STAR_SVG + '<span class="rd-count"></span>';
@@ -864,7 +859,7 @@
       mn.setAttribute('aria-label', 'Menu: past editions, sections, text size, reminder, share');
       mn.innerHTML = SLIDERS_SVG;
       mn.addEventListener('click', function () { openMenu(mn); });
-      bar.appendChild(aa);
+      // Text size lives in the Menu only (owner's call, 2026-11-18): the top bar keeps Saved and Menu.
       bar.appendChild(sv);
       bar.appendChild(mn);
       inner.appendChild(bar);
@@ -993,11 +988,6 @@
     // Same header everywhere — Today, Audio, Challenge, Archive — rather than each screen showing its own
     // stripped-down version (this one used to just close itself; Audio's own close went the same way).
     var acts = mk('div', 'ab-actions');
-    var aa = mk('button', 'ab-btn reader-size');
-    aa.type = 'button';
-    aa.setAttribute('aria-label', 'Text size');
-    aa.innerHTML = ICON.aa;
-    aa.addEventListener('click', function () { openTextSize(aa); });
     var sv = mk('button', 'ab-btn reader-saved');
     sv.type = 'button';
     sv.innerHTML = STAR_SVG + '<span class="rd-count"></span>';
@@ -1007,7 +997,6 @@
     mn.setAttribute('aria-label', 'Menu: sections, text size, reminder, share');
     mn.innerHTML = SLIDERS_SVG;
     mn.addEventListener('click', function () { openMenu(mn); });
-    acts.appendChild(aa);
     acts.appendChild(sv);
     acts.appendChild(mn);
     top.appendChild(logo);
@@ -1277,6 +1266,21 @@
     if (!reader() || !/[?&]quiz=1(&|$)/.test(location.search)) return;
     openQuizPage();
   }
+  // Keep the address in step with the Audio and Challenge screens (both overlays on the feed), so a refresh, or a link
+  // copied from the address bar, reopens the same screen instead of dropping back to Today. replaceState, so no extra
+  // history entries. Started only after an incoming ?audio=1 / ?quiz=1 has been handled (see start()).
+  function syncScreenUrl() {
+    if (!reader() || !window.history || !history.replaceState) return;
+    var cls = document.documentElement.classList;
+    var want = cls.contains('hb-hub-open') ? 'audio' : cls.contains('hb-quiz-page') ? 'quiz' : '';
+    var params = new URLSearchParams(location.search);
+    var had = params.get('audio') === '1' ? 'audio' : params.get('quiz') === '1' ? 'quiz' : '';
+    if (want === had) return;
+    params.delete('audio'); params.delete('quiz');
+    if (want) params.set(want, '1');
+    var qs = params.toString();
+    try { history.replaceState(history.state, '', location.pathname + (qs ? '?' + qs : '') + location.hash); } catch (e) { /* ignore */ }
+  }
   function start() {
     if (cardsOk() && getView() === 'cards' && deckTarget()) pendingOn();
     apply(); openFromHash(); loadListen();
@@ -1289,6 +1293,7 @@
       document.addEventListener('hb:deck', function () { if (!deckOpen()) { maybeSuggest(); maybeSuggestInstall(); } });
       openAudioFromUrl();
       openQuizFromUrl();
+      if (window.MutationObserver) new MutationObserver(syncScreenUrl).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
     });
   }
   if (document.readyState === 'loading') {

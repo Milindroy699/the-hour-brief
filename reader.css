@@ -330,7 +330,8 @@ section.lane:not(.quiz) .lane-head:has(.lane-tag) h2 { display: none; }
   -webkit-tap-highlight-color: transparent;
 }
 .hb-pl-b:disabled { opacity: 0.35; cursor: default; }
-.hb-pl-play { min-width: 54px; min-height: 54px; border-radius: 27px; background: var(--brand); color: #fff; }
+/* Fixed square + no padding: with only a min size, Android WebView's default button padding stretched it into an oval. */
+.hb-pl-play { width: 54px; height: 54px; min-width: 54px; min-height: 54px; padding: 0; box-sizing: border-box; flex: none; aspect-ratio: 1 / 1; border-radius: 50%; background: var(--brand); color: #fff; }
 /* Speed: a bordered pill holding − / value / + so it reads as one control, same slot the old single button had. */
 .hb-pl-rate-group { display: flex; align-items: center; gap: 0; padding: 1px; border: 1px solid var(--line); border-radius: 17px; flex: none; }
 .hb-pl-rate-btn { min-width: 30px; min-height: 30px; padding: 0; border-radius: 15px; font-size: 1rem; line-height: 1; }
