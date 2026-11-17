@@ -101,7 +101,17 @@
   function loadSocial(daysAgo) {
     return fetch('/social/' + istDate(daysAgo) + '.json', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : Promise.reject(); });
   }
+  // App install links, added the same way the server adds them (api/_kit.js withApp): above the closing hashtags.
+  var APP_BLOCK = '📱 Get the free app\niPhone: https://apps.apple.com/app/id6817195056\nAndroid: https://play.google.com/store/apps/details?id=app.thehourbrief';
+  function withApp(text) {
+    var t = String(text || '').replace(/\s+$/, '');
+    var m = /^([\s\S]*?)\s*((?:#[A-Za-z]\w*\s*)+)$/.exec(t);
+    if (m && m[1].trim()) return m[1].replace(/\s+$/, '') + '\n\n' + APP_BLOCK + '\n\n' + m[2].trim();
+    return t + '\n\n' + APP_BLOCK;
+  }
   loadSocial(0).catch(function () { return loadSocial(1); }).then(function (s) {
+    s.linkedin = withApp(s.linkedin);
+    s.status = withApp(s.status);
     var lane = { ai: 'ai', biz: 'biz', mkt: 'mkt' }[s.lane] || '';
     var img = '/api/og?' + new URLSearchParams({ type: 'status', i: s.insight, d: s.date, n: String(s.edition || ''), lane: lane }).toString();
     $('meta-social').textContent = 'Edition ' + s.edition + ' · ' + s.date + (s.date !== istDate(0) ? ' (today’s isn’t ready yet)' : '');

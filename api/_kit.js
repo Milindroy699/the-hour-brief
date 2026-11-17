@@ -15,6 +15,19 @@ const { kv, allTokens, sendToTokens } = require('./_push');
 const NOTION_DB_ID = process.env.NOTION_DB_ID || '41b5454835148128912dd31e3d93f149';
 const DEDUPE_TTL = String(3 * 86400);
 
+// App install links, appended to everything that goes out (same URLs as mobile.js STORE_URL and api/share.js).
+const APP_LINKS = { ios: 'https://apps.apple.com/app/id6817195056', android: 'https://play.google.com/store/apps/details?id=app.thehourbrief' };
+const APP_BLOCK = `📱 Get the free app\niPhone: ${APP_LINKS.ios}\nAndroid: ${APP_LINKS.android}`;
+// Insert a block just above a post's closing hashtags (whether on their own line or ending the last sentence), or at
+// the end if it has none.
+function beforeTags(text, block) {
+  const t = String(text || '').replace(/\s+$/, '');
+  const m = /^([\s\S]*?)\s*((?:#[A-Za-z]\w*\s*)+)$/.exec(t);
+  if (m && m[1].trim()) return `${m[1].replace(/\s+$/, '')}\n\n${block}\n\n${m[2].trim()}`;
+  return `${t}\n\n${block}`;
+}
+const withApp = (text) => beforeTags(text, APP_BLOCK);
+
 function istToday() {
   return new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
 }
@@ -70,7 +83,7 @@ async function toNotion(s, l) {
       Edition: { number: Number(s.edition) || null },
       ...(laneName ? { Lane: { select: { name: laneName } } } : {}),
       Insight: { rich_text: richText(s.insight) },
-      'Status caption': { rich_text: richText(s.status) },
+      'Status caption': { rich_text: richText(withApp(s.status)) },
       'Push': { rich_text: richText(s.push ? `${s.push.title} — ${s.push.body}` : '') },
       Kit: { url: l.kit },
       'Status image': { files: [{ name: `status-${s.date}.png`, type: 'external', external: { url: l.image } }] },
@@ -78,9 +91,9 @@ async function toNotion(s, l) {
     children: [
       { object: 'block', type: 'image', image: { type: 'external', external: { url: l.image } } },
       heading('WhatsApp status caption'),
-      para(s.status),
+      para(withApp(s.status)),
       heading('LinkedIn post'),
-      ...String(s.linkedin).split(/\n{2,}/).filter((p) => p.trim()).map(para),
+      ...withApp(s.linkedin).split(/\n{2,}/).filter((p) => p.trim()).map(para),
       heading('Links'),
       para(`Post kit (share buttons): ${l.kit}`),
       para(`Story: ${l.story}`),
@@ -122,8 +135,8 @@ async function toTelegram(s, l) {
   const chat = await telegramChat();
   if (!chat) return { ok: false, skipped: 'telegram not paired yet (message the bot, then pair)' };
   // Photo first (save it to WhatsApp status), caption ready to paste; then the LinkedIn post as its own message.
-  await tg('sendPhoto', { chat_id: chat, photo: l.image, caption: `${s.status}\n\nPost kit: ${l.kit}`.slice(0, 1024) });
-  await tg('sendMessage', { chat_id: chat, text: `LinkedIn post for ${s.date}:\n\n${s.linkedin}`.slice(0, 4096), link_preview_options: { is_disabled: true } });
+  await tg('sendPhoto', { chat_id: chat, photo: l.image, caption: `${withApp(s.status)}\n\nPost kit: ${l.kit}`.slice(0, 1024) });
+  await tg('sendMessage', { chat_id: chat, text: `LinkedIn post for ${s.date}:\n\n${withApp(s.linkedin)}`.slice(0, 4096), link_preview_options: { is_disabled: true } });
   return { ok: true };
 }
 
@@ -209,4 +222,4 @@ async function pairTelegram({ dry = false } = {}) {
   return { ok: true, dry, chat: list[0] };
 }
 
-module.exports = { istToday, loadSocial, links, deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram };
+module.exports = { APP_LINKS, withApp, beforeTags, istToday, loadSocial, links, deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram };

@@ -14,7 +14,7 @@ const crypto = require('crypto');
 const { CANON } = require('./_edition');
 const { kv } = require('./_push');
 const { buildDigest } = require('./_digest');
-const { istToday, loadSocial } = require('./_kit');
+const { istToday, loadSocial, withApp, beforeTags } = require('./_kit');
 
 const REDIRECT_URI = `${CANON}/linkedin/callback`;
 const SCOPES = 'w_organization_social r_organization_social';
@@ -166,12 +166,10 @@ async function morningPost(date) {
     '',
     ...lanes.filter((l) => l[1]).map(([name, t]) => `${name}: ${t}`),
     '',
-    `Read it free: ${d.editionUrl}`,
-    '',
     '#AI #Business #StockMarket',
   ].join('\n');
   return {
-    text: (s && s.page) ? `${s.page}\n\nRead it free: ${d.editionUrl}` : fallback,
+    text: withApp(beforeTags((s && s.page) || fallback, `Read it free: ${d.editionUrl}`)),
     link: d.editionUrl,
     title: `The Hour Brief · Edition ${d.edition}`,
     description: 'AI & tech, product & business, and the markets: today’s brief.',
@@ -220,7 +218,7 @@ function leaderPost(b) {
   const link = `${CANON}/leaders.html#a=${encodeURIComponent(b.id)}`;
   const from = (b.sources || []).map((s) => s.creator).filter(Boolean);
   return {
-    text: [
+    text: withApp([
       `${label} · Thought Leaders`,
       '',
       b.title,
@@ -231,7 +229,7 @@ function leaderPost(b) {
       `Read the full piece: ${link}`,
       '',
       PILLAR_TAGS[b.category] || '#ThoughtLeadership',
-    ].filter((line, i, arr) => !(line === '' && arr[i - 1] === '')).join('\n'),
+    ].filter((line, i, arr) => !(line === '' && arr[i - 1] === '')).join('\n')),
     link,
     title: b.title,
     description: `${label} · Thought Leaders on The Hour Brief`,
