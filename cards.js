@@ -120,11 +120,16 @@
     card.setAttribute('role', 'group');
     card.setAttribute('aria-roledescription', 'slide');
     card.setAttribute('aria-label', label);
+    // .dk-card is three screens wide (its left two thirds overlap the cards before it and are empty); .dk-hold is the
+    // screen-sized right third, position: sticky, and holds the face. See "Stacked deck" in app.css for why.
+    var hold = mk('div', 'dk-hold');
     var f = mk('div', 'dk-face');
     var sc = mk('div', 'dk-scroll');
     sc.addEventListener('scroll', function () { fade(sc); }, { passive: true });
     f.appendChild(sc);
-    card.appendChild(f);
+    hold.appendChild(f);
+    card.appendChild(hold);
+    card.appendChild(mk('div', 'dk-snap'));          // the scroll-snap point: exactly where this card rests
     return { card: card, face: f, scroll: sc };
   }
   // A card taller than the screen scrolls inside itself; a soft fade at the bottom says there is more.
@@ -425,7 +430,7 @@
     document.addEventListener('hb:listen', function () { if (shown) onListenSoon(); });
   }
 
-  function touched() { lastTouch = Date.now(); goal = null; }         // the reader has taken over: forget any move in progress
+  function touched() { lastTouch = Date.now(); goal = null; cancelNudge(); }   // the reader has taken over: forget any move in progress
 
   // A sideways swipe the track never got. On iPhone, while a card's text is still gliding after a flick up or down, the
   // next touch belongs to that text scroller, so a swipe to the next card made straight after scrolling went nowhere
@@ -482,6 +487,7 @@
     quietNav();
     armIdle();
     dismissSwipeHint();
+    nudgeDone();
   }
 
   var SWIPE_HINT_KEY = 'hb-swipe-hint-v1';
@@ -496,14 +502,18 @@
     var c = cards[idx];
     if (!shown || swipeHintEl || hasSwiped || !c || c.kind !== 'story' || swipeHintSeen()) return;
     try { localStorage.setItem(SWIPE_HINT_KEY, '1'); } catch (e) { /* shown once is enough either way */ }
+    showSwipeHint('Swipe to continue', 4000);
+  }
+  function showSwipeHint(text, ms) {
+    dismissSwipeHint();
     swipeHintEl = mk('div', 'dk-swipehint');
     swipeHintEl.setAttribute('role', 'status');
     var ic = mk('span', 'dk-swipehint-ic');
     ic.appendChild(svg('M15 5l-7 7 7 7'));
     swipeHintEl.appendChild(ic);
-    swipeHintEl.appendChild(mk('span', '', 'Swipe to continue'));
+    swipeHintEl.appendChild(mk('span', '', text));
     deck.appendChild(swipeHintEl);
-    swipeHintT = setTimeout(dismissSwipeHint, 4000);
+    swipeHintT = setTimeout(dismissSwipeHint, ms);
   }
 
   function onKey(e) {
@@ -573,6 +583,9 @@
     cards.forEach(function (x, i) {
       if (canInert) x.el.inert = i !== idx;
       else x.el.setAttribute('aria-hidden', String(i !== idx));
+      // The cards waiting behind the current one are held on screen (sticky); only the next two are ever seen, so the
+      // rest aren't drawn at all. Card idx+3 is still off-screen when this flips mid-swipe, so it never shows.
+      x.el.classList.toggle('dk-far', i > idx + 2);
     });
     syncFab();
     maybeShowSwipeHint();
@@ -594,27 +607,30 @@
   // Older browsers keep the JS version below, kept lean: only the cards near the screen, only values that changed.
   // Transforms go on each card's face, never on the .dk-card (the scroll-snap target: Chrome snaps to a transformed
   // target's moved box). Reduced motion: no effect at all.
-  var sda = !!(window.CSS && CSS.supports && CSS.supports('animation-timeline: --dk') && CSS.supports('view-timeline-name: --dk') &&
-    CSS.supports('animation-range: cover -50% cover 100%'));
+  var sda = !!(window.CSS && CSS.supports && CSS.supports('animation-timeline: --dk') && CSS.supports('view-timeline-name: --dk'));
   var stacked = [];                                   // faces the JS fallback has styled, so it can clear them later
   // Same motion as the CSS keyframes (dk-stack in app.css), as a function of d = how many cards ahead of the screen this
-  // one is. The stacking order is fixed in render(), so only the face's transform and opacity change here.
+  // one is. Where each card sits is position: sticky's job (see app.css), so this only adds the small drop, shrink and
+  // tilt: a frame of lag in those is invisible, unlike the sideways shift the old version had to keep up with.
   function stack() {
     if (!track || !cards.length || reduceMotion || sda) return;
     var w = track.clientWidth || 1, pos = track.scrollLeft / w;
-    var lo = Math.max(0, Math.floor(pos) - 1), hi = Math.min(cards.length - 1, Math.ceil(pos) + 2), now = [];
+    var lo = Math.max(0, Math.floor(pos) - 1), hi = Math.min(cards.length - 1, Math.ceil(pos) + 3), now = [];
     for (var i = lo; i <= hi; i++) {
       var c = cards[i], face = c.face || (c.face = c.el.querySelector('.dk-face'));
       if (!face) continue;
       var d = i - pos, t = '', op = '', k;
-      if (d > 1 && d <= 2) {                              // two ahead: same spot as the next card, further back, fading in
+      if (d >= 2) {                                       // two or more ahead: further back, invisible
+        t = 'translate3d(0,28px,0) scale(0.9)';
+        op = '0';
+      } else if (d > 1) {                                 // coming up behind the next card, fading in
         k = d - 1;
-        t = 'translate3d(' + (-(0.92 + k) * w).toFixed(1) + 'px,' + (14 + k * 14).toFixed(1) + 'px,0) scale(' + (0.94 - k * 0.06).toFixed(4) + ')';
+        t = 'translate3d(0,' + (14 + k * 14).toFixed(1) + 'px,0) scale(' + (0.95 - k * 0.05).toFixed(4) + ')';
         op = (1 - k).toFixed(3);
-      } else if (d > 0 && d <= 1) {                       // next up, waiting behind: cancel most of its sideways travel
-        t = 'translate3d(' + (-d * w * 0.92).toFixed(1) + 'px,' + (d * 14).toFixed(1) + 'px,0) scale(' + (1 - d * 0.06).toFixed(4) + ')';
+      } else if (d > 0) {                                 // next up, waiting just behind: peeks out at the bottom
+        t = 'translate3d(0,' + (d * 14).toFixed(1) + 'px,0) scale(' + (1 - d * 0.05).toFixed(4) + ')';
       } else if (d < 0 && d >= -1.5) {                    // leaving (or coming back) over the top, tilting a little
-        t = 'translate3d(0,0,0) rotate(' + (d * 5).toFixed(2) + 'deg)';
+        t = 'rotate(' + (d * 4).toFixed(2) + 'deg)';
       }
       if (face.style.transform !== t) face.style.transform = t;
       if (face.style.opacity !== op) face.style.opacity = op;
@@ -896,7 +912,41 @@
     var h = cards[idx].el.querySelector('.dk-title');
     if (h) { try { h.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }
     document.dispatchEvent(new CustomEvent('hb:deck'));
+    maybeNudge();
     return true;
+  }
+
+  // ---- First-run nudge (owner, 2026-11-18): show a new reader that the cards move by swiping ----
+  // On opening Cards, the current card slides a little to the left and back, showing the next card waiting behind it,
+  // with a "Swipe to flip through" pill. Again once more if they still haven't touched it. Shown on the first three
+  // opens at most, and never again once they have swiped (onSwiped marks it done). The slide is a plain CSS animation
+  // on .dk-hold, so it never touches the scroll position or the snap points. Reduced motion: the pill only.
+  var NUDGE_KEY = 'hb-deck-nudge-v1', nudgeT = [], nudged = null;
+  function nudgeCount() { try { var v = localStorage.getItem(NUDGE_KEY); return v === 'done' ? -1 : (parseInt(v, 10) || 0); } catch (e) { return -1; } }
+  function nudgeDone() { try { localStorage.setItem(NUDGE_KEY, 'done'); } catch (e) { /* fine */ } cancelNudge(); }
+  function cancelNudge() {
+    nudgeT.forEach(clearTimeout);
+    nudgeT = [];
+    if (nudged) { nudged.classList.remove('dk-nudge'); nudged = null; }
+  }
+  function maybeNudge() {
+    var n = nudgeCount();
+    if (n < 0 || n >= 3 || hasSwiped || idx >= cards.length - 1) return;
+    try { localStorage.setItem(NUDGE_KEY, String(n + 1)); } catch (e) { return; }
+    var openedAt = lastTouch;
+    function once(withPill) {
+      if (!shown || hasSwiped || lastTouch !== openedAt) return;       // they've started on their own
+      var hold = cards[idx] && cards[idx].el.querySelector('.dk-hold');
+      if (!hold) return;
+      if (withPill) showSwipeHint('Swipe to flip through the cards', 4200);
+      if (reduceMotion) return;
+      hold.classList.remove('dk-nudge');
+      void hold.offsetWidth;                                             // restart the animation if it ran before
+      hold.classList.add('dk-nudge');
+      nudged = hold;
+    }
+    nudgeT.push(setTimeout(function () { once(true); }, 700));
+    nudgeT.push(setTimeout(function () { once(false); }, 3400));
   }
 
   // An instant jump to an element. Not scrollIntoView({behavior:'instant'}): Chrome 113 (Android WebView) ignores that, eases
@@ -921,6 +971,7 @@
     clearTimeout(fabAuto);
     clearTimeout(idleT);
     dismissSwipeHint();
+    cancelNudge();
     playIdx = -1;
     lastFollowId = null;
     if (fabEl) fabEl.hidden = true;

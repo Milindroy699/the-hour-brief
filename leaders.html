@@ -288,7 +288,13 @@
   footer.colophon { position: relative; z-index: 1; margin-top: 48px; padding-top: 22px; border-top: 1px solid var(--line); font-size: 0.8rem; color: var(--ink-faint); }
   footer.colophon a { color: var(--ink-soft); }
 
+  .tl-skel { background: rgba(27, 27, 35, 0.07); box-shadow: none; animation: tl-skel 1.4s ease-in-out infinite alternate; }
+  .tl-skel::before, .tl-skel::after { content: none; }
+  @keyframes tl-skel { to { background: rgba(27, 27, 35, 0.12); } }
+  .tl-chips:empty { min-height: 54px; }               /* the chips row (two lines on a phone) arrives with the data */
+
   @media (prefers-reduced-motion: reduce) {
+    .tl-skel { animation: none; }
     .tl-eyebrow .tl-dot { animation: none; }
     .tl-tile, .tl-tile-art, .tl-card { transition: none; }
   }
@@ -341,8 +347,10 @@
       <div class="tl-chips" id="tl-chips"></div>
     </section>
     <div class="tl-tiles">
-      <div id="tl-hero"><p class="tl-state">Loading…</p></div>
-      <div class="tl-grid" id="tl-grid"></div>
+      <!-- Placeholders the size of the real tiles, so the page doesn't jump when the roundups arrive (first visit only:
+           after that the page draws straight from the copy it keeps, see Load below). -->
+      <div id="tl-hero"><div class="tl-tile tl-hero tl-skel" role="status" aria-label="Loading roundups"></div></div>
+      <div class="tl-grid" id="tl-grid"><div class="tl-tile tl-skel"></div><div class="tl-tile tl-skel"></div><div class="tl-tile tl-skel"></div><div class="tl-tile tl-skel"></div></div>
     </div>
     <a class="tl-engine tl-glass" id="tl-engine" href="about.html" hidden></a>
   </div>
@@ -778,15 +786,18 @@
   }
 
   // ---- Router: #c=<category>, #a=<article id>, anything else is home ----
-  function route() {
-    var h = location.hash.slice(1), m, shown = 'home';
-    if ((m = /^a=(.+)$/.exec(h)) && renderArticle(decodeURIComponent(m[1]))) shown = 'article';
+  // soft: a background refresh of what is already on screen (fresher data arrived), so keep the scroll position, and
+  // never redraw an open article: drawing one counts a view and reloads its comments.
+  function route(soft) {
+    var h = location.hash.slice(1), m, shown = 'home', art = /^a=(.+)$/.exec(h);
+    if (soft && art && !artView.hidden) return;
+    if (art && renderArticle(decodeURIComponent(art[1]))) shown = 'article';
     else if ((m = /^c=(.+)$/.exec(h)) && renderCategory(decodeURIComponent(m[1]))) shown = 'cat';
     else renderHome();
     home.hidden = shown !== 'home';
     catView.hidden = shown !== 'cat';
     artView.hidden = shown !== 'article';
-    window.scrollTo(0, 0);
+    if (!soft) window.scrollTo(0, 0);
   }
 
   // ---- Load ----
@@ -800,19 +811,48 @@
     })).then(function (parts) { return Object.assign.apply(Object, [{}].concat(parts)); });
   }
 
+  // Draw at once from the copy kept on the last visit, then refresh in the background and redraw only if something
+  // changed. Before, every visit waited on two network round trips behind a "Loading…" line, then the whole page
+  // jumped into place: in the app that read as the Voices tab flickering (owner, 2026-11-18). Also works offline.
+  var CACHE = 'hb-voices-v1', drawn = false;
+  function readCache() {
+    try { var c = JSON.parse(localStorage.getItem(CACHE) || 'null'); return c && c.briefs && c.briefs.length ? c : null; } catch (e) { return null; }
+  }
+  function use(d) {                                   // copies, so a view or like counted on screen never edits the saved copy
+    all = d.briefs.map(function (b) {
+      var x = Object.assign({}, b);
+      x.category = LEGACY[x.category] || x.category;
+      x.stats = Object.assign({ likes: 0, views: 0, comments: 0 }, d.stats && d.stats[x.id]);
+      return x;
+    });
+  }
+  function draw() {
+    if (drawn) { route(true); return; }
+    drawn = true;
+    window.addEventListener('hashchange', function () { route(); });
+    route();
+  }
+  var saved = readCache(), savedSig = saved ? JSON.stringify(saved) : '';
+  if (saved) { use(saved); draw(); }
+
   fetch('/leaders-data.json', { cache: 'no-store' })
     .then(function (r) { return r.json(); })
     .then(function (data) {
-      all = (data.briefs || []).map(function (b) { b.category = LEGACY[b.category] || b.category; return b; });
-      return statsFor(all.map(function (b) { return b.id; }));
+      var briefs = data.briefs || [];
+      return statsFor(briefs.map(function (b) { return b.id; })).then(function (stats) {
+        // A failed counts request comes back empty: keep the last known counts rather than show zeros.
+        return { briefs: briefs, stats: Object.assign({}, saved && saved.stats, stats) };
+      });
     })
-    .then(function (stats) {
-      all.forEach(function (b) { b.stats = stats[b.id] || { likes: 0, views: 0, comments: 0 }; });
-      window.addEventListener('hashchange', route);
-      route();
+    .then(function (fresh) {
+      var sig = JSON.stringify(fresh);
+      if (sig === savedSig) return;                   // nothing new: leave the page exactly as drawn
+      try { localStorage.setItem(CACHE, sig); } catch (e) { /* full or blocked: the page still works, just not instantly */ }
+      use(fresh);
+      draw();
     })
     .catch(function () {
-      document.getElementById('tl-hero').innerHTML = '<p class="tl-state">Couldn’t load roundups right now.</p>';
+      if (!drawn) document.getElementById('tl-hero').innerHTML = '<p class="tl-state">Couldn’t load roundups right now.</p>';
     });
 })();
 </script>

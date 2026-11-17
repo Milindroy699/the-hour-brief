@@ -686,7 +686,13 @@ html.hb-deck-open #mob-progress, html.hb-deck-open #mob-top { display: none; }
 .dk-nav:focus-visible, .dk-act:focus-visible, .dk-cta:focus-visible, .dk-hint:focus-visible, .dk-track:focus-visible { outline: 2px solid var(--hb-primary); outline-offset: 2px; }
 .dk-track { flex: 1; min-height: 0; display: flex; padding-top: env(safe-area-inset-top, 0px); overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
 .dk-track::-webkit-scrollbar { display: none; }
-.dk-card { flex: 0 0 100%; min-width: 0; height: 100%; box-sizing: border-box; padding: 4px 16px 10px; scroll-snap-align: center; scroll-snap-stop: always; display: flex; }
+/* Each card is three screens wide but only advances the track by one (the -200% margin): its left two thirds are empty
+   and overlap the two cards before it. That room is what lets its visible part (.dk-hold, the right third) stay stuck on
+   screen behind the current card until its turn: see "Stacked deck" below. .dk-snap marks where it rests. */
+.dk-card { flex: 0 0 300%; margin-left: -200%; min-width: 0; height: 100%; display: flex; justify-content: flex-end; position: relative; pointer-events: none; }
+.dk-hold { flex: 0 0 calc(100% / 3); min-width: 0; height: 100%; box-sizing: border-box; padding: 4px 16px 10px; display: flex; position: sticky; right: 0; pointer-events: auto; }
+.dk-snap { position: absolute; top: 0; right: 0; width: calc(100% / 3); height: 1px; scroll-snap-align: center; scroll-snap-stop: always; pointer-events: none; }
+.dk-card.dk-far { visibility: hidden; }               /* three or more ahead: never on screen, so not drawn */
 .dk-face { flex: 1; min-height: 0; display: flex; flex-direction: column; box-sizing: border-box; width: 100%; max-width: 640px; margin: 0 auto; background: var(--paper); border: 1px solid var(--line); border-radius: 26px; overflow: hidden; box-shadow: 0 10px 30px rgba(18, 19, 22, 0.07); }
 /* overscroll-behavior-y only: a card's text running out of room must not drag the page behind it, but the x axis has to
    stay unset, or a sideways swipe that starts on the text could never reach the track. */
@@ -751,32 +757,42 @@ html.hb-deck-open #mob-progress, html.hb-deck-open #mob-top { display: none; }
 .dk-pager { justify-content: space-between; gap: 10px; padding: 6px 16px 12px; }
 .dk-pager .dk-nav { position: static; top: auto; flex: none; width: 46px; height: 46px; }
 .dk-pager .dk-count { flex: 1; min-width: 0; text-align: center; font-family: var(--hb-label); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-/* Stacked deck: card faces tilt around a point near their bottom, so a swipe reads as a throw. Never transform the
-   .dk-card itself: it's the scroll-snap target, and Chrome snaps to a transformed target's moved box. */
+/* ---- Stacked deck (owner's call, 2026-11-18): the next card waits directly behind the current one; swiping slides the
+   current card off to the left with a slight tilt, and going back brings the earlier card in over the top. ----
+   Who stays put is decided by position: sticky, not by transforms: a card's .dk-hold sticks to the right edge of the
+   screen until the track reaches it. The browser moves sticky boxes in step with the scroll itself (on iPhone, in the
+   same native pass as the scroll), so the waiting card is rock steady. The earlier version held it still with a
+   transform recomputed for each scroll position, which on iPhone ran a frame behind the scroll and made a forward swipe
+   judder (owner: "swipe right is almost perfect, swipe left has this jerking"). What's left for the animation below
+   is only small: the waiting card's slight drop and shrink (it peeks out a few pixels at the bottom), and the tilt. */
 .dk-face { transform-origin: 50% 85%; }
-/* Stacking order is fixed, not animated: each card sits above every card after it (cards.js sets the z-index once),
-   so a card leaving to the left always passes over the one coming in. Animating z-index kept the browser from running
-   the effect off the main thread. Isolated so the cards' z-index never competes with the Listen button or hints. */
+/* Stacking order is fixed: each card sits above every card after it (cards.js sets the z-index once), so a card leaving
+   to the left always passes over the one behind. Isolated so it never competes with the Listen button or hints. */
 .dk-track { isolation: isolate; }
-/* Scroll-driven version (cards.js adds .dk-sda when supported): each card's face follows its own card's position in the
-   track, run by the browser in lockstep with the swipe. The range is widened to start a card early (cover -50%), so the
-   timeline runs from two cards ahead to just off the left edge: 0% = two ahead, 33.3% = next up, 66.7% = centred,
-   100% = gone left. 92cqw = 92% of the track's width (the track is the size container). Two ahead, a card waits in the
-   very same spot as the next one, smaller, lower and invisible, and rises into that spot as the deck moves on: before,
-   it waited off-screen and slid in from the right edge just as a forward swipe finished, which read as the deck
-   shaking at the end of the move (owner, 2026-11-18). */
-@supports (animation-timeline: --dk) and (view-timeline-name: --dk) and (animation-range: cover -50% cover 100%) {
-  .dk-sda .dk-track { container-type: inline-size; }
+/* Scroll-driven (cards.js adds .dk-sda where supported). Each three-screen-wide card's own view timeline runs from three
+   cards ahead (0%) through next up (50%) and current (75%) to gone left (100%), no range tricks needed. */
+@supports (animation-timeline: --dk) and (view-timeline-name: --dk) {
   .dk-sda .dk-card { view-timeline: --dk-card x; }
-  .dk-sda .dk-face { animation: dk-stack linear both; animation-timeline: --dk-card; animation-range: cover -50% cover 100%; }
+  .dk-sda .dk-face { animation: dk-stack linear both; animation-timeline: --dk-card; }
 }
 @keyframes dk-stack {
-  0% { transform: translate3d(-192cqw, 28px, 0) scale(0.88); opacity: 0; }
-  33.3333% { transform: translate3d(-92cqw, 14px, 0) scale(0.94); opacity: 1; }
-  66.6667% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); opacity: 1; }
-  100% { transform: translate3d(0, 0, 0) scale(1) rotate(-5deg); opacity: 1; }
+  0% { transform: translate3d(0, 28px, 0) scale(0.9) rotate(0deg); opacity: 0; }
+  25% { transform: translate3d(0, 28px, 0) scale(0.9) rotate(0deg); opacity: 0; }
+  50% { transform: translate3d(0, 14px, 0) scale(0.95) rotate(0deg); opacity: 1; }
+  75% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); opacity: 1; }
+  100% { transform: translate3d(0, 0, 0) scale(1) rotate(-4deg); opacity: 1; }
 }
-@media (prefers-reduced-motion: reduce) { .dk-sda .dk-face { animation: none; } }
+/* First-run nudge (cards.js maybeNudge): the current card slides a little left and back, showing the one behind it. */
+.dk-hold.dk-nudge { animation: dk-nudge 1.5s cubic-bezier(0.45, 0, 0.25, 1); }
+@keyframes dk-nudge {
+  0%, 100% { transform: none; }
+  30% { transform: translate3d(-22%, 0, 0) rotate(-2.5deg); }
+  58% { transform: none; }
+  72% { transform: translate3d(-6%, 0, 0) rotate(-0.6deg); }
+  86% { transform: none; }
+}
+/* Reduced motion: a plain side-by-side slide, nothing held back or tilted. */
+@media (prefers-reduced-motion: reduce) { .dk-hold { position: relative; } .dk-sda .dk-face { animation: none; } }
 .dk-nav svg { width: 20px; height: 20px; stroke-width: 2.4; }
 .dk-nav:disabled { opacity: 0.25; cursor: default; }
 .dk-nav:not(:disabled):active { transform: scale(0.92); }

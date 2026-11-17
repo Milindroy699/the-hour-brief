@@ -4,6 +4,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <script>if ("scrollRestoration" in history) history.scrollRestoration = "manual";</script>
+<script>
+// Arriving on a particular screen (Audio or Challenge from another page's tab bar, or Cards, the saved reading view):
+// keep the page hidden, all but the tab bar, until mobile.js has that screen up. Otherwise the list painted first, then
+// the cards, then Audio or Challenge on top: a visible jitter coming back from Voices (owner, 2026-11-18). mobile.js
+// lifts it (bootDone); the timer is only a safety net.
+(function () {
+  try {
+    var app = !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform());
+    if (!app && !(window.matchMedia && matchMedia('(max-width: 640px)').matches)) return;
+    var q = location.search, cards = true;
+    try { cards = localStorage.getItem('hb-view-v1') !== 'list'; } catch (e) {}
+    var screen = /[?&](audio|quiz)=1(&|$)/.test(q) || (cards && !location.hash && !/[?&](join|beat)=/.test(q));
+    if (!screen) return;
+    var h = document.documentElement;
+    h.classList.add('hb-boot');
+    setTimeout(function () { h.classList.remove('hb-boot'); }, 4000);
+  } catch (e) {}
+})();
+</script>
+<style>html.hb-boot body { visibility: hidden; } html.hb-boot .tab-bar { visibility: visible; }</style>
 <title>The Hour Brief</title>
 <meta name="description" content="A free daily one-hour digest of AI/tech, product & business (India + global), and the Indian stock market — every item links to its original source.">
 <meta property="og:title" content="The Hour Brief">

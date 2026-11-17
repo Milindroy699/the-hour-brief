@@ -131,13 +131,31 @@
         return;
       }
       e.preventDefault();
-      location.assign(url.href);
+      go(url.href);
       return;
     }
 
     e.preventDefault();
     openExternal(url.href);
   }, true);
+
+  // The iOS shell shows its "We couldn't load today's brief" page for ANY failed navigation, including one that was only
+  // cancelled: tapping a tab twice (the second navigation cancels the first), or leaving a page that is still loading
+  // (its unfinished load is cancelled). Both looked like a broken Voices tab (owner, 2026-11-18). App 1.1.4 ignores
+  // cancellations natively; for 1.1.3 and older: one navigation at a time, and wait for this page to finish loading.
+  var navAt = 0;
+  window.addEventListener('pageshow', function () { navAt = 0; });
+  function go(href) {
+    var u = new URL(href);
+    if (u.hash && u.pathname === location.pathname && u.search === location.search) { location.assign(href); return; }   // same page: no load to cancel
+    if (navAt && Date.now() - navAt < 5000) return;              // already on our way somewhere
+    navAt = Date.now();
+    if (document.readyState === 'complete') { location.assign(href); return; }
+    var done = false;
+    var leave = function () { if (done) return; done = true; location.assign(href); };
+    window.addEventListener('load', leave);
+    setTimeout(leave, 2500);                                     // a stuck image must not trap the reader here
+  }
 
   function openExternal(href) {
     if (P.Browser) { P.Browser.open({ url: href, presentationStyle: 'popover' }).catch(function () {}); }

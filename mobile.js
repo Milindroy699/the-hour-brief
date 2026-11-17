@@ -1093,8 +1093,17 @@
     // the desktop layout .tab-bar floats with its own bottom:16px gap below it, which also needs reserving; on
     // phones it's flush (bottom:0), so this is simply the bar's height there, same result either way.
     var set = function () { var h = window.innerHeight - bar.getBoundingClientRect().top; if (h > 0) document.documentElement.style.setProperty('--hb-tab-h', Math.ceil(h) + 'px'); };
-    if (window.ResizeObserver) { new ResizeObserver(set).observe(bar); } else { set(); }
+    // border-box, not the default content-box: the bar's bottom padding is the phone's safe area, which iOS can report
+    // a moment after launch. That grew the bar by ~34px without changing its content box, so nothing re-measured and
+    // the cards' pager sat behind the tab bar on a cold start (owner, 2026-11-18).
+    if (window.ResizeObserver) { try { new ResizeObserver(set).observe(bar, { box: 'border-box' }); } catch (e) { new ResizeObserver(set).observe(bar); } }
+    set();
     window.addEventListener('resize', set);   // viewport height can change (a mobile URL bar collapsing) without the bar's own size changing
+    window.addEventListener('load', set);
+    window.addEventListener('pageshow', set);
+    window.addEventListener('orientationchange', function () { setTimeout(set, 300); });
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', set);
+    [300, 1000, 2500].forEach(function (ms) { setTimeout(set, ms); });   // belt and braces for a late safe-area inset
   }
   function syncTabs() {
     var bar = document.querySelector('.tab-bar');
@@ -1111,7 +1120,7 @@
     var L = window.HBListen, hub = !!(L && L.hubOpen && L.hubOpen());
     var quizPage = !!(window.HBQuizPage && window.HBQuizPage.isOpen && window.HBQuizPage.isOpen());
     var r = qOk && !quizPage ? q.getBoundingClientRect() : null;    // scrolled to the inline quiz chip's target in the normal list, not the dedicated page
-    var cur = hub ? 'audio' : quizPage ? 'quiz' : deckOpen() ? 'today' : (r && r.top < window.innerHeight * 0.5 && r.bottom > 90) ? 'quiz' : 'today';
+    var cur = bootScreen() || (hub ? 'audio' : quizPage ? 'quiz' : deckOpen() ? 'today' : (r && r.top < window.innerHeight * 0.5 && r.bottom > 90) ? 'quiz' : 'today');
     bar.querySelectorAll('.tab').forEach(function (t) {
       var n = t.getAttribute('data-tab');
       if (n === cur) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
@@ -1251,12 +1260,26 @@
   }
 
   function openAudioFromUrl() {                       // /?audio=1 from another page's Audio tab
-    if (!reader() || !/[?&]audio=1(&|$)/.test(location.search)) return;
+    if (!reader() || !/[?&]audio=1(&|$)/.test(location.search)) return false;
     var tries = 0;
     (function wait() {
-      if (window.HBListen && window.HBListen.openHub) { window.HBListen.openHub(); return; }
+      if (window.HBListen && window.HBListen.openHub) { window.HBListen.openHub(); bootDone(); return; }
       if (++tries < 40) setTimeout(wait, 100);
+      else bootDone();
     })();
+    return true;
+  }
+  // index.html's head hides the page (html.hb-boot) when it is arriving on Cards, Audio or Challenge; this shows it once
+  // that screen is up, so the reader sees one change of screen instead of the list, then cards, then the screen asked for.
+  function bootDone() {
+    var h = document.documentElement;
+    if (!h.classList.contains('hb-boot')) return;
+    h.classList.remove('hb-boot');
+    syncTabs();
+  }
+  function bootScreen() {                             // the tab to light while hidden, so the bar doesn't flick across
+    if (!document.documentElement.classList.contains('hb-boot')) return '';
+    return /[?&]audio=1(&|$)/.test(location.search) ? 'audio' : /[?&]quiz=1(&|$)/.test(location.search) ? 'quiz' : '';
   }
   // /?quiz=1 from another page's Challenge tab (Archive, About, Privacy, Contact — all non-feed pages, where the tab
   // is a plain link instead of tabGo()). Used to be a plain #quiz anchor, which the browser's own hash-scroll just
@@ -1264,8 +1287,10 @@
   // opens, so arriving this way looked like a completely different, broken screen. #quiz itself still means exactly
   // that elsewhere (shared story links, the quiz chip, archive edition links) — only this one tab link changed.
   function openQuizFromUrl() {
-    if (!reader() || !/[?&]quiz=1(&|$)/.test(location.search)) return;
+    if (!reader() || !/[?&]quiz=1(&|$)/.test(location.search)) return false;
     openQuizPage();
+    bootDone();
+    return true;
   }
   // Keep the address in step with the Audio and Challenge screens (both overlays on the feed), so a refresh, or a link
   // copied from the address bar, reopens the same screen instead of dropping back to Today. replaceState, so no extra
@@ -1284,6 +1309,7 @@
   }
   function start() {
     if (cardsOk() && getView() === 'cards' && deckTarget()) pendingOn();
+    setTimeout(bootDone, 3000);                       // never leave the page hidden for long, whatever goes wrong below
     apply(); openFromHash(); loadListen();
     restoreView(function () {
       maybeSuggest();
@@ -1292,8 +1318,8 @@
       // tipCard()) — give it another look the moment the reader actually reaches List, in the same visit, rather
       // than only on a later day that happens to start there.
       document.addEventListener('hb:deck', function () { if (!deckOpen()) { maybeSuggest(); maybeSuggestInstall(); } });
-      openAudioFromUrl();
-      openQuizFromUrl();
+      var audio = openAudioFromUrl(), quiz = openQuizFromUrl();
+      if (!audio && !quiz) bootDone();                // Today: the cards (or the list) are already up
       if (window.MutationObserver) new MutationObserver(syncScreenUrl).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
     });
   }
