@@ -115,6 +115,7 @@ function extractArticleText(html) {
 // exhausted key, outage): the caller leaves those for the next run instead of treating them as "no transcript".
 async function fetchTranscripts(videoIds, token) {
   const out = {};
+  const langs = {};
   const failed = [];
   let status = 0, error = '';
   for (let i = 0; i < videoIds.length; i += 50) {
@@ -143,7 +144,11 @@ async function fetchTranscripts(videoIds, token) {
         if (!text && Array.isArray(item.tracks) && item.tracks[0] && Array.isArray(item.tracks[0].transcript)) {
           text = item.tracks[0].transcript.map((s) => s.text || '').join(' ');
         }
-        if (id && text) out[id] = String(text).trim();
+        if (id && text) {
+          out[id] = String(text).trim();
+          // Captions come in the video's own language (e.g. "hi" for Hindi-only channels); English is "en"/"en-US".
+          langs[id] = (Array.isArray(item.tracks) && item.tracks[0] && item.tracks[0].language) || '';
+        }
       });
     } catch (e) {
       failed.push(...batch);
@@ -151,7 +156,7 @@ async function fetchTranscripts(videoIds, token) {
     }
     if (i + 50 < videoIds.length) await new Promise((r) => setTimeout(r, 2200)); // stay under 5 req/10s
   }
-  return { texts: out, failed, status, error };
+  return { texts: out, langs, failed, status, error };
 }
 
 // ---- GitHub Contents API: commit the collected pending file ----
@@ -350,10 +355,12 @@ async function runFetch({ dry = false } = {}) {
       report.transcriptBudget.used += batch.length;
     }
     const transcripts = {};
+    const langs = {};
     const unanswered = new Set();
     for (const { a, take } of plan) {
       const got = await fetchTranscripts(take.map((v) => v.e.videoId), a.account.token);
       Object.assign(transcripts, got.texts);
+      Object.assign(langs, got.langs);
       if (!got.failed.length) continue;
       // Rejected or unanswered: no credit was spent, so give it back, and leave the videos unseen for the next run.
       got.failed.forEach((id) => unanswered.add(id));
@@ -364,12 +371,42 @@ async function runFetch({ dry = false } = {}) {
       if ([401, 402, 403, 429].includes(got.status)) await kv(['SET', `leader:ytt:benched:${a.account.n}`, `HTTP ${got.status}`, 'EX', '86400']);
       report.errors.push(`transcript account ${a.account.n}: ${got.error} (${got.failed.length} video(s) left for the next run)`);
     }
+    // An answered request can still come back without a transcript for one video (seen 2026-11-17: a Hindi video
+    // returned nothing, then the full text minutes later). Ask once more for those, after a short pause.
+    const empty = plan
+      .map(({ a, take }) => ({ a, take: take.filter((v) => !unanswered.has(v.e.videoId) && !transcripts[v.e.videoId]) }))
+      .filter((p) => p.take.length);
+    if (empty.length) {
+      await new Promise((r) => setTimeout(r, 3000));
+      for (const { a, take } of empty) {
+        const got = await fetchTranscripts(take.map((v) => v.e.videoId), a.account.token);
+        Object.assign(transcripts, got.texts);
+        Object.assign(langs, got.langs);
+        const spent = take.length - got.failed.length;
+        if (spent > 0) {
+          await kv(['INCRBY', a.counter, String(spent)]);
+          await kv(['INCRBY', budget.dayKey, String(spent)]);
+          report.transcriptBudget.accounts.find((x) => x.account === a.account.n).used += spent;
+          report.transcriptBudget.used += spent;
+        }
+      }
+    }
     for (const { creator, e } of batch) {
       if (unanswered.has(e.videoId)) continue;
-      markAttempted(creator, e); // attempted once either way
       const content = transcripts[e.videoId] || '';
+      if (!content) {
+        // Still nothing: leave it for the next run (Monday has more slots) and only give up after a second run misses too.
+        const misses = await kv(['INCR', `leader:notx:${e.videoId}`]);
+        await kv(['EXPIRE', `leader:notx:${e.videoId}`, String(8 * 86400)]);
+        if (misses < 2) { report.skipped.push(`${creator.name}: "${e.title}" (no transcript yet, will retry next run)`); continue; }
+      }
+      markAttempted(creator, e); // attempted (twice, if it never came) — don't keep spending credits on it
       if (content.length < MIN_TRANSCRIPT_CHARS) { report.skipped.push(`${creator.name}: "${e.title}" (${content ? 'too short' : 'no transcript'})`); continue; }
-      add(creator, e, content);
+      const lang = langs[e.videoId] || '';
+      const note = lang && !/^en/i.test(lang)
+        ? `[Transcript language: ${lang}. These are auto-generated captions in the video's own language, so expect transcription errors: work from the argument and quote nothing verbatim.]\n\n`
+        : '';
+      add(creator, e, note + content);
     }
   }
 
