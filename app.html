@@ -35,6 +35,8 @@
     else fetch('/api/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, keepalive: true });
   } catch (e) {}
   window.HB_STORE = { ios: IOS, android: play, kind: kind };
+  // Set the phone layout now: once a redirect starts, scripts further down the page may never run.
+  if (kind !== 'desktop') document.documentElement.classList.add('phone');
   if (ios) location.replace(IOS);
   else if (android) location.replace(play);
 })();
