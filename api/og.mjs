@@ -148,7 +148,7 @@ function statusCard(q) {
     h({ alignItems: 'center', gap: 22 }, [logo(92), wordmark(50)]),
     h({ flexDirection: 'column', flex: 1, justifyContent: 'center' }, [
       h({ alignItems: 'center', gap: 16 }, [
-        pill('TODAY’S INSIGHT', C.lav, C.lavBg),
+        pill(clip(q.get('k'), 28).toUpperCase() || 'TODAY’S INSIGHT', C.lav, C.lavBg),
         lane ? chip(lane) : h({}, undefined),
       ]),
       h({ marginTop: 44, borderLeft: `10px solid ${C.bar}`, paddingLeft: 40, fontFamily: SERIF, fontSize: size, fontWeight: 500, lineHeight: 1.16, letterSpacing: -1.5 }, insight),
