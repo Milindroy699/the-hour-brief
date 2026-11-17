@@ -304,6 +304,9 @@
      replaces it a beat later. That swap read as "a weird old UI flashing." Hide until mobile.js has had its
      turn (the reveal script below polls for its .tab-bar), with a safety timeout in case it never loads. */
   body { visibility: hidden; }
+  /* While the body is hidden, the root must still paint the app's background: otherwise the app's dark native
+     background showed through and the switch to or from Voices flashed black (owner, 2026-11-18). */
+  html { background-color: var(--bg); }
 </style>
 <link rel="stylesheet" href="/mobile.css" media="(max-width: 640px)">
 <script defer src="/_vercel/insights/script.js"></script>

@@ -131,7 +131,7 @@
         return;
       }
       e.preventDefault();
-      go(url.href);
+      go(url.href, a);
       return;
     }
 
@@ -143,19 +143,38 @@
   // cancelled: tapping a tab twice (the second navigation cancels the first), or leaving a page that is still loading
   // (its unfinished load is cancelled). Both looked like a broken Voices tab (owner, 2026-11-18). App 1.1.4 ignores
   // cancellations natively; for 1.1.3 and older: one navigation at a time, and wait for this page to finish loading.
-  var navAt = 0;
+  // Each trip is also noted (hb-nav-try), and the next page checks it arrived: if the reader ends up anywhere else, the
+  // trip failed, and that is counted (nav_fail_loaded: this page had finished loading when they tapped, so it was not a
+  // cancelled load; nav_fail_loading: it had not). The error page itself is part of the app and can't report anything.
+  var navAt = 0, NAV_KEY = 'hb-nav-try';
   window.addEventListener('pageshow', function () { navAt = 0; });
-  function go(href) {
+  function go(href, a) {
     var u = new URL(href);
     if (u.hash && u.pathname === location.pathname && u.search === location.search) { location.assign(href); return; }   // same page: no load to cancel
-    if (navAt && Date.now() - navAt < 5000) return;              // already on our way somewhere
+    if (navAt && Date.now() - navAt < 8000) return;              // already on our way somewhere
     navAt = Date.now();
-    if (document.readyState === 'complete') { location.assign(href); return; }
-    var done = false;
-    var leave = function () { if (done) return; done = true; location.assign(href); };
+    if (a && a.classList && a.classList.contains('tab')) {       // show the tap landed straight away, even if we wait below
+      var bar = a.parentNode;
+      if (bar) Array.prototype.forEach.call(bar.querySelectorAll('.tab'), function (t) { if (t === a) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current'); });
+    }
+    var leave = function () {
+      if (leave.done) return;
+      leave.done = true;
+      try { localStorage.setItem(NAV_KEY, JSON.stringify({ to: u.pathname, at: Date.now(), rs: document.readyState })); } catch (e) {}
+      location.assign(href);
+    };
+    if (document.readyState === 'complete') { leave(); return; }
     window.addEventListener('load', leave);
-    setTimeout(leave, 2500);                                     // a stuck image must not trap the reader here
+    setTimeout(leave, 6000);                                     // a stuck image must not trap the reader here for long
   }
+  (function checkArrival() {
+    var t = null;
+    try { t = JSON.parse(localStorage.getItem(NAV_KEY) || 'null'); localStorage.removeItem(NAV_KEY); } catch (e) { return; }
+    if (!t || !deviceId || Date.now() - t.at > 120000) return;
+    if (location.pathname === t.to || location.pathname.replace(/index\.html$/, '') === t.to) return;   // arrived
+    fetch('/api/track', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event: t.rs === 'complete' ? 'nav_fail_loaded' : 'nav_fail_loading', deviceId: deviceId }) }).catch(function () {});
+  })();
 
   function openExternal(href) {
     if (P.Browser) { P.Browser.open({ url: href, presentationStyle: 'popover' }).catch(function () {}); }
