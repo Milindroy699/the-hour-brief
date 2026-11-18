@@ -165,19 +165,30 @@ body { background-color: var(--bg); background-image: url('/brand/backgrounds/li
 }
 :root[data-theme="dark"] body { background-image: url('/brand/backgrounds/list-dark.svg'); }
 
-/* ---- App bar: the masthead, reworked (logo, wordmark, screen name; text size, saved, menu) ---- */
+/* ---- App bar: the masthead, reworked (logo, wordmark, screen name; text size, saved, menu) ----
+   The very same header as Audio's, Challenge's and the cards' (.hub-top): same padding (with the notch), and it stays
+   at the top while the page scrolls, as theirs do (owner, 2026-11-19: one header on every tab). The section chips
+   stick just under it (--hb-head-h, mobile.js watchHeadH). */
 .masthead-band {
   background: var(--paper);
   color: var(--ink);
   border-bottom: 1px solid var(--line);
   box-shadow: 0 2px 8px rgba(18, 19, 22, 0.04);
-  padding: 10px 16px 10px;
+  padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 10px;
+  position: sticky; top: 0; z-index: 40;
 }
+html .nav { top: var(--hb-head-h, 0px); }
+html section.lane { scroll-margin-top: calc(var(--hb-head-h, 0px) + 64px); }
+html .item { scroll-margin-top: calc(var(--hb-head-h, 0px) + 72px); }
+.ab-back { flex: none; width: 34px; height: 34px; margin-right: 0; border-radius: 10px; }
+.ab-back svg { width: 26px; height: 26px; }
 .masthead-inner { display: flex; align-items: center; gap: 12px; flex-wrap: nowrap; max-width: none; }
 .masthead-inner > .edition, .masthead-inner > .cap-actions, .masthead-inner > #cap-share, .masthead-inner > .back-link { display: none !important; }   /* the tab bar covers these */
 /* The tagline as its own line under the whole header row — legible size, not squeezed into the small "Feed"
    subtitle next to the wordmark (tried that first; asked for this instead, with room to actually read it). */
-.masthead-tagline { margin: 10px 2px 0; font-size: 1rem; line-height: 1.4; color: var(--ink-soft); }
+/* "Get it by email" is gone (owner, 2026-11-19: no daily email is actually sent); older editions still carry the box. */
+.subscribe-box, .side-col:has(> .subscribe-box:only-child) { display: none !important; }
+.masthead-tagline { margin: 14px 18px 0; font-size: 1rem; line-height: 1.4; color: var(--ink-soft); }
 .ab-logo { flex: none; width: 34px; height: 34px; border-radius: 9px; box-shadow: 0 0 0 1px var(--line); }
 .ab-brand { flex: 1 1 auto; min-width: 0; }
 .wordmark {
@@ -405,6 +416,25 @@ footer.colophon { border-top-color: var(--line); }
   box-shadow: 0 10px 26px rgba(18, 19, 22, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 .tab-switch[hidden] { display: none; }
+
+/* "Get the app" bar for phone visitors on the website (mobile.js getAppBar), just above the tab bar — above the
+   List | Cards pill when that is showing there. */
+.hb-getapp {
+  position: fixed; left: 12px; right: 12px; bottom: calc(var(--hb-tab-h) + 10px); z-index: 9986;
+  display: flex; align-items: center; gap: 12px; padding: 10px 8px 10px 12px; border-radius: 18px;
+  background: var(--paper); border: 1px solid rgba(var(--hb-primary-rgb), 0.22);
+  box-shadow: 0 12px 30px rgba(18, 19, 22, 0.22); font-family: var(--hb-sans); color: var(--ink);
+  animation: hb-getapp-in 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+html:not(.hb-deck-open) body:has(> .tab-switch:not([hidden])) .hb-getapp { bottom: calc(var(--hb-tab-h) + 62px); }
+.hb-getapp-ic { flex: none; width: 40px; height: 40px; border-radius: 10px; box-shadow: 0 0 0 1px var(--line); }
+.hb-getapp-tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.hb-getapp-tx strong { font-size: 0.92rem; font-weight: 700; }
+.hb-getapp-tx span { font-size: 0.78rem; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hb-getapp-go { flex: none; display: inline-flex; align-items: center; min-height: 36px; padding: 0 18px; border-radius: 999px; background: var(--hb-primary); color: #fff; font-family: var(--hb-label); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; text-decoration: none; }
+.hb-getapp-x { flex: none; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--ink-faint); cursor: pointer; }
+.hb-getapp-x svg { width: 18px; height: 18px; fill: none; }
+@keyframes hb-getapp-in { from { transform: translateY(16px); opacity: 0; } to { transform: none; opacity: 1; } }
 html.hb-deck-open .tab-switch { top: calc(var(--dk-head-h, env(safe-area-inset-top, 0px)) + 12px); left: auto; right: 16px; bottom: auto; transform: none; }   /* just under the deck's header */
 .tab-switch button { min-height: 34px; padding: 0 16px; border: 0; border-radius: 999px; background: transparent; color: var(--ink-soft); font-family: var(--hb-label); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .tab-switch button[aria-pressed="true"] { background: var(--hb-primary); color: #fff; }
@@ -636,7 +666,8 @@ html.hb-quiz-page body.hb-listening .hub-scroll { padding-bottom: 130px; }
    The "html" prefix beats mobile.css's own phone rules (they load after this file). */
 @media (min-width: 641px) {
   :root { --hb-col: 680px; --hb-tab-h: 96px; }
-  html .masthead-band { padding: 12px 24px; }
+  html .masthead-band { padding: calc(10px + env(safe-area-inset-top, 0px)) 24px 10px; }
+  html .masthead-tagline { max-width: var(--hb-col); margin: 18px auto 0; padding: 0 24px; box-sizing: border-box; }
   html .masthead-inner { max-width: var(--hb-col); margin: 0 auto; padding: 0; }
   html .pause-band { padding: 24px 24px 0; }
   html .pause-inner { max-width: calc(var(--hb-col) - 48px); margin: 0 auto; }
@@ -884,45 +915,64 @@ html.hb-deck-open .hb-player { display: none; }
 .dk-fp-goto { align-self: flex-start; margin-top: 6px; min-height: 34px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--hb-lav); color: var(--hb-primary-2); font-family: var(--hb-label); font-size: 0.74rem; font-weight: 700; letter-spacing: 0.04em; cursor: pointer; }
 .hb-deck.dk-has-fab .dk-scroll { padding-bottom: 82px; }        /* text can scroll clear of the round button */
 
-/* ---- Screen-change loader (owner, 2026-11-18): an hourglass on the app's background while a page changes ----
-   Going to or from Voices is a real page load. Instead of the old page freezing and the new one appearing blank, the
-   moment a tab link is tapped the screen fades to the background with the logo turning like an hourglass
-   (html.hb-leaving, mobile.js), and the arriving page shows the very same loader until its screen is ready
-   (html.hb-boot: Today in index.html's head, Voices in leaders.html). The two loaders run in step (the turn is timed
-   off the clock via --hb-spin-delay), so the swap between pages is invisible. The tab bar (9985) stays on top. */
+/* ---- Screen-change loader (owner, 2026-11-18; reworked 2026-11-19) ----
+   Going to or from Voices is a real page load. The moment a tab link is tapped the screen fades to the background
+   with the logo turning like an hourglass and a thin bar sliding under it (html.hb-leaving, mobile.js); the arriving
+   page shows the very same loader from its first frame (html.hb-boot: Today in index.html's head, Voices in
+   leaders.html), carried on from the same point of the turn (--hb-spin-delay counts from the tap), and keeps it up
+   until its screen is really ready: fonts in, pictures decoded, and at least one full turn (mobile.js bootDone). Then
+   the bar fills and the loader fades off the finished page (html.hb-reveal). The tab bar (9985) stays on top. */
 html.hb-leaving::before, html.hb-boot::before {
   content: ""; position: fixed; left: 0; right: 0; top: 0; bottom: var(--hb-tab-h, 0px); z-index: 9984;
   background: var(--bg); pointer-events: none;
 }
 html.hb-leaving::after, html.hb-boot::after {
   content: ""; position: fixed; left: 50%; top: calc(50% - var(--hb-tab-h, 0px) / 2); z-index: 9984;
-  width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 12px;
-  background: url('/brand/logo-128.png') center / contain no-repeat;
+  width: 52px; height: 52px; margin: -40px 0 0 -26px; border-radius: 12px;
+  /* the logo itself, inlined (3 KB): a separate image could still be on its way when the next page first paints */
+  background: url('data:image/jpeg;base64,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') center / contain no-repeat;
   box-shadow: 0 8px 22px rgba(94, 67, 243, 0.22); pointer-events: none;
-  animation: hb-hourglass 2.4s cubic-bezier(0.65, 0, 0.35, 1) var(--hb-spin-delay, 0s) infinite;
+  animation: hb-hourglass 1.6s cubic-bezier(0.65, 0, 0.35, 1) var(--hb-spin-delay, 0s) infinite;
 }
-/* Leaving: fade the cover in at once (the tap is acknowledged immediately), the hourglass turning from the start. */
-html.hb-leaving::before { animation: hb-loader-in 0.16s ease; }
+/* The slider: a short bar running under the logo (body::before, shown even while the body itself is hidden). */
+html.hb-leaving body::before, html.hb-boot body::before {
+  content: ""; visibility: visible; position: fixed; left: 50%; top: calc(50% - var(--hb-tab-h, 0px) / 2 + 30px);
+  z-index: 9984; width: 88px; height: 3px; margin-left: -44px; border-radius: 3px; pointer-events: none;
+  background: linear-gradient(90deg, var(--hb-primary), var(--hb-primary)) no-repeat, rgba(var(--hb-primary-rgb), 0.16);
+  background-size: 38% 100%, auto;
+  animation: hb-slide 1.1s cubic-bezier(0.45, 0, 0.25, 1) var(--hb-spin-delay, 0s) infinite;
+}
+/* Leaving: fade the cover in at once (the tap is acknowledged immediately); the page leaves once it is in. */
+html.hb-leaving::before { animation: hb-loader-in 0.12s ease; }
 html.hb-leaving::after {
-  animation-name: hb-loader-in, hb-hourglass; animation-duration: 0.16s, 2.4s; animation-iteration-count: 1, infinite;
+  animation-name: hb-loader-in, hb-hourglass; animation-duration: 0.12s, 1.6s; animation-iteration-count: 1, infinite;
   animation-timing-function: ease, cubic-bezier(0.65, 0, 0.35, 1); animation-delay: 0s, var(--hb-spin-delay, 0s);
 }
+html.hb-leaving body::before {
+  animation-name: hb-loader-in, hb-slide; animation-duration: 0.12s, 1.1s; animation-iteration-count: 1, infinite;
+  animation-timing-function: ease, cubic-bezier(0.45, 0, 0.25, 1); animation-delay: 0s, var(--hb-spin-delay, 0s);
+}
 /* Arriving without a loader before it (a cold start, a link from outside): only show it if the wait is noticeable. */
-html.hb-boot:not(.hb-from-loader)::after {
-  opacity: 0; animation-name: hb-hourglass, hb-loader-in; animation-duration: 2.4s, 0.2s; animation-iteration-count: infinite, 1;
+html.hb-boot:not(.hb-from-loader)::after, html.hb-boot:not(.hb-from-loader) body::before {
+  opacity: 0; animation-name: hb-hourglass, hb-loader-in; animation-duration: 1.6s, 0.2s; animation-iteration-count: infinite, 1;
   animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1), ease; animation-delay: var(--hb-spin-delay, 0s), 0.25s;
   animation-fill-mode: none, forwards;
 }
-/* Lifting it (html.hb-reveal, a 200ms step before hb-boot goes): the page shows underneath and the loader fades off it. */
-html.hb-boot.hb-reveal::before, html.hb-boot.hb-reveal::after, html.hb-boot.hb-reveal:not(.hb-from-loader)::after { animation: hb-loader-out 0.2s ease forwards; }
-html.hb-leaving .tab-switch { visibility: hidden; }
+html.hb-boot:not(.hb-from-loader) body::before { animation-name: hb-slide, hb-loader-in; animation-duration: 1.1s, 0.2s; }
+/* Ready (html.hb-reveal, 280ms before hb-boot goes): the bar fills, then the loader fades off the finished page. */
+html.hb-boot.hb-reveal body::before { background-size: 100% 100%, auto; background-position: 0 0, 0 0; animation: hb-loader-out 0.18s ease 0.1s forwards; }
+html.hb-boot.hb-reveal::before, html.hb-boot.hb-reveal::after, html.hb-boot.hb-reveal:not(.hb-from-loader)::after { animation: hb-loader-out 0.2s ease 0.08s forwards; }
+html.hb-leaving .tab-switch, html.hb-leaving .hb-getapp, html.hb-boot .tab-switch, html.hb-boot .hb-getapp { visibility: hidden; }
+/* One flip straight away (so even a short wait shows the turn), a short rest, the second flip, a rest. */
 @keyframes hb-hourglass {
-  0%, 30% { transform: rotate(0deg); }
-  50%, 80% { transform: rotate(180deg); }
-  100% { transform: rotate(360deg); }
+  0% { transform: rotate(0deg); }
+  38%, 50% { transform: rotate(180deg); }
+  88%, 100% { transform: rotate(360deg); }
 }
+@keyframes hb-slide { from { background-position: -70% 0, 0 0; } to { background-position: 170% 0, 0 0; } }
 @keyframes hb-loader-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes hb-loader-out { from { opacity: 1; } to { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
-  html.hb-leaving::before, html.hb-leaving::after, html.hb-boot::after, html.hb-boot:not(.hb-from-loader)::after { animation: none; opacity: 1; }
+  html.hb-leaving::before, html.hb-leaving::after, html.hb-boot::after, html.hb-boot:not(.hb-from-loader)::after,
+  html.hb-leaving body::before, html.hb-boot body::before { animation: none; opacity: 1; }
 }

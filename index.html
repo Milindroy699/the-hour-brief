@@ -22,8 +22,10 @@
     setTimeout(function () { h.classList.remove('hb-boot'); }, 4000);
     // The hourglass loader (app.css) shows while hidden; straight away if the last page left with one (mobile.js
     // showLeaving), turning in step with it.
-    h.style.setProperty('--hb-spin-delay', -(Date.now() % 2400) + 'ms');
-    try { var at = +sessionStorage.getItem('hb-loader-at'); sessionStorage.removeItem('hb-loader-at'); if (at && Date.now() - at < 10000) h.classList.add('hb-from-loader'); } catch (e) {}
+    h.style.setProperty('--hb-spin-delay', '0ms');
+    // After a tab trip the loader carries on from the same point of its turn (its clock starts at the tap), and mobile.js
+    // keeps it up for at least one turn from then (data-hb-loader-at).
+    try { var at = +sessionStorage.getItem('hb-loader-at'); sessionStorage.removeItem('hb-loader-at'); if (at && Date.now() - at < 10000) { h.classList.add('hb-from-loader'); h.setAttribute('data-hb-loader-at', String(at)); h.style.setProperty('--hb-spin-delay', -(Date.now() - at) + 'ms'); } } catch (e) {}
     // Start fetching what that screen needs now, not after the page has loaded: the hidden moment is that much shorter.
     var pre = function (src) { var l = document.createElement('link'); l.rel = 'preload'; l.as = 'script'; l.href = src; document.head.appendChild(l); };
     pre('/cards.js');
@@ -31,9 +33,37 @@
   } catch (e) {}
 })();
 </script>
+<script>
+// The tab bar from the very first frame (owner, 2026-11-19): mobile.js builds the real one a beat after the page first
+// paints, so arriving here from another tab the bar vanished and came back under the loader. This draws the same markup
+// as soon as <body> exists; mobile.js swaps in the real one (same look) in a single step. Phones and the apps only.
+(function () {
+  try {
+    if (!(window.matchMedia && matchMedia('(max-width: 640px)').matches) || !window.MutationObserver) return;
+    var lit = /[?&]audio=1(&|$)/.test(location.search) ? 'audio' : /[?&]quiz=1(&|$)/.test(location.search) ? 'quiz' : 'today';
+    var tabs = [['today','Today','/','<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5h12.5v13H6.5a2.5 2.5 0 0 1-2.5-2.5V5.5z"/><path d="M16.5 9H20v7a2.5 2.5 0 0 1-2.5 2.5"/><path d="M7.5 9h6M7.5 12h6M7.5 15h3.5"/></svg>'], ['audio','Audio','/?audio=1','<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><path d="M4 15h3v5H5a1 1 0 0 1-1-1v-4z"/><path d="M20 15h-3v5h2a1 1 0 0 0 1-1v-4z"/></svg>'], ['leaders','Voices','/leaders.html','<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 4.5h10a2 2 0 0 1 2 2v5.5a2 2 0 0 1-2 2H9l-3.5 3v-3h-1a2 2 0 0 1-2-2V6.5a2 2 0 0 1 2-2z"/><path d="M16.5 8.5h3a2 2 0 0 1 2 2V16a2 2 0 0 1-2 2h-1v2.5L15 18h-3.5a2 2 0 0 1-1.9-1.4"/></svg>'], ['quiz','Challenge','/?quiz=1','<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/></svg>']];
+    var mo = new MutationObserver(function () {
+      if (!document.body) return;
+      mo.disconnect();
+      var nav = document.createElement('nav');
+      nav.className = 'tab-bar';
+      nav.setAttribute('data-early', '');
+      nav.setAttribute('aria-hidden', 'true');
+      nav.innerHTML = '<div class="tab-row">' + tabs.map(function (t) {
+        return '<a class="tab" data-tab="' + t[0] + '" href="' + t[2] + '"' + (t[0] === lit ? ' aria-current="page"' : '') +
+          '><span class="tab-ic">' + t[3] + '</span><span class="tab-lb">' + t[1] + '</span></a>';
+      }).join('') + '</div>';
+      document.body.appendChild(nav);
+    });
+    mo.observe(document.documentElement, { childList: true });
+  } catch (e) { /* mobile.js draws it */ }
+})();
+</script>
 <!-- The root paints the app's background while the body is hidden; without it the app's dark native background showed
      through and switching screens flashed black (owner, 2026-11-18). -->
 <style>html.hb-boot { background-color: var(--bg, #faf9fd); } html.hb-boot:not(.hb-reveal) body { visibility: hidden; } html.hb-boot .tab-bar { visibility: visible; }</style>
+<!-- iPhone Safari's own "Open in the App Store" banner for website visitors (other browsers get mobile.js's bar) -->
+<meta name="apple-itunes-app" content="app-id=6817195056">
 <title>The Hour Brief</title>
 <meta name="description" content="A free daily one-hour digest of AI/tech, product & business (India + global), and the Indian stock market — every item links to its original source.">
 <meta property="og:title" content="The Hour Brief">
@@ -181,6 +211,7 @@
   }
   .main-col { min-width: 0; }
   .side-col { position: sticky; top: 72px; }
+  .page:not(:has(> .side-col)) { grid-template-columns: minmax(0, 1fr); max-width: 760px; }
   @media (max-width: 900px) {
     .page { grid-template-columns: 1fr; max-width: 720px; }
     .side-col { position: static; }
@@ -1022,18 +1053,6 @@
 
   </div>
 
-  <aside class="side-col">
-    <div class="subscribe-box">
-      <span class="sub-label">Get it by email</span>
-      <p>One email a day, every morning. Unsubscribe anytime — no spam, just the day's edition.</p>
-      <form id="subscribe-form" class="subscribe-form">
-        <input type="email" name="email" id="sub-email" placeholder="you@example.com" required>
-        <button type="submit">Subscribe</button>
-      </form>
-      <div class="subscribe-status" id="subscribe-status"></div>
-      <p class="subscribe-note">Prefer no inbox clutter? <a href="feed.xml" target="_blank" rel="noopener">Use RSS instead</a>.</p>
-    </div>
-  </aside>
 </div>
 <script>
 (function () {
@@ -1133,38 +1152,6 @@
       var type = btn.getAttribute('data-vote');
       btn.classList.toggle('voted-' + type, voted === type);
       btn.disabled = !!voted;
-    });
-  }
-
-  // ---- Email subscribe ----
-  var subForm = document.getElementById('subscribe-form');
-  var subStatus = document.getElementById('subscribe-status');
-  if (subForm) {
-    subForm.addEventListener('submit', function (e) {
-      e.preventDefault();
-      var emailInput = document.getElementById('sub-email');
-      var email = emailInput.value.trim();
-      if (!email) return;
-      var btn = subForm.querySelector('button');
-      btn.disabled = true;
-      subStatus.className = 'subscribe-status';
-      subStatus.textContent = 'Subscribing…';
-      fetch('/api/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email })
-      })
-        .then(function (r) { return r.ok ? r.json() : Promise.reject(r); })
-        .then(function () {
-          subStatus.className = 'subscribe-status ok';
-          subStatus.textContent = "You're in — first edition lands next morning.";
-          emailInput.value = '';
-        })
-        .catch(function () {
-          subStatus.className = 'subscribe-status err';
-          subStatus.textContent = 'Something went wrong — try again.';
-        })
-        .finally(function () { btn.disabled = false; });
     });
   }
 

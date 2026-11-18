@@ -13,7 +13,7 @@
  *    pages get a reading-progress bar and a back-to-top button.
  *  - The evergreen About paragraph gets a matching "More" toggle, and a "Contact us · About · Privacy" row leads the footer.
  *  - Save-for-later bookmarks and a text-size control (both stored on this device only).
- *  - "Your sections": readers pick which sections show and in what order (menu > Sections; the apps
+ *  - "Your sections": readers pick which sections show (menu > Sections; the apps
  *    offer it once, as a small card, on the second day they are opened). Stored on this device only.
  *  - "Listen to today's brief" (listen.js, loaded on demand where the device can speak).
  *  - Swipe cards (cards.js, loaded on demand): the same stories one per screen. Cards is the default view on phones and
@@ -231,6 +231,7 @@
     clearTimeout(toast._t);
     toast._t = setTimeout(function () { t.hidden = true; }, 2200);
   }
+  window.HBToast = toast;                             // capacitor-bridge.js confirms the daily reminder with it
   function shareStory(it) {
     var h3 = it.querySelector('h3');
     var headline = h3 ? h3.textContent.trim() : document.title;
@@ -495,7 +496,8 @@
   function loadPrefs() {
     try {
       var o = JSON.parse(localStorage.getItem(PREF_KEY) || 'null');
-      if (o && typeof o === 'object') return { order: idList(o.order), off: idList(o.off) };
+      // Sections can no longer be moved (owner, 2026-11-19): an order saved before then is dropped, not applied.
+      if (o && typeof o === 'object') return { order: [], off: idList(o.off) };
     } catch (e) { /* none saved */ }
     return null;
   }
@@ -550,36 +552,57 @@
       if (!off) shown.push(id);
     });
     document.body.classList.toggle('hb-quiz-off', on && prefs.off.indexOf('quiz') >= 0);
-    // The pill row snaps to the pill it was on: after a reorder, start again from the first one.
+    // The pill row snaps to the pill it was on: when the sections shown change, start again from the first one.
     var navKey = shown.join(',') + '|' + ids.join(',');
     if (nav && navKey !== lastNavKey) { nav.scrollLeft = 0; lastNavKey = navKey; }
 
     var sig = on ? shown.join(',') : '';
     if (prefSig !== null && sig !== prefSig) document.dispatchEvent(new CustomEvent('hb:prefs'));
     prefSig = sig;
+    if (on) laneList();                               // remembered for the Sections sheet on the other screens
   }
   function commitPrefs() { storePrefs(); applyPrefs(); syncSoon(); }
 
+  // The sections a reader can switch, as [{ id, name }]: from this page when it is an edition, otherwise as last seen on
+  // one, so the Menu offers Sections on every screen, not only on Today (owner, 2026-11-19: the menu must not change from
+  // screen to screen). Changes made elsewhere apply when the reader is back on an edition.
+  var LANES_KEY = 'hb-lanes-v1';
+  function laneList() {
+    if (laneBase) {
+      var list = choosable().map(function (id) { return { id: id, name: laneName(document.getElementById(id)) }; });
+      if (list.length) { try { localStorage.setItem(LANES_KEY, JSON.stringify(list)); } catch (e) { /* ignore */ } }
+      return list;
+    }
+    try {
+      var c = JSON.parse(localStorage.getItem(LANES_KEY) || 'null');
+      if (Array.isArray(c)) return c.filter(function (x) { return x && typeof x.id === 'string' && typeof x.name === 'string'; });
+    } catch (e) { /* none seen yet */ }
+    return [];
+  }
+
+  // Show or hide sections. Moving them up and down was taken out (owner, 2026-11-19): every reader gets the same order.
   function openPrefs(returnTo) {
-    if (!laneBase) return;
+    if (!laneList().length) return;
+    if (!prefs) prefs = loadPrefs() || { order: [], off: [] };
     var msg = null;
     tipDone('sections');
     openSheet('Your sections', function (body) {
-      body.appendChild(mk('p', '', 'Switch sections on or off and move them up or down. Changes apply straight away.'));
+      body.appendChild(mk('p', '', laneBase ? 'Choose which sections you see. Changes apply straight away.'
+        : 'Choose which sections you see in Today’s edition.'));
       var ul = mk('ul', 'rd-prefs');
       msg = mk('p', 'rd-prefs-msg');
       msg.setAttribute('role', 'status');
-      var reset = mk('button', 'rd-btn rd-reset', 'Reset to default');
+      var reset = mk('button', 'rd-btn rd-reset', 'Show all sections');
       reset.type = 'button';
       body.appendChild(ul);
       body.appendChild(msg);
       body.appendChild(reset);
 
       function draw(focus) {
-        var ids = choosable(), onCount = ids.filter(function (id) { return prefs.off.indexOf(id) < 0; }).length;
+        var lanes = laneList(), onCount = lanes.filter(function (l) { return prefs.off.indexOf(l.id) < 0; }).length;
         ul.textContent = '';
-        ids.forEach(function (id, i) {
-          var name = laneName(document.getElementById(id));
+        lanes.forEach(function (l) {
+          var id = l.id;
           var li = mk('li');
           li.setAttribute('data-id', id);
           var lab = mk('label', 'rd-sw');
@@ -596,33 +619,16 @@
             draw('[data-id="' + id + '"] input');
           });
           lab.appendChild(cb);
-          lab.appendChild(mk('span', 'rd-sw-name', name));
+          lab.appendChild(mk('span', 'rd-sw-name', l.name));
           li.appendChild(lab);
-          [['up', '↑', -1], ['down', '↓', 1]].forEach(function (d) {
-            var b = mk('button', 'rd-btn rd-mv rd-' + d[0], d[1]);
-            b.type = 'button';
-            b.setAttribute('aria-label', 'Move ' + name + ' ' + d[0]);
-            b.disabled = i + d[2] < 0 || i + d[2] >= ids.length;
-            b.addEventListener('click', function () {
-              var order = ids.slice(), t = order[i];
-              order[i] = order[i + d[2]];
-              order[i + d[2]] = t;
-              prefs.order = order;
-              msg.textContent = '';
-              commitPrefs();
-              draw('[data-id="' + id + '"] .rd-' + d[0]);
-            });
-            li.appendChild(b);
-          });
           ul.appendChild(li);
         });
         var f = focus && ul.querySelector(focus);
-        if (f && f.disabled) f = ul.querySelector(focus.replace(/\.rd-(up|down)$/, function (m, w) { return '.rd-' + (w === 'up' ? 'down' : 'up'); }));
-        if (f && !f.disabled) f.focus({ preventScroll: true });
+        if (f) f.focus({ preventScroll: true });
       }
       reset.addEventListener('click', function () {
         prefs = { order: [], off: [] };
-        msg.textContent = 'Back to the default order, everything on.';
+        msg.textContent = 'All sections are on.';
         commitPrefs();
         draw();
       });
@@ -734,7 +740,7 @@
     if (!tipSave(st)) return;                      // cannot remember the answer: do not ask every time
     if (st.n < 2 || location.hash || /[?&]utm_/.test(location.search) || document.querySelector('.hb-tip')) return;
     if (!st.done && !loadPrefs() && choosable().length >= 2 && (!st.secOn || st.secOn === today)) {
-      if (tipCard('sections', SLIDERS_SVG, 'Make it yours', 'Choose which sections you see, and in what order.', 'Choose', function () { openPrefs(null); })) { st.secOn = today; tipSave(st); }
+      if (tipCard('sections', SLIDERS_SVG, 'Make it yours', 'Choose which sections you see.', 'Choose', function () { openPrefs(null); })) { st.secOn = today; tipSave(st); }
       return;
     }
   }
@@ -756,23 +762,75 @@
     try { return +JSON.parse(localStorage.getItem(INSTALL_KEY) || 'null').until || 0; } catch (e) { return 0; }
   }
   function installSnooze(days) {
-    var el = document.querySelector('.hb-tip[data-tip="install"]');
+    var el = document.querySelector('.hb-tip[data-tip="install"]') || document.querySelector('.hb-getapp');
     if (el) el.remove();
     try { localStorage.setItem(INSTALL_KEY, JSON.stringify({ until: Date.now() + days * 86400000 })); return true; } catch (e) { return false; }
   }
+  // Phones on the website get a slim "Get the app" bar above the tab bar, on Today (cards or list) and Voices; before,
+  // the nudge was a card in the list, which sat hidden under the cards (the default view), so phone visitors never saw
+  // it (owner, 2026-11-19). Real Safari on iPhone shows Apple's own App Store banner instead (the apple-itunes-app meta
+  // tag in the page head), so it is skipped there. Desktop keeps the card in the list ("Show QR code").
+  function iosSafari() {
+    var ua = navigator.userAgent || '';
+    return mobileOS() === 'ios' && /Version\/[\d.]+.*Safari\//.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|GSA\//.test(ua);
+  }
+  // A plain count (no identifier is sent): the once-a-day check below happens on the device.
+  function track(event) {
+    if (/^(localhost|127\.)/.test(location.hostname)) return;     // not from test servers
+    try { fetch('/api/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: event }), keepalive: true }).catch(function () {}); }
+    catch (e) { /* not counted */ }
+  }
+  // One count a day per browser, by kind (web_open_ios / _android / _desktop), so web and app use can be compared.
+  function countWebVisit() {
+    if (NATIVE) return;
+    try {
+      var day = localDay();
+      if (localStorage.getItem('hb-web-day') === day) return;
+      localStorage.setItem('hb-web-day', day);
+    } catch (e) { return; }
+    track('web_open_' + (mobileOS() || 'desktop'));
+  }
   function maybeSuggestInstall() {
-    if (NATIVE || !laneBase) return;
+    if (NATIVE) return;
     try { localStorage.setItem(INSTALL_KEY + '-probe', '1'); localStorage.removeItem(INSTALL_KEY + '-probe'); }
     catch (e) { return; }  // can't remember a "Not now" (e.g. Safari private mode): don't nag every visit
-    if (Date.now() < installUntil() || location.hash || document.querySelector('.hb-tip')) return;
+    if (Date.now() < installUntil() || location.hash) return;
     var os = mobileOS();
-    tipCard('install', DOWNLOAD_SVG,
-      os ? 'Get the free app' : 'Get the app on your phone',
-      os ? 'The daily brief in your pocket: offline reading, audio and a morning reminder.'
-         : 'Scan a QR code for iPhone or Android: offline reading, audio and a morning reminder.',
-      os ? 'Get it' : 'Show QR code',
-      function () { installSnooze(30); location.href = '/app?src=web-' + (os || 'desktop'); },
+    if (os) { getAppBar(os); return; }
+    if (!laneBase || document.querySelector('.hb-tip')) return;
+    tipCard('install', DOWNLOAD_SVG, 'Get the app on your phone',
+      'Scan a QR code for iPhone or Android: offline reading, audio and a morning reminder.', 'Show QR code',
+      function () { installSnooze(30); location.href = '/app?src=web-desktop'; },
       function () { installSnooze(14); });
+  }
+  function getAppBar(os) {
+    if (document.querySelector('.hb-getapp') || iosSafari() || (!laneBase && screenName() !== 'Voices')) return;
+    setTimeout(function () {
+      if (document.querySelector('.hb-getapp') || document.querySelector('.rd-sheet-bg') || Date.now() < installUntil()) return;
+      var bar = mk('aside', 'hb-getapp');
+      bar.setAttribute('aria-label', 'Get the app');
+      var ic = mk('img', 'hb-getapp-ic');
+      ic.src = '/brand/icon-192.png';
+      ic.alt = '';
+      ic.width = ic.height = 40;
+      var tx = mk('div', 'hb-getapp-tx');
+      tx.appendChild(mk('strong', '', 'The Hour Brief app'));
+      tx.appendChild(mk('span', '', 'Free · offline, audio, a morning nudge'));
+      var go = mk('a', 'hb-getapp-go', 'Get');
+      go.href = '/app?src=web-' + os;
+      go.addEventListener('click', function () { track('install_nudge_tap'); installSnooze(30); });
+      var x = mk('button', 'hb-getapp-x');
+      x.type = 'button';
+      x.setAttribute('aria-label', 'Not now');
+      x.innerHTML = '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+      x.addEventListener('click', function () { installSnooze(14); });
+      bar.appendChild(ic);
+      bar.appendChild(tx);
+      bar.appendChild(go);
+      bar.appendChild(x);
+      document.body.appendChild(bar);
+      track('install_nudge_shown');
+    }, 2500);
   }
 
   // ---- Tools row under the chips: hosts the quiz chip (and, in Listen, the listen card follows it) ----
@@ -795,7 +853,7 @@
   // ---- App chrome: app bar (logo, wordmark, screen name; text size, saved, menu), tab bar, section chips ----
   var ICON = {
     aa: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8V6h9v2"/><path d="M7.5 6v12"/><path d="M5.5 18h4"/><path d="M13.5 12v-1.5H21V12"/><path d="M17.25 10.5V18"/><path d="M15.5 18h3.5"/></svg>',
-    mail: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>',
+    back: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>',
     bell: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>',
     today: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5h12.5v13H6.5a2.5 2.5 0 0 1-2.5-2.5V5.5z"/><path d="M16.5 9H20v7a2.5 2.5 0 0 1-2.5 2.5"/><path d="M7.5 9h6M7.5 12h6M7.5 15h3.5"/></svg>',
     audio: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><path d="M4 15h3v5H5a1 1 0 0 1-1-1v-4z"/><path d="M20 15h-3v5h2a1 1 0 0 0 1-1v-4z"/></svg>',
@@ -843,10 +901,21 @@
         }
         brand.classList.add('ab-brand');
       }
-      var logo = mk('img', 'ab-logo');
-      logo.src = LOGO_SRC;
-      logo.alt = '';
-      logo.width = logo.height = 34;
+      // Sub-pages (Past editions, a past edition, About…) show a back arrow where the logo sits; the rest of the header
+      // is the same on every screen.
+      var bk = backTarget(), logo;
+      if (bk) {
+        logo = mk('button', 'ab-btn ab-back');
+        logo.type = 'button';
+        logo.setAttribute('aria-label', bk.label);
+        logo.innerHTML = ICON.back;
+        logo.addEventListener('click', bk.go);
+      } else {
+        logo = mk('img', 'ab-logo');
+        logo.src = LOGO_SRC;
+        logo.alt = '';
+        logo.width = logo.height = 34;
+      }
       inner.insertBefore(logo, inner.firstChild);
 
       bar = mk('div', 'ab-actions');
@@ -865,17 +934,44 @@
       inner.appendChild(bar);
       refreshSaved();
     }
-    // The tagline, as its own full-width line under the header row (not squeezed into the small "Feed" subtitle,
-    // which stays put) — tried inside the compact subtitle first, asked to be its own, more legible line instead.
+    // The tagline, as its own legible line on an edition — under the header now, not inside it, so the header itself is
+    // exactly the same on every screen (owner, 2026-11-19); Past editions doesn't repeat it.
     var band = inner.parentElement;
-    if (band && !band.querySelector('.masthead-tagline')) {
+    if (band && isFeed() && !document.querySelector('.masthead-tagline')) {
       var tg = document.querySelector('.tagline');
-      if (tg) band.appendChild(mk('p', 'masthead-tagline', tg.textContent.trim()));
+      if (tg) band.insertAdjacentElement('afterend', mk('p', 'masthead-tagline', tg.textContent.trim()));
     }
     var on = reader();
-    [inner.querySelector('.ab-logo'), bar].forEach(function (el) { if (el) el.hidden = !on; });
+    [inner.querySelector('.ab-logo'), inner.querySelector('.ab-back'), bar].forEach(function (el) { if (el) el.hidden = !on; });
     var mtg = document.querySelector('.masthead-tagline');
     if (mtg) mtg.hidden = !on;
+    if (band && !band._hbWatched) { band._hbWatched = true; watchHeadH(band); }
+  }
+  // The header stays at the top of every screen (sticky, like Audio's and Challenge's); the section chips stick just
+  // under it, and jumps to a section or story clear it, via --hb-head-h.
+  var headH = 0;
+  function watchHeadH(band) {
+    function set() {
+      var h = reader() ? band.offsetHeight : 0;
+      if (h === headH) return;
+      headH = h;
+      document.documentElement.style.setProperty('--hb-head-h', h + 'px');
+    }
+    set();
+    if (window.ResizeObserver) new ResizeObserver(set).observe(band);
+    window.addEventListener('load', set);
+  }
+  // Where a sub-page's back arrow goes: back where the reader came from when that was this site, else a sensible home.
+  function pastEdition() { return /^\/archive\/\d{4}-\d{2}-\d{2}(\.html)?$/.test(location.pathname); }
+  function backTarget() {
+    var p = location.pathname, home = pastEdition() ? '/archive/' : '/';
+    if (!pastEdition() && screenName() !== 'Archive' && !INFO_TITLES[p]) return null;
+    return { label: pastEdition() ? 'Back to past editions' : 'Back', go: function () {
+      var ref = '';
+      try { ref = new URL(document.referrer).origin; } catch (e) { /* none */ }
+      if (ref === location.origin && history.length > 1) { showLeaving(null); setTimeout(function () { history.back(); }, LEAVE_MS); }
+      else leaveTo(home);
+    } };
   }
 
   function shareEdition() {
@@ -904,14 +1000,18 @@
         li.appendChild(b);
         ul.appendChild(li);
       }
-      if (screenName() !== 'Archive') item('archive', ICON.archive, 'Past editions', 'Every edition, newest first', function () { closeSheet(); location.href = '/archive/'; });
-      if (laneBase) item('sections', SLIDERS_SVG, 'Sections', 'Show, hide and reorder', function () { openPrefs(returnTo); });
-      if (cardsOk() && !deckOpen()) item('cards', CARDS_SVG, 'Swipe cards', 'Read one story at a time', function () { closeSheet(); openCards(); });
+      // The same items, in the same order, on every screen (owner, 2026-11-19: on Past editions the menu used to lose
+      // half its items). "Swipe cards" went (the List | Cards switch does that) and so did "Get it by email" (no
+      // daily email is actually sent).
+      item('archive', ICON.archive, 'Past editions', 'Every edition, newest first', function () {
+        closeSheet();
+        if (screenName() === 'Archive') window.scrollTo({ top: 0, behavior: 'smooth' }); else leaveTo('/archive/');
+      });
+      if (laneList().length) item('sections', SLIDERS_SVG, 'Sections', 'Show or hide sections', function () { openPrefs(returnTo); });
       item('textsize', ICON.aa, 'Text size', SIZE_NAMES[getSize()], function () { openTextSize(returnTo); });
-      if (document.getElementById('cap-remind')) item('reminder', ICON.bell, 'Daily reminder', 'A morning nudge on this device', function () { closeSheet(); document.getElementById('cap-remind').click(); });
-      item('share', SHARE_SVG, 'Share this edition', 'Send today’s brief to a friend', function () { closeSheet(); shareEdition(); });
-      var sub = document.querySelector('.subscribe-box');
-      if (sub) item('email', ICON.mail, 'Get it by email', 'One email every morning', function () { closeSheet(); if (deckOpen()) window.HBCards.close({ keep: true, to: sub, center: true }); else sub.scrollIntoView({ block: 'center', behavior: 'smooth' }); var i = sub.querySelector('input'); if (i) setTimeout(function () { try { i.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }, 500); });
+      var bell = document.getElementById('cap-remind');
+      if (bell) item('reminder', ICON.bell, 'Daily reminder', bell.getAttribute('data-summary') || 'A morning nudge on this device', function () { closeSheet(); bell.click(); });
+      item('share', SHARE_SVG, 'Share', isFeed() ? 'Send this edition to a friend' : 'Send this page to a friend', function () { closeSheet(); shareEdition(); });
       body.appendChild(ul);
       var foot = mk('div', 'rd-menu-foot');
       [['Contact us', '/contact.html'], ['About', '/about.html'], ['Privacy', '/privacy.html']].forEach(function (l, i) {
@@ -995,7 +1095,7 @@
     sv.addEventListener('click', function () { openSaved(sv); });
     var mn = mk('button', 'ab-btn ab-menu');
     mn.type = 'button';
-    mn.setAttribute('aria-label', 'Menu: sections, text size, reminder, share');
+    mn.setAttribute('aria-label', 'Menu: past editions, sections, text size, reminder, share');
     mn.innerHTML = SLIDERS_SVG;
     mn.addEventListener('click', function () { openMenu(mn); });
     acts.appendChild(sv);
@@ -1038,7 +1138,7 @@
   window.HBQuizPage = { close: closeQuizPage, isOpen: function () { return quizOvShown; } };
   // listen.js builds the same header row (see buildHub() there) — it is a separate file/closure, so the actions it
   // needs are handed across here rather than duplicated.
-  window.HBChrome = { textSize: openTextSize, saved: openSaved, menu: openMenu, refreshSaved: refreshSaved, icons: { aa: ICON.aa, star: STAR_SVG, sliders: SLIDERS_SVG } };
+  window.HBChrome = { textSize: openTextSize, saved: openSaved, menu: openMenu, refreshSaved: refreshSaved, back: backTarget, icons: { aa: ICON.aa, star: STAR_SVG, sliders: SLIDERS_SVG, back: ICON.back } };
   // The List | Cards switch: a floating pill, appended straight to body (see below) — centred just above the tab
   // bar in List, top-right of the deck in Cards. An earlier version nested it inside .tab-bar itself instead,
   // specifically to remove a recurring real-device bug (list content bleeding through a seam between two
@@ -1046,7 +1146,7 @@
   // that same bug because it anchors to --hb-tab-h, which watchTabBarH() below keeps continuously correct via a
   // ResizeObserver, not a one-off measurement — so it can't drift stale the way the old --hb-switch-h did.
   function tabBar() {
-    var bar = document.querySelector('.tab-bar');
+    var bar = document.querySelector('.tab-bar:not([data-early])');
     if (!bar) {
       bar = mk('nav', 'tab-bar');
       bar.setAttribute('aria-label', 'App sections');
@@ -1067,7 +1167,7 @@
       document.body.appendChild(sw);
       var row = mk('div', 'tab-row');
       TABS.forEach(function (t) {
-        var link = t[0] === 'leaders' || !feed;
+        var link = t[0] === 'leaders' || !feed || pastEdition();     // a past edition's Today/Audio/Challenge are today's
         var el = link ? mk('a', 'tab') : mk('button', 'tab');
         el.setAttribute('data-tab', t[0]);
         el.innerHTML = '<span class="tab-ic">' + ICON[t[0]] + '</span><span class="tab-lb">' + t[1] + '</span>';
@@ -1077,6 +1177,8 @@
       });
       bar.appendChild(row);
       document.body.appendChild(bar);
+      var early = document.querySelector('.tab-bar[data-early]');   // the head's first-frame copy (index.html, leaders.html)
+      if (early) early.remove();
       window.addEventListener('scroll', syncSoon, { passive: true });
       document.addEventListener('hb:hub', syncTabs);
       document.addEventListener('hb:deck', syncTabs);
@@ -1087,20 +1189,38 @@
   }
   // A tab that is a real page load (Voices, or Today/Audio/Challenge from Voices): cover the screen at once with the
   // hourglass loader (html.hb-leaving in app.css), and tell the next page to carry it on (hb-loader-at), so the change
-  // reads as one deliberate moment instead of a freeze, a blank and a pop (owner, 2026-11-18). The turn is timed off
-  // the clock so both pages' hourglasses line up.
-  var leavingT = 0;
+  // reads as one deliberate moment instead of a freeze, a blank and a pop (owner, 2026-11-18). The arriving page starts
+  // its loader at the same point of the turn (its --hb-spin-delay counts from the tap) and keeps it up until its screen
+  // is really ready (bootDone), so it never blinks: loader, then the page (owner, 2026-11-19).
+  // The page only leaves once the cover is fully in (LEAVE_MS): the website waits here, the apps in capacitor-bridge go().
+  var leavingT = 0, LEAVE_MS = 140;
   function showLeaving(e) {
     if (e && (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button > 0)) return;   // opening in a new tab
     var h = document.documentElement, tab = e && e.currentTarget;
     if (tab && tab.parentNode) Array.prototype.forEach.call(tab.parentNode.querySelectorAll('.tab'), function (t) { if (t === tab) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current'); });
-    h.style.setProperty('--hb-spin-delay', -(Date.now() % 2400) + 'ms');
-    h.classList.add('hb-leaving');
-    try { sessionStorage.setItem('hb-loader-at', String(Date.now())); } catch (err) { /* the next page just fades in */ }
+    if (!h.classList.contains('hb-leaving')) {
+      h.style.setProperty('--hb-spin-delay', '0ms');
+      h.classList.add('hb-leaving');
+      try { sessionStorage.setItem('hb-loader-at', String(Date.now())); } catch (err) { /* the next page just fades in */ }
+    }
+    if (e && !NATIVE && tab && tab.href && !e.defaultPrevented) {
+      e.preventDefault();
+      setTimeout(function () { location.href = tab.href; }, LEAVE_MS);
+    }
     clearTimeout(leavingT);
     leavingT = setTimeout(function () { h.classList.remove('hb-leaving'); }, 10000);   // never stuck if the trip fails
   }
+  function leaveTo(href) {                            // the same, for a page change that isn't a tab (Menu, back arrow)
+    showLeaving(null);
+    setTimeout(function () { location.href = href; }, LEAVE_MS);
+  }
   window.addEventListener('pageshow', function (e) { if (e.persisted) document.documentElement.classList.remove('hb-leaving'); });
+  // The pages also cross-fade on their own (@view-transition in app.css). With the loader up on both sides that blended
+  // a frozen picture of the old hourglass with the turning new one, a ghosted double logo: skip it for these trips.
+  window.addEventListener('pageswap', function (e) {
+    if (!e.viewTransition || !document.documentElement.classList.contains('hb-leaving')) return;
+    try { e.viewTransition.skipTransition(); } catch (err) { /* already finished */ }
+  });
   // --hb-tab-h, kept exactly in sync with .tab-bar's own real rendered height, continuously, for as long as the
   // page lives — not measured once and hoped to stay right. Fires immediately on observe() with the current size,
   // then again on every future change (the tab row's label wrapping, a safe-area change, a late web font).
@@ -1124,7 +1244,7 @@
   function syncTabs() {
     var bar = document.querySelector('.tab-bar');
     if (!bar || bar.hidden) return;
-    if (!isFeed()) {                                           // About, Privacy, Contact, the archive list
+    if (!isFeed()) {                                           // About, Privacy, Contact, the archive list (no tab lit)
       var here = screenName();
       bar.querySelectorAll('.tab').forEach(function (t) {
         if (t.getAttribute('data-tab') === 'leaders' && here === 'Voices') t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
@@ -1136,11 +1256,12 @@
     var L = window.HBListen, hub = !!(L && L.hubOpen && L.hubOpen());
     var quizPage = !!(window.HBQuizPage && window.HBQuizPage.isOpen && window.HBQuizPage.isOpen());
     var r = qOk && !quizPage ? q.getBoundingClientRect() : null;    // scrolled to the inline quiz chip's target in the normal list, not the dedicated page
-    var cur = bootScreen() || (hub ? 'audio' : quizPage ? 'quiz' : deckOpen() ? 'today' : (r && r.top < window.innerHeight * 0.5 && r.bottom > 90) ? 'quiz' : 'today');
+    var cur = bootScreen() || (hub ? 'audio' : quizPage ? 'quiz' : deckOpen() ? 'today' : (r && r.top < window.innerHeight * 0.5 && r.bottom > headH + 90) ? 'quiz' : 'today');
+    var past = pastEdition();                                  // a past edition is a page of Past editions: no tab is lit
     bar.querySelectorAll('.tab').forEach(function (t) {
       var n = t.getAttribute('data-tab');
-      if (n === cur) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
-      if (n === 'quiz') t.hidden = !qOk;
+      if (n === cur && !past) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
+      if (n === 'quiz') t.hidden = !qOk && !past;
     });
     var sw = document.querySelector('.tab-switch');   // floating now, no longer a child of .tab-bar — see tabBar()
     if (sw) {
@@ -1158,7 +1279,7 @@
     if (!nav || !reader()) return;
     var cur = 'all';
     document.querySelectorAll('section.lane[id]').forEach(function (l) {
-      if (l.style.display !== 'none' && !l.hidden && l.getBoundingClientRect().top <= 110) cur = l.id;
+      if (l.style.display !== 'none' && !l.hidden && l.getBoundingClientRect().top <= headH + 110) cur = l.id;
     });
     var on = null;
     nav.querySelectorAll('a').forEach(function (a) {
@@ -1287,12 +1408,41 @@
   }
   // index.html's head hides the page (html.hb-boot) when it is arriving on Cards, Audio or Challenge; this shows it once
   // that screen is up, so the reader sees one change of screen instead of the list, then cards, then the screen asked for.
+  // It waits for the screen to settle first (whenSettled): lifting the loader the moment the screen's markup existed
+  // showed it half-drawn, then the fonts and pictures popping in, which read as a flicker (owner, 2026-11-19).
+  // Voices (leaders.html) calls it too, once its roundups are drawn (window.HBReveal).
+  var revealing = false;
   function bootDone() {
     var h = document.documentElement;
-    if (!h.classList.contains('hb-boot') || h.classList.contains('hb-reveal')) return;
-    h.classList.add('hb-reveal');                       // page shows; the hourglass loader fades off it (app.css)
-    setTimeout(function () { h.classList.remove('hb-boot', 'hb-reveal', 'hb-from-loader'); syncTabs(); }, 200);
-    syncTabs();
+    if (!h.classList.contains('hb-boot') || h.classList.contains('hb-reveal') || revealing) return;
+    revealing = true;
+    whenSettled(function () {
+      h.classList.add('hb-reveal');                     // page shows; the loader completes and fades off it (app.css)
+      setTimeout(function () { h.classList.remove('hb-boot', 'hb-reveal', 'hb-from-loader'); syncTabs(); }, 280);
+      syncTabs();
+    });
+  }
+  window.HBReveal = bootDone;
+  // Ready = the web fonts are in and the pictures on screen are decoded (each wait capped), and after a tab trip the
+  // loader has been up long enough to turn once (LOADER_MIN from the tap), so a quick trip doesn't flash it.
+  var LOADER_MIN = 650, SETTLE_MAX = 2000;
+  function whenSettled(done) {
+    var at = +document.documentElement.getAttribute('data-hb-loader-at') || 0, fired = false;
+    function finish() {
+      if (fired) return;
+      fired = true;
+      setTimeout(done, at ? Math.max(0, LOADER_MIN - (Date.now() - at)) : 0);
+    }
+    var waits = [];
+    if (document.fonts && document.fonts.ready) waits.push(document.fonts.ready);
+    Array.prototype.forEach.call(document.images, function (im) {
+      if (im.complete || im.loading === 'lazy') return;
+      var r = im.getBoundingClientRect();
+      if (!r.width || r.bottom < 0 || r.top > window.innerHeight) return;
+      waits.push(new Promise(function (res) { im.addEventListener('load', res); im.addEventListener('error', res); }));
+    });
+    Promise.all(waits).then(finish, finish);
+    setTimeout(finish, SETTLE_MAX);
   }
   function bootScreen() {                             // the tab to light while hidden, so the bar doesn't flick across
     var cl = document.documentElement.classList;
@@ -1332,6 +1482,7 @@
     restoreView(function () {
       maybeSuggest();
       maybeSuggestInstall();
+      countWebVisit();
       // Cards is the default view, so the very first call above almost always finds the deck open and defers (see
       // tipCard()) — give it another look the moment the reader actually reaches List, in the same visit, rather
       // than only on a later day that happens to start there.

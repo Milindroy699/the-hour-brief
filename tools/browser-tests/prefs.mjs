@@ -1,4 +1,4 @@
-// Browser test for "Your sections" (mobile.js): show/hide + reorder the sections, the "Make it yours" card on the second day in the apps,
+// Browser test for "Your sections" (mobile.js): show/hide the sections (moving them was removed 2026-11-19), the "Make it yours" card on the second day in the apps,
 // deep links, desktop, the quiz link, and how Listen follows the choices (recording jumps + device voice).
 // The recording is a dry-run (tones) generated for the real latest edition. No Sarvam credit is used.
 //   node prefs.mjs [screenshotDir]
@@ -74,8 +74,8 @@ await open();
 check('default: canonical order, every section visible', eq(await order(), ['ai', 'biz', 'mkt', 'quiz']) && eq(await shown(), ['ai', 'biz', 'mkt', 'quiz']), JSON.stringify(await order()));
 check('the menu button sits in the app bar (top right), and the website never pops the sheet up by itself', (await c.ev(`!!document.querySelector('.ab-actions .ab-menu') && !document.querySelector('.rd-sheet')`)) === true);
 await openSheet();
-let t = await J(`({ dialog: ${sheet}.getAttribute('role'), title: ${sheet}.querySelector('h2').textContent, names: [...document.querySelectorAll('.rd-prefs .rd-sw-name')].map(n => n.textContent), on: [...document.querySelectorAll('.rd-prefs input')].map(i => i.checked), upFirst: ${row('ai')}.querySelector('.rd-up').disabled, downLast: ${row('quiz')}.querySelector('.rd-down').disabled, done: ${sheet}.querySelector('.rd-close').textContent })`);
-check('the sheet lists the four sections, all on, with sensible arrows', t.dialog === 'dialog' && t.title === 'Your sections' && eq(t.names, ['AI & Tech', 'Product & Business', 'Stock Market', 'Daily quiz']) && t.on.every(Boolean) && t.upFirst && t.downLast && t.done === 'Done', JSON.stringify(t));
+let t = await J(`({ dialog: ${sheet}.getAttribute('role'), title: ${sheet}.querySelector('h2').textContent, names: [...document.querySelectorAll('.rd-prefs .rd-sw-name')].map(n => n.textContent), on: [...document.querySelectorAll('.rd-prefs input')].map(i => i.checked), arrows: document.querySelectorAll('.rd-prefs .rd-up, .rd-prefs .rd-down, .rd-prefs .rd-mv').length, done: ${sheet}.querySelector('.rd-close').textContent })`);
+check('the sheet lists the four sections, all on, as switches only (no moving them)', t.dialog === 'dialog' && t.title === 'Your sections' && eq(t.names, ['AI & Tech', 'Product & Business', 'Stock Market', 'Daily quiz']) && t.on.every(Boolean) && t.arrows === 0 && t.done === 'Done', JSON.stringify(t));
 await c.shot(`${OUT}/prefs_sheet.png`);
 
 // ---------- 1b. Contact us · About · Privacy live in the footer ----------
@@ -90,13 +90,8 @@ t = await J(`({ off: document.querySelector('#mkt').hasAttribute('data-pref-off'
 const st = await stored();
 check('switching Stock Market off hides it, its pill and marks it for Listen; the choice is saved', eq(await shown(), ['ai', 'biz', 'quiz']) && t.off && !t.quizBody && eq(st.off, ['mkt']) && (await pills()).find((p) => p.t === 'Stock Market').hidden, JSON.stringify({ shown: await shown(), st }));
 
-// ---------- 3. reorder ----------
-await c.ev(`${row('quiz')}.querySelector('.rd-up').click()`); await c.sleep(200);
-await c.ev(`${row('quiz')}.querySelector('.rd-up').click()`); await c.sleep(200);
-t = await J(`({ focus: document.activeElement.className, inRow: !!(document.activeElement.closest('li') && document.activeElement.closest('li').dataset.id) })`);
-check('Move up twice: the quiz is now second, sections and pills follow, and keyboard focus stays on the arrow', eq(await order(), ['ai', 'quiz', 'biz', 'mkt']) && eq((await pills()).slice(0, 4).map((p) => p.t), ['AI & Tech', 'Quiz', 'Product & Business', 'Stock Market']) && /rd-up/.test(t.focus), JSON.stringify({ o: await order(), t }));
-check('nothing is destroyed by moving: each section still has its stories', (await c.ev(`document.querySelectorAll('#ai .item').length > 3 && document.querySelectorAll('#mkt .item').length > 2 && !!document.querySelector('#quiz #quiz-root')`)) === true);
-check('the order is saved', eq((await stored()).order, ['ai', 'quiz', 'biz', 'mkt']), JSON.stringify(await stored()));
+// ---------- 3. no reordering: the order is fixed ----------
+check('nothing is destroyed by switching: each section still has its stories, in the usual order', eq(await order(), ['ai', 'biz', 'mkt', 'quiz']) && (await c.ev(`document.querySelectorAll('#ai .item').length > 3 && document.querySelectorAll('#mkt .item').length > 2 && !!document.querySelector('#quiz #quiz-root')`)) === true, JSON.stringify(await order()));
 await c.shot(`${OUT}/prefs_sheet_changed.png`);
 
 // ---------- 4. at least one section stays on ----------
@@ -122,7 +117,7 @@ check('after a reload the same order and visibility are back (and no sheet)', eq
 // ---------- 7. reset ----------
 await openSheet();
 await c.ev(`${sheet}.querySelector('.rd-reset').click()`); await c.sleep(250);
-check('Reset to default: original order, everything on', eq(await order(), ['ai', 'biz', 'mkt', 'quiz']) && eq(await shown(), ['ai', 'biz', 'mkt', 'quiz']) && (await c.ev(`[...document.querySelectorAll('.rd-prefs input')].every(i => i.checked)`)) && (await c.ev(`!document.body.classList.contains('hb-quiz-off')`)), JSON.stringify(await order()));
+check('Show all sections: original order, everything on', eq(await order(), ['ai', 'biz', 'mkt', 'quiz']) && eq(await shown(), ['ai', 'biz', 'mkt', 'quiz']) && (await c.ev(`[...document.querySelectorAll('.rd-prefs input')].every(i => i.checked)`)) && (await c.ev(`!document.body.classList.contains('hb-quiz-off')`)), JSON.stringify(await order()));
 await c.ev(`${sheet}.querySelector('.rd-close').click()`);
 
 // ---------- 8. the apps: nothing at the door; "Make it yours" is offered once, on the second day ----------
@@ -152,7 +147,7 @@ await c.ev(`(() => { const o = JSON.parse(localStorage.getItem('hb-tip-v1')); o.
 await c.ev(`(location.reload(), 'ok')`); await c.sleep(1800);
 check('and a "Not now" is final: not asked again on a later day either', !(await hasTip()) && (await tipStored()).done === true, JSON.stringify(await tipStored()));
 await c.ev(`document.querySelector('.ab-menu').click()`); await waitFor(`!!document.querySelector('.rd-menu')`);
-check('the menu still has Sections (Show, hide and reorder) for anyone who wants it any time', (await c.ev(`document.querySelector('.rd-item[data-act=sections]').textContent`)) === 'SectionsShow, hide and reorder');
+check('the menu still has Sections (Show or hide sections) for anyone who wants it any time', (await c.ev(`document.querySelector('.rd-item[data-act=sections]').textContent`)) === 'SectionsShow or hide sections');
 await c.ev(`document.querySelector('.rd-sheet .rd-close').click()`);
 
 await open({ native: true, tip: { n: 1, last: LONG_AGO, done: false }, wait: 600, hash: '#ai-2' }); await c.sleep(1800);
@@ -162,7 +157,7 @@ check('opened with tracking parameters (a share): not interrupted either', !(awa
 await open({ native: true, prefs: { order: [], off: [] }, tip: { n: 3, last: LONG_AGO, done: false }, wait: 600 }); await c.sleep(1800);
 check('anyone who already has saved sections (the old first-launch sheet stored the default) is never asked about sections', !(await hasTip('sections')) && (await noSheet()));
 await open({ native: true, prefs: { order: ['biz', 'ai', 'mkt', 'quiz'], off: [] }, tip: { n: 3, last: LONG_AGO, done: false }, wait: 600 }); await c.sleep(1800);
-check('a reader who already customised: no sections card, and the saved order applies', !(await hasTip('sections')) && eq(await order(), ['biz', 'ai', 'mkt', 'quiz']), JSON.stringify(await order()));
+check('a reader who already customised: no sections card, and an order saved back when sections could be moved is ignored', !(await hasTip('sections')) && eq(await order(), ['ai', 'biz', 'mkt', 'quiz']), JSON.stringify(await order()));
 await open({ native: true, tip: { n: 1, last: LONG_AGO, done: false }, blockTip: true, wait: 600 }); await c.sleep(1800);
 check('if the answer cannot be remembered (storage blocked) it is not shown, rather than asking every time', !(await hasTip()));
 await open({ native: false, tip: { n: 5, last: LONG_AGO, done: false }, wait: 600 }); await c.sleep(1800);
@@ -187,7 +182,7 @@ check('deep link into a hidden section shows that section for this visit only (t
 
 // ---------- 10. the desktop website follows the choices too (and ?classic=1 opts out) ----------
 await open({ prefs: { order: ['quiz', 'mkt', 'biz', 'ai'], off: ['ai'] }, width: 1280 });
-check('desktop: the choices apply here too (order and hidden sections), and no first-launch sheet on the website', eq(await order(), ['quiz', 'mkt', 'biz', 'ai']) && eq(await shown(), ['quiz', 'mkt', 'biz']) && (await c.ev(`!document.querySelector('.rd-sheet')`)) === true, JSON.stringify({ o: await order(), s: await shown() }));
+check('desktop: the choices apply here too (hidden sections; an old saved order is ignored), and no first-launch sheet on the website', eq(await order(), ['ai', 'biz', 'mkt', 'quiz']) && eq(await shown(), ['biz', 'mkt', 'quiz']) && (await c.ev(`!document.querySelector('.rd-sheet')`)) === true, JSON.stringify({ o: await order(), s: await shown() }));
 check('desktop: the footer row (Contact us · About · Privacy) is shown', (await c.ev(`getComputedStyle(document.querySelector('.site-links')).display !== 'none'`)) === true);
 await open({ prefs: { order: ['quiz', 'mkt', 'biz', 'ai'], off: ['ai'] }, width: 1280, query: '?classic=1' });
 check('desktop with ?classic=1: the old layout, so the choices are ignored', eq(await order(), ['ai', 'biz', 'mkt', 'quiz']) && eq(await shown(), ['ai', 'biz', 'mkt', 'quiz']), JSON.stringify(await order()));
@@ -238,24 +233,13 @@ const minsAll = await c.ev(`${btn}.textContent`);
 const n = (s) => Number((/(\d+) min/.exec(s) || [])[1]);
 check('the length shown reflects what will be played (fewer minutes with a section off)', n(minsNow) < n(minsAll) || (n(minsNow) === n(minsAll) && false), `${minsNow} vs ${minsAll}`);
 
-// reorder: Stock Market first
+// an order saved back when sections could be moved (Stock Market first) is ignored: Listen walks the usual order
 await open({ audio: true, tts: true, prefs: { order: ['mkt', 'ai', 'biz', 'quiz'], off: [] }, wait: 1200 }); await c.sleep(900);
 await c.ev(`${btn}.click()`); await waitFor(`window.__audio && __audio.currentTime > 0.3`, 6000);
 seq = await walk();
-const wantOrder = ['Today’s brief', 'lane:mkt', ...inLane('mkt'), 'lane:ai', ...inLane('ai'), 'lane:biz', ...inLane('biz'), 'That’s the brief'];
-check('recording, Stock Market moved first: Next walks the sections in the reader’s order', eq(seq, wantOrder), JSON.stringify(seq));
+const wantOrder = ['Today’s brief', 'lane:ai', ...inLane('ai'), 'lane:biz', ...inLane('biz'), 'lane:mkt', ...inLane('mkt'), 'That’s the brief'];
+check('recording, with an old saved order: Next walks the sections in the usual order', eq(seq, wantOrder), JSON.stringify(seq));
 await c.ev(`${pl('.hb-pl-close')}.click()`); await c.sleep(200);
-await c.ev(`${btn}.click()`); await waitFor(`window.__audio && __audio.currentTime > 0.3`, 6000);
-await c.ev(`(__audio.currentTime = ${cue('intro').end - 0.6}, 'ok')`);
-const first = await waitFor(`(${cur}) === 'lane:mkt'`, 8000);
-t = await J(`({ time: __audio.currentTime })`);
-check('the intro flows straight into Stock Market (the recording jumps ahead to it)', first && t.time >= cue('lane:mkt').start - 0.3 && t.time < cue('lane:mkt').start + 3, JSON.stringify({ t, wantAt: cue('lane:mkt').start }));
-const lastMkt = inLane('mkt').slice(-1)[0];
-while ((await c.ev(cur)) !== lastMkt) { await c.ev(`${pl('.hb-pl-next')}.click()`); await c.sleep(250); }
-await c.sleep(400);
-await c.ev(`(__audio.currentTime = ${cue('story:' + lastMkt).end - 1.2}, 'ok')`);
-check('and from the last Stock Market story it jumps back to the AI section', await waitFor(`(${cur}) === 'lane:ai'`, 8000), await c.ev(cur));
-await c.ev(`${pl('.hb-pl-close')}.click()`);
 
 // quiz off: the recorded outro points at the quiz, so the brief ends on the last story
 await open({ audio: true, tts: true, prefs: { order: [], off: ['quiz'] }, wait: 1200 }); await c.sleep(900);
@@ -291,7 +275,7 @@ await c.ev(`window.__ttsMs = 20; ${btn}.click()`);
 await waitFor(`HBListen.state() === 'done'`, 20000);
 t = await J(`(() => { const norm = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' '); const said = norm(window.__spoken.join(' ')); const head = (id) => norm(document.querySelector('.item[data-story-id="' + id + '"] h3').textContent).split(' ').slice(0, 6).join(' ');
   return { done: HBListen.state(), ai: said.includes(head('ai-1')), biz: said.includes(head('biz-1')), mkt: said.includes(head('mkt-1')), mktBeforeAi: said.indexOf(head('mkt-1')) >= 0 && said.indexOf(head('mkt-1')) < said.indexOf(head('ai-1')) }; })()`);
-check('device voice: hidden section is not read, the others are read in the reader’s order', t.done === 'done' && t.ai && t.mkt && !t.biz && t.mktBeforeAi, JSON.stringify(t));
+check('device voice: hidden section is not read, the others are read in the usual order (an old saved order is ignored)', t.done === 'done' && t.ai && t.mkt && !t.biz && !t.mktBeforeAi, JSON.stringify(t));
 
 // ---------- 14. install nudge: a browser visitor (not the app) is offered the app, via the smart link /app ----------
 const installStored = () => J(`JSON.parse(localStorage.getItem('hb-install-v2') || 'null')`);
@@ -300,35 +284,41 @@ const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleW
 const ANDROID_UA = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36';
 const setUA = (ua) => c.send('Emulation.setUserAgentOverride', { userAgent: ua });
 
+// Phones get a slim "Get the app" bar above the tab bar (it used to be a card in the list, hidden under the cards).
+const CHROME_IOS_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/120.0.6099.119 Mobile/15E148 Safari/604.1';
+const installBar = () => J(`(() => { const k = document.querySelector('.hb-getapp'); if (!k) return null; return { title: k.querySelector('strong').textContent, go: k.querySelector('.hb-getapp-go').textContent, href: k.querySelector('.hb-getapp-go').getAttribute('href') }; })()`);
 await setUA(IPHONE_UA);
-await open({ wait: 600 }); await c.sleep(1800);
-t = await installCard();
-check('iPhone browser, first visit: the install card appears straight away ("Get the free app" / "Get it")', t && t.title === 'Get the free app' && t.go === 'Get it', JSON.stringify(t));
-await c.ev(`document.querySelector('.hb-tip[data-tip="install"] .hb-tip-no').click()`); await c.sleep(200);
+await open({ wait: 600 }); await c.sleep(3200);
+check('iPhone Safari: none of ours (Safari shows its own App Store banner from the apple-itunes-app tag)', !(await installBar()) && (await c.ev(`!!document.querySelector('meta[name="apple-itunes-app"]')`)));
+await setUA(CHROME_IOS_UA);
+await open({ wait: 600 }); await c.sleep(3200);
+t = await installBar();
+check('iPhone, another browser, first visit: the bar appears over the cards ("Get", to /app?src=web-ios)', t && t.title === 'The Hour Brief app' && t.go === 'Get' && t.href === '/app?src=web-ios', JSON.stringify(t));
+await c.ev(`document.querySelector('.hb-getapp-x').click()`); await c.sleep(200);
 t = await installStored();
-check('"Not now" hides it and snoozes it for about 14 days, independently of the sections tip', !(await hasTip('install')) && t && t.until > Date.now() + 13 * 86400000 && t.until < Date.now() + 15 * 86400000 && (await tipStored()) === null, JSON.stringify(t));
-await c.ev(`(location.reload(), 'ok')`); await c.sleep(1800);
-check('...and stays hidden on the next visit while snoozed', !(await hasTip('install')));
+check('"Not now" hides it and snoozes it for about 14 days, independently of the sections tip', !(await installBar()) && t && t.until > Date.now() + 13 * 86400000 && t.until < Date.now() + 15 * 86400000 && (await tipStored()) === null, JSON.stringify(t));
+await c.ev(`(location.reload(), 'ok')`); await c.sleep(3200);
+check('...and stays hidden on the next visit while snoozed', !(await installBar()));
 await c.ev(`(localStorage.setItem('hb-install-v2', JSON.stringify({ until: Date.now() - 1000 })), 'ok')`);
-await c.ev(`(location.reload(), 'ok')`); await c.sleep(1800);
-check('once the snooze is over, it comes back', await hasTip('install'));
+await c.ev(`(location.reload(), 'ok')`); await c.sleep(3200);
+check('once the snooze is over, it comes back', !!(await installBar()));
 
 await c.ev(`(localStorage.removeItem('hb-install-v2'), 'ok')`);
-await open({ hash: '#ai-2', wait: 600 }); await c.sleep(1800);
-check('not shown to someone who arrived at a specific story (#story link)', !(await hasTip('install')));
+await open({ hash: '#ai-2', wait: 600 }); await c.sleep(3200);
+check('not shown to someone who arrived at a specific story (#story link)', !(await installBar()));
 
 await setUA(ANDROID_UA);
 await c.ev(`(localStorage.removeItem('hb-install-v2'), 'ok')`);
-await open({ wait: 600 }); await c.sleep(1800);
-t = await installCard();
-check('Android Chrome gets the phone version too', t && t.title === 'Get the free app', JSON.stringify(t));
-// "Get it" snoozes for 30 days and navigates to /app?src=web-<os>; the smart link page then picks the store. A
+await open({ wait: 600 }); await c.sleep(3200);
+t = await installBar();
+check('Android Chrome gets it too', t && t.href === '/app?src=web-android', JSON.stringify(t));
+// "Get" snoozes for 30 days and navigates to /app?src=web-<os>; the smart link page then picks the store. A
 // same-window navigation isn't intercepted here (flaky in headless Chrome); /app itself is checked by hand.
 
-await setUA(IPHONE_UA);
+await setUA(CHROME_IOS_UA);
 await c.ev(`(localStorage.removeItem('hb-install-v2'), 'ok')`);
-await open({ native: true, wait: 600 }); await c.sleep(1800);
-check('never shown inside the app itself', !(await hasTip('install')));
+await open({ native: true, wait: 600 }); await c.sleep(3200);
+check('never shown inside the app itself', !(await installBar()) && !(await hasTip('install')));
 
 await setUA('');  // restore a normal desktop UA for the rest of the suite
 await c.ev(`(localStorage.removeItem('hb-install-v2'), 'ok')`);
@@ -340,11 +330,11 @@ await c.ev(`document.querySelector('.hb-tip[data-tip="install"] .hb-tip-no').cli
 // ---------- visuals ----------
 await open({ prefs: { order: ['mkt', 'ai', 'biz', 'quiz'], off: ['biz'] }, dark: true, width: 360, wait: 1500 });
 t = await J(`(() => { const nav = document.querySelector('.nav'), all = nav.querySelector('.nav-all'), first = [...nav.querySelectorAll('a:not(.nav-all)')].find((a) => getComputedStyle(a).display !== 'none'); const chip = document.querySelector('.quiz-chip'), tools = document.querySelector('.reader-tools'); const cr = chip.getBoundingClientRect(), tr = tools.getBoundingClientRect(); const bs = [...tools.querySelectorAll('.reader-btn')].map((b) => Math.round(b.getBoundingClientRect().top)); return { scroll: nav.scrollLeft, first: first.textContent.trim(), left: Math.round(all.getBoundingClientRect().left), chipH: Math.round(cr.height), chipW: Math.round(cr.width), toolsW: Math.round(tr.width), bar: [...document.querySelectorAll('.ab-actions .ab-btn')].map((b) => { const r = b.getBoundingClientRect(); return { l: Math.round(r.left), r: Math.round(r.right) }; }) }; })()`);
-check('a reordered chip row starts at the beginning (All, then the first section), not scrolled sideways by scroll-snap', t.scroll === 0 && t.first === 'Stock Market' && t.left >= 0, JSON.stringify(t));
+check('the chip row starts at the beginning (All, then the first section shown), not scrolled sideways by scroll-snap', t.scroll === 0 && t.first === 'AI & Tech' && t.left >= 0, JSON.stringify(t));
 check('360px: the quiz chip is one full-width tile, and the app bar keeps its three buttons on screen', t.chipH <= 84 && t.chipW >= t.toolsW - 2 && t.bar.every((r) => r.l >= 0 && r.r <= 360), JSON.stringify(t));
 await c.shot(`${OUT}/prefs_page_dark.png`);
 await openSheet(); await c.sleep(200); await c.shot(`${OUT}/prefs_sheet_dark.png`);
-const geo = await J(`(() => { const r = ${sheet}.getBoundingClientRect(); return { l: r.left, r: innerWidth - r.right, over: document.documentElement.scrollWidth > innerWidth, rows: [...document.querySelectorAll('.rd-prefs li')].map(li => { const b = li.getBoundingClientRect(); return [Math.round(b.height), Math.round(li.querySelector('.rd-up').getBoundingClientRect().width)]; }) }; })()`);
+const geo = await J(`(() => { const r = ${sheet}.getBoundingClientRect(); return { l: r.left, r: innerWidth - r.right, over: document.documentElement.scrollWidth > innerWidth, rows: [...document.querySelectorAll('.rd-prefs li')].map(li => { const b = li.getBoundingClientRect(); return [Math.round(b.height), Math.round(li.querySelector('.rd-sw').getBoundingClientRect().height)]; }) }; })()`);
 check('360px wide (dark): the sheet fits, no sideways scroll, tap targets are at least 44px', geo.l >= 0 && geo.r >= 0 && !geo.over && geo.rows.every((r) => r[0] >= 44 && r[1] >= 44), JSON.stringify(geo));
 check('no JavaScript errors', c.errors.length === 0, c.errors.slice(0, 3).join(' | '));
 console.log(`\n${pass} passed, ${fail} failed · screenshots in ${OUT}`);

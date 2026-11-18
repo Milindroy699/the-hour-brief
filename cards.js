@@ -388,11 +388,19 @@
     var saved = btn('ab-btn reader-saved', '', 'Saved stories');
     saved.innerHTML = (HC ? HC.icons.star : '') + '<span class="rd-count"></span>';
     saved.addEventListener('click', function () { if (HC) HC.saved(saved); });
-    var menu = btn('ab-btn ab-menu', '', 'Menu: sections, text size, reminder, share');
+    var menu = btn('ab-btn ab-menu', '', 'Menu: past editions, sections, text size, reminder, share');
     menu.innerHTML = HC ? HC.icons.sliders : '';
     menu.addEventListener('click', function () { if (HC) HC.menu(menu); });
     acts.appendChild(saved);
     acts.appendChild(menu);
+    // A past edition: a back arrow (to Past editions) where the logo sits, as on the list (mobile.js HBChrome.back).
+    var back = HC && HC.back && HC.back();
+    if (back) {
+      var bb = btn('ab-btn ab-back', '', back.label);
+      bb.innerHTML = HC.icons.back;
+      bb.addEventListener('click', back.go);
+      logo = bb;
+    }
     head.appendChild(logo);
     head.appendChild(brand);
     head.appendChild(acts);

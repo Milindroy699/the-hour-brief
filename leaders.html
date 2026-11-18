@@ -10,10 +10,40 @@
 (function () {
   var h = document.documentElement;
   h.classList.add('hb-boot');
-  h.style.setProperty('--hb-spin-delay', -(Date.now() % 2400) + 'ms');
-  try { var at = +sessionStorage.getItem('hb-loader-at'); sessionStorage.removeItem('hb-loader-at'); if (at && Date.now() - at < 10000) h.classList.add('hb-from-loader'); } catch (e) {}
+  h.style.setProperty('--hb-spin-delay', '0ms');
+  // After a tab trip the loader carries on from the same point of its turn (its clock starts at the tap), and stays up
+  // for at least one turn from then (mobile.js reads data-hb-loader-at).
+  try { var at = +sessionStorage.getItem('hb-loader-at'); sessionStorage.removeItem('hb-loader-at'); if (at && Date.now() - at < 10000) { h.classList.add('hb-from-loader'); h.setAttribute('data-hb-loader-at', String(at)); h.style.setProperty('--hb-spin-delay', -(Date.now() - at) + 'ms'); } } catch (e) {}
+  setTimeout(function () { h.classList.remove('hb-boot', 'hb-reveal', 'hb-from-loader'); }, 5000);   // safety net
 })();
 </script>
+<script>
+// The tab bar from the very first frame (owner, 2026-11-19): mobile.js builds the real one a beat after the page first
+// paints, so arriving here from another tab the bar vanished and came back under the loader. This draws the same markup
+// as soon as <body> exists; mobile.js swaps in the real one (same look) in a single step. Phones and the apps only.
+(function () {
+  try {
+    if (!(window.matchMedia && matchMedia('(max-width: 640px)').matches) || !window.MutationObserver) return;
+    var lit = 'leaders';
+    var tabs = [['today','Today','/','<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5h12.5v13H6.5a2.5 2.5 0 0 1-2.5-2.5V5.5z"/><path d="M16.5 9H20v7a2.5 2.5 0 0 1-2.5 2.5"/><path d="M7.5 9h6M7.5 12h6M7.5 15h3.5"/></svg>'], ['audio','Audio','/?audio=1','<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><path d="M4 15h3v5H5a1 1 0 0 1-1-1v-4z"/><path d="M20 15h-3v5h2a1 1 0 0 0 1-1v-4z"/></svg>'], ['leaders','Voices','/leaders.html','<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 4.5h10a2 2 0 0 1 2 2v5.5a2 2 0 0 1-2 2H9l-3.5 3v-3h-1a2 2 0 0 1-2-2V6.5a2 2 0 0 1 2-2z"/><path d="M16.5 8.5h3a2 2 0 0 1 2 2V16a2 2 0 0 1-2 2h-1v2.5L15 18h-3.5a2 2 0 0 1-1.9-1.4"/></svg>'], ['quiz','Challenge','/?quiz=1','<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/></svg>']];
+    var mo = new MutationObserver(function () {
+      if (!document.body) return;
+      mo.disconnect();
+      var nav = document.createElement('nav');
+      nav.className = 'tab-bar';
+      nav.setAttribute('data-early', '');
+      nav.setAttribute('aria-hidden', 'true');
+      nav.innerHTML = '<div class="tab-row">' + tabs.map(function (t) {
+        return '<a class="tab" data-tab="' + t[0] + '" href="' + t[2] + '"' + (t[0] === lit ? ' aria-current="page"' : '') +
+          '><span class="tab-ic">' + t[3] + '</span><span class="tab-lb">' + t[1] + '</span></a>';
+      }).join('') + '</div>';
+      document.body.appendChild(nav);
+    });
+    mo.observe(document.documentElement, { childList: true });
+  } catch (e) { /* mobile.js draws it */ }
+})();
+</script>
+<meta name="apple-itunes-app" content="app-id=6817195056">
 <title>Voices — The Hour Brief</title>
 <meta name="description" content="Voices: the week's best thinking from the people worth listening to in tech & AI, business, product and finance, plus weekend essays on principles for work and life.">
 <link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png">
@@ -313,7 +343,8 @@
      swap DOM in place — so this page's own raw masthead-band paints first and mobile.js's app-bar skin only
      replaces it a beat later. That swap read as "a weird old UI flashing." Hide until mobile.js has had its
      turn (the reveal script below polls for its .tab-bar), with a safety timeout in case it never loads. */
-  body { visibility: hidden; }
+  html.hb-boot:not(.hb-reveal) body { visibility: hidden; }
+  html.hb-boot .tab-bar { visibility: visible; }
   /* While the body is hidden, the root must still paint the app's background: otherwise the app's dark native
      background showed through and the switch to or from Voices flashed black (owner, 2026-11-18). */
   html { background-color: var(--bg); }
@@ -322,23 +353,25 @@
 <script defer src="/_vercel/insights/script.js"></script>
 <script defer src="/capacitor-bridge.js"></script>
 <script defer src="/mobile.js"></script>
-<script defer>
+<script>
   (function () {
-    // Poll for the real signal that mobile.js has finished its DOM transform (it builds .tab-bar
-    // synchronously in apply(), right after DOMContentLoaded) rather than guessing at script/listener
-    // ordering. Falls back to a flat timeout for ?classic=1 (no premium skin, so no .tab-bar ever appears)
-    // or if mobile.js fails to load at all.
-    var tries = 0;
+    // Lift the loader once the page is really ready: mobile.js has built the app header and tab bar (.tab-bar) AND the
+    // roundups are drawn (tlReady, set below, from the saved copy or the network, or once loading failed). It used to
+    // lift on the tab bar alone, so the loader gave way to skeleton tiles and then the roundups popped in: a flicker
+    // (owner, 2026-11-19). mobile.js's HBReveal then also waits for the fonts and pictures. Capped, and if mobile.js
+    // never loads (or ?classic=1) the page is simply shown.
+    var t0 = Date.now();
     function reveal() {
       var h = document.documentElement;
-      document.body.style.visibility = 'visible';
+      if (window.HBReveal && document.querySelector('.tab-bar:not([data-early])')) { window.HBReveal(); return; }
       if (!h.classList.contains('hb-boot') || h.classList.contains('hb-reveal')) return;
-      h.classList.add('hb-reveal');                     // the hourglass loader fades off the page (app.css)
-      setTimeout(function () { h.classList.remove('hb-boot', 'hb-reveal', 'hb-from-loader'); }, 200);
+      h.classList.add('hb-reveal');
+      setTimeout(function () { h.classList.remove('hb-boot', 'hb-reveal', 'hb-from-loader'); }, 280);
     }
     function poll() {
-      if (document.querySelector('.tab-bar') || ++tries > 40) { reveal(); return; }
-      setTimeout(poll, 20);
+      var waited = Date.now() - t0;
+      if ((document.querySelector('.tab-bar:not([data-early])') && window.tlReady) || waited > 3500 || (waited > 2500 && !window.HBReveal)) { reveal(); return; }
+      setTimeout(poll, 30);
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', poll);
     else poll();
@@ -850,6 +883,7 @@
     drawn = true;
     window.addEventListener('hashchange', function () { route(); });
     route();
+    window.tlReady = true;                            // the loader can go (see the reveal script in the head)
   }
   var saved = readCache(), savedSig = saved ? JSON.stringify(saved) : '';
   if (saved) { use(saved); draw(); }
@@ -872,6 +906,7 @@
     })
     .catch(function () {
       if (!drawn) document.getElementById('tl-hero').innerHTML = '<p class="tl-state">Couldn’t load roundups right now.</p>';
+      window.tlReady = true;
     });
 })();
 </script>

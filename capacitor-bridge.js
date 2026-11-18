@@ -66,7 +66,7 @@
   // ---- Shared injected stylesheet for the bits this script builds ----
   (function injectStyle() {
     var css =
-      '.masthead-band{padding-top:calc(12px + env(safe-area-inset-top,0px)) !important;}' +
+      '.masthead-band{padding-top:calc(10px + env(safe-area-inset-top,0px)) !important;}' +   /* = .hub-top's */
       'body{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);}' +
       // Store UGC policies (Play, App Store 1.2) require in-app reporting/blocking for comments; the app omits them.
       '.comments-section{display:none !important;}' +
@@ -163,8 +163,11 @@
       try { localStorage.setItem(NAV_KEY, JSON.stringify({ to: u.pathname, at: Date.now(), rs: document.readyState })); } catch (e) {}
       location.assign(href);
     };
-    if (document.readyState === 'complete') { leave(); return; }
-    window.addEventListener('load', leave);
+    // A tab trip covers the screen with the loader first (mobile.js showLeaving): leave once it is fully in, so the
+    // old page never shows through it.
+    var wait = a && a.classList && a.classList.contains('tab') ? 140 : 0;
+    if (document.readyState === 'complete') { setTimeout(leave, wait); return; }
+    window.addEventListener('load', function () { setTimeout(leave, wait); });
     setTimeout(leave, 6000);                                     // a stuck image must not trap the reader here for long
   }
   (function checkArrival() {
@@ -324,7 +327,30 @@
         '<path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>';
       actions.appendChild(share);
     }
-    function setBell(on) { btn.classList.toggle('on', !!on); }
+    // The bell's state, and a one-line summary the Menu shows under "Daily reminder" (mobile.js reads data-summary).
+    function setBell(on, time) {
+      btn.classList.toggle('on', !!on);
+      btn.setAttribute('data-summary', on && time ? 'On, every day at ' + fmt(time) : 'Off · a morning nudge on this device');
+    }
+    // Saving gives clear feedback (owner, 2026-11-19: "Save time" did nothing visible): the sheet closes and a toast
+    // confirms. mobile.js's toast where it is loaded, else a small one of our own.
+    function notify(msg) {
+      if (window.HBToast) { window.HBToast(msg); return; }
+      var t = document.getElementById('cap-toast');
+      if (!t) {
+        t = document.createElement('div');
+        t.id = 'cap-toast';
+        t.setAttribute('role', 'status');
+        t.style.cssText = 'position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);' +
+          'z-index:10000;max-width:calc(100% - 40px);padding:11px 18px;border-radius:999px;background:#17191c;color:#fff;' +
+          'font:600 14px/1.3 -apple-system,system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.25)';
+        document.body.appendChild(t);
+      }
+      t.textContent = msg;
+      t.hidden = false;
+      clearTimeout(notify._t);
+      notify._t = setTimeout(function () { t.hidden = true; }, 2600);
+    }
 
     var sheet = null;
     function close() { if (sheet) { sheet.remove(); sheet = null; } }
@@ -354,21 +380,30 @@
           offBtn.hidden = !s.on;
           onBtn.textContent = s.on ? 'Save time' : 'Turn on';
           status.textContent = msg || (s.on ? 'On: every day at ' + fmt(s.time) + '.' : '');
-          setBell(s.on);
+          setBell(s.on, s.time);
         });
       }
 
       sheet.addEventListener('click', function (e) { if (e.target === sheet) close(); });
       sheet.querySelector('#cap-remind-close').addEventListener('click', close);
       offBtn.addEventListener('click', function () {
-        LN.cancel({ notifications: [{ id: NOTIF_ID }] }).catch(noop).then(function () { return refresh('Reminder turned off.'); });
+        LN.cancel({ notifications: [{ id: NOTIF_ID }] }).catch(noop).then(function () {
+          setBell(false);
+          close();
+          notify('Daily reminder turned off');
+        });
       });
       onBtn.addEventListener('click', function () {
         var v = timeEl.value || DEFAULT_TIME;
         var p = v.split(':');
         status.textContent = 'Setting up…';
         enable(parseInt(p[0], 10), parseInt(p[1], 10), v).then(function (res) {
-          if (res === 'ok') return refresh();
+          if (res === 'ok') {
+            setBell(true, v);
+            close();
+            notify('✓ Reminder set for ' + fmt(v) + ', every day');
+            return;
+          }
           status.textContent = 'Notifications are turned off for The Hour Brief. Turn them on in your device settings, then try again.';
         }).catch(function () { status.textContent = 'Could not set the reminder. Please try again.'; });
       });
@@ -378,7 +413,7 @@
     btn.addEventListener('click', open);
     // Re-arm on every launch: Android drops alarms on force-stop, which would leave a reminder that looks on but never fires.
     getState().then(function (s) {
-      setBell(s.on);
+      setBell(s.on, s.time);
       if (!s.on) return;
       var p = s.time.split(':');
       LN.checkPermissions().then(function (r) {
