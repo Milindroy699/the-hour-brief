@@ -1,0 +1,33 @@
+name: Voiceover
+
+# On demand only: reads a voiceover script (tools/audio/voiceover/*.json) aloud with Sarvam, in the app's Listen voice,
+# and keeps the clips as a run artifact for a week. Used for app videos; costs a few rupees of Sarvam credit per run.
+on:
+  workflow_dispatch:
+    inputs:
+      script:
+        description: Voiceover script (JSON) in the repo
+        default: tools/audio/voiceover/walkthrough.json
+
+permissions:
+  contents: read
+
+jobs:
+  voiceover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Read the script aloud
+        env:
+          SARVAM_API_KEY: ${{ secrets.SARVAM_API_KEY }}
+          SCRIPT: ${{ inputs.script }}
+        run: node tools/audio/voiceover.mjs "$SCRIPT" out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: voiceover
+          path: out
+          retention-days: 7

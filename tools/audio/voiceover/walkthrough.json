@@ -1,0 +1,16 @@
+{
+  "about": "Voiceover for the app walkthrough video (2026-11-18). One clip per scene, in the app's own Listen voice.",
+  "voice": "neha",
+  "pace": 1.1,
+  "segments": [
+    { "id": "01-intro", "text": "This is The Hour Brief. Everything that mattered today, in AI and tech, business and the markets, in one sitting." },
+    { "id": "02-swipe", "text": "Each story is a card. Swipe through the day, one clear idea at a time, with the takeaway that matters." },
+    { "id": "03-save", "text": "Save a story for later, or share it, in a single tap." },
+    { "id": "04-list", "text": "Prefer to scroll? Switch to List, and read the whole edition top to bottom." },
+    { "id": "05-audio", "text": "Short on time? Open Audio, and listen to today's brief, read aloud." },
+    { "id": "06-voices", "text": "Voices brings you the week's sharpest thinking, from the people worth listening to, across tech, business, product and finance." },
+    { "id": "07-challenge", "text": "Then test yourself with the daily Challenge, and keep your streak going." },
+    { "id": "08-menu", "text": "Make it yours. Pick your sections, set the text size, and get a gentle morning reminder." },
+    { "id": "09-outro", "text": "The Hour Brief. Free on iPhone and Android. Built for one sitting." }
+  ]
+}
