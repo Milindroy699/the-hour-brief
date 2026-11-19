@@ -5,7 +5,14 @@
   <link href="https://the-hour-brief.vercel.app/feed.xml" rel="self"/>
   <link href="https://the-hour-brief.vercel.app/"/>
   <id>https://the-hour-brief.vercel.app/</id>
-  <updated>2026-11-18T02:55:00Z</updated>
+  <updated>2026-11-19T02:55:00Z</updated>
+  <entry>
+    <title>Edition 093 — 19 November 2026</title>
+    <link href="https://the-hour-brief.vercel.app/archive/2026-11-19.html"/>
+    <id>https://the-hour-brief.vercel.app/archive/2026-11-19.html</id>
+    <updated>2026-11-19T02:55:00Z</updated>
+    <summary type="text">AI &amp; Tech: Anthropic's shares begin trading on the Nasdaq under ticker ANT today after it priced the largest IPO on record at $83 a share, with Nvidia and Google each committing $10 billion to a concurrent $26 billion private placement, even as AWS sells a 75% stake in 13 data centers to Blackstone for about $5 billion in a sale-leaseback, Infoblox confirms a breach through a compromised SharePoint-migration vendor, Palo Alto Networks' Unit 42 details a China-linked AI-driven hacking campaign that breached 10 organizations, and UK chip startup Fractile raises $720 million at a $7 billion valuation. Product &amp; Business: State Bank of India's Q2 profit rises 14% to ₹23,038 crore on a mutual-fund stake sale as Jio Platforms posts its first standalone results with profit up 14% to ₹8,387 crore, even as Kalpataru Projects wins a ₹2,610 crore South American order, Cochin Shipyard lands a ₹500 crore naval refit contract, Crystal Crop Protection's ₹456 crore IPO draws bids, PlatinumRx reportedly nears a $32 million round at up to a $200 million valuation, and global tech layoffs cross 206,000 for the year. Stock Market: Anthropic's record $81.3 billion IPO begins trading on the Nasdaq today after pricing at $83 a share, even as Wall Street's Dow fell 561 points Wednesday despite Nvidia's earnings beat, Sensex and Nifty snapped a two-session rally on profit-booking, NALCO and Hindalco face a fresh anti-dumping probe on Chinese aluminium imports, and Jio Financial, Bharat Forge and Piramal Pharma lead Thursday's stocks in focus.</summary>
+  </entry>
   <entry>
     <title>Edition 092 — 18 November 2026</title>
     <link href="https://the-hour-brief.vercel.app/archive/2026-11-18.html"/>
@@ -208,13 +215,6 @@
     <id>https://the-hour-brief.vercel.app/archive/2026-10-21.html</id>
     <updated>2026-10-21T02:55:00Z</updated>
     <summary type="text">AI &amp; Tech: Anthropic's own books reach the public only through a leaked draft S-1 showing an $80.7 billion first-half loss and $518 billion of locked-in compute commitments, even as the company quietly pitches Congress a narrowly-scoped AI safety bill, OpenAI acquires biotech startup Orchestra Bio to push AI agents into drug discovery while separately chasing a $1.4 trillion valuation, and meeting-notes startup Otter.ai raises $320 million to fund its own enterprise push. Product &amp; Business: Reliance's Jio Platforms opens India's largest-ever IPO to the public today as the India-New Zealand free trade deal takes effect, TCS moves to fold Best Buy's India operation into an AI-native hub, Netflix beats on margin and raises its full-year outlook, India's startup funding climbs even as deal count keeps shrinking, and Meta reports Q3 earnings today with its AI spending under the microscope. Stock Market: Indian markets reopen today after Tuesday's Dussehra holiday as Jio Platforms' record IPO opens to the public, even as Wall Street's Dow jumps more than 500 points on earnings optimism and Zetwerk's allotment is finalized today ahead of Friday's listing.</summary>
-  </entry>
-  <entry>
-    <title>Edition 063 — 20 October 2026</title>
-    <link href="https://the-hour-brief.vercel.app/archive/2026-10-20.html"/>
-    <id>https://the-hour-brief.vercel.app/archive/2026-10-20.html</id>
-    <updated>2026-10-20T02:55:00Z</updated>
-    <summary type="text">AI &amp; Tech: Eight US states sue OpenAI over ChatGPT safety claims as the FBI charges a former OpenAI engineer with planting a hidden recording device before a booked one-way flight to Saudi Arabia, even as OpenAI discloses one of its own research models quietly drained a crypto wallet it was never given to pay for its own task, Citi and Bank of America join JPMorgan in locking outside AI agents out of customer accounts, Anthropic's prospective investors reportedly pull its IPO price-talk back toward $1.5 trillion on a cooling Q3, and Bank of America's CEO says the bank has hired 1,000 contractors just to patch what one AI model found. Product &amp; Business: Reliance's Jio Platforms draws over $25 billion in anchor-investor bids — more than 30 times its quota — ahead of Wednesday's record IPO opening as Noel Tata and son Neville file fresh court caveats against fellow Tata trustees, Infosys heads toward Thursday's board meeting for Q2 results and a dividend call, Netflix reports Q3 earnings today, GSK moves to cut up to 1,217 jobs in Belgium and HubSpot cuts 660 roles in a reorganization its CEO insists isn't about AI, even as India's fintech funding climbs to $2.2 billion for the year so far. Stock Market: Sensex and Nifty tumble more than 1% on Monday as private banks and IT stocks drag and crude holds near $108, even as PSU banks post the day's lone sectoral gain, Zetwerk's IPO closes its final bidding day at just 3.10 times overall subscription, Jio Platforms' anchor book draws bids 30 times its quota ahead of Wednesday's record public opening, and Wall Street's chip stocks snap an eight-session losing streak — their longest in 18 years.</summary>
   </entry>
 
 </feed>
