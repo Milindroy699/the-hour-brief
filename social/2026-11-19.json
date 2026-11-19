@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-19",
+  "edition": 93,
+  "lane": "biz",
+  "storyId": "biz-1",
+  "storyTitle": "SBI's Q2 FY27 standalone profit rises 14.3% to ₹23,038 crore, helped by a mutual-fund stake sale",
+  "insight": "SBI's 14% profit jump leans on a one-off stake sale; core operating profit grew just 7.3%, so read earnings for what repeats.",
+  "linkedin": "Strip out one stake sale and SBI's 14% profit jump shrinks to 7%.\n\nSBI's Q2 profit rose 14.3% to ₹23,038 crore, but about ₹7,288 crore came from selling a 6.3% stake in SBI Funds Management.\n\nCore operating profit grew just 7.3% to ₹34,226 crore, so the headline flatters the engine underneath.\n\nRead earnings season for what repeats, not what's booked once.\n\nToday's full brief 👉 https://the-hour-brief.vercel.app/e/2026-11-19\n\n#IndiaInc #Earnings #Banking",
+  "status": "One stake sale made SBI's Q2 profit jump 14%. Core operating profit grew only 7.3%. Read earnings for what repeats. Today's brief 👉 https://the-hour-brief.vercel.app/e/2026-11-19",
+  "push": {
+    "title": "SBI's 14% jump is mostly a one-off",
+    "body": "A ₹7,288 crore stake-sale gain sits inside it; core operating profit grew only 7.3%."
+  },
+  "page": "The Hour Brief, Edition 93: Anthropic's record $81.3 billion IPO begins trading on the Nasdaq today, priced at $83 a share, above its marketed range. It is the story that ties all three of our lanes together.\n\nAI & Tech: Nvidia and Google each commit $10 billion to Anthropic's concurrent $26 billion private placement, while AWS sells a 75% stake in 13 data centers to Blackstone for about $5 billion and leases them back.\n\nBusiness: SBI's Q2 profit rose 14% to ₹23,038 crore, helped by a stake sale, and Jio Platforms posted its first results as a listed company.\n\nMarkets: the Dow fell 561 points on Wednesday and the Sensex and Nifty snapped a two-session rally on profit-booking.\n\n#AI #Markets #IPO",
+  "leaders": {
+    "id": "product-2026-11-17",
+    "category": "product",
+    "title": "\"Trust Is a Must\": How Meta Built Muse by Launching Late",
+    "post": "Meta spent seven months on Muse while rivals shipped in two.\n\nMona Sarantakos, head of product for Muse, says that was deliberate: \"Trust is a must,\" because an agent holding your email and able to buy things can't launch with open issues.\n\nHer team built its own safety evals, a \"sentinel\" backstop outside the core agent, and a handwritten system prompt.\n\nRead the full breakdown 👉 https://the-hour-brief.vercel.app/leaders.html#a=product-2026-11-17\n\n#ProductManagement #AI #Meta"
+  },
+  "generatedAt": "2026-11-19T03:38:22Z"
+}
