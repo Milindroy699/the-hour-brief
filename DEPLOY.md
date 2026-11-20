@@ -40,6 +40,20 @@ Left out on purpose because we do not have them: XP, "Top 8% recall", spatial au
 - Tests: `node tools/browser-tests/premium.mjs` (with `prefs.mjs` and `listen.mjs`). To see the app itself, build a debug APK whose `server.url` is a
   local static server (`http://10.0.2.2:PORT`, `cleartext: true`), run it on the emulator, then put `mobile/capacitor.config.json` back (never commit that).
 
+## SEO and AI-answer engines (on every deploy)
+
+`npm run vercel-build` (package.json) runs `tools/seo/build.mjs` on Vercel. It edits the DEPLOYED copy only, never git, so the
+daily routine keeps copying `index.html` exactly as before:
+- each edition gets its own `<title>` (lead AI story + date), description, canonical link, Open Graph card (the `/api/og` edition
+  image) and NewsArticle + BreadcrumbList JSON-LD (sources as citations, takeaways marked speakable); the homepage gets a fixed
+  brand title and WebSite + NewsMediaOrganization JSON-LD; other pages get a canonical link; `share-kit.html` stays noindex.
+- rewrites `sitemap.xml` (Google News tags for the last two days), `robots.txt` (all crawlers, AI ones included, welcome; internal
+  folders disallowed) and `llms.txt`. These three must stay committed: Vercel only serves static files that exist before the build.
+- the generated block sits between `<!-- seo:start -->` and `<!-- seo:end -->` and is replaced in place, so a page copied from a
+  stamped one is fine. Anything it cannot parse is skipped; it never fails a deploy. Tests: `npm run test:seo`.
+- `vercel.json` sends `X-Robots-Tag: noindex` for `tools/`, `mobile/`, `social/`, `.github/`, `DEPLOY.md` and the `/e /s /q /l` share links.
+- Owner's step: add the site to Google Search Console and Bing Webmaster Tools (HTML-tag verification) and submit `/sitemap.xml`.
+
 ## Podcast (Spotify, Apple Podcasts)
 
 The daily Quick recording is also a podcast. `tools/audio/podcast.mjs` builds an RSS feed from the manifests already in R2 (file, size, duration) and
