@@ -39,35 +39,41 @@ Internal / closed testing note: `Testing build 1.0.0 — please check that it in
 
 ## Store listing
 
-- **App name:** The Hour Brief
-- **Short description (74/80):** A daily brief on AI, business and markets — built for one hour of reading.
+- **App name (26/30):** The Hour Brief: Daily News   _(was "The Hour Brief"; updated 2026-11-21 for search)_
+- **Short description (79/80):** AI, business & stock market news daily. Read or listen in 7 min, then the quiz.
 - **Category:** News & Magazines · **Free** · **No ads**
 - **Contact:** milindroy101292@gmail.com · https://the-hour-brief.vercel.app · contact page https://the-hour-brief.vercel.app/contact.html
 - **Privacy policy:** https://the-hour-brief.vercel.app/privacy.html
 
-**Full description**
+**Full description**  _(updated 2026-11-21: 1718/4000; no email sign-up, no reordering, stories show in full, podcast + channels + reviewed market section)_
 
 ```
-The Hour Brief is a daily read built for one sitting — about an hour, once a morning.
+The Hour Brief is your daily news summary for India: what moved in AI and technology, what's shaping business and startups in India and worldwide, and what the stock market did and why. One short brief every morning, built for one sitting.
 
-Every edition covers three lanes:
-• AI & Tech — what moved in AI and technology
-• Product & Business — what's shaping products and companies, in India and globally
-• Stock Market — how Indian and US markets closed, the day's movers, and one investing principle worth remembering
+Every edition has three sections:
+• AI & Tech: the AI and tech news that actually mattered today
+• Product & Business: business and startup news from India and around the world
+• Stock Market: how Sensex, Nifty and the US markets closed, the day's movers, and why
 
-Made to be read, not scrolled:
-• Every story has a short summary you can expand and a one-line takeaway
-• A five-question daily quiz on the edition, with streaks, badges and a shareable score (no account needed)
-• Friends leagues: start a private league, invite friends with a link and compare quiz scores every day (no sign-up, no typed names)
-• Listen to today's brief: about six minutes of the day's headlines and takeaways, read aloud in an AI-generated Indian-English voice (recorded each morning; if it isn't ready yet, your phone reads it instead)
-• Every summary links back to its original source
-• Clean layout, no ads, and it follows your phone's light or dark theme
-• Share any edition with one tap, pull down to refresh any time, and the next edition opens on its own once it's ready
-• Browse the archive of past editions
+Read it, listen to it, or both:
+• Listen in about 7 minutes: each morning's brief is read aloud in an AI-generated Indian-English voice, with chapters, offline playback and the screen off. The same episode is also a podcast on Spotify.
+• Swipe through one story at a time, or switch to the full list
+• Every story has a short summary, a one-line takeaway, and a link to its original source
+• Hide the sections you don't want
+• A morning reminder, so the brief is waiting when you are
 
-How it's made: editions are researched with AI from public reporting, newsletters and market data, and every item links to its source. It is not independently fact-checked, so check the source before relying on anything. Nothing here is investment advice.
+Daily current affairs quiz:
+• Five quick questions on the day's news, about a minute
+• Streaks and badges, and a score you can share
+• Private friends leagues: invite friends, your class or your team with one link and compare scores every day (no sign-up, no typed names)
 
-Free, and no account needed. Prefer your inbox? Subscribe by email from the app.
+Also:
+• Past editions archive, light and dark mode, no ads, no account needed
+• The brief every morning on WhatsApp and Telegram too
+
+How it's made: each edition is researched and written with AI from public reporting and market data, and every item links to its source. The Stock Market section is reviewed by a person each morning after it publishes, and corrections are noted on the story. Nothing here is investment advice.
+
+Free. No ads. No sign-up.
 ```
 
 ## App content answers

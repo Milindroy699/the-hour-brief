@@ -887,7 +887,8 @@
   }
   function lgError(r) {
     if (r.status === 404) return 'That league no longer exists.';
-    if (r.status === 409) return 'That league is full (30 players).';
+    if (r.status === 409) return 'That league is full.';
+    if (r.status === 400 && r.d && r.d.error && /[A-Z]/.test(r.d.error.charAt(0))) return r.d.error;   // the server's own words (a name it can't take)
     if (r.status === 429) return 'Too many tries for now. Please try again tomorrow.';
     return 'Could not reach leagues right now. Please try again.';
   }
@@ -899,7 +900,10 @@
       var d = dates.length ? dates[dates.length - 1] : DATE;
       return lgFetch('/api/league?' + new URLSearchParams({ code: code, mid: st.mid, date: d }));
     }).then(function (r) {
-      if (r.ok) { boards[code] = r.d; checkChampion(code, r.d); } else if (r.status === 404) { boards[code] = { gone: true }; }
+      if (r.ok) {
+        boards[code] = r.d; checkChampion(code, r.d);
+        if (r.d.kind) { var s2 = lgLoad(), l2 = s2.leagues.filter(function (l) { return l.code === code; })[0]; if (l2 && l2.kind !== r.d.kind) { l2.kind = r.d.kind; lgSave(s2); } }
+      } else if (r.status === 404) { boards[code] = { gone: true }; }
       renderLeagues();
     }).catch(function () { renderLeagues(); });
   }
@@ -939,15 +943,18 @@
 
   function afterJoin(code) { setLgMsg(''); refreshBoard(code); syncScores(); }
 
-  function startLeague() {
+  // kind: undefined for a friends league (generated name, up to 30), or 'college' | 'office' | 'community' with a typed name
+  // (up to 300 players; api/league.js checks the name).
+  function startLeague(kind, name) {
     if (lgBusy) return;
     var st = lgLoad();
     if (st.leagues.length >= MAX_LEAGUES) return;
     lgBusy = true; setLgMsg('Creating your league…');
-    lgPost({ action: 'create', mid: st.mid }).then(function (r) {
+    lgPost(kind ? { action: 'create', mid: st.mid, kind: kind, name: name } : { action: 'create', mid: st.mid }).then(function (r) {
       lgBusy = false;
       if (!r.ok) { setLgMsg(lgError(r)); return; }
-      st.leagues.push({ code: r.d.code, name: r.d.name });
+      groupForm = false;
+      st.leagues.push({ code: r.d.code, name: r.d.name, kind: r.d.kind || 'friends' });
       lgSave(st);
       afterJoin(r.d.code);
     }).catch(function () { lgBusy = false; setLgMsg(lgError({})); });
@@ -959,7 +966,7 @@
     if (st.leagues.length >= MAX_LEAGUES) { setLgMsg('You can be in up to ' + MAX_LEAGUES + ' leagues. Leave one to join another.'); return Promise.resolve(false); }
     return lgPost({ action: 'join', code: code, mid: st.mid }).then(function (r) {
       if (!r.ok) { setLgMsg(lgError(r)); return false; }
-      st.leagues.push({ code: code, name: r.d.name });
+      st.leagues.push({ code: code, name: r.d.name, kind: r.d.kind || (boards[code] && boards[code].kind) || 'friends' });
       lgSave(st);
       afterJoin(code);
       return true;
@@ -976,8 +983,12 @@
   }
 
   function inviteLink(lg) { return location.origin + '/l/' + lg.code + '?n=' + encodeURIComponent(lg.name); }
+  // The code is in the message itself: someone who installs the app from the invite arrives without the link, and types it.
   function invite(lg) {
-    share('Join my Hour Brief quiz league “' + lg.name + '” and beat me at today’s news quiz.', inviteLink(lg));
+    var group = lg.kind && lg.kind !== 'friends';
+    share((group ? 'Join “' + lg.name + '” on The Hour Brief: a 1-minute daily news quiz, with a leaderboard for all of us.'
+      : 'Join my Hour Brief quiz league “' + lg.name + '” and beat me at today’s news quiz.') +
+      ' Open the link, or get the app and enter code ' + lg.code + ' under Challenge.', inviteLink(lg));
   }
 
   function boardList(s, week) {
@@ -991,6 +1002,7 @@
         list.appendChild(li);
       });
       if (!list.children.length) list.appendChild(el('li', 'qz-empty', 'No scores this week yet.'));
+      if (s.weekCount > (s.week || []).length) list.appendChild(el('li', 'qz-empty', '…and ' + (s.weekCount - s.week.length) + ' more'));
       return list;
     }
     (s.today || []).forEach(function (e) {
@@ -1001,7 +1013,9 @@
       list.appendChild(li);
     });
     if (!list.children.length) list.appendChild(el('li', 'qz-empty', 'Nobody has played yet today.'));
-    if ((s.yet || []).length) {
+    if (s.todayCount > (s.today || []).length) list.appendChild(el('li', 'qz-empty', '…and ' + (s.todayCount - s.today.length) + ' more'));
+    if (s.yetCount > (s.yet || []).length) list.appendChild(el('li', 'qz-empty', s.yetCount + ' yet to play today'));
+    else if ((s.yet || []).length) {
       var w = el('li', 'qz-empty', 'Yet to play: ' + s.yet.map(function (y) { return y.h + (y.me ? ' (you)' : ''); }).join(', '));
       list.appendChild(w);
     }
@@ -1013,12 +1027,14 @@
     var head = el('div', 'qz-lg-head');
     head.appendChild(el('b', '', lg.name));
     head.appendChild(el('span', 'qz-code', 'Code ' + lg.code));
+    var bs = boards[lg.code];
+    if (bs && bs.label) head.appendChild(el('span', 'qz-code', bs.label));
     card.appendChild(head);
     var s = boards[lg.code];
     if (!s) { card.appendChild(el('p', 'qz-lg-note', 'Loading standings…')); }
     else if (s.gone) { card.appendChild(el('p', 'qz-lg-note', 'This league has expired.')); }
     else {
-      card.appendChild(el('p', 'qz-lg-note', s.members + (s.members === 1 ? ' player' : ' players') + (s.me ? ' · you are ' + s.me : '')));
+      card.appendChild(el('p', 'qz-lg-note', s.members + (s.members === 1 ? ' player' : ' players') + (s.max && s.max > 30 ? ' of ' + s.max : '') + (s.me ? ' · you are ' + s.me : '')));
       var tabs = el('div', 'qz-tabs');
       [['Today', false], ['This week', true]].forEach(function (t) {
         var b = el('button', 'qz-tab' + (!!viewWeek[lg.code] === t[1] ? ' on' : ''), t[0]);
@@ -1031,7 +1047,7 @@
       card.appendChild(boardList(s, !!viewWeek[lg.code]));
     }
     var row = el('div', 'quiz-actions');
-    var inv = el('button', 'quiz-btn primary', 'Invite friends');
+    var inv = el('button', 'quiz-btn primary', lg.kind && lg.kind !== 'friends' ? 'Invite your group' : 'Invite friends');
     inv.type = 'button';
     inv.addEventListener('click', function () { invite(lg); });
     var leave = el('button', 'quiz-btn', 'Leave');
@@ -1049,18 +1065,24 @@
   function renderLeagues() {
     var st = lgLoad();
     lgBox.textContent = '';
-    lgBox.appendChild(el('h3', 'qz-lg-title', 'Friends leagues'));
+    lgBox.appendChild(el('h3', 'qz-lg-title', 'Leagues'));
     if (!st.leagues.length) {
-      lgBox.appendChild(el('p', 'qz-lg-intro', 'Compete privately with friends — for two people or twenty. Start a league and send the link. No accounts: everyone gets a fun generated name.'));
+      lgBox.appendChild(el('p', 'qz-lg-intro', 'Play the daily quiz against your friends, your class or your team. Start a league and share the link or its code. No accounts: everyone gets a fun generated name.'));
     }
     st.leagues.forEach(function (lg) { lgBox.appendChild(leagueCard(lg)); });
     if (st.leagues.length < MAX_LEAGUES) {
       var row = el('div', 'quiz-actions');
-      var start = el('button', 'quiz-btn' + (st.leagues.length ? '' : ' primary'), st.leagues.length ? 'Start another league' : 'Start a league');
+      var start = el('button', 'quiz-btn' + (st.leagues.length ? '' : ' primary'), st.leagues.length ? 'Friends league' : 'Start a friends league');
       start.type = 'button';
-      start.addEventListener('click', startLeague);
+      start.addEventListener('click', function () { startLeague(); });
+      var grp = el('button', 'quiz-btn', 'College or office league');
+      grp.type = 'button';
+      grp.setAttribute('aria-expanded', String(groupForm));
+      grp.addEventListener('click', function () { groupForm = !groupForm; renderLeagues(); });
       row.appendChild(start);
+      row.appendChild(grp);
       lgBox.appendChild(row);
+      if (groupForm) lgBox.appendChild(groupFormEl());
       var jr = el('form', 'qz-joinrow');
       var input = el('input', 'qz-input');
       input.type = 'text';
@@ -1083,11 +1105,42 @@
     }
     if (lgMsg) { var m = el('p', 'qz-lg-msg', lgMsg); m.setAttribute('role', 'status'); lgBox.appendChild(m); }
     var priv = el('p', 'qz-lg-priv');
-    priv.appendChild(document.createTextNode('Leagues store a random device ID, a generated name and your daily score for up to 4 months. '));
+    priv.appendChild(document.createTextNode('Leagues store a random device ID, a generated name and your daily score for up to 4 months. A college or office league’s name is chosen by whoever starts it and is shown to everyone with its link. '));
     var a = el('a', '', 'Privacy');
     a.href = '/privacy.html';
     priv.appendChild(a);
     lgBox.appendChild(priv);
+  }
+
+  // Starting a college / office / community league: its kind and a name (up to 300 players).
+  var groupForm = false;
+  function groupFormEl() {
+    var f = el('form', 'qz-groupform');
+    f.appendChild(el('p', 'qz-lg-intro', 'For a class, a batch, a team or a club: up to 300 players, one leaderboard. Pick a name everyone will recognise.'));
+    var kind = el('select', 'qz-input');
+    kind.setAttribute('aria-label', 'Kind of league');
+    [['college', 'College or class'], ['office', 'Office or team'], ['community', 'Community or club']].forEach(function (k) {
+      var o = el('option', '', k[1]); o.value = k[0]; kind.appendChild(o);
+    });
+    var name = el('input', 'qz-input');
+    name.type = 'text';
+    name.maxLength = 40;
+    name.placeholder = 'e.g. IIT Delhi CSE 2027';
+    name.setAttribute('aria-label', 'League name');
+    name.setAttribute('autocomplete', 'off');
+    var go = el('button', 'quiz-btn primary', 'Create league');
+    go.type = 'submit';
+    var r = el('div', 'quiz-actions');
+    r.appendChild(kind); r.appendChild(name); r.appendChild(go);
+    f.appendChild(r);
+    f.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var n = name.value.replace(/\s+/g, ' ').trim();
+      if (n.length < 3) { setLgMsg('Give the league a name (3 to 40 characters).'); return; }
+      startLeague(kind.value, n);
+    });
+    setTimeout(function () { try { name.focus(); } catch (x) { /* ignore */ } }, 0);
+    return f;
   }
 
   function handleJoinParam() {
@@ -1100,7 +1153,7 @@
       joinBox.textContent = '';
       var card = el('div', 'quiz-friend');
       if (!r.ok) { card.textContent = 'This league invite is no longer valid.'; joinBox.appendChild(card); return; }
-      card.appendChild(el('p', 'qz-join-t', 'You’re invited to join “' + r.d.name + '” (' + r.d.members + (r.d.members === 1 ? ' player' : ' players') + ').'));
+      card.appendChild(el('p', 'qz-join-t', 'You’re invited to join ' + (r.d.label ? 'the ' + r.d.label.toLowerCase() + ' league ' : '') + '“' + r.d.name + '” (' + r.d.members + (r.d.members === 1 ? ' player' : ' players') + ').'));
       var row = el('div', 'quiz-actions');
       var yes = el('button', 'quiz-btn primary', 'Join league');
       yes.type = 'button';

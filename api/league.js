@@ -1,6 +1,9 @@
-// Friends leagues: private, invite-by-link groups that compare daily quiz scores.
-// No accounts and no user-typed text: the server assigns every player a generated name
-// ("Curious Otter 27") derived from a random device id, and every league a generated name.
+// Leagues: private, invite-by-link groups that compare daily quiz scores.
+// No accounts: the server assigns every player a generated name ("Curious Otter 27") derived from a random device id.
+// Two kinds (2026-11-21):
+//   friends  up to 30 players, a generated league name ("Swift Otters")
+//   group    a college class, an office team or a community: up to 300 players and a name its creator types
+//            ("IIM-A PGP 2027"), checked here (length, characters, a blocklist); the boards show the top 25 plus you.
 // Stored per league: name, member id -> generated name, and one score per member per day.
 // Everything expires ~120 days after last activity.
 const crypto = require('crypto');
@@ -9,6 +12,19 @@ const KV_URL = process.env.KV_REST_API_URL;
 const KV_TOKEN = process.env.KV_REST_API_TOKEN;
 const TTL = 120 * 86400;
 const MAX_MEMBERS = 30;
+const GROUP_MAX = 300;
+const BOARD_TOP = 25;                    // a group's boards list this many, plus the viewer if they are further down
+const KINDS = { college: 'College', office: 'Office', community: 'Community' };
+// A typed league name: 3-40 characters of letters, digits, spaces and . , & - ' ( ) /, no links, nothing on the blocklist.
+const BLOCK = /\b(fuck|shit|bitch|cunt|dick|porn|sex|nazi|rape|slut|whore|chutiya|madarchod|bhenchod|behenchod|bsdk|gaand|lund|randi|harami|kamina)\w*/i;
+function cleanName(raw) {
+  const n = String(raw || '').replace(/\s+/g, ' ').trim();
+  if (n.length < 3 || n.length > 40) return { error: 'Names are 3 to 40 characters.' };
+  if (!/^[\p{L}\p{N} .,&'()\/-]+$/u.test(n)) return { error: 'Use letters, numbers, spaces and . , & - \' ( ) / only.' };
+  if (/https?:|www\.|[a-z0-9-]{2,}\.(com|in|net|org|io|co|app)\b/i.test(n)) return { error: 'No links in league names.' };   // "B.Com" is a degree, "spam.com" a link
+  if (BLOCK.test(n.replace(/[^\p{L}\s]/gu, ''))) return { error: 'Please choose another name.' };
+  return { name: n };
+}
 const DAY_MS = 86400000;
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
@@ -116,7 +132,13 @@ async function standings(code, mid, date) {
     const winners = entries.filter((e) => e.s === top);
     return { date: d, players: entries.length, top, winners: winners.map((e) => members[e.id]), meWon: entries.length >= 2 && winners.some((e) => e.id === mid) };
   });
-  return { code, name: meta.name, members: ids.length, date, isMember: !!members[mid], me: members[mid] || null, today, yet, week, hist };
+  const max = parseInt(meta.max, 10) || MAX_MEMBERS;
+  // a big league shows its top players plus the viewer; who has yet to play becomes a count
+  const trim = (arr) => (arr.length <= BOARD_TOP ? arr : arr.slice(0, BOARD_TOP).concat(arr.slice(BOARD_TOP).filter((e) => e.me)));
+  const big = ids.length > BOARD_TOP + 5;
+  return { code, name: meta.name, kind: meta.kind || 'friends', label: KINDS[meta.kind] || '', max, members: ids.length, date, isMember: !!members[mid], me: members[mid] || null,
+    today: big ? trim(today) : today, todayCount: today.length, yet: big ? yet.filter((e) => e.me) : yet, yetCount: yet.length,
+    week: big ? trim(week) : week, weekCount: week.length, hist };
 }
 
 module.exports = async (req, res) => {
@@ -133,9 +155,10 @@ module.exports = async (req, res) => {
     const code = String(q.code || '').toUpperCase();
     if (!CODE_RE.test(code)) return bad('invalid code');
     if (q.meta === '1') {
-      const [m, n] = await pipe([['HGET', `lg:${code}`, 'name'], ['HLEN', `lg:${code}:m`]]);
-      if (!m.result) return bad('league not found', 404);
-      return res.status(200).json({ code, name: m.result, members: parseInt(n.result, 10) || 0 });
+      const [m, n] = await pipe([['HMGET', `lg:${code}`, 'name', 'kind', 'max'], ['HLEN', `lg:${code}:m`]]);
+      const [name, kind, max] = m.result || [];
+      if (!name) return bad('league not found', 404);
+      return res.status(200).json({ code, name, kind: kind || 'friends', label: KINDS[kind] || '', max: parseInt(max, 10) || MAX_MEMBERS, members: parseInt(n.result, 10) || 0 });
     }
     const mid = String(q.mid || '');
     const date = String(q.date || '');
@@ -153,22 +176,25 @@ module.exports = async (req, res) => {
   if (!MID_RE.test(mid)) return bad('invalid request');
 
   if (body.action === 'create') {
-    if (await limited(req, 'create', 5)) return bad('too many leagues created today', 429);
+    const group = body.kind && KINDS[body.kind];
+    let typed = null;
+    if (group) { typed = cleanName(body.name); if (typed.error) return bad(typed.error); }
+    if (await limited(req, group ? 'create-group' : 'create', group ? 3 : 5)) return bad('too many leagues created today', 429);
     let code = null;
     for (let i = 0; i < 6 && !code; i++) {
       const c = newCode();
       if ((await kv(['HSETNX', `lg:${c}`, 'created', String(Date.now())])).result === 1) code = c;
     }
     if (!code) return bad('try again', 503);
-    const name = leagueName();
+    const name = group ? typed.name : leagueName();
     const handle = handleFor(mid, new Set());
     await pipe([
-      ['HSET', `lg:${code}`, 'name', name],
+      ['HSET', `lg:${code}`, 'name', name, 'kind', group ? body.kind : 'friends', 'max', String(group ? GROUP_MAX : MAX_MEMBERS)],
       ['HSET', `lg:${code}:m`, mid, handle],
       ['EXPIRE', `lg:${code}`, String(TTL)],
       ['EXPIRE', `lg:${code}:m`, String(TTL)],
     ]);
-    return res.status(200).json({ ok: true, code, name, handle });
+    return res.status(200).json({ ok: true, code, name, handle, kind: group ? body.kind : 'friends', max: group ? GROUP_MAX : MAX_MEMBERS });
   }
 
   const code = String(body.code || '').toUpperCase();
@@ -176,11 +202,13 @@ module.exports = async (req, res) => {
 
   if (body.action === 'join') {
     if (await limited(req, 'join', 30)) return bad('too many requests', 429);
-    const [meta, mem] = await pipe([['HGET', `lg:${code}`, 'name'], ['HGETALL', `lg:${code}:m`]]);
-    if (!meta.result) return bad('league not found', 404);
+    const [meta, mem] = await pipe([['HMGET', `lg:${code}`, 'name', 'max'], ['HGETALL', `lg:${code}:m`]]);
+    const [lname, lmax] = meta.result || [];
+    if (!lname) return bad('league not found', 404);
+    meta.result = lname;
     const members = flat(mem);
     if (members[mid]) return res.status(200).json({ ok: true, code, name: meta.result, handle: members[mid], already: true });
-    if (Object.keys(members).length >= MAX_MEMBERS) return bad('this league is full', 409);
+    if (Object.keys(members).length >= (parseInt(lmax, 10) || MAX_MEMBERS)) return bad('this league is full', 409);
     const handle = handleFor(mid, new Set(Object.values(members)));
     await pipe([['HSET', `lg:${code}:m`, mid, handle], ['EXPIRE', `lg:${code}:m`, String(TTL)], ['EXPIRE', `lg:${code}`, String(TTL)]]);
     return res.status(200).json({ ok: true, code, name: meta.result, handle });
@@ -209,3 +237,5 @@ module.exports = async (req, res) => {
 
   return bad('unknown action');
 };
+
+module.exports.cleanName = cleanName;

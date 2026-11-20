@@ -273,7 +273,7 @@ await c.ev(`${pl('.hb-pl-close')}.click()`);
 await open({ tts: true, manifestOk: false, prefs: { order: ['mkt', 'ai', 'biz', 'quiz'], off: ['biz'] }, wait: 1200 }); await c.sleep(600);
 await c.ev(`window.__ttsMs = 20; ${btn}.click()`);
 await waitFor(`HBListen.state() === 'done'`, 20000);
-t = await J(`(() => { const norm = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' '); const said = norm(window.__spoken.join(' ')); const head = (id) => norm(document.querySelector('.item[data-story-id="' + id + '"] h3').textContent).split(' ').slice(0, 6).join(' ');
+t = await J(`(() => { const norm = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' '); const said = norm(window.__spoken.join(' ')); const head = (id) => norm(document.querySelector('.item[data-story-id="' + id + '"] h3').textContent.replace(/&/g, ' and ')).split(' ').slice(0, 6).join(' ');   /* the voice says "S and P" for "S&P" */
   return { done: HBListen.state(), ai: said.includes(head('ai-1')), biz: said.includes(head('biz-1')), mkt: said.includes(head('mkt-1')), mktBeforeAi: said.indexOf(head('mkt-1')) >= 0 && said.indexOf(head('mkt-1')) < said.indexOf(head('ai-1')) }; })()`);
 check('device voice: hidden section is not read, the others are read in the usual order (an old saved order is ignored)', t.done === 'done' && t.ai && t.mkt && !t.biz && !t.mktBeforeAi, JSON.stringify(t));
 

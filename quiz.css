@@ -263,3 +263,10 @@
 .qz-joinrow { display: flex; gap: 10px; margin-top: 12px; }
 .qz-input { flex: 1; min-width: 0; min-height: 46px; padding: 0 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); font: inherit; font-size: 16px; letter-spacing: 0.1em; text-transform: uppercase; }
 .qz-input::placeholder { letter-spacing: 0; text-transform: none; }
+
+/* Starting a college / office / community league (quiz.js groupFormEl): a kind, a typed name, Create. */
+.qz-groupform { margin-top: 12px; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); }
+.qz-groupform .qz-lg-intro { margin: 0 0 10px; }
+.qz-groupform .quiz-actions { flex-direction: column; align-items: stretch; gap: 10px; }
+.qz-groupform .qz-input { letter-spacing: normal; text-transform: none; width: 100%; box-sizing: border-box; }
+.qz-groupform select.qz-input { appearance: auto; }

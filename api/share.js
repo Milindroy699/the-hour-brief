@@ -2,7 +2,7 @@
 // /l/<code> (league invite). Crawlers read the Open Graph tags; people are redirected straight on.
 const { CANON, DATE_RE, ID_RE, CODE_RE, LANE_LABEL, esc, clip, loadEdition, editionInfo, storyInfo } = require('./_edition');
 
-function page({ title, description, image, alt, landing, dest }) {
+function page({ title, description, image, alt, landing, dest, note = '', src = 'share-page', hold = false }) {
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <title>${esc(title)}</title>
@@ -23,12 +23,14 @@ function page({ title, description, image, alt, landing, dest }) {
 <meta name="twitter:title" content="${esc(title)}">
 <meta name="twitter:description" content="${esc(description)}">
 <meta name="twitter:image" content="${esc(image)}">
-<meta http-equiv="refresh" content="3;url=${esc(dest)}">
+${hold ? '' : `<meta http-equiv="refresh" content="3;url=${esc(dest)}">`}
 </head><body style="font:16px/1.5 system-ui,sans-serif;padding:24px;max-width:420px;margin:0 auto;text-align:center">
 <p id="hb-land-msg">Opening <a href="${esc(dest)}">The Hour Brief</a>…</p>
+${note ? `<p style="margin:12px 0 0;padding:12px 14px;border-radius:12px;background:#f1eefe;color:#2b2160">${note}</p>` : ''}
 <p id="hb-land-store" hidden style="margin-top:14px">
-<a id="hb-land-ios" href="/app?src=share-page&amp;to=ios" style="display:none">Get it on the App Store</a>
-<a id="hb-land-android" href="/app?src=share-page&amp;to=android" style="display:none">Get it on Google Play</a>
+<a id="hb-land-ios" href="/app?src=${esc(src)}&amp;to=ios" style="display:none">Get it on the App Store</a>
+<a id="hb-land-android" href="/app?src=${esc(src)}&amp;to=android" style="display:none">Get it on Google Play</a>
+${hold ? `<br><a id="hb-land-web" href="${esc(dest)}" style="display:inline-block;margin-top:14px">Continue on the website</a>` : ''}
 </p>
 <script>
 (function () {
@@ -59,6 +61,8 @@ function page({ title, description, image, alt, landing, dest }) {
     document.getElementById(ios ? 'hb-land-ios' : 'hb-land-android').style.display = 'inline-block';
     document.getElementById('hb-land-msg').textContent = 'The Hour Brief has an app.';
   }
+  // A league invite on a phone waits for a choice (the code above has to be readable); anything else moves on by itself.
+  if (${hold ? 'true' : 'false'} && (ios || android)) { var w = document.getElementById('hb-land-web'); if (w) w.href = dest; return; }
   setTimeout(function () { location.replace(dest); }, ios || android ? 2500 : 0);
 })();
 </script>
@@ -120,6 +124,10 @@ module.exports = async (req, res) => {
       alt: 'Join a friends league on The Hour Brief',
       landing: `${CANON}/l/${code}`,
       dest: `/?join=${code}#quiz`,
+      // Installing the app loses this link, so the code is spelled out for typing in.
+      note: `League code <b style="letter-spacing:.12em">${esc(code)}</b>. In the app, open <b>Challenge</b> and enter it to join.`,
+      src: 'league-invite',
+      hold: true,
     };
   }
 

@@ -586,11 +586,22 @@
   // The story the reader has reached in the list, so reopening Cards resumes there instead of restarting at the
   // cover every time — close() already scrolls the list to match the card being read; this is the other direction,
   // for a reader who went List -> Cards -> List -> Cards without an explicit target (a shared link, Listen playing).
+  // The story being read in the list: the last one whose top has reached the reading line, just under the sticky header
+  // (logo bar + section chips). Measured, not a fixed number: the header grew on 2026-11-19 and a fixed 120px then picked
+  // the story above the one in view, so List -> Cards resumed one story early.
+  function readingLine() {
+    var y = 0;
+    ['.masthead-band', '.nav'].forEach(function (sel) {
+      var e = document.querySelector(sel), r = e && e.getBoundingClientRect();
+      if (r && r.height && r.top < 240 && r.bottom > y) y = r.bottom;
+    });
+    return (y || 72) + 48;
+  }
   function listStoryId() {
-    var items = document.querySelectorAll('.item[data-story-id]'), best = null, bestTop = -Infinity;
+    var items = document.querySelectorAll('.item[data-story-id]'), best = null, bestTop = -Infinity, line = readingLine();
     for (var k = 0; k < items.length; k++) {
       var top = items[k].getBoundingClientRect().top;
-      if (top <= 120 && top > bestTop) { bestTop = top; best = items[k]; }
+      if (top <= line && top > bestTop) { bestTop = top; best = items[k]; }
     }
     return best ? best.getAttribute('data-story-id') : null;
   }
@@ -921,6 +932,9 @@
     o = o || {};
     build();
     if (shown) { if (o.id) { var j = indexOfStory(o.id); if (j >= 0) goTo(j, true); } return true; }
+    // The story being read in the list, measured BEFORE the deck opens: with hb-deck-open on the root the header stops
+    // being sticky, so measuring afterwards misses it and resumes one story early.
+    var readingId = listStoryId();
     render();
     if (!cards.some(function (c) { return c.kind === 'story'; })) return false;
     returnFocus = document.activeElement;
@@ -933,7 +947,7 @@
     var now = listenNow();
     if (now.live && now.cur) lastFollowId = now.cur.id;              // opening mid-play: start on it, then follow the NEXT part
     if (i < 0 && now.live) i = unitIndex(now.cur);
-    if (i < 0) { var lastId = listStoryId(); if (lastId) i = indexOfStory(lastId); }
+    if (i < 0 && readingId) i = indexOfStory(readingId);
     if (i < 0) i = 0;
     deckW = track.clientWidth;
     goTo(i, false);
