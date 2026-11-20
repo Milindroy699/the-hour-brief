@@ -335,7 +335,7 @@ async function main() {
   if (outro) {
     trims.push(`aevalsrc=0:d=${OUTRO_GAP}:s=44100,${norm}[gap]`);
     labels.push('[gap]');
-    outro.forEach((o, k) => { trims.push(`[${k + 2}:a]${norm}[o${k}]`); labels.push(`[o${k}]`); });
+    outro.forEach((o, k) => { trims.push(`[${k + 2}:a]${norm},volume=4dB,alimiter=limit=0.97[o${k}]`); labels.push(`[o${k}]`); });   // the outro clips come out ~4 dB quieter than the day's narration
   }
   const join = labels.join('') + `concat=n=${labels.length}:v=0:a=1,apad=whole_dur=${total.toFixed(3)}[aout]`;
   fs.mkdirSync(out, { recursive: true });
