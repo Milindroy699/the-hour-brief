@@ -40,6 +40,22 @@ Left out on purpose because we do not have them: XP, "Top 8% recall", spatial au
 - Tests: `node tools/browser-tests/premium.mjs` (with `prefs.mjs` and `listen.mjs`). To see the app itself, build a debug APK whose `server.url` is a
   local static server (`http://10.0.2.2:PORT`, `cleartext: true`), run it on the emulator, then put `mobile/capacitor.config.json` back (never commit that).
 
+## Growth tracking and app entry points (2026-11-21)
+
+- **Owner report: `/growth.html`** (noindex). Open once as `/growth.html#key=<STATS_KEY>`; the key (Vercel env `STATS_KEY`,
+  production) is then kept in that browser. Data: `GET /api/track?action=report&days=N&key=...` (api/track.js).
+- **Source of a visit** (mobile.js `GROWTH_SRC`): `?utm_source`/`?src` on the landing URL, else `?ref` (the share pages /e /s /q /l
+  pass on the referrer they saw), else document.referrer mapped to a name (google, chatgpt, linkedin...), else `direct`. Kept for
+  the browser session; first touch kept in localStorage (`hb-src-first`). Website only; the apps report as `app`.
+- **Tallies** per IST day in KV hash `g:<date>`: `v|<kind>|<src>` visits, `n|...` first-time visitors, `c|<store>|<src>|<place>`
+  store taps (through `/app`), `p|<podcast app>|<src>`, `s|<place>` prompts shown, `i|<platform>` installs (first app launch).
+- **Every "Get the app" link goes through `/app?src=<place>`** (app.html): footer badges (`footer`, with `&to=ios|android`), the phone
+  bar (`getapp-bar`), desktop card (`getapp-card`), end of the deck (`end-card`), quiz result (`quiz`), Audio screen (`audio`),
+  share pages (`share-page`), QR (`qr`), podcast episodes (`podcast`), posts (`telegram`, `linkedin`, `linkedin-page`,
+  `whatsapp-status`). Play gets `utm_source/medium/campaign` as the install referrer; the App Store gets `pt`/`ct` once
+  `APPLE_PT` is filled in app.html (App Store Connect › App Analytics › Acquisition › Campaigns › generate a link, copy `pt`).
+- **Podcast links on the site:** `PODCASTS` in mobile.js; a platform shows (footer and Audio screen) once its URL is filled in.
+
 ## SEO and AI-answer engines (on every deploy)
 
 `npm run vercel-build` (package.json) runs `tools/seo/build.mjs` on Vercel. It edits the DEPLOYED copy only, never git, so the

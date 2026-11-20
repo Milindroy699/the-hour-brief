@@ -131,7 +131,7 @@
       '.hb-get-tx span{font-size:.86rem;color:var(--ink-soft,#5b5d72);line-height:1.45}' +
       '.hb-badges{display:flex;gap:8px;flex-wrap:wrap}' +
       '.hb-badge{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:10px;background:#14151f;color:#fff!important;text-decoration:none!important;font-size:.82rem;font-weight:600;line-height:1.1}' +
-      '.hb-badge svg{width:18px;height:18px;fill:currentColor;flex:none}.hb-badge small{display:block;font-weight:400;font-size:.66rem;opacity:.8}' +
+      '.hb-badge svg{width:18px;height:18px;fill:currentColor;flex:none}.hb-badge span,.hb-badge small{color:#fff!important}.hb-badge small{display:block;font-weight:400;font-size:.66rem;opacity:.8}' +
       '.hb-qr{width:84px;height:84px;background:#fff;padding:6px;border-radius:10px;border:1px solid var(--line,#e3e1f0);flex:none}' +
       '@media (max-width:640px){.hb-qr{display:none}}' +
       '.hb-pods{flex-basis:100%;display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:.84rem;color:var(--ink-soft,#5b5d72);border-top:1px solid var(--line,#e3e1f0);padding-top:12px}' +
