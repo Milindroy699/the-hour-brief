@@ -17,28 +17,45 @@
 <link rel="icon" href="/brand/logo-256.png">
 <script>
 // Smart app link (/app): phones go straight to their store; everyone else sees this page (QR + both stores).
-// ?src=<where the link was shared> rides along as Google Play's install referrer, and each visit is counted by platform.
+//   ?src=<place>  where the link was tapped or shared: a spot on the site (footer, end-card, quiz, audio, web-ios...) or a
+//                 channel (podcast, linkedin, whatsapp-status...). ?to=ios|android picks a store (a store badge).
+// Each visit is counted by platform, by the visitor's source (from mobile.js, same browser session) and by place, and the
+// place rides along to the stores: Google Play's install referrer (Play Console > Acquisition) and, once APPLE_PT is set,
+// an App Store campaign (App Store Connect > App Analytics > Acquisition > Campaigns), so installs can be traced back too.
 (function () {
+  var APPLE_PT = '';            // App Store Connect provider token (App Analytics > Campaigns > Generate a link: the "pt" value)
   var IOS = 'https://apps.apple.com/app/id6817195056';
   var PLAY = 'https://play.google.com/store/apps/details?id=app.thehourbrief';
   var ua = navigator.userAgent || '';
   // iPadOS reports a Mac user agent; touch support tells them apart.
   var ios = /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
   var android = !ios && /Android/.test(ua);
+  var clean = function (v) { return String(v || '').toLowerCase().replace(/[^a-z0-9._-]/g, '').slice(0, 40); };
+  var q = {};
+  try { q = Object.fromEntries(new URLSearchParams(location.search)); } catch (e) {}
+  var place = clean(q.src) || 'app-link';
+  var to = q.to === 'ios' || q.to === 'android' ? q.to : '';
+  // The visitor's source: this browser session's (set by mobile.js on the site); a link from outside (a podcast, a post)
+  // opened straight here has none, so its place is its source.
   var src = '';
-  try { src = (new URLSearchParams(location.search).get('src') || '').replace(/[^a-z0-9_-]/gi, '').slice(0, 40); } catch (e) {}
-  var play = PLAY + '&referrer=' + encodeURIComponent('utm_source=' + (src || 'app_link') + '&utm_medium=app_link');
+  try { src = sessionStorage.getItem('hb-src-s') || ''; } catch (e) {}
+  if (!src || src === 'direct') src = place;
+  var play = PLAY + '&referrer=' + encodeURIComponent('utm_source=' + src + '&utm_medium=' + place + '&utm_campaign=' + place);
+  var apple = IOS + (APPLE_PT ? '?pt=' + APPLE_PT + '&ct=' + encodeURIComponent((src + '.' + place).slice(0, 40)) + '&mt=8' : '');
   var kind = ios ? 'ios' : android ? 'android' : 'desktop';
+  var go = to || (kind === 'desktop' ? '' : kind);                  // where this visit is being sent
   try {
-    var body = JSON.stringify({ event: 'app_link_' + kind });
-    if (navigator.sendBeacon) navigator.sendBeacon('/api/track', new Blob([body], { type: 'application/json' }));
-    else fetch('/api/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, keepalive: true });
+    if (!/^(localhost|127\.)/.test(location.hostname)) {
+      var body = JSON.stringify({ event: 'app_link_' + (go || 'desktop'), src: src, place: place, from: kind });
+      if (navigator.sendBeacon) navigator.sendBeacon('/api/track', new Blob([body], { type: 'application/json' }));
+      else fetch('/api/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, keepalive: true });
+    }
   } catch (e) {}
-  window.HB_STORE = { ios: IOS, android: play, kind: kind };
+  window.HB_STORE = { ios: apple, android: play, kind: kind };
   // Set the phone layout now: once a redirect starts, scripts further down the page may never run.
-  if (kind !== 'desktop') document.documentElement.classList.add('phone');
-  if (ios) location.replace(IOS);
-  else if (android) location.replace(play);
+  if (go) document.documentElement.classList.add('phone');
+  if (go === 'ios') location.replace(apple);
+  else if (go === 'android') location.replace(play);
 })();
 </script>
 <style>
@@ -63,6 +80,7 @@
   html.phone .opening { display: block; }
   html.phone .qr, html.phone .qr-cap { display: none; }
 </style>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"MobileApplication","name":"The Hour Brief","operatingSystem":"iOS","applicationCategory":"NewsApplication","url":"https://apps.apple.com/app/id6817195056","installUrl":"https://apps.apple.com/app/id6817195056","offers":{"@type":"Offer","price":"0","priceCurrency":"INR"},"publisher":{"@id":"https://the-hour-brief.vercel.app/#organization"},"description":"The daily brief on AI, business and the Indian stock market, read aloud, with a one-minute quiz and a morning reminder."},{"@type":"MobileApplication","name":"The Hour Brief","operatingSystem":"Android","applicationCategory":"NewsApplication","url":"https://play.google.com/store/apps/details?id=app.thehourbrief","installUrl":"https://play.google.com/store/apps/details?id=app.thehourbrief","offers":{"@type":"Offer","price":"0","priceCurrency":"INR"},"publisher":{"@id":"https://the-hour-brief.vercel.app/#organization"},"description":"The daily brief on AI, business and the Indian stock market, read aloud, with a one-minute quiz and a morning reminder."}]}</script>
 </head>
 <body>
 <main>
@@ -83,6 +101,7 @@
   if (window.HB_STORE) {
     if (window.HB_STORE.kind !== 'desktop') document.documentElement.classList.add('phone');
     document.getElementById('android').href = window.HB_STORE.android;
+    document.getElementById('ios').href = window.HB_STORE.ios;
   }
 </script>
 </body>

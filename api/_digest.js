@@ -40,7 +40,8 @@ async function buildDigest() {
     '',
     ...lanes.flatMap(([icon, name, t]) => [`${icon} <b>${esc(name)}</b>`, esc(t), '']),
     ...(n ? [`🧠 <b>${esc(quizLine)}</b>`, `<a href="${esc(quizUrl)}">Play the quiz</a>`, ''] : []),
-    `📖 <a href="${esc(editionUrl)}">Read the full edition</a>`,
+    `📖 <a href="${esc(editionUrl + '?src=telegram')}">Read the full edition</a>`,
+    `📱 <a href="${esc(CANON + '/app?src=telegram')}">Get the free app</a>: the brief at 8am, audio and the daily quiz`,
   ].join('\n');
 
   const plainLines = (bold) => [

@@ -55,6 +55,152 @@
     })(window, document, 'clarity', 'script', 'zgqdsavwa8');
   }
 
+  // ---- Growth: where a visitor came from, the app store links, and the podcast links (website only) ----
+  // source(): the visit's source, decided on the first page of a browser session and kept for the session, so a click on
+  // "Get the app" three pages later is still credited to Google, LinkedIn, the podcast... Order: ?utm_source / ?src on the
+  // landing URL, then ?ref (the share pages /e /s /q pass on the referrer they saw), then document.referrer, else "direct".
+  // The first source ever seen on this browser is kept too (first touch), which also tells a new visitor from a returning one.
+  // Read by app.html (store clicks), cards.js / listen.js / quiz.js (app prompts) and the growth report (growth.html).
+  var REFS = [
+    [/(^|\.)news\.google\./, 'google-news'], [/(^|\.)gemini\.google\./, 'gemini'], [/(^|\.)google\./, 'google'],
+    [/(^|\.)bing\.com$/, 'bing'], [/(^|\.)copilot\.microsoft\.com$/, 'copilot'], [/(^|\.)duckduckgo\.com$/, 'duckduckgo'],
+    [/(^|\.)yahoo\./, 'yahoo'], [/(^|\.)(chatgpt\.com|openai\.com)$/, 'chatgpt'], [/(^|\.)perplexity\.ai$/, 'perplexity'],
+    [/(^|\.)claude\.ai$/, 'claude'], [/(^|\.)(linkedin\.com|lnkd\.in)$/, 'linkedin'], [/(^|\.)(t\.co|x\.com|twitter\.com)$/, 'x'],
+    [/(^|\.)(facebook\.com|fb\.com|fb\.me)$/, 'facebook'], [/(^|\.)instagram\.com$/, 'instagram'], [/(^|\.)threads\.net$/, 'threads'],
+    [/(^|\.)reddit\.com$/, 'reddit'], [/(^|\.)(youtube\.com|youtu\.be)$/, 'youtube'], [/(^|\.)(t\.me|telegram\.org)$/, 'telegram'],
+    [/(^|\.)whatsapp\.(com|net)$/, 'whatsapp'], [/(^|\.)spotify\.com$/, 'spotify'], [/(^|\.)podcasts\.apple\.com$/, 'apple-podcasts'],
+    [/(^|\.)music\.amazon\./, 'amazon-music'], [/(^|\.)jiosaavn\.com$/, 'jiosaavn'], [/(^|\.)(mail\.google\.com|outlook\.|mail\.yahoo\.)/, 'email'],
+    [/(^|\.)news\.ycombinator\.com$/, 'hacker-news'], [/(^|\.)notion\.(so|site)$/, 'notion']];
+  function cleanSrc(v) { return String(v || '').toLowerCase().replace(/[^a-z0-9._-]/g, '').slice(0, 40); }
+  function refSource(host) {
+    host = String(host || '').toLowerCase().replace(/^www\./, '');
+    if (!host || host === location.hostname || /(^|\.)the-hour-brief\.vercel\.app$/.test(host)) return '';
+    for (var i = 0; i < REFS.length; i++) if (REFS[i][0].test(host)) return REFS[i][1];
+    return cleanSrc(host.split('.').slice(-2).join('.'));                         // any other site, by its domain
+  }
+  var GROWTH_SRC = (function () {
+    if (NATIVE) return { src: 'app', first: 'app', isNew: false };
+    var q = {};
+    try { q = Object.fromEntries(new URLSearchParams(location.search)); } catch (e) {}
+    var here = cleanSrc(q.utm_source || q.src) || refSource(q.ref);
+    if (!here) { try { here = refSource(document.referrer ? new URL(document.referrer).hostname : ''); } catch (e) { here = ''; } }
+    var sess = '', first = null;
+    try { sess = sessionStorage.getItem('hb-src-s') || ''; } catch (e) {}
+    if (!sess) { sess = here || 'direct'; try { sessionStorage.setItem('hb-src-s', sess); } catch (e) {} }
+    try { first = JSON.parse(localStorage.getItem('hb-src-first') || 'null'); } catch (e) {}
+    var isNew = false;
+    if (!first || !first.src) {
+      first = { src: sess, day: localDay() }; isNew = true;
+      try { localStorage.setItem('hb-src-first', JSON.stringify(first)); } catch (e) { isNew = false; }
+    } else if (first.day === localDay()) isNew = true;                           // still the day they first came
+    return { src: sess, first: first.src, isNew: isNew };
+  })();
+  var STORES = { ios: 'https://apps.apple.com/app/id6817195056', android: 'https://play.google.com/store/apps/details?id=app.thehourbrief' };
+  // The show on each podcast app. Paste each link as it goes live; a platform with no link is simply not shown.
+  var PODCASTS = [
+    ['spotify', 'Spotify', ''],
+    ['apple', 'Apple Podcasts', ''],
+    ['youtube', 'YouTube Music', ''],
+    ['amazon', 'Amazon Music', ''],
+    ['jiosaavn', 'JioSaavn', ''],
+  ].filter(function (p) { return /^https:\/\//.test(p[2]); });
+  // place = where on the site the link was tapped (footer, end-card, quiz, audio...); to = a specific store, else the
+  // device's own (desktops see a QR page).
+  function appLink(place, to) {
+    return '/app?src=' + encodeURIComponent(cleanSrc(place) || 'web') + (to ? '&to=' + to : '');
+  }
+  window.HBGrowth = {
+    native: NATIVE, source: GROWTH_SRC, stores: STORES, podcasts: PODCASTS, appLink: appLink,
+    track: function (event, extra) { track(event, extra); }
+  };
+  countWebVisit();                                   // every page with this script, not just editions: a visit from Google can land on Voices
+
+  // "Get the app" + "Listen on" block at the foot of every page on the website (editions, past editions, Voices, About...):
+  // the store badges go through /app (counted, tagged for the stores), the podcast links are counted as they leave.
+  var STORE_ICON = {
+    ios: 'M16.4 12.6c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9s-1.9-.8-3.1-.8C6.8 7.4 5.3 8.3 4.5 9.8c-1.7 2.9-.4 7.2 1.2 9.6.8 1.2 1.8 2.5 3 2.4 1.2 0 1.7-.8 3.1-.8s1.9.8 3.1.8c1.3 0 2.1-1.2 2.9-2.4.9-1.3 1.3-2.6 1.3-2.7-.1 0-2.7-1-2.7-4.1zM14.2 5.6c.6-.8 1.1-1.9 1-3-1 0-2.1.6-2.8 1.4-.6.7-1.1 1.8-1 2.9 1.1.1 2.1-.5 2.8-1.3z',
+    android: 'M3.6 2.3c-.3.3-.4.7-.4 1.2v17c0 .5.1.9.4 1.2l9.6-9.7-9.6-9.7zm10.6 10.7l2.9 2.9-11.2 6.4c-.4.2-.8.3-1.1.2l9.4-9.5zm4-4l3 1.7c.9.5.9 1.3 0 1.8l-3 1.7-3.2-3.2 3.2-2zM5.1 1.9c.4-.1.7 0 1.1.2l11.2 6.4-2.9 2.9-9.4-9.5z'
+  };
+  function growthCss() {
+    if (document.getElementById('hb-growth-css')) return;
+    var st = document.createElement('style');
+    st.id = 'hb-growth-css';
+    st.textContent =
+      '.hb-get{margin:28px 0 8px;padding:18px;border:1px solid var(--line,#e3e1f0);border-radius:14px;background:var(--paper-2,rgba(94,67,243,.04));display:flex;gap:18px;align-items:center;flex-wrap:wrap}' +
+      '.hb-get-tx{flex:1 1 220px;min-width:0}.hb-get-tx strong{display:block;font-size:1rem;color:var(--ink,#14151f);margin-bottom:3px}' +
+      '.hb-get-tx span{font-size:.86rem;color:var(--ink-soft,#5b5d72);line-height:1.45}' +
+      '.hb-badges{display:flex;gap:8px;flex-wrap:wrap}' +
+      '.hb-badge{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:10px;background:#14151f;color:#fff!important;text-decoration:none!important;font-size:.82rem;font-weight:600;line-height:1.1}' +
+      '.hb-badge svg{width:18px;height:18px;fill:currentColor;flex:none}.hb-badge small{display:block;font-weight:400;font-size:.66rem;opacity:.8}' +
+      '.hb-qr{width:84px;height:84px;background:#fff;padding:6px;border-radius:10px;border:1px solid var(--line,#e3e1f0);flex:none}' +
+      '@media (max-width:640px){.hb-qr{display:none}}' +
+      '.hb-pods{flex-basis:100%;display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:.84rem;color:var(--ink-soft,#5b5d72);border-top:1px solid var(--line,#e3e1f0);padding-top:12px}' +
+      '.hb-pods a{color:var(--ink,#14151f);font-weight:600}' +
+      '.hb-appcta{display:flex;gap:12px;align-items:center;margin-top:14px;padding:12px 14px;border-radius:12px;background:rgba(94,67,243,.08);text-decoration:none!important;color:var(--ink,#14151f)!important}' +
+      '.hb-appcta img{width:36px;height:36px;border-radius:9px;flex:none}.hb-appcta b{display:block;font-size:.9rem}.hb-appcta span{font-size:.8rem;color:var(--ink-soft,#5b5d72)}' +
+      '.hb-appcta i{margin-left:auto;font-style:normal;font-weight:700;color:#5e43f3;white-space:nowrap}';
+    document.head.appendChild(st);
+  }
+  function badge(store, place) {
+    var a = document.createElement('a');
+    a.className = 'hb-badge';
+    a.href = appLink(place, store);
+    a.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + STORE_ICON[store] + '"/></svg><span><small>' +
+      (store === 'ios' ? 'Download on the' : 'Get it on') + '</small>' + (store === 'ios' ? 'App Store' : 'Google Play') + '</span>';
+    return a;
+  }
+  function podcastLinks(place) {
+    if (!PODCASTS.length) return null;
+    var row = document.createElement('div');
+    row.className = 'hb-pods';
+    row.appendChild(document.createTextNode('Listen to the daily episode on'));
+    PODCASTS.forEach(function (p) {
+      var a = document.createElement('a');
+      a.href = p[2]; a.target = '_blank'; a.rel = 'noopener'; a.textContent = p[1];
+      a.addEventListener('click', function () { track('podcast_out', { place: p[0] }); });
+      row.appendChild(a);
+    });
+    return row;
+  }
+  // A one-line app prompt for the moments a reader is most likely to want the app (end of the deck, quiz done, Audio).
+  function appPrompt(place, title, sub) {
+    if (NATIVE) return null;
+    growthCss();
+    var a = document.createElement('a');
+    a.className = 'hb-appcta';
+    a.href = appLink(place);
+    a.innerHTML = '<img src="/brand/icon-192.png" alt=""><span><b></b><span></span></span><i>Get the app</i>';
+    a.querySelector('b').textContent = title;
+    a.querySelector('span span').textContent = sub;
+    track('app_prompt_shown', { place: place });
+    return a;
+  }
+  window.HBGrowth.appPrompt = appPrompt;
+  window.HBGrowth.podcastLinks = podcastLinks;
+  (function footerGetApp() {
+    if (NATIVE) return;
+    var foot = document.querySelector('footer.colophon');
+    if (!foot || document.querySelector('.hb-get')) return;
+    growthCss();
+    var box = document.createElement('div');
+    box.className = 'hb-get';
+    var qr = document.createElement('img');
+    qr.className = 'hb-qr'; qr.src = '/brand/app-qr.svg'; qr.alt = 'QR code: get the app on your phone'; qr.width = qr.height = 84;
+    var tx = document.createElement('div');
+    tx.className = 'hb-get-tx';
+    tx.innerHTML = '<strong>Get The Hour Brief app</strong><span>Free. The brief on your phone at 8am, read aloud, offline, with the daily quiz and your streak.</span>';
+    var b = document.createElement('div');
+    b.className = 'hb-badges';
+    b.appendChild(badge('ios', 'footer'));
+    b.appendChild(badge('android', 'footer'));
+    tx.appendChild(b);
+    box.appendChild(qr);
+    box.appendChild(tx);
+    var pods = podcastLinks('footer');
+    if (pods) box.appendChild(pods);
+    foot.insertBefore(box, foot.firstChild);
+  })();
+
   function reader() { return !CLASSIC || mq.matches || NATIVE; }
   function ensureReaderCss() {
     if (document.querySelector('link[data-reader-css]')) return;
@@ -783,9 +929,12 @@
     return mobileOS() === 'ios' && /Version\/[\d.]+.*Safari\//.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|GSA\//.test(ua);
   }
   // A plain count (no identifier is sent): the once-a-day check below happens on the device.
-  function track(event) {
+  // Also carries the visit's source (see GROWTH_SRC) so each count can be split by where readers came from.
+  function track(event, extra) {
     if (/^(localhost|127\.)/.test(location.hostname)) return;     // not from test servers
-    try { fetch('/api/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: event }), keepalive: true }).catch(function () {}); }
+    var body = { event: event, src: GROWTH_SRC.src };
+    if (extra) for (var k in extra) body[k] = extra[k];
+    try { fetch('/api/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), keepalive: true }).catch(function () {}); }
     catch (e) { /* not counted */ }
   }
   // One count a day per browser, by kind (web_open_ios / _android / _desktop), so web and app use can be compared.
@@ -796,7 +945,7 @@
       if (localStorage.getItem('hb-web-day') === day) return;
       localStorage.setItem('hb-web-day', day);
     } catch (e) { return; }
-    track('web_open_' + (mobileOS() || 'desktop'));
+    track('web_open_' + (mobileOS() || 'desktop'), { new: GROWTH_SRC.isNew ? 1 : 0 });
   }
   function maybeSuggestInstall() {
     if (NATIVE) return;
@@ -806,9 +955,10 @@
     var os = mobileOS();
     if (os) { getAppBar(os); return; }
     if (!laneBase || document.querySelector('.hb-tip')) return;
+    track('install_nudge_shown', { place: 'getapp-card' });
     tipCard('install', DOWNLOAD_SVG, 'Get the app on your phone',
       'Scan a QR code for iPhone or Android: offline reading, audio and a morning reminder.', 'Show QR code',
-      function () { installSnooze(30); location.href = '/app?src=web-desktop'; },
+      function () { installSnooze(30); location.href = appLink('getapp-card'); },
       function () { installSnooze(14); });
   }
   function getAppBar(os) {
@@ -825,7 +975,7 @@
       tx.appendChild(mk('strong', '', 'The Hour Brief app'));
       tx.appendChild(mk('span', '', 'Free · offline, audio, a morning nudge'));
       var go = mk('a', 'hb-getapp-go', 'Get');
-      go.href = '/app?src=web-' + os;
+      go.href = appLink('getapp-bar');
       go.addEventListener('click', function () { track('install_nudge_tap'); installSnooze(30); });
       var x = mk('button', 'hb-getapp-x');
       x.type = 'button';
@@ -1490,7 +1640,6 @@
     restoreView(function () {
       maybeSuggest();
       maybeSuggestInstall();
-      countWebVisit();
       // Cards is the default view, so the very first call above almost always finds the deck open and defers (see
       // tipCard()) — give it another look the moment the reader actually reaches List, in the same visit, rather
       // than only on a later day that happens to start there.

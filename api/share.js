@@ -27,8 +27,8 @@ function page({ title, description, image, alt, landing, dest }) {
 </head><body style="font:16px/1.5 system-ui,sans-serif;padding:24px;max-width:420px;margin:0 auto;text-align:center">
 <p id="hb-land-msg">Opening <a href="${esc(dest)}">The Hour Brief</a>…</p>
 <p id="hb-land-store" hidden style="margin-top:14px">
-<a id="hb-land-ios" href="https://apps.apple.com/app/id6817195056" style="display:none">Get it on the App Store</a>
-<a id="hb-land-android" href="https://play.google.com/store/apps/details?id=app.thehourbrief" style="display:none">Get it on Google Play</a>
+<a id="hb-land-ios" href="/app?src=share-page&amp;to=ios" style="display:none">Get it on the App Store</a>
+<a id="hb-land-android" href="/app?src=share-page&amp;to=android" style="display:none">Get it on Google Play</a>
 </p>
 <script>
 (function () {
@@ -36,6 +36,20 @@ function page({ title, description, image, alt, landing, dest }) {
   var ios = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
   var android = /Android/.test(ua);
   var dest = ${JSON.stringify(dest)};
+  // Pass on where this link was opened from (the referrer this page saw, or ?src= on the shared link), so the site can
+  // credit the visit to LinkedIn, WhatsApp, Telegram... instead of to this page.
+  try {
+    var q = new URLSearchParams(location.search), add = [];
+    var src = (q.get('src') || q.get('utm_source') || '').replace(/[^a-z0-9._-]/gi, '').slice(0, 40);
+    var ref = document.referrer ? new URL(document.referrer).hostname : '';
+    if (src && !/[?&]utm_source=/.test(dest)) add.push('utm_source=' + encodeURIComponent(src));
+    if (ref && ref !== location.hostname) add.push('ref=' + encodeURIComponent(ref));
+    if (!src && !ref && !/[?&]utm_source=/.test(dest)) add.push('utm_source=shared-link');
+    if (add.length) {
+      var h = dest.indexOf('#'), base = h < 0 ? dest : dest.slice(0, h), hash = h < 0 ? '' : dest.slice(h);
+      dest = base + (base.indexOf('?') < 0 ? '?' : '&') + add.join('&') + hash;
+    }
+  } catch (e) {}
   if (ios || android) {
     document.getElementById('hb-land-store').hidden = false;
     document.getElementById(ios ? 'hb-land-ios' : 'hb-land-android').style.display = 'inline-block';

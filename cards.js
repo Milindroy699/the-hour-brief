@@ -356,6 +356,10 @@
     c.quiz = { el: qtile, link: qgo };
     b.scroll.appendChild(qtile);
 
+    // Website only: the moment someone has read the whole brief is the best time to offer it every morning.
+    var G = window.HBGrowth, ap = G && G.appPrompt && G.appPrompt('end-card', 'Get tomorrow’s brief at 8am', 'Free app: a morning nudge, offline reading and audio');
+    if (ap) b.scroll.appendChild(ap);
+
     var back = btn('dk-cta', 'Back to the list');
     back.addEventListener('click', function () { close(); });
     b.scroll.appendChild(back);

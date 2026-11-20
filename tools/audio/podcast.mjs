@@ -18,7 +18,7 @@ import { editionMeta } from './script.mjs';
 export const SHOW = {
   title: 'The Hour Brief',
   site: 'https://the-hour-brief.vercel.app',
-  description: 'A daily news brief, read aloud in about seven minutes: what moved in AI and technology, product and business in India and around the world, and what the Indian stock market did and why. Every story links back to its original source at the-hour-brief.vercel.app. Narrated by an AI-generated voice.',
+  description: 'A daily news brief, read aloud in about seven minutes: what moved in AI and technology, product and business in India and around the world, and what the Indian stock market did and why. Every story links back to its original source at the-hour-brief.vercel.app. Get the free app for iPhone and Android (the brief at 8am, the daily quiz and your streak): https://the-hour-brief.vercel.app/app?src=podcast . Narrated by an AI-generated voice.',
   subtitle: 'Your daily brief on AI, business and the markets, read aloud.',
   language: 'en-IN',
   author: 'The Hour Brief',
@@ -80,7 +80,8 @@ export function episodeFrom(manifest, html, { audioBase, site }) {
   const body = [
     `Your brief for ${longDate(date)}, read aloud in about ${mins} minute${mins === 1 ? '' : 's'}.`,
     ...secs.map((s) => `${s.name}: ${s.text}`),
-    `Read along, with every story's original source: ${page}`,
+    `Read along, with every story's original source: ${page}?src=podcast`,
+    `Get the free app for iPhone and Android: the brief at 8am, the one-minute daily quiz and your streak: ${site}/app?src=podcast`,
     `Narrated by ${voice === 'an' ? 'an AI-generated voice' : voice + ', an AI-generated voice'}.`,
   ].join('\n\n');
   return {

@@ -268,8 +268,8 @@ async function morningPost(date) {
     '#AI #Business #StockMarket',
   ].join('\n');
   return {
-    text: withApp(beforeTags((s && s.page) || fallback, `Read it free: ${d.editionUrl}`), 'linkedin-page'),
-    link: d.editionUrl,
+    text: withApp(beforeTags((s && s.page) || fallback, `Read it free: ${d.editionUrl}?src=linkedin-page`), 'linkedin-page'),
+    link: `${d.editionUrl}?src=linkedin-page`,
     title: `The Hour Brief · Edition ${d.edition}`,
     description: 'AI & tech, product & business, and the markets: today’s brief.',
     imageUrl: d.image,

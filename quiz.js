@@ -603,6 +603,13 @@
     var compare = el('div', 'quiz-compare');
     card.appendChild(compare);
 
+    // Website only, on a fresh official result: the streak is the hook, and the app is what keeps it going.
+    var G = window.HBGrowth;
+    if (official && fresh && G && G.appPrompt) {
+      var ap = G.appPrompt('quiz', 'Keep your streak going', 'The app reminds you each morning, when the new quiz is out');
+      if (ap) card.appendChild(ap);
+    }
+
     var actions = el('div', 'quiz-actions');
     var shareBtn = el('button', 'quiz-btn primary', 'Share my score');
     shareBtn.type = 'button';

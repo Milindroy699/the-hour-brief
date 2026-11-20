@@ -293,7 +293,7 @@ check('iPhone Safari: none of ours (Safari shows its own App Store banner from t
 await setUA(CHROME_IOS_UA);
 await open({ wait: 600 }); await c.sleep(3200);
 t = await installBar();
-check('iPhone, another browser, first visit: the bar appears over the cards ("Get", to /app?src=web-ios)', t && t.title === 'The Hour Brief app' && t.go === 'Get' && t.href === '/app?src=web-ios', JSON.stringify(t));
+check('iPhone, another browser, first visit: the bar appears over the cards ("Get", to /app?src=getapp-bar)', t && t.title === 'The Hour Brief app' && t.go === 'Get' && t.href === '/app?src=getapp-bar', JSON.stringify(t));
 await c.ev(`document.querySelector('.hb-getapp-x').click()`); await c.sleep(200);
 t = await installStored();
 check('"Not now" hides it and snoozes it for about 14 days, independently of the sections tip', !(await installBar()) && t && t.until > Date.now() + 13 * 86400000 && t.until < Date.now() + 15 * 86400000 && (await tipStored()) === null, JSON.stringify(t));
@@ -311,7 +311,7 @@ await setUA(ANDROID_UA);
 await c.ev(`(localStorage.removeItem('hb-install-v2'), 'ok')`);
 await open({ wait: 600 }); await c.sleep(3200);
 t = await installBar();
-check('Android Chrome gets it too', t && t.href === '/app?src=web-android', JSON.stringify(t));
+check('Android Chrome gets it too', t && t.href === '/app?src=getapp-bar', JSON.stringify(t));
 // "Get" snoozes for 30 days and navigates to /app?src=web-<os>; the smart link page then picks the store. A
 // same-window navigation isn't intercepted here (flaky in headless Chrome); /app itself is checked by hand.
 

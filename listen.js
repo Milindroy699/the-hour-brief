@@ -849,6 +849,14 @@
     sc.appendChild(hubEl.list);
     sc.appendChild(hubEl.eph);
     sc.appendChild(hubEl.eps);
+    // Website only: the same episode on the podcast apps, and the app (which plays it offline, in the background).
+    var G = window.HBGrowth;
+    if (G && !G.native) {
+      var pods = G.podcastLinks && G.podcastLinks('audio');
+      if (pods) { pods.classList.add('hub-pods'); sc.appendChild(pods); }
+      var ap = G.appPrompt && G.appPrompt('audio', 'Listen in the app', 'Plays with your screen off, offline, every morning');
+      if (ap) sc.appendChild(ap);
+    }
     hub.appendChild(top);
     hub.appendChild(sc);
     document.body.appendChild(hub);

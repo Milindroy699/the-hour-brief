@@ -64,7 +64,7 @@
       "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
     },
     {
-      "source": "/:file(DEPLOY\\.md|share-kit\\.html|requirements\\.txt)",
+      "source": "/:file(DEPLOY\\.md|share-kit\\.html|growth\\.html|requirements\\.txt)",
       "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
     },
     {
