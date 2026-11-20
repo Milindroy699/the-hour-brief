@@ -51,6 +51,15 @@ YouTube title/description, Instagram caption and WhatsApp caption. Skipped when 
 Delivered by the post kit: the Telegram kit sends the video (`telegramShort`, retried by the later kit runs if it is not ready yet)
 and share-kit.html has a "Short / Reel" section (preview, Share video, Save, captions). Posting itself is by hand for now
 (YouTube and Instagram uploads need the owner's accounts connected). Tests: `node --test tools/video/test/*.test.mjs`.
+- **Spoken outro**: the video ends on three cards (the free app with store badges; "Also on" Spotify / WhatsApp / Telegram; "Search
+  The Hour Brief", link in bio) with one narrated sentence each (`OUTRO` in short.mjs). Each clip is recorded once with Sarvam in the
+  day's voice and pace and kept as R2 `shorts/outro-<hash>.mp3`; changing the words, voice or pace records new ones. Keep `also`
+  matching what is really live. Without the clips (no SARVAM_API_KEY, e.g. a local run) it ends on a silent card.
+- **Auto-posting** (`tools/video/publish.mjs`, last step of short.yml; each platform skips until connected, never posts a date twice,
+  ids in KV `short:<platform>:<date>`): YouTube via `node tools/video/youtube-auth.mjs <client-id> <client-secret>` (Desktop OAuth
+  client; consent screen published) which sets the YT_* GitHub secrets; Instagram via `node tools/video/publish.mjs --ig-token <long-lived token>`
+  (Professional account, Meta app with Instagram Login), stored and refreshed weekly in KV `ig:auth`. Until the YouTube API audit
+  passes, YouTube locks uploads to private.
 
 ## Growth tracking and app entry points (2026-11-21)
 

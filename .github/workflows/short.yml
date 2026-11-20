@@ -64,12 +64,28 @@ jobs:
           if [ "$made" = "$audio" ] && [ "$FORCE" != "true" ]; then echo "short for $d already matches $audio"; echo "skip=1" >> "$GITHUB_OUTPUT"; fi
       - name: Make the short
         if: steps.which.outputs.skip != '1'
+        env:
+          SARVAM_API_KEY: ${{ secrets.SARVAM_API_KEY }}     # only used once, to record the spoken outro (then kept on R2)
         run: node tools/video/short.mjs --date "${{ steps.which.outputs.date }}" --out out/shorts
       - name: Publish (video and cover first, the json that announces them last)
         if: steps.which.outputs.skip != '1'
         run: |
           d="${{ steps.which.outputs.date }}"
+          # outro clips recorded on this run: kept for every later short
+          for f in out/shorts/outro-*.mp3; do if [ -e "$f" ]; then aws s3 cp "$f" "s3://$R2_BUCKET/shorts/$(basename "$f")" --endpoint-url "$R2_ENDPOINT" --content-type audio/mpeg --cache-control "public, max-age=31536000, immutable"; fi; done
           aws s3 cp "out/shorts/$d.mp4" "s3://$R2_BUCKET/shorts/$d.mp4" --endpoint-url "$R2_ENDPOINT" --content-type video/mp4 --cache-control "public, max-age=300"
           aws s3 cp "out/shorts/$d.jpg" "s3://$R2_BUCKET/shorts/$d.jpg" --endpoint-url "$R2_ENDPOINT" --content-type image/jpeg --cache-control "public, max-age=300"
           aws s3 cp "out/shorts/$d.json" "s3://$R2_BUCKET/shorts/$d.json" --endpoint-url "$R2_ENDPOINT" --content-type application/json --cache-control "public, max-age=120"
           curl -fsS -o /dev/null -w "video: %{http_code} %{content_type} %{size_download} bytes\n" "$R2_PUBLIC_URL/shorts/$d.mp4"
+      - name: Post to YouTube Shorts and Instagram Reels (each skips until its account is connected; never posts a date twice)
+        if: steps.which.outputs.skip != '1'
+        continue-on-error: true          # a platform hiccup must not mark the video itself as failed
+        env:
+          KV_REST_API_URL: ${{ secrets.KV_REST_API_URL }}
+          KV_REST_API_TOKEN: ${{ secrets.KV_REST_API_TOKEN }}
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+          YT_PRIVACY: ${{ vars.YT_PRIVACY }}
+          IG_GRAPH_VERSION: ${{ vars.IG_GRAPH_VERSION }}
+        run: node tools/video/publish.mjs --date "${{ steps.which.outputs.date }}" --dir out/shorts

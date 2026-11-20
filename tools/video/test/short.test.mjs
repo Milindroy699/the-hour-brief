@@ -53,3 +53,14 @@ test('post texts: YouTube title fits, links are tagged, AI voice and not-advice 
   assert.match(t.instagram.caption, /link in bio/);
   assert.match(t.whatsapp, /src=whatsapp-video/);
 });
+
+test('YouTube upload request: a Short with the AI-voice flag, not for kids, tags from the hashtags', async () => {
+  const { youtubeBody } = await import('../publish.mjs');
+  const t = postText({ date: '2026-11-20', edition: 94, heads: leadHeadlines(html), when: 'Fri, 20 Nov 2026' });
+  const b = youtubeBody({ youtube: t.youtube }, 'public');
+  assert.ok(b.snippet.title.length <= 100 && /#Shorts/.test(b.snippet.title));
+  assert.equal(b.status.containsSyntheticMedia, true);
+  assert.equal(b.status.selfDeclaredMadeForKids, false);
+  assert.ok(b.snippet.tags.includes('Shorts') && b.snippet.tags.includes('Nifty'));
+  assert.equal(b.snippet.categoryId, '25');
+});
