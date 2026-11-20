@@ -301,7 +301,7 @@
     var paras = it.querySelectorAll('.story-body > p');
     if (!paras.length) paras = it.querySelectorAll(':scope > div > p:not(.takeaway)');
     var body = mk('div', 'dk-body');
-    Array.prototype.forEach.call(paras, function (p) { body.appendChild(mk('p', '', plain(p))); });
+    Array.prototype.forEach.call(paras, function (p) { body.appendChild(mk('p', p.classList.contains('correction') ? 'correction' : '', plain(p))); });   // a "Corrected" note keeps its look
     b.scroll.appendChild(body);
     var tk = it.querySelector('.takeaway');
     if (tk) {

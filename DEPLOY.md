@@ -54,6 +54,20 @@ daily routine keeps copying `index.html` exactly as before:
 - `vercel.json` sends `X-Robots-Tag: noindex` for `tools/`, `mobile/`, `social/`, `.github/`, `DEPLOY.md` and the `/e /s /q /l` share links.
 - Owner's step: add the site to Google Search Console and Bing Webmaster Tools (HTML-tag verification) and submit `/sitemap.xml`.
 
+## Corrections (owner reviews the Stock Market section daily, after publishing, since 2026-11-21)
+
+The site says, on the About page, in every edition's footer (from `index.html`) and in `llms.txt`, that Milind reads each edition's
+Stock Market section after it publishes and fixes errors. Keep that true: if the daily read stops, change those three places.
+To correct a story:
+1. Fix the wrong text in the story itself, in `archive/<date>.html` AND, if it is today's edition, in `index.html` too.
+2. Add a note inside that story, after its last body paragraph and before `<p class="takeaway">`:
+   `<p class="correction" data-corrected="YYYY-MM-DD"><strong>Corrected D Mon YYYY:</strong> what was wrong and what it says now.</p>`
+3. Commit and push. On deploy, `tools/seo/build.mjs` lists it on `/corrections.html` (built from these notes, never edited by
+   hand; keep the committed copy, Vercel needs it to exist) and sets that edition's `dateModified`. The note is styled by
+   `reader.css` and kept in the card view by `cards.js`.
+The day's recording is not re-recorded for a text fix (`audio.yml` only re-records when the stories themselves change); force it
+with `gh workflow run audio.yml -f date=<date> -f modes=quick -f force=true` (about ₹18) if the error was read aloud.
+
 ## Podcast (Spotify, Apple Podcasts)
 
 The daily Quick recording is also a podcast. `tools/audio/podcast.mjs` builds an RSS feed from the manifests already in R2 (file, size, duration) and

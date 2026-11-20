@@ -34,8 +34,11 @@ export const SITE = {
 };
 const LANES = [['ai', 'AI & Tech'], ['biz', 'Product & Business'], ['mkt', 'Stock Market']];
 // Other public pages worth a canonical link and a sitemap entry (path from the site root).
-const PAGES = ['about.html', 'podcasts.html', 'leaders.html', 'contact.html', 'privacy.html', 'app.html', 'archive/index.html'];
+const PAGES = ['about.html', 'corrections.html', 'podcasts.html', 'leaders.html', 'contact.html', 'privacy.html', 'app.html', 'archive/index.html'];
 const NOINDEX = ['share-kit.html'];
+// A correction note inside a story (see DEPLOY.md, "Corrections"): <p class="correction" data-corrected="YYYY-MM-DD">…</p>
+const CORRECTION = /<p class="correction" data-corrected="(\d{4}-\d{2}-\d{2})">([\s\S]*?)<\/p>/g;
+export const REVIEW_START = '2026-11-21';            // the owner reads each edition's Stock Market section after it publishes, from this date
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 const attr = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -57,6 +60,7 @@ export function readEdition(html) {
       headline: text((/<h3>([\s\S]*?)<\/h3>/.exec(chunk) || [])[1]),
       source: (/class="src"><a href="(https?:\/\/[^"]+)"/.exec(chunk) || [])[1] || '',
       sourceName: text((/class="src"><a [^>]*>([\s\S]*?)<\/a>/.exec(chunk) || [])[1]).replace(/\s*→\s*$/, ''),
+      corrections: [...chunk.matchAll(CORRECTION)].map((m) => ({ date: m[1], note: text(m[2]).replace(/^Corrected[^:]*:\s*/i, '') })),
     })).filter((s) => s.headline);
     return { id, label, headline, takeaway, stories };
   }).filter((l) => l.stories.length);
@@ -105,7 +109,7 @@ export function organization() {
     logo: { '@type': 'ImageObject', url: CANON + SITE.logo, width: 256, height: 256 },
     sameAs: SITE.sameAs,
     publishingPrinciples: CANON + '/about.html', actionableFeedbackPolicy: CANON + '/contact.html',
-    correctionsPolicy: CANON + '/about.html',
+    correctionsPolicy: CANON + '/corrections.html',
   };
 }
 const website = () => ({ '@type': 'WebSite', '@id': SITE_ID, name: SITE.name, url: CANON + '/', inLanguage: 'en-IN', publisher: { '@id': ORG_ID } });
@@ -122,11 +126,13 @@ export function editionHead(ed, { times = {} } = {}) {
   const image = `${CANON}/api/og?${new URLSearchParams(params)}`;
   const at = published(ed.date, times);
   const stories = ed.lanes.flatMap((l) => l.stories);
+  const fixed = stories.flatMap((s) => s.corrections.map((c) => c.date)).sort().pop();
+  const modified = fixed && fixed > ed.date ? fixed : at;                         // a corrected edition shows Google its update date
   const article = {
     '@type': 'NewsArticle', '@id': url + '#article', url, mainEntityOfPage: url,
     headline: clip(`${SITE.name}, ${when}: ${lead}`, 110),
     alternativeHeadline: ed.number ? `Edition ${ed.number}` : undefined,
-    description: clip(summary, 500), datePublished: at, dateModified: at, inLanguage: 'en-IN', isAccessibleForFree: true,
+    description: clip(summary, 500), datePublished: at, dateModified: modified, inLanguage: 'en-IN', isAccessibleForFree: true,
     image: [image], articleSection: ed.lanes.map((l) => l.label),
     keywords: ['AI news', 'technology news', 'India business news', 'Indian stock market', 'Sensex', 'Nifty', 'daily news brief'],
     author: { '@id': ORG_ID }, publisher: { '@id': ORG_ID }, isPartOf: { '@id': SITE_ID },
@@ -143,7 +149,7 @@ export function editionHead(ed, { times = {} } = {}) {
   return [
     ...metaTags({ title, description, canonical: url, type: 'article', image, imageAlt: `${SITE.name}, ${when}`, extra: [
       `<meta property="article:published_time" content="${at}">`,
-      `<meta property="article:modified_time" content="${at}">`,
+      `<meta property="article:modified_time" content="${modified}">`,
       ...ed.lanes.map((l) => `<meta property="article:section" content="${attr(l.label)}">`),
     ] }),
     `<script type="application/ld+json">${json({ '@context': 'https://schema.org', '@graph': [article, crumbs, organization(), website()] })}</script>`,
@@ -235,7 +241,7 @@ export function llms(editions, latest) {
   const lines = [
     `# ${SITE.name}`, '',
     `> A free daily news brief, published every morning in India: what moved in AI and technology, product and business in India and around the world, and what the Indian stock market (Sensex, Nifty) did and why. Every story links to its original source.`, '',
-    'How it is made: an automated AI agent researches and writes each edition on a daily schedule, directed by one person (Milind); no human edits each day\'s content before it publishes. Each story is a short summary of public reporting plus a one-line "Takeaway" (the implication), with a link to the original source. Nothing here is investment advice. When citing a fact, prefer the original source linked from the story.', '',
+    `How it is made: an automated AI agent researches and writes each edition on a daily schedule, directed by one person (Milind); nobody approves an edition before it publishes. Since ${shortDate(REVIEW_START)}, Milind reads each edition's Stock Market section after it publishes and fixes errors; fixes are noted on the story ("Corrected") and listed at ${CANON}/corrections.html. The AI & Tech and Product & Business sections are not reviewed daily. Each story is a short summary of public reporting plus a one-line "Takeaway" (the implication), with a link to the original source. Nothing here is investment advice. When citing a fact, prefer the original source linked from the story.`, '',
     `Each edition lives at ${CANON}/archive/YYYY-MM-DD.html and is grouped into three sections: AI & Tech, Product & Business, Stock Market. Story anchors are #ai-1, #biz-2, #mkt-3 and so on.`, '',
   ];
   if (latest) {
@@ -259,6 +265,48 @@ export function llms(editions, latest) {
   return lines.join('\n');
 }
 
+// The public corrections log, built from the notes on the pages so it can never disagree with them. It borrows the About
+// page's head (styles, icons, analytics) and masthead.
+export function correctionsPage(aboutHtml, editions) {
+  const head = aboutHtml.slice(0, aboutHtml.indexOf('</head>'));
+  const mast = (/<div class="masthead-band">[\s\S]*?\n<\/div>\n/.exec(aboutHtml) || [''])[0];
+  if (!head || !mast) throw new Error('about.html has changed shape; corrections.html left as it is');
+  const rows = editions.flatMap((ed) => ed.lanes.flatMap((l) => l.stories.flatMap((s) => s.corrections.map((c) => ({ ...c, ed, lane: l, story: s })))))
+    .sort((a, b) => (a.date === b.date ? (a.ed.date < b.ed.date ? 1 : -1) : a.date < b.date ? 1 : -1));
+  const e = (x) => attr(x);
+  const list = rows.length ? `<ul class="corrections">\n${rows.map((r) => `    <li><p class="when">Corrected ${shortDate(r.date)} · ${r.ed.number ? `Edition ${r.ed.number}, ` : ''}${shortDate(r.ed.date)} · ${e(r.lane.label)}</p>
+      <p class="story"><a href="/archive/${r.ed.date}.html#${e(r.story.id)}">${e(r.story.headline)}</a></p>
+      <p>${e(r.note)}</p></li>`).join('\n')}\n  </ul>`
+    : `<p class="empty">No corrections yet.</p>`;
+  return head
+    .replace(/<title>[\s\S]*?<\/title>/, '<title>Corrections — The Hour Brief</title>')
+    .replace(/<meta name="description" content="[^"]*">/, '<meta name="description" content="Every correction made to The Hour Brief after publishing: what was wrong, what changed and when.">')
+    + `<style>
+  .corrections { list-style: none; padding: 0; margin: 0; }
+  .corrections li { border-top: 1px solid var(--line, #ddd); padding: 16px 0; }
+  .corrections p { margin: 4px 0; line-height: 1.55; }
+  .corrections .when { font-size: 0.8rem; color: var(--ink-faint, #777); letter-spacing: 0.02em; }
+  .corrections .story a { font-weight: 600; color: var(--ink, inherit); }
+  .empty { color: var(--ink-soft, #555); }
+</style>
+</head>
+<body>
+<!-- Written on every deploy by tools/seo/build.mjs from the "Corrected" notes on edition pages; edit those, not this file. -->
+
+${mast}
+<div class="page">
+  <h1>Corrections</h1>
+  <p class="lede">Each edition is written and published automatically every morning. Since ${shortDate(REVIEW_START)}, Milind reads the Stock Market section of every edition after it publishes and fixes anything wrong. Every fix stays visible on the story as a dated &ldquo;Corrected&rdquo; note and is listed here, newest first. Spotted something wrong? Tell us from the <a href="/contact.html">contact page</a>.</p>
+  ${list}
+  <footer class="colophon">
+    <a href="/about.html">How this is made</a> · <a href="/">Today's edition</a> · <a href="/archive/">Past editions</a> · <a href="/contact.html">Contact us</a>
+  </footer>
+</div>
+</body>
+</html>
+`;
+}
+
 // ---- run ----
 export function build(root, { log = console.log, now = new Date() } = {}) {
   const read = (rel) => { try { return fs.readFileSync(path.join(root, rel), 'utf8'); } catch { return ''; } };
@@ -267,7 +315,7 @@ export function build(root, { log = console.log, now = new Date() } = {}) {
   let index = [];
   try { index = JSON.parse(read('editions.json')).editions || []; } catch { log('seo: editions.json unreadable; using archive/ only'); }
   const heads = Object.fromEntries(index.map((e) => [e.date, e]));
-  const editions = [];
+  const editions = [], full = [];
   let latest = null, done = 0, skipped = 0;
 
   const files = fs.readdirSync(path.join(root, 'archive')).filter((f) => /^\d{4}-\d{2}-\d{2}\.html$/.test(f)).sort();
@@ -279,7 +327,7 @@ export function build(root, { log = console.log, now = new Date() } = {}) {
       write(rel, stampHead(html, editionHead(ed, { times })));
       const h = heads[ed.date] || {};
       editions.push({ date: ed.date, number: ed.number, lead: ed.lanes[0].stories[0].headline, ai: h.headline_ai, biz: h.headline_biz, mkt: h.headline_mkt });
-      latest = ed; done++;
+      full.push(ed); latest = ed; done++;
     } catch (e) { skipped++; log(`seo: skipped ${rel}: ${e.message}`); }
   }
   try {
@@ -288,6 +336,7 @@ export function build(root, { log = console.log, now = new Date() } = {}) {
     if (ed.date && ed.lanes.length && (!latest || ed.date >= latest.date)) latest = ed;
     done++;
   } catch (e) { log(`seo: skipped index.html: ${e.message}`); }
+  try { write('corrections.html', correctionsPage(read('about.html'), full)); } catch (e) { log(`seo: corrections log not rebuilt: ${e.message}`); }
   for (const rel of PAGES) {
     try { const html = read(rel); if (html) { write(rel, stampHead(html, pageHead(html, rel))); done++; } } catch (e) { log(`seo: skipped ${rel}: ${e.message}`); }
   }

@@ -2,7 +2,7 @@
 
 > A free daily news brief, published every morning in India: what moved in AI and technology, product and business in India and around the world, and what the Indian stock market (Sensex, Nifty) did and why. Every story links to its original source.
 
-How it is made: an automated AI agent researches and writes each edition on a daily schedule, directed by one person (Milind); no human edits each day's content before it publishes. Each story is a short summary of public reporting plus a one-line "Takeaway" (the implication), with a link to the original source. Nothing here is investment advice. When citing a fact, prefer the original source linked from the story.
+How it is made: an automated AI agent researches and writes each edition on a daily schedule, directed by one person (Milind); nobody approves an edition before it publishes. Since 21 Nov 2026, Milind reads each edition's Stock Market section after it publishes and fixes errors; fixes are noted on the story ("Corrected") and listed at https://the-hour-brief.vercel.app/corrections.html. The AI & Tech and Product & Business sections are not reviewed daily. Each story is a short summary of public reporting plus a one-line "Takeaway" (the implication), with a link to the original source. Nothing here is investment advice. When citing a fact, prefer the original source linked from the story.
 
 Each edition lives at https://the-hour-brief.vercel.app/archive/YYYY-MM-DD.html and is grouped into three sections: AI & Tech, Product & Business, Stock Market. Story anchors are #ai-1, #biz-2, #mkt-3 and so on.
 

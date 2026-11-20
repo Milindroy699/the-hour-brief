@@ -61,7 +61,7 @@ test('the whole site: every edition stamped with a unique title; sitemap, robots
     const eds = fs.readdirSync(path.join(dir, 'archive')).filter((f) => /^\d{4}-\d{2}-\d{2}\.html$/.test(f));
     const titles = new Set(eds.map((f) => /<title>(.*?)<\/title>/.exec(fs.readFileSync(path.join(dir, 'archive', f), 'utf8'))[1]));
     assert.equal(titles.size, eds.length, 'every edition has its own title');
-    assert.equal(count(fs.readFileSync(path.join(dir, 'sitemap.xml'), 'utf8'), '<url>'), eds.length + 2 + 6);
+    assert.equal(count(fs.readFileSync(path.join(dir, 'sitemap.xml'), 'utf8'), '<url>'), eds.length + 2 + 7);
     assert.match(fs.readFileSync(path.join(dir, 'robots.txt'), 'utf8'), /Sitemap: https:\/\/the-hour-brief.vercel.app\/sitemap.xml/);
     assert.match(fs.readFileSync(path.join(dir, 'llms.txt'), 'utf8'), /^# The Hour Brief\n/);
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
@@ -80,4 +80,23 @@ test('a page it cannot read is skipped, not fatal', () => {
     assert.equal(r.skipped, 1);
     assert.ok(fs.existsSync(path.join(dir, 'sitemap.xml')));
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('a "Corrected" note is read, moves dateModified, and appears in the corrections log', async () => {
+  const { correctionsPage } = await import('../build.mjs');
+  const note = '<p class="correction" data-corrected="2099-01-02"><strong>Corrected 2 Jan 2099:</strong> Nifty closed at 26,010, not 26,100.</p>';
+  const html = latestHtml.replace('<p class="takeaway">', note + '\n<p class="takeaway">');
+  const ed = readEdition(html);
+  const fixed = ed.lanes.flatMap((l) => l.stories).filter((s) => s.corrections.length);
+  assert.equal(fixed.length, 1);
+  assert.deepEqual(fixed[0].corrections, [{ date: '2099-01-02', note: 'Nifty closed at 26,010, not 26,100.' }]);
+  const head = stampHead(html, editionHead(ed));
+  assert.match(head, /"dateModified":"2099-01-02"/);
+  assert.match(head, /article:modified_time" content="2099-01-02"/);
+  const about = fs.readFileSync(path.join(REPO, 'about.html'), 'utf8');
+  const log = correctionsPage(about, [ed]);
+  assert.match(log, /<title>Corrections — The Hour Brief<\/title>/);
+  assert.match(log, new RegExp(`href="/archive/${ed.date}.html#${fixed[0].id}"`));
+  assert.match(log, /Nifty closed at 26,010, not 26,100\./);
+  assert.match(correctionsPage(about, [readEdition(latestHtml)]), /No corrections yet\./);
 });
