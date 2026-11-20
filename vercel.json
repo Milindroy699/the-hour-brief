@@ -38,6 +38,10 @@
       "destination": "/api/interactions?action=vote"
     },
     {
+      "source": "/podcast.xml",
+      "destination": "https://pub-1dafea4a948540db8413a044895e083c.r2.dev/podcast.xml"
+    },
+    {
       "source": "/app",
       "destination": "/app.html"
     },

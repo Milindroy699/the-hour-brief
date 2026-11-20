@@ -17,7 +17,10 @@ echo "manifests found: $(find "$WORK/manifests" -name manifest.json | wc -l | tr
 # Fails (and publishes nothing) if there are no usable episodes or the feed does not pass its own checks.
 SITE_ARGS=()
 [ -n "${PODCAST_SITE:-}" ] && SITE_ARGS=(--site "$PODCAST_SITE")          # only the tests set this
-node podcast.mjs --audio "$WORK/manifests" --audio-base "$R2_PUBLIC_URL" --feed-url "$R2_PUBLIC_URL/podcast.xml" --out "$WORK/podcast.xml" --episodes-out "$WORK/episodes.json" ${SITE_ARGS[@]+"${SITE_ARGS[@]}"}
+# The address podcast apps subscribe to is the site's /podcast.xml (vercel.json proxies it to the R2 copy), not the r2.dev link:
+# r2.dev can be rate-limited and cannot redirect, so a feed submitted there could never move. The audio files stay on R2.
+FEED_URL="${PODCAST_SITE:-https://the-hour-brief.vercel.app}"; FEED_URL="${FEED_URL%/}/podcast.xml"
+node podcast.mjs --audio "$WORK/manifests" --audio-base "$R2_PUBLIC_URL" --feed-url "$FEED_URL" --out "$WORK/podcast.xml" --episodes-out "$WORK/episodes.json" ${SITE_ARGS[@]+"${SITE_ARGS[@]}"}
 
 if [ "${FEED_DRY:-}" = "1" ]; then
   echo "FEED_DRY=1: not uploading. Feed is at $WORK/podcast.xml"; cat "$WORK/podcast.xml" | head -40; exit 0
@@ -28,5 +31,5 @@ aws s3 cp "$WORK/podcast.xml" "s3://$R2_BUCKET/podcast.xml" --endpoint-url "$R2_
 # the Audio screen's list of all episodes (the site reads this, the podcast apps read the feed)
 aws s3 cp "$WORK/episodes.json" "s3://$R2_BUCKET/episodes.json" --endpoint-url "$R2_ENDPOINT" \
   --content-type "application/json" --cache-control "public, max-age=300"
-echo "published $R2_PUBLIC_URL/podcast.xml and episodes.json"
+echo "published $R2_PUBLIC_URL/podcast.xml and episodes.json"; echo "podcast apps subscribe at $FEED_URL"
 node podcast.mjs --verify "$R2_PUBLIC_URL/podcast.xml"

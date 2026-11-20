@@ -47,18 +47,33 @@ the edition page (title, section takeaways): one episode per day, guid `hourbrie
 `tools/audio/publish-feed.sh` (run by `audio.yml` after each recording, or by hand with the "Podcast feed" workflow) syncs the manifests, builds
 `podcast.xml`, uploads it to R2 with the right content type, then `--verify`s it: feed structure, cover art, and that the newest audio is served with
 the right size, `audio/mpeg` and range support. It costs nothing (no Sarvam) and refuses to publish an empty feed.
-- **Live since 2026-09-26** with the 24 and 25 Sep episodes (published and verified by the "Podcast feed" workflow; `audio.yml` refreshes it after each recording). Not yet submitted to Spotify/Apple: that is the owner's step below.
-- Feed address: `<R2_PUBLIC_URL>/podcast.xml` (today `https://pub-1dafea4a948540db8413a044895e083c.r2.dev/podcast.xml`). Cover: `brand/podcast-cover.jpg`
-  (2048px, `node tools/brand/podcast-cover.mjs`), served by Vercel, so deploy it BEFORE submitting the feed. Show details (name, description, category,
+- **Live since 2026-09-26** with the 24 and 25 Sep episodes (published and verified by the "Podcast feed" workflow; `audio.yml` refreshes it after each recording). Not yet submitted to Spotify/Apple: that is the owner's step below ("Submitting the show").
+- **Feed address to submit: `https://the-hour-brief.vercel.app/podcast.xml`.** `vercel.json` proxies it to the R2 copy (`<R2_PUBLIC_URL>/podcast.xml`,
+  today `https://pub-1dafea4a948540db8413a044895e083c.r2.dev/podcast.xml`), and the feed's `atom:link rel="self"` names the site address. Never submit the
+  r2.dev link: it can be rate-limited and cannot redirect, so a show listed there could never move. If the R2 public URL changes, update the rewrite in
+  `vercel.json` and the feed address stays the same. Episode audio is still served from R2; its links can change at any time without resubmitting.
+  Cover: `brand/podcast-cover.jpg` (2048px, `node tools/brand/podcast-cover.mjs`), served by Vercel. Show details (name, description, category,
   owner email) are `SHOW` in `podcast.mjs`.
 - Episodes must not disappear from R2 (removing an item can remove it from Spotify), so `audio.yml` now keeps everything unless the repository variable
   `AUDIO_KEEP_DAYS` is set. About 3 MB a day.
-- `r2.dev` links are meant for light traffic and can be rate-limited by Cloudflare; if the show grows, put a custom domain on the bucket and set `R2_PUBLIC_URL` to it
-  (the feed address changes, so tell Spotify/Apple through their "change feed" option, or do this before submitting).
-- New episodes only appear once `AUDIO_ENABLED=true` (about ₹18 a day). Tests: `node --test test/*.test.mjs` in `tools/audio` (25 checks, including the publish script run end to end
+- New episodes only appear once `AUDIO_ENABLED=true` (about ₹18 a day). Tests: `node --test test/*.test.mjs` in `tools/audio` (including the publish script run end to end
   against a fake `aws` and a local host).
-- Submit once: creators.spotify.com -> add an existing podcast -> paste the feed address -> enter the code Spotify emails to the owner address in the feed
-  (`milindroy101292@gmail.com`) -> choose category, language and country. Apple Podcasts Connect takes the same feed.
+
+### Submitting the show (owner's step, once per platform)
+
+Every platform reads the same feed address above, and new episodes then arrive on their own after each daily recording.
+1. **Spotify:** creators.spotify.com -> sign in -> "Add an existing podcast" / "Find your show" -> paste the feed address -> Spotify emails a code to the
+   feed's owner address (`milindroy101292@gmail.com`) -> enter it -> category News, language English, country India -> submit. Usually live within hours.
+2. **Apple Podcasts:** podcastsconnect.apple.com -> sign in with an Apple ID -> "+" -> New Show -> "Add a show with an RSS feed" -> paste the feed address
+   -> fill in the content rights / AI disclosure questions -> Submit for review. Review takes from about a day up to a week. Overcast, Pocket Casts,
+   Castro and most other apps find the show through Apple's directory once it is listed there.
+3. **YouTube Music:** YouTube Studio (the channel that should own the show) -> Create -> New podcast -> "Submit RSS feed" -> paste the feed address ->
+   verify via the owner email. Each episode becomes a video with the cover art as a still image.
+4. **Amazon Music / Audible:** podcasters.amazon.com -> Add your podcast -> paste the feed address -> verify via the owner email.
+5. **Podcast Index** (feeds Podverse, Fountain, Podcast Addict and other open apps): podcastindex.org/add -> paste the feed address. No account needed.
+6. **JioSaavn / Gaana** (optional, India): both take podcast submissions by RSS through their creator/partner forms.
+
+Once Spotify and Apple give you show links, put them on the site (Audio screen, About page) and in `SHOW` if wanted.
 
 ## Audio screen: all episodes, and Sarvam credit alerts
 
