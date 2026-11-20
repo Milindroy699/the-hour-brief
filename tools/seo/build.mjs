@@ -28,7 +28,8 @@ export const SITE = {
   homeDescription: 'A free daily news brief: what moved in AI and technology, product and business in India and worldwide, and the Indian stock market (Sensex, Nifty). Every story links to its original source. New edition every morning.',
   logo: '/brand/logo-256.png',
   ogImage: '/og-image.png',
-  sameAs: ['https://apps.apple.com/app/id6817195056', 'https://play.google.com/store/apps/details?id=app.thehourbrief'],
+  sameAs: ['https://apps.apple.com/app/id6817195056', 'https://play.google.com/store/apps/details?id=app.thehourbrief',
+    'https://open.spotify.com/show/1FjOE5ABaOEzUTxwJeaoYr', 'https://whatsapp.com/channel/0029Vb9RU0kCXC3F1pRY6q2L', 'https://t.me/thehourbrief'],
   // Search engine ownership checks, on the homepage only. Removing one un-verifies the site in that tool.
   verification: [['google-site-verification', 'xUFqUiPuQjWuYKQam9SfDEwj2WOcp-dV7PgYg48kr8A']],
 };
@@ -260,7 +261,8 @@ export function llms(editions, latest) {
     `- [How this is made](${CANON}/about.html): sources, process and limits`,
     `- [All past editions](${CANON}/archive/)`,
     `- [RSS feed of editions](${CANON}/feed.xml)`,
-    `- [Podcast feed](${CANON}/podcast.xml): each edition read aloud in about seven minutes, AI-generated voice`,
+    `- [Podcast feed](${CANON}/podcast.xml): each edition read aloud in about seven minutes, AI-generated voice; also on [Spotify](https://open.spotify.com/show/1FjOE5ABaOEzUTxwJeaoYr)`,
+    `- Daily channels with each morning's brief: [WhatsApp](https://whatsapp.com/channel/0029Vb9RU0kCXC3F1pRY6q2L) and [Telegram](https://t.me/thehourbrief)`,
     `- [Edition index as JSON](${CANON}/editions.json)`,
     `- [Contact](${CANON}/contact.html)`, '');
   return lines.join('\n');

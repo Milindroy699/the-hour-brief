@@ -108,7 +108,7 @@
   // The daily channels (the same post every morning). Paste each invite link once the channel exists; empty ones are not shown.
   var CHANNELS = [
     ['whatsapp', 'WhatsApp', 'https://whatsapp.com/channel/0029Vb9RU0kCXC3F1pRY6q2L'],
-    ['telegram', 'Telegram', ''],          // https://t.me/<handle>
+    ['telegram', 'Telegram', 'https://t.me/thehourbrief'],
   ].filter(function (p) { return /^https:\/\//.test(p[2]); });
   // place = where on the site the link was tapped (footer, end-card, quiz, audio...); to = a specific store, else the
   // device's own (desktops see a QR page).
@@ -124,6 +124,7 @@
   // "Get the app" + "Listen on" block at the foot of every page on the website (editions, past editions, Voices, About...):
   // the store badges go through /app (counted, tagged for the stores), the podcast links are counted as they leave.
   var WA_SVG = '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="M3.6 20.4l1.2-3.9A8.6 8.6 0 1 1 8 19.3z"/><path d="M9.2 8.1c-.3 2 2.4 5.6 5.6 6.4l1.4-1.3-1.9-1.1-.9.8c-1.1-.5-2.2-1.6-2.7-2.7l.8-.9-1.1-1.9z"/></svg>';
+  var TG_SVG = '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="M21 4.5L2.8 11.4l5.6 2 2.2 6.1 3.2-3.6 4.6 3.4z"/><path d="M8.4 13.4L21 4.5 10.6 15.9"/></svg>';
   var STORE_ICON = {
     ios: 'M16.4 12.6c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9s-1.9-.8-3.1-.8C6.8 7.4 5.3 8.3 4.5 9.8c-1.7 2.9-.4 7.2 1.2 9.6.8 1.2 1.8 2.5 3 2.4 1.2 0 1.7-.8 3.1-.8s1.9.8 3.1.8c1.3 0 2.1-1.2 2.9-2.4.9-1.3 1.3-2.6 1.3-2.7-.1 0-2.7-1-2.7-4.1zM14.2 5.6c.6-.8 1.1-1.9 1-3-1 0-2.1.6-2.8 1.4-.6.7-1.1 1.8-1 2.9 1.1.1 2.1-.5 2.8-1.3z',
     android: 'M3.6 2.3c-.3.3-.4.7-.4 1.2v17c0 .5.1.9.4 1.2l9.6-9.7-9.6-9.7zm10.6 10.7l2.9 2.9-11.2 6.4c-.4.2-.8.3-1.1.2l9.4-9.5zm4-4l3 1.7c.9.5.9 1.3 0 1.8l-3 1.7-3.2-3.2 3.2-2zM5.1 1.9c.4-.1.7 0 1.1.2l11.2 6.4-2.9 2.9-9.4-9.5z'
@@ -1181,15 +1182,16 @@
       var bell = document.getElementById('cap-remind');
       if (bell) item('reminder', ICON.bell, 'Daily reminder', bell.getAttribute('data-summary') || 'A morning nudge on this device', function () { closeSheet(); bell.click(); });
       item('share', SHARE_SVG, 'Share', isFeed() ? 'Send this edition to a friend' : 'Send this page to a friend', function () { closeSheet(); shareEdition(); });
-      // The WhatsApp channel, website and app alike. Opened as an ordinary outside link: a new tab on the website, the in-app
-      // browser in the app (capacitor-bridge.js), whose WhatsApp page has the Follow button.
-      var wa = CHANNELS.filter(function (c) { return c[0] === 'whatsapp'; })[0];
-      if (wa) item('whatsapp', WA_SVG, 'Follow on WhatsApp', 'The brief every morning, free', function () {
-        closeSheet();
-        track('channel_out', { place: 'whatsapp' });
-        var a = mk('a');
-        a.href = wa[2]; a.target = '_blank'; a.rel = 'noopener';
-        document.body.appendChild(a); a.click(); a.remove();
+      // The daily channels, website and app alike. Opened as an ordinary outside link: a new tab on the website, the in-app
+      // browser in the app (capacitor-bridge.js), whose WhatsApp / Telegram page has the Follow / Join button.
+      CHANNELS.forEach(function (ch) {
+        item(ch[0], ch[0] === 'telegram' ? TG_SVG : WA_SVG, 'Follow on ' + ch[1], 'The brief every morning, free', function () {
+          closeSheet();
+          track('channel_out', { place: ch[0] });
+          var a = mk('a');
+          a.href = ch[2]; a.target = '_blank'; a.rel = 'noopener';
+          document.body.appendChild(a); a.click(); a.remove();
+        });
       });
       body.appendChild(ul);
       var foot = mk('div', 'rd-menu-foot');

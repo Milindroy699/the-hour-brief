@@ -57,6 +57,8 @@ Left out on purpose because we do not have them: XP, "Top 8% recall", spatial au
 - **Deep links in the daily posts:** the routine writes the WhatsApp status / LinkedIn texts with an edition link (`/e/<date>`);
   `deepLinks()` in api/_kit.js (mirrored in share-kit.html) turns it into the featured story's link (`/s/<date>/<storyId>?src=<channel>`),
   which the app opens directly (universal / app links) and the website scrolls to. A `?src=` on a share link beats the generic `utm_source=share`.
+- **Telegram channel** https://t.me/thehourbrief (@thehourbrief; @Thehourbrief_bot is an admin): Vercel `TELEGRAM_CHAT_ID=@thehourbrief` makes
+  post-digest.js post the day's brief there each morning; listed in `CHANNELS` (footer + menu), the Organization `sameAs`, llms.txt and the podcast description.
 - **WhatsApp channel** (https://whatsapp.com/channel/0029Vb9RU0kCXC3F1pRY6q2L): `CHANNELS` in mobile.js (footer row on the website, "Follow on
   WhatsApp" in the menu on the website and in the app), `WA_CHANNEL` in api/_kit.js and share-kit.html (every WhatsApp status and message),
   and api/_digest.js (the channel post itself: "Forwarded to you? Follow…"). Taps on the site count as `channel_out` (j|whatsapp|<src>).

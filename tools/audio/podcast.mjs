@@ -18,7 +18,7 @@ import { editionMeta } from './script.mjs';
 export const SHOW = {
   title: 'The Hour Brief',
   site: 'https://the-hour-brief.vercel.app',
-  description: 'A daily news brief, read aloud in about seven minutes: what moved in AI and technology, product and business in India and around the world, and what the Indian stock market did and why. Every story links back to its original source at the-hour-brief.vercel.app. Get the free app for iPhone and Android (the brief at 8am, the daily quiz and your streak): https://the-hour-brief.vercel.app/app?src=podcast . Narrated by an AI-generated voice.',
+  description: 'A daily news brief, read aloud in about seven minutes: what moved in AI and technology, product and business in India and around the world, and what the Indian stock market did and why. Every story links back to its original source at the-hour-brief.vercel.app. Get the free app for iPhone and Android (the brief at 8am, the daily quiz and your streak): https://the-hour-brief.vercel.app/app?src=podcast . The brief every morning on WhatsApp (https://whatsapp.com/channel/0029Vb9RU0kCXC3F1pRY6q2L) and Telegram (https://t.me/thehourbrief). Narrated by an AI-generated voice.',
   subtitle: 'Your daily brief on AI, business and the markets, read aloud.',
   language: 'en-IN',
   author: 'The Hour Brief',
