@@ -40,6 +40,18 @@ Left out on purpose because we do not have them: XP, "Top 8% recall", spatial au
 - Tests: `node tools/browser-tests/premium.mjs` (with `prefs.mjs` and `listen.mjs`). To see the app itself, build a debug APK whose `server.url` is a
   local static server (`http://10.0.2.2:PORT`, `cleartext: true`), run it on the emulator, then put `mobile/capacitor.config.json` back (never commit that).
 
+## Daily short (YouTube Shorts / Instagram Reels / WhatsApp status video)
+
+`.github/workflows/short.yml` runs after every "Daily audio" run (or by hand, with a date) and makes "3 things that mattered today":
+`tools/video/short.mjs` cuts the intro and the three section takeaways out of the morning recording (cue times in the manifest),
+draws a 1080x1920 frame per caption line with satori + resvg (brand fonts, nothing in the bottom 400px where the apps put their
+buttons), ends on an app card ("link in bio"), and joins it with ffmpeg: about 60 s, about 2 MB. Free: no Sarvam call.
+Published to R2 `shorts/<date>.mp4|.jpg|.json` (its own folder: audio.yml syncs `audio/<date>/` with --delete); the json holds the
+YouTube title/description, Instagram caption and WhatsApp caption. Skipped when the day's short already matches the recording.
+Delivered by the post kit: the Telegram kit sends the video (`telegramShort`, retried by the later kit runs if it is not ready yet)
+and share-kit.html has a "Short / Reel" section (preview, Share video, Save, captions). Posting itself is by hand for now
+(YouTube and Instagram uploads need the owner's accounts connected). Tests: `node --test tools/video/test/*.test.mjs`.
+
 ## Growth tracking and app entry points (2026-11-21)
 
 - **Owner report: `/growth.html`** (noindex). Open once as `/growth.html#key=<STATS_KEY>`; the key (Vercel env `STATS_KEY`,

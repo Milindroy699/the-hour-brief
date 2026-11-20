@@ -187,13 +187,29 @@ async function toOwnerPush(s, l) {
 }
 
 // `only` limits a run to one channel (e.g. resending just the WhatsApp pick by hand with force).
+// The day's vertical video (made by .github/workflows/short.yml from the morning recording), sent to the owner to post as a
+// YouTube Short, an Instagram Reel or a WhatsApp status. Not there yet (the recording or the video is still being made): not
+// sent, so a later run of the kit today tries again.
+const SHORTS_BASE = 'https://pub-1dafea4a948540db8413a044895e083c.r2.dev/shorts';
+async function toTelegramShort(s, l) {
+  const chat = await telegramChat();
+  if (!chat || !process.env.TELEGRAM_BOT_TOKEN) return { ok: false, skipped: 'telegram not paired' };
+  const r = await fetch(`${SHORTS_BASE}/${s.date}.json`, { cache: 'no-store', signal: AbortSignal.timeout(8000) }).catch(() => null);
+  if (!r || !r.ok) return { ok: false, skipped: 'no short for today yet' };
+  const v = await r.json();
+  const caption = [`🎬 Today’s Short / Reel (${Math.round(v.duration)}s): post it to YouTube Shorts, Instagram Reels or your WhatsApp status.`,
+    '', `YouTube title: ${v.youtube.title}`, '', `Captions to copy (YouTube, Instagram, WhatsApp): ${l.kit}#short`].join('\n');
+  await tg('sendVideo', { chat_id: chat, video: `${SHORTS_BASE}/${s.date}.mp4`, caption: caption.slice(0, 1024), supports_streaming: true, width: 1080, height: 1920 });
+  return { ok: true, duration: v.duration };
+}
+
 async function deliverKit({ date = istToday(), force = false, dry = false, only = null, memberPosted = false } = {}) {
   const s = await loadSocial(date);
   if (!s) return { ok: false, date, skipped: 'no social post for this date yet' };
   const l = links(s);
   if (dry) return { ok: true, dry: true, date, social: s, links: l };
   const result = { ok: true, date };
-  for (const [name, fn] of [['telegram', toTelegram], ['telegramPost', toTelegramPost], ['telegramLeaders', toTelegramLeaders], ['ownerPush', toOwnerPush]]) {
+  for (const [name, fn] of [['telegram', toTelegram], ['telegramPost', toTelegramPost], ['telegramLeaders', toTelegramLeaders], ['telegramShort', toTelegramShort], ['ownerPush', toOwnerPush]]) {
     if (only && name !== only) continue;
     const key = `kit:${name}:${date}`;
     if (!(await claim(key, force))) { result[name] = { ok: true, skipped: 'already sent' }; continue; }

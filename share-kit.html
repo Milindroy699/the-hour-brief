@@ -47,6 +47,26 @@
     <textarea id="status-cap" readonly aria-label="WhatsApp status caption" style="min-height:6em"></textarea>
     <div class="row"><button id="copy-cap" type="button">Copy caption</button></div>
 
+    <div id="short" hidden>
+      <h2>Short / Reel</h2>
+      <p class="meta" id="short-meta"></p>
+      <video class="card status" id="short-video" controls playsinline preload="metadata"></video>
+      <div class="row">
+        <button class="primary" id="short-share" type="button" hidden>Share video…</button>
+        <a class="btn" id="short-save" download>Save video</a>
+      </div>
+      <p class="hint">On your phone, Share video → YouTube (Short) or Instagram (Reel) or WhatsApp → My Status, then paste its caption.</p>
+      <label class="meta" for="short-yt">YouTube Shorts: title, then description</label>
+      <textarea id="short-yt" readonly style="min-height:9em"></textarea>
+      <div class="row"><button id="copy-yt" type="button">Copy title</button><button id="copy-ytd" type="button">Copy description</button></div>
+      <label class="meta" for="short-ig">Instagram Reel caption</label>
+      <textarea id="short-ig" readonly style="min-height:8em"></textarea>
+      <div class="row"><button id="copy-ig" type="button">Copy caption</button></div>
+      <label class="meta" for="short-wa">WhatsApp status caption</label>
+      <textarea id="short-wa" readonly style="min-height:4em"></textarea>
+      <div class="row"><button id="copy-swa" type="button">Copy caption</button></div>
+    </div>
+
     <h2>LinkedIn post</h2>
     <p class="meta" id="li-label"></p>
     <textarea id="li" readonly aria-label="LinkedIn post text"></textarea>
@@ -107,6 +127,36 @@
   var $ = function (id) { return document.getElementById(id); };
   var status = $('status'), timer;
   function say(msg) { status.textContent = msg; clearTimeout(timer); timer = setTimeout(function () { status.textContent = ''; }, 2500); }
+  // The day's vertical video (tools/video/short.mjs, published by .github/workflows/short.yml). Hidden until it exists.
+  function loadShort(date) {
+    var base = 'https://pub-1dafea4a948540db8413a044895e083c.r2.dev/shorts/' + date;
+    fetch(base + '.json', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : Promise.reject(); }).then(function (v) {
+      var url = base + '.mp4';
+      $('short-meta').textContent = Math.round(v.duration) + ' seconds · 1080×1920 · ' + (v.bytes / 1e6).toFixed(1) + ' MB';
+      $('short-video').src = url;
+      $('short-video').poster = base + '.jpg';
+      $('short-save').href = url;
+      $('short-save').setAttribute('download', 'hour-brief-short-' + date + '.mp4');
+      $('short-yt').value = v.youtube.title + '\n\n' + v.youtube.description;
+      $('short-ig').value = v.instagram.caption;
+      $('short-wa').value = v.whatsapp;
+      $('copy-yt').addEventListener('click', function () { copy(v.youtube.title); });
+      $('copy-ytd').addEventListener('click', function () { copy(v.youtube.description); });
+      $('copy-ig').addEventListener('click', function () { copy(v.instagram.caption); });
+      $('copy-swa').addEventListener('click', function () { copy(v.whatsapp); });
+      if (navigator.canShare) {
+        fetch(url).then(function (r) { return r.blob(); }).then(function (b) {
+          var f = new File([b], 'hour-brief-' + date + '.mp4', { type: 'video/mp4' });
+          if (!navigator.canShare({ files: [f] })) return;
+          var btn = $('short-share');
+          btn.hidden = false;
+          btn.addEventListener('click', function () { navigator.share({ files: [f], text: v.whatsapp }).catch(function () {}); });
+        }).catch(function () {});
+      }
+      $('short').hidden = false;
+      if (location.hash === '#short') $('short').scrollIntoView();
+    }).catch(function () { /* no video today (yet) */ });
+  }
   function copy(text) {
     if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(text).then(function () { say('Copied'); });
     var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select();
@@ -149,6 +199,7 @@
   loadSocial(0).catch(function () { return loadSocial(1); }).then(function (s) {
     s.linkedin = withApp(deepLinks(s.linkedin, s, 'linkedin'), 'linkedin');
     s.status = withWhatsApp(deepLinks(s.status, s, 'whatsapp-status'), 'whatsapp-status');
+    loadShort(s.date);
     // Weekdays: the day's post is the punchy Thought Leaders pick; the insight post stays available as an alternative.
     var pick = s.leaders && s.leaders.post ? s.leaders : null;
     var post = pick ? withApp(pick.post, 'linkedin') : s.linkedin;

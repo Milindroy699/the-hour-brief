@@ -1,0 +1,10 @@
+{
+  "name": "hour-brief-video",
+  "private": true,
+  "type": "module",
+  "description": "Daily vertical short (YouTube Shorts / Instagram Reels) from the morning recording. See short.mjs.",
+  "dependencies": {
+    "@resvg/resvg-js": "2.6.2",
+    "satori": "0.33.5"
+  }
+}
