@@ -29,6 +29,8 @@ export const SITE = {
   logo: '/brand/logo-256.png',
   ogImage: '/og-image.png',
   sameAs: ['https://apps.apple.com/app/id6817195056', 'https://play.google.com/store/apps/details?id=app.thehourbrief'],
+  // Search engine ownership checks, on the homepage only. Removing one un-verifies the site in that tool.
+  verification: [['google-site-verification', 'xUFqUiPuQjWuYKQam9SfDEwj2WOcp-dV7PgYg48kr8A']],
 };
 const LANES = [['ai', 'AI & Tech'], ['biz', 'Product & Business'], ['mkt', 'Stock Market']];
 // Other public pages worth a canonical link and a sitemap entry (path from the site root).
@@ -152,6 +154,7 @@ export function homeHead() {
   const canonical = CANON + '/';
   return [
     ...metaTags({ title: SITE.homeTitle, description: SITE.homeDescription, canonical, type: 'website', image: CANON + SITE.ogImage }),
+    ...SITE.verification.map(([name, content]) => `<meta name="${attr(name)}" content="${attr(content)}">`),
     `<link rel="alternate" type="application/rss+xml" title="${attr(SITE.name)} podcast" href="${CANON}/podcast.xml">`,
     `<script type="application/ld+json">${json({ '@context': 'https://schema.org', '@graph': [website(), organization()] })}</script>`,
   ];
