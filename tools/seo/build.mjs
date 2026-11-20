@@ -8,6 +8,9 @@
 //   - the homepage: a stable brand title and description, WebSite + NewsMediaOrganization JSON-LD
 //   - the other public pages: canonical + og:url; the internal post kit: noindex
 //   - writes sitemap.xml (with Google News tags for the last two days), robots.txt and llms.txt
+// sitemap.xml, robots.txt and llms.txt must also exist in git: Vercel lists a project's static files before this runs (it runs
+// once per serverless function) and only serves files on that list, so a file created here alone would 404. Their contents
+// are replaced here on every deploy.
 // It never fails a deploy: anything it cannot do is logged and skipped, and the page is served as it is in git.
 //
 //   node tools/seo/build.mjs              on Vercel (VERCEL=1): edits the deploy copy in place
@@ -196,11 +199,12 @@ export function sitemap(editions, { times = {}, now = new Date() } = {}) {
     rows.push(url(`${CANON}/archive/${ed.date}.html`, at, news));
   }
   for (const p of PAGES.filter((p) => p !== 'archive/index.html')) rows.push(url(urlFor(p)));
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">\n${rows.join('\n')}\n</urlset>\n`;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<!-- rewritten on every deploy by tools/seo/build.mjs (the copy in git is only a starting point) -->\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">\n${rows.join('\n')}\n</urlset>\n`;
 }
 
 export function robots() {
-  return `# The Hour Brief. Search engines and AI assistants (GPTBot, OAI-SearchBot, ClaudeBot, PerplexityBot, Google-Extended and
+  return `# Rewritten on every deploy by tools/seo/build.mjs; the copy in git is only a starting point.
+# The Hour Brief. Search engines and AI assistants (GPTBot, OAI-SearchBot, ClaudeBot, PerplexityBot, Google-Extended and
 # others) are all welcome to read and cite the editions. Only internal working files are kept out.
 User-agent: *
 Allow: /

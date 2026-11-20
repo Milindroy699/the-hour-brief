@@ -1,0 +1,20 @@
+# Rewritten on every deploy by tools/seo/build.mjs; the copy in git is only a starting point.
+# The Hour Brief. Search engines and AI assistants (GPTBot, OAI-SearchBot, ClaudeBot, PerplexityBot, Google-Extended and
+# others) are all welcome to read and cite the editions. Only internal working files are kept out.
+User-agent: *
+Allow: /
+Allow: /api/og
+Disallow: /api/
+Disallow: /tools/
+Disallow: /mobile/
+Disallow: /social/
+Disallow: /leaders-pending/
+Disallow: /.github/
+Disallow: /share-kit.html
+Disallow: /DEPLOY.md
+Disallow: /e/
+Disallow: /s/
+Disallow: /q/
+Disallow: /l/
+
+Sitemap: https://the-hour-brief.vercel.app/sitemap.xml
