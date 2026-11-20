@@ -41,7 +41,7 @@
   try { src = sessionStorage.getItem('hb-src-s') || ''; } catch (e) {}
   if (!src || src === 'direct') src = place;
   var play = PLAY + '&referrer=' + encodeURIComponent('utm_source=' + src + '&utm_medium=' + place + '&utm_campaign=' + place);
-  var apple = IOS + (APPLE_PT ? '?pt=' + APPLE_PT + '&ct=' + encodeURIComponent((src + '.' + place).slice(0, 40)) + '&mt=8' : '');
+  var apple = IOS + (APPLE_PT ? '?pt=' + APPLE_PT + '&ct=' + encodeURIComponent((src === place ? place : src + '.' + place).slice(0, 30)) + '&mt=8' : '');
   var kind = ios ? 'ios' : android ? 'android' : 'desktop';
   var go = to || (kind === 'desktop' ? '' : kind);                  // where this visit is being sent
   try {
