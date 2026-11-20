@@ -66,9 +66,11 @@ async function toYouTube(meta, video, { dry }) {
 }
 
 // ---- Instagram ----
-const IG = () => `https://graph.instagram.com${env('IG_GRAPH_VERSION') ? '/' + env('IG_GRAPH_VERSION') : ''}`;
-async function igCall(method, p, params) {
-  const url = `${IG()}${p}${method === 'GET' ? '?' + new URLSearchParams(params) : ''}`;
+// Two kinds of token work: an Instagram-login token (graph.instagram.com) or a Facebook-login one, where the account is reached
+// through its linked Facebook Page (graph.facebook.com, with the Page's token, which does not expire). Same publishing calls.
+const IG = (host = 'graph.instagram.com') => `https://${host}${env('IG_GRAPH_VERSION') ? '/' + env('IG_GRAPH_VERSION') : ''}`;
+async function igCall(method, p, params, host) {
+  const url = `${IG(host)}${p}${method === 'GET' ? '?' + new URLSearchParams(params) : ''}`;
   const r = await fetch(url, method === 'GET' ? {} : { method, headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(params) });
   const j = await r.json().catch(() => ({}));
   if (!r.ok || j.error) throw new Error(`instagram ${p}: ${(j.error && j.error.message) || r.status}`);
@@ -78,8 +80,9 @@ async function igAuth() {
   const raw = await kv(['GET', 'ig:auth']);
   if (!raw) return null;
   let a = JSON.parse(raw);
-  // a long-lived token lasts 60 days and can be refreshed once it is a day old; refresh weekly so it never lapses
-  if (Date.now() - (a.refreshedAt || 0) > 7 * 864e5) {
+  // an Instagram-login token lasts 60 days and can be refreshed once it is a day old; refresh weekly so it never lapses
+  // (a Facebook Page token does not expire)
+  if ((a.host || 'graph.instagram.com') === 'graph.instagram.com' && Date.now() - (a.refreshedAt || 0) > 7 * 864e5) {
     const r = await fetch(`https://graph.instagram.com/refresh_access_token?${new URLSearchParams({ grant_type: 'ig_refresh_token', access_token: a.token })}`);
     const j = await r.json().catch(() => ({}));
     if (j.access_token) { a = { ...a, token: j.access_token, refreshedAt: Date.now(), expiresAt: Date.now() + (j.expires_in || 0) * 1000 }; await kv(['SET', 'ig:auth', JSON.stringify(a)]); }
@@ -93,13 +96,13 @@ async function toInstagram(meta, date, { dry }) {
   if (!a) return { skipped: 'Instagram not connected (run: node publish.mjs --ig-token <token>)' };
   const params = { media_type: 'REELS', video_url: `${PUBLIC}/shorts/${date}.mp4`, cover_url: `${PUBLIC}/shorts/${date}.jpg`, caption: meta.instagram.caption.slice(0, 2200), share_to_feed: 'true', access_token: a.token };
   if (dry) return { dry: true, account: a.username, params: { ...params, access_token: '…' } };
-  const c = await igCall('POST', `/${a.userId}/media`, params);
+  const c = await igCall('POST', `/${a.userId}/media`, params, a.host);
   for (let i = 0; i < 40; i++) {                                         // Instagram fetches and processes the video: up to ~6 min
     await new Promise((r) => setTimeout(r, 9000));
-    const st = await igCall('GET', `/${c.id}`, { fields: 'status_code,status', access_token: a.token });
+    const st = await igCall('GET', `/${c.id}`, { fields: 'status_code,status', access_token: a.token }, a.host);
     if (st.status_code === 'FINISHED') {
-      const p = await igCall('POST', `/${a.userId}/media_publish`, { creation_id: c.id, access_token: a.token });
-      const link = await igCall('GET', `/${p.id}`, { fields: 'permalink', access_token: a.token }).catch(() => ({}));
+      const p = await igCall('POST', `/${a.userId}/media_publish`, { creation_id: c.id, access_token: a.token }, a.host);
+      const link = await igCall('GET', `/${p.id}`, { fields: 'permalink', access_token: a.token }, a.host).catch(() => ({}));
       return { id: p.id, url: link.permalink || '' };
     }
     if (st.status_code === 'ERROR' || st.status_code === 'EXPIRED') throw new Error(`instagram processing: ${st.status || st.status_code}`);
@@ -108,9 +111,20 @@ async function toInstagram(meta, date, { dry }) {
 }
 // One-time: store a long-lived token (from the Meta app's "Generate token" for the Instagram account) and its account id.
 async function saveIgToken(token) {
-  const me = await igCall('GET', '/me', { fields: 'user_id,username,account_type', access_token: token });
-  await kv(['SET', 'ig:auth', JSON.stringify({ token, userId: me.user_id, username: me.username, refreshedAt: 0 })]);
-  return me;
+  try {
+    const me = await igCall('GET', '/me', { fields: 'user_id,username,account_type', access_token: token });
+    await kv(['SET', 'ig:auth', JSON.stringify({ host: 'graph.instagram.com', token, userId: me.user_id, username: me.username, refreshedAt: 0 })]);
+    return { ...me, via: 'Instagram login' };
+  } catch (e) {
+    // a Facebook-login token: find the Page with an Instagram professional account and keep that Page's token
+    const pages = await igCall('GET', '/me/accounts', { fields: 'name,access_token,instagram_business_account{id,username}', access_token: token }, 'graph.facebook.com')
+      .catch((e2) => { throw new Error(`that token works with neither Instagram login (${e.message}) nor Facebook login (${e2.message})`); });
+    const pg = (pages.data || []).find((x) => x.instagram_business_account);
+    if (!pg) throw new Error('signed in with Facebook, but none of its Pages has an Instagram professional account linked');
+    const ig = pg.instagram_business_account;
+    await kv(['SET', 'ig:auth', JSON.stringify({ host: 'graph.facebook.com', token: pg.access_token, userId: ig.id, username: ig.username, page: pg.name, refreshedAt: Date.now() })]);
+    return { user_id: ig.id, username: ig.username, account_type: `via the Facebook Page "${pg.name}"`, via: 'Facebook login' };
+  }
 }
 
 // ---- run ----
@@ -129,7 +143,7 @@ async function main() {
     try {
       const a = env('KV_REST_API_URL') ? await igAuth() : null;
       if (!a) console.log('instagram: not connected');
-      else { const me = await igCall('GET', '/me', { fields: 'username', access_token: a.token }); console.log(`instagram: OK, @${me.username}`); }
+      else { const me = await igCall('GET', `/${a.userId}`, { fields: 'username', access_token: a.token }, a.host); console.log(`instagram: OK, @${me.username} (via ${a.host || 'graph.instagram.com'})`); }
     } catch (e) { bad++; console.log(`instagram: NOT OK, ${e.message}`); }
     process.exitCode = bad ? 1 : 0;
     return;
