@@ -111,7 +111,13 @@ async function toInstagram(meta, date, { dry }) {
   throw new Error('instagram: the video was still processing after 6 minutes');
 }
 // One-time: store a long-lived token (from the Meta app's "Generate token" for the Instagram account) and its account id.
-async function saveIgToken(token) {
+async function saveIgToken(token, igId) {
+  // A Unified-login token that can't list its accounts: the Instagram account id comes from the Meta app page (--ig-id).
+  if (igId) {
+    const acct = await igCall('GET', `/${igId}`, { fields: 'username', access_token: token }, 'graph.facebook.com');
+    await kv(['SET', 'ig:auth', JSON.stringify({ host: 'graph.facebook.com', token, userId: igId, username: acct.username, refreshedAt: Date.now() })]);
+    return { user_id: igId, username: acct.username, account_type: 'Unified login', via: 'Unified login' };
+  }
   try {
     const me = await igCall('GET', '/me', { fields: 'user_id,username,account_type', access_token: token });
     await kv(['SET', 'ig:auth', JSON.stringify({ host: 'graph.instagram.com', token, userId: me.user_id, username: me.username, refreshedAt: 0 })]);
@@ -169,7 +175,7 @@ async function main() {
     process.exitCode = bad ? 1 : 0;
     return;
   }
-  if (arg('--ig-token')) { const me = await saveIgToken(arg('--ig-token')); console.log(`Instagram connected: @${me.username} (${me.account_type}, id ${me.user_id})`); return; }
+  if (arg('--ig-token')) { const me = await saveIgToken(arg('--ig-token'), arg('--ig-id')); console.log(`Instagram connected: @${me.username} (${me.account_type}, id ${me.user_id})`); return; }
   const date = arg('--date');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '')) throw new Error('--date YYYY-MM-DD');
   const dry = process.argv.includes('--dry'), force = process.argv.includes('--force'), only = arg('--only');
