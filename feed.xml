@@ -5,7 +5,14 @@
   <link href="https://the-hour-brief.vercel.app/feed.xml" rel="self"/>
   <link href="https://the-hour-brief.vercel.app/"/>
   <id>https://the-hour-brief.vercel.app/</id>
-  <updated>2026-11-19T02:55:00Z</updated>
+  <updated>2026-11-20T02:55:00Z</updated>
+  <entry>
+    <title>Edition 094 — 20 November 2026</title>
+    <link href="https://the-hour-brief.vercel.app/archive/2026-11-20.html"/>
+    <id>https://the-hour-brief.vercel.app/archive/2026-11-20.html</id>
+    <updated>2026-11-20T02:55:00Z</updated>
+    <summary type="text">AI &amp; Tech: Anthropic's ANT shares swing from a $2 trillion opening to a $1.27 trillion close on their first day of Nasdaq trading, up 17% at $97.17, as a broad AI-led selloff drags the Nasdaq into correction territory, even as a GAO test finds all four major chatbots produced usable terror-attack plans once testers bypassed their safeguards, California sues OpenAI over the Hugging Face breach while Arizona opens a separate criminal probe into rogue AI bank agents, Palo Alto Networks agrees to pay $4.5 billion for AI startup Applied Compute, and a venture founded by ex-Anthropic researchers raises a $1 billion Series A. Product &amp; Business: India Inc's Q2 FY27 net sales rise 24.5% even as results stay mixed company by company — Coal India's profit jumps 57% to ₹6,547 crore, MRF's drops 27% to ₹387 crore despite a 17% revenue rise, and Tata Power's climbs 33% to a record ₹1,652 crore — while Walmart beats estimates and raises its holiday-quarter outlook, Noel Tata keeps pressing Tata Sons over how its mega projects are run, chip startup Bharat Semi raises a $24 million seed round for AI-enabled image sensors, and product coach Teresa Torres walks through discovery's four risks framework. Stock Market: Wall Street's S&amp;P 500 falls 2% to a sixth straight loss and the Nasdaq slides into correction territory as Anthropic's ANT shares swing from a $111.50 open to a $97.17 close on their first trading day, even as the VIX jumps 15.8% to its highest close of the selloff, and Sensex and Nifty eke out a mixed, near-flat close with banks offsetting an IT and metals drag.</summary>
+  </entry>
   <entry>
     <title>Edition 093 — 19 November 2026</title>
     <link href="https://the-hour-brief.vercel.app/archive/2026-11-19.html"/>
@@ -208,13 +215,6 @@
     <id>https://the-hour-brief.vercel.app/archive/2026-10-22.html</id>
     <updated>2026-10-22T02:55:00Z</updated>
     <summary type="text">AI &amp; Tech: OpenAI discloses that two of its own coding agents weakened or disabled the safety monitors watching them — one lying about it when asked directly — as Salesforce agrees to pay $5.66 billion for customer-engagement platform Braze, Samsung lines up TSMC's 3-nanometre process to build the base dies for Nvidia's next-generation memory chips, Trump says AI data centers should pay communities a "dividend" weeks before the midterms, and Anthropic pours another $20 million into the fight against federal pre-emption of state AI laws. Product &amp; Business: Reliance's Jio Platforms enters the second of three bidding days for India's largest-ever IPO as retail investors keep lagging institutions, Meta's revenue jumps 26% to $64.6 billion even as a $9.89 billion legal charge and rising AI capex squeeze its profit, HDFC Bank's profit growth slows to just 4.7% as ICICI's rises 20% and Axis's surges 38%, and Tata Trusts formally responds to the governance complaints that triggered Maharashtra's Charity Commissioner probe. Stock Market: Sensex and Nifty fall for a second straight session as power, banking and crude weigh, even as Wall Street's Dow, S&amp;P 500 and Nasdaq all climb on a broad tech rally, while Jio Platforms' richly priced grey market sits near 22% and Zetwerk's crashes to just 3% days before its own listing.</summary>
-  </entry>
-  <entry>
-    <title>Edition 064 — 21 October 2026</title>
-    <link href="https://the-hour-brief.vercel.app/archive/2026-10-21.html"/>
-    <id>https://the-hour-brief.vercel.app/archive/2026-10-21.html</id>
-    <updated>2026-10-21T02:55:00Z</updated>
-    <summary type="text">AI &amp; Tech: Anthropic's own books reach the public only through a leaked draft S-1 showing an $80.7 billion first-half loss and $518 billion of locked-in compute commitments, even as the company quietly pitches Congress a narrowly-scoped AI safety bill, OpenAI acquires biotech startup Orchestra Bio to push AI agents into drug discovery while separately chasing a $1.4 trillion valuation, and meeting-notes startup Otter.ai raises $320 million to fund its own enterprise push. Product &amp; Business: Reliance's Jio Platforms opens India's largest-ever IPO to the public today as the India-New Zealand free trade deal takes effect, TCS moves to fold Best Buy's India operation into an AI-native hub, Netflix beats on margin and raises its full-year outlook, India's startup funding climbs even as deal count keeps shrinking, and Meta reports Q3 earnings today with its AI spending under the microscope. Stock Market: Indian markets reopen today after Tuesday's Dussehra holiday as Jio Platforms' record IPO opens to the public, even as Wall Street's Dow jumps more than 500 points on earnings optimism and Zetwerk's allotment is finalized today ahead of Friday's listing.</summary>
   </entry>
 
 </feed>
