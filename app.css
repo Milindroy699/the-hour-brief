@@ -697,6 +697,8 @@ html.hb-quiz-page body.hb-listening .hub-scroll { padding-bottom: 130px; }
 .hub-here { flex: none; padding: 6px 12px; border-radius: 999px; background: var(--hb-primary); color: #fff; font-family: var(--hb-label); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
 .hub-eph[hidden], .hub-eps[hidden] { display: none; }
 .hub-eps { margin-bottom: 8px; }
+.hub-more { display: block; width: 100%; margin-top: 2px; padding: 12px 16px; border: 1px dashed var(--line); border-radius: 22px; background: transparent; color: var(--ink-soft, inherit); font: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.hub-more:hover { background: color-mix(in srgb, var(--hb-primary) 6%, transparent); color: var(--ink); }
 
 /* ---- Swipe cards (cards.js): the same stories, one per screen ---- */
 html.hb-deck-open, html.hb-deck-open body { overflow: hidden; }

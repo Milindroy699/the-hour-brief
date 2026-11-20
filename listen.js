@@ -944,6 +944,8 @@
   // ---- All episodes: the list published next to the recordings (episodes.json). Each row opens that edition, whose page
   // has the chapters and the story highlighting; the row for the page you are on is marked instead of linked. ----
   var eps = null, epsAt = 0;
+  // Only the newest few show at first (plus the row for the page you are on, if it is older); the rest open on demand.
+  var EPS_SHOWN = 3, epsAll = false;
   function pageDate() { var el = document.querySelector('[data-edition-date]'); return el && el.getAttribute('data-edition-date'); }
   function niceDate(iso) {
     try { return new Date(iso + 'T00:00:00Z').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }); } catch (e) { return iso; }
@@ -974,8 +976,11 @@
     var here = pageDate(), oldest = eps[eps.length - 1].date;
     hubEl.epn.textContent = eps.length + (eps.length === 1 ? ' episode' : ' episodes') + (eps.length > 1 ? ' · since ' + niceDay(oldest) : '');
     hubEl.eps.textContent = '';
-    eps.forEach(function (e) {
-      var li = mk('li'), current = e.date === here;
+    var extra = 0;
+    eps.forEach(function (e, k) {
+      var current = e.date === here;
+      if (!epsAll && k >= EPS_SHOWN && !current) { extra++; return; }
+      var li = mk('li');
       var row = mk(current ? 'div' : 'a', 'hub-row ep' + (current ? ' now' : ''));
       if (current) row.setAttribute('aria-current', 'true'); else row.href = '/archive/' + e.date + '.html?audio=1';
       row.appendChild(mk('span', 'hub-t', e.edition ? ('00' + e.edition).slice(-3) : '·'));
@@ -989,6 +994,20 @@
       li.appendChild(row);
       hubEl.eps.appendChild(li);
     });
+    if (eps.length > EPS_SHOWN) {
+      var li2 = mk('li');
+      var more = mk('button', 'hub-more', epsAll ? 'Show fewer' : 'Show ' + extra + ' older episode' + (extra === 1 ? '' : 's'));
+      more.type = 'button';
+      more.setAttribute('aria-expanded', String(epsAll));
+      more.addEventListener('click', function () {
+        epsAll = !epsAll;
+        renderEpisodes();
+        var b = hubEl.eps.querySelector('.hub-more');
+        if (b) try { b.focus({ preventScroll: !epsAll }); } catch (x) { /* ignore */ }
+      });
+      li2.appendChild(more);
+      hubEl.eps.appendChild(li2);
+    }
   }
 
   function openHub() {
