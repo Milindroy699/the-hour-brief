@@ -120,6 +120,15 @@
   }
   // App install links, added the same way the server adds them (api/_kit.js withApp): above the closing hashtags.
   function appBlock(src) { return '📱 Get the free app (iPhone & Android): ' + location.origin + '/app?src=' + src; }
+  // Everything posted to WhatsApp also offers the channel (same as api/_kit.js withWhatsApp).
+  var CHANNEL_LINE = '🟢 Follow on WhatsApp for the brief every morning: https://whatsapp.com/channel/0029Vb9RU0kCXC3F1pRY6q2L';
+  function waBlock(src) { return CHANNEL_LINE + '\n' + appBlock(src); }
+  function withWhatsApp(text, src) {
+    var t = String(text || '').replace(/\s+$/, '');
+    var m = /^([\s\S]*?)\s*((?:#[A-Za-z]\w*\s*)+)$/.exec(t);
+    if (m && m[1].trim()) return m[1].replace(/\s+$/, '') + '\n\n' + waBlock(src) + '\n\n' + m[2].trim();
+    return t + '\n\n' + waBlock(src);
+  }
   function withApp(text, src) {
     var block = appBlock(src);
     var t = String(text || '').replace(/\s+$/, '');
@@ -139,7 +148,7 @@
   }
   loadSocial(0).catch(function () { return loadSocial(1); }).then(function (s) {
     s.linkedin = withApp(deepLinks(s.linkedin, s, 'linkedin'), 'linkedin');
-    s.status = withApp(deepLinks(s.status, s, 'whatsapp-status'), 'whatsapp-status');
+    s.status = withWhatsApp(deepLinks(s.status, s, 'whatsapp-status'), 'whatsapp-status');
     // Weekdays: the day's post is the punchy Thought Leaders pick; the insight post stays available as an alternative.
     var pick = s.leaders && s.leaders.post ? s.leaders : null;
     var post = pick ? withApp(pick.post, 'linkedin') : s.linkedin;
@@ -152,7 +161,7 @@
       var link = location.origin + '/leaders.html#a=' + encodeURIComponent(pick.id);
       var laneOf = { 'tech-ai': 'ai', business: 'biz', product: 'biz', finance: 'mkt' };
       var wlImg = '/api/og?' + new URLSearchParams({ type: 'status', k: 'Voices', i: hook, d: s.date, lane: laneOf[pick.category] || '' }).toString();
-      var wlMsg = ['*' + hook + '*'].concat(points, ['Read the full breakdown 👉 ' + link, appBlock('whatsapp')]).join('\n\n');
+      var wlMsg = ['*' + hook + '*'].concat(points, ['Read the full breakdown 👉 ' + link, waBlock('whatsapp')]).join('\n\n');
       $('wl-img').src = wlImg;
       $('wl-save').href = wlImg;
       $('wl-save').setAttribute('download', 'hour-brief-leaders-' + s.date + '.png');
@@ -164,7 +173,7 @@
           var f = new File([blob], 'hour-brief-leaders-' + s.date + '.png', { type: 'image/png' });
           if (!navigator.canShare || !navigator.canShare({ files: [f] })) return;
           var b = $('wl-share'); b.hidden = false;
-          b.addEventListener('click', function () { navigator.share({ files: [f], text: hook + '\n\nRead the full breakdown 👉 ' + link + '\n\n' + appBlock('whatsapp-status') }).catch(function () {}); });
+          b.addEventListener('click', function () { navigator.share({ files: [f], text: hook + '\n\nRead the full breakdown 👉 ' + link + '\n\n' + waBlock('whatsapp-status') }).catch(function () {}); });
         }).catch(function () {});
       }
       $('li2').value = s.linkedin;

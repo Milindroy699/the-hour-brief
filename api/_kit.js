@@ -30,6 +30,10 @@ function beforeTags(text, block) {
   return `${t}\n\n${block}`;
 }
 const withApp = (text, src) => beforeTags(text, appBlock(src));
+// The WhatsApp channel, offered on everything posted to WhatsApp (status and chat messages), above the app links.
+const WA_CHANNEL = 'https://whatsapp.com/channel/0029Vb9RU0kCXC3F1pRY6q2L';
+const channelLine = '🟢 Follow on WhatsApp for the brief every morning: ' + WA_CHANNEL;
+const withWhatsApp = (text, src) => beforeTags(text, `${channelLine}\n${appBlock(src)}`);
 // Deep links: the day's post is about one story (s.storyId), so its link should open that story, not the top of the edition.
 // The routine writes the texts with an edition link (/e/<date>); this turns it into the story's link (/s/<date>/<id>, which
 // the app opens directly when installed, and the website scrolls to) and tags it with the channel (?src=) for the growth report.
@@ -79,8 +83,8 @@ function leadersWhatsApp(s) {
   return {
     hook,
     image: `${CANON}/api/og?${new URLSearchParams({ type: 'status', k: 'Voices', i: hook, d: s.date, lane: LANE_OF[L.category] || '' }).toString()}`,
-    status: `${hook}\n\nRead the full breakdown 👉 ${link}\n\n${appBlock('whatsapp-status')}`,
-    message: [`*${hook}*`, ...points, `Read the full breakdown 👉 ${link}`, appBlock('whatsapp')].join('\n\n'),
+    status: `${hook}\n\nRead the full breakdown 👉 ${link}\n\n${channelLine}\n${appBlock('whatsapp-status')}`,
+    message: [`*${hook}*`, ...points, `Read the full breakdown 👉 ${link}`, `${channelLine}\n${appBlock('whatsapp')}`].join('\n\n'),
   };
 }
 
@@ -124,7 +128,7 @@ async function toTelegram(s, l) {
   const chat = await telegramChat();
   if (!chat) return { ok: false, skipped: 'telegram not paired yet (message the bot, then pair)' };
   // The status image to save to WhatsApp status, with its caption ready to paste.
-  await tg('sendPhoto', { chat_id: chat, photo: l.image, caption: `${withApp(deepLinks(s.status, s, 'whatsapp-status'), 'whatsapp-status')}\n\nPost kit: ${l.kit}`.slice(0, 1024) });
+  await tg('sendPhoto', { chat_id: chat, photo: l.image, caption: `${withWhatsApp(deepLinks(s.status, s, 'whatsapp-status'), 'whatsapp-status')}\n\nPost kit: ${l.kit}`.slice(0, 1024) });
   return { ok: true };
 }
 // The day's LinkedIn post as its own message (its own dedupe key, so it can follow later the same day). When it already
@@ -255,4 +259,4 @@ async function pairTelegram({ dry = false } = {}) {
   return { ok: true, dry, chat: list[0] };
 }
 
-module.exports = { APP_LINKS, appLink, withApp, deepLinks, beforeTags, primaryPost, leadersWhatsApp, notifyOwner, istToday, loadSocial, links, deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram };
+module.exports = { APP_LINKS, WA_CHANNEL, appLink, withApp, withWhatsApp, deepLinks, beforeTags, primaryPost, leadersWhatsApp, notifyOwner, istToday, loadSocial, links, deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram };

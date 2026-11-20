@@ -52,6 +52,8 @@ async function buildDigest() {
     ...(n ? [`🧠 ${quizLine}: ${src ? quizUrl.replace('utm_source=digest', `utm_source=${src}`) : quizUrl}`, ''] : []),
     `📖 Full edition: ${editionUrl}${src ? `?src=${src}` : ''}`,
     ...(src ? ['', `📱 Get the free app (iPhone & Android): ${CANON}/app?src=${src}`] : []),
+    // channel posts get forwarded: whoever receives one can follow from it
+    ...(src === 'whatsapp-channel' ? [`🟢 Forwarded to you? Follow for the brief every morning: https://whatsapp.com/channel/0029Vb9RU0kCXC3F1pRY6q2L`] : []),
   ].join('\n');
 
   return {
