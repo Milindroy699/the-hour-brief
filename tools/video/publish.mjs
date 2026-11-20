@@ -94,6 +94,7 @@ async function toInstagram(meta, date, { dry }) {
   if (!env('KV_REST_API_URL') || !env('KV_REST_API_TOKEN')) return { skipped: 'KV not configured (it holds the Instagram token)' };
   const a = await igAuth();
   if (!a) return { skipped: 'Instagram not connected (run: node publish.mjs --ig-token <token>)' };
+  if (a.expiresAt && a.expiresAt - Date.now() < 7 * 864e5) console.warn(`instagram: the token expires ${new Date(a.expiresAt).toISOString().slice(0, 10)}; generate a new one and run --ig-token again`);
   const params = { media_type: 'REELS', video_url: `${PUBLIC}/shorts/${date}.mp4`, cover_url: `${PUBLIC}/shorts/${date}.jpg`, caption: meta.instagram.caption.slice(0, 2200), share_to_feed: 'true', access_token: a.token };
   if (dry) return { dry: true, account: a.username, params: { ...params, access_token: '…' } };
   const c = await igCall('POST', `/${a.userId}/media`, params, a.host);
@@ -121,6 +122,19 @@ async function saveIgToken(token) {
       .catch((e2) => { throw new Error(`that token works with neither Instagram login (${e.message}) nor Facebook login (${e2.message})`); });
     const pg = (pages.data || []).find((x) => x.instagram_business_account);
     if (!pg) {
+      // "Unified login" (Facebook Login for Business with an Instagram configuration): no Page, but the grant itself names the
+      // Instagram account(s) it covers (debug_token's granular_scopes target_ids). The user token then posts to that account.
+      const dbg = await igCall('GET', '/debug_token', { input_token: token, access_token: token }, 'graph.facebook.com').catch(() => ({}));
+      const d = dbg.data || {};
+      const scope = (d.granular_scopes || []).find((g) => g.scope === 'instagram_content_publish') || (d.granular_scopes || []).find((g) => g.scope === 'instagram_basic');
+      const igId = scope && scope.target_ids && scope.target_ids[0];
+      if (igId) {
+        const acct = await igCall('GET', `/${igId}`, { fields: 'username', access_token: token }, 'graph.facebook.com');
+        const expiresAt = d.expires_at ? d.expires_at * 1000 : 0;
+        await kv(['SET', 'ig:auth', JSON.stringify({ host: 'graph.facebook.com', token, userId: igId, username: acct.username, expiresAt, refreshedAt: Date.now() })]);
+        const left = expiresAt ? `expires ${new Date(expiresAt).toISOString().slice(0, 10)} (${Math.round((expiresAt - Date.now()) / 864e5)} days)` : 'does not expire';
+        return { user_id: igId, username: acct.username, account_type: `token ${left}`, via: 'Unified login' };
+      }
       const perms = await igCall('GET', '/me/permissions', { access_token: token }, 'graph.facebook.com').catch(() => ({ data: [] }));
       throw new Error(['Could not connect. What the token can see:',
         `  token type: ${/^IG/.test(token) ? 'Instagram (IG…)' : /^EAA/.test(token) ? 'Facebook (EAA…)' : 'unknown (' + token.slice(0, 3) + '…)'}, ${token.length} characters`,
@@ -150,7 +164,7 @@ async function main() {
     try {
       const a = env('KV_REST_API_URL') ? await igAuth() : null;
       if (!a) console.log('instagram: not connected');
-      else { const me = await igCall('GET', `/${a.userId}`, { fields: 'username', access_token: a.token }, a.host); console.log(`instagram: OK, @${me.username} (via ${a.host || 'graph.instagram.com'})`); }
+      else { const me = await igCall('GET', `/${a.userId}`, { fields: 'username', access_token: a.token }, a.host); console.log(`instagram: OK, @${me.username} (via ${a.host || 'graph.instagram.com'}${a.expiresAt ? ', token expires ' + new Date(a.expiresAt).toISOString().slice(0, 10) : ''})`); }
     } catch (e) { bad++; console.log(`instagram: NOT OK, ${e.message}`); }
     process.exitCode = bad ? 1 : 0;
     return;
