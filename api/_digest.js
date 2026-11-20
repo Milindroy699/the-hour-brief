@@ -44,12 +44,14 @@ async function buildDigest() {
     `📱 <a href="${esc(CANON + '/app?src=telegram')}">Get the free app</a>: the brief at 8am, audio and the daily quiz`,
   ].join('\n');
 
-  const plainLines = (bold) => [
+  // src tags each link so the growth report can credit the channel (whatsapp-channel for the post kit's WhatsApp text).
+  const plainLines = (bold, src) => [
     `📰 ${bold(head)} · ${when}`,
     '',
     ...lanes.flatMap(([icon, name, t]) => [`${icon} ${bold(name)}`, t, '']),
-    ...(n ? [`🧠 ${quizLine}: ${quizUrl}`, ''] : []),
-    `📖 Full edition: ${editionUrl}`,
+    ...(n ? [`🧠 ${quizLine}: ${src ? quizUrl.replace('utm_source=digest', `utm_source=${src}`) : quizUrl}`, ''] : []),
+    `📖 Full edition: ${editionUrl}${src ? `?src=${src}` : ''}`,
+    ...(src ? ['', `📱 Get the free app (iPhone & Android): ${CANON}/app?src=${src}`] : []),
   ].join('\n');
 
   return {
@@ -61,7 +63,7 @@ async function buildDigest() {
     quizUrl,
     image: `${CANON}/api/og?${new URLSearchParams({ type: 'edition', n: info.n, d: info.d, ai: info.lanes.ai || '', biz: info.lanes.biz || '', mkt: info.lanes.mkt || '' }).toString()}`,
     telegram,
-    whatsapp: plainLines((s) => `*${s}*`),
+    whatsapp: plainLines((s) => `*${s}*`, 'whatsapp-channel'),
     plain: plainLines((s) => s),
   };
 }

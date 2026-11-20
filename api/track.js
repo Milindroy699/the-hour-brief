@@ -30,12 +30,13 @@ const ALLOWED_EVENTS = new Set(['listen_play', 'app_link_ios', 'app_link_android
   // the website (mobile.js): one visit a day per browser by kind, and the phone "Get the app" bar
   'web_open_ios', 'web_open_android', 'web_open_desktop', 'install_nudge_shown', 'install_nudge_tap',
   // growth: a tap on a podcast-app link (place = which app), and the app prompts' views (place = where)
-  'podcast_out', 'app_prompt_shown']);
+  'podcast_out', 'app_prompt_shown', 'channel_out']);
 
 // Growth report (GET ?action=report&key=STATS_KEY, read by growth.html). Each event above may carry src (where the visitor came
 // from: google, linkedin, podcast, direct...) and place (where on the site, or which channel); they are tallied per day in
 //   g:<YYYY-MM-DD>  HASH  v|<kind>|<src> visits (one a day per browser)   n|<kind>|<src> of which first-time visitors
 //                         c|<store>|<src>|<place> store clicks via /app   p|<place>|<src> podcast-app taps   s|<place> prompts shown
+//                         j|<channel>|<src> taps on the WhatsApp / Telegram channel links
 //                         i|<platform> installs (a device's first launch of the app)
 const SLUG = /^[a-z0-9][a-z0-9._-]{0,39}$/;
 const slug = (v, d) => { const x = String(v || '').toLowerCase().slice(0, 40); return SLUG.test(x) ? x : d; };
@@ -162,6 +163,7 @@ module.exports = async (req, res) => {
     if (web) { field = `v|${web[1]}|${src}`; if (body.new === 1 || body.new === '1') field2 = `n|${web[1]}|${src}`; }
     else if (link) field = `c|${link[1]}|${src}|${place}`;
     else if (event === 'podcast_out') field = `p|${place}|${src}`;
+    else if (event === 'channel_out') field = `j|${place}|${src}`;
     else if (event === 'app_prompt_shown') field = `s|${place}`;
     else if (event === 'install_nudge_shown') field = `s|${place === 'getapp-card' ? 'getapp-card' : 'getapp-bar'}`;
     if (field) jobs.push(kv(['HINCRBY', g, field, '1']));

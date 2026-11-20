@@ -187,7 +187,7 @@
         if (p[0] === 'v') { (src[p[2]] = src[p[2]] || { v: 0, n: 0, c: 0 }).v += n; }
         else if (p[0] === 'n') { (src[p[2]] = src[p[2]] || { v: 0, n: 0, c: 0 }).n += n; }
         else if (p[0] === 'c') { (src[p[2]] = src[p[2]] || { v: 0, n: 0, c: 0 }).c += n; (place[p[3]] = place[p[3]] || { c: 0, ios: 0, android: 0, desktop: 0 }).c += n; place[p[3]][p[1]] += n; }
-        else if (p[0] === 'p') { pods[p[1]] = (pods[p[1]] || 0) + n; }
+        else if (p[0] === 'p' || p[0] === 'j') { pods[(p[0] === 'j' ? 'channel: ' : '') + p[1]] = (pods[(p[0] === 'j' ? 'channel: ' : '') + p[1]] || 0) + n; }
         else if (p[0] === 's') { shown[p[1]] = (shown[p[1]] || 0) + n; }
       }
     });
@@ -218,8 +218,8 @@
     ]));
     var podRows = Object.keys(pods).map(function (k) { return [k, pods[k]]; }).sort(function (a, b) { return b[1] - a[1]; });
     main.appendChild(h('div', { class: 'grid2' }, [
-      card('Podcast and posts → app', 'Taps on app links people found outside the site.', table(['Came from', 'App taps'], srcRows.filter(function (r) { return /^(podcast|telegram|linkedin|linkedin-page|whatsapp-status|qr|share-page|shared-link)$/.test(r[0]) && r[3]; }).map(function (r) { return [r[0], r[3]]; }), 1)),
-      card('Podcast apps opened from the site', 'Taps on the Spotify, Apple Podcasts… links.', table(['App', 'Taps'], podRows, 1)),
+      card('Podcast and posts → app', 'Taps on app links people found outside the site.', table(['Came from', 'App taps'], srcRows.filter(function (r) { return /^(podcast|telegram|whatsapp-channel|whatsapp|linkedin|linkedin-page|whatsapp-status|qr|share-page|shared-link)$/.test(r[0]) && r[3]; }).map(function (r) { return [r[0], r[3]]; }), 1)),
+      card('Podcast apps and channels opened from the site', 'Taps on the Spotify, Apple Podcasts…, WhatsApp and Telegram links.', table(['Link', 'Taps'], podRows, 1)),
     ]));
     document.getElementById('sub').textContent = 'Last ' + D.length + ' days · updated ' + new Date(r.generated).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
   }

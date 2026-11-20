@@ -104,6 +104,11 @@
     ['amazon', 'Amazon Music', ''],
     ['jiosaavn', 'JioSaavn', ''],
   ].filter(function (p) { return /^https:\/\//.test(p[2]); });
+  // The daily channels (the same post every morning). Paste each invite link once the channel exists; empty ones are not shown.
+  var CHANNELS = [
+    ['whatsapp', 'WhatsApp', ''],          // https://whatsapp.com/channel/...
+    ['telegram', 'Telegram', ''],          // https://t.me/<handle>
+  ].filter(function (p) { return /^https:\/\//.test(p[2]); });
   // place = where on the site the link was tapped (footer, end-card, quiz, audio...); to = a specific store, else the
   // device's own (desktops see a QR page).
   function appLink(place, to) {
@@ -149,19 +154,21 @@
       (store === 'ios' ? 'Download on the' : 'Get it on') + '</small>' + (store === 'ios' ? 'App Store' : 'Google Play') + '</span>';
     return a;
   }
-  function podcastLinks(place) {
-    if (!PODCASTS.length) return null;
+  function linkRow(label, list, event) {
+    if (!list.length) return null;
     var row = document.createElement('div');
     row.className = 'hb-pods';
-    row.appendChild(document.createTextNode('Listen to the daily episode on'));
-    PODCASTS.forEach(function (p) {
+    row.appendChild(document.createTextNode(label));
+    list.forEach(function (p) {
       var a = document.createElement('a');
       a.href = p[2]; a.target = '_blank'; a.rel = 'noopener'; a.textContent = p[1];
-      a.addEventListener('click', function () { track('podcast_out', { place: p[0] }); });
+      a.addEventListener('click', function () { track(event, { place: p[0] }); });
       row.appendChild(a);
     });
     return row;
   }
+  function podcastLinks() { return linkRow('Listen to the daily episode on', PODCASTS, 'podcast_out'); }
+  function channelLinks() { return linkRow('Get the brief every morning on', CHANNELS, 'channel_out'); }
   // A one-line app prompt for the moments a reader is most likely to want the app (end of the deck, quiz done, Audio).
   function appPrompt(place, title, sub) {
     if (NATIVE) return null;
@@ -196,7 +203,9 @@
     tx.appendChild(b);
     box.appendChild(qr);
     box.appendChild(tx);
-    var pods = podcastLinks('footer');
+    var chans = channelLinks();
+    if (chans) box.appendChild(chans);
+    var pods = podcastLinks();
     if (pods) box.appendChild(pods);
     foot.insertBefore(box, foot.firstChild);
   })();
