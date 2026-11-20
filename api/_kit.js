@@ -226,6 +226,28 @@ async function deliverKit({ date = istToday(), force = false, dry = false, only 
   return result;
 }
 
+// ---- The owner's daily market review (the site says Milind reads the Stock Market section after it publishes) ----
+// A push to the owner's phone, opening today's Stock Market section, once today's edition is live. Sent at most once a day;
+// if the edition isn't out yet when it runs, nothing is claimed, so a later run (the digest slots) sends it.
+async function sendReviewReminder({ force = false, dry = false } = {}) {
+  const date = istToday();
+  const { loadEdition, editionInfo } = require('./_edition');
+  const info = editionInfo(await loadEdition('latest'), 160);
+  if (info.d !== date) return { ok: false, skipped: `today's edition (${date}) is not live yet` };
+  const payload = { title: `Market review: Edition ${info.n}`, body: info.lanes.mkt ? `Check today's Stock Market section. ${info.lanes.mkt}`.slice(0, 180) : 'Check today’s Stock Market section.', url: `${CANON}/archive/${date}.html#mkt` };
+  if (dry) return { ok: true, dry: true, date, payload };
+  if (!process.env.FIREBASE_PROJECT_ID) return { ok: false, skipped: 'firebase not configured' };
+  const tokens = await ownerTokens();
+  if (!tokens.length) return { ok: false, skipped: 'owner phone not paired' };
+  const key = `kit:review:${date}`;
+  if (!(await claim(key, force))) return { ok: true, skipped: 'already sent today' };
+  try {
+    const out = await sendToTokens(tokens, payload);
+    if (!out.successCount && !force) await release(key);
+    return { ok: out.successCount > 0, date, ...out };
+  } catch (e) { if (!force) await release(key); return { ok: false, error: e.message }; }
+}
+
 // ---- The second daily push, to every app user ----
 async function sendInsightPush({ date = istToday(), force = false, dry = false } = {}) {
   const s = await loadSocial(date);
@@ -275,4 +297,4 @@ async function pairTelegram({ dry = false } = {}) {
   return { ok: true, dry, chat: list[0] };
 }
 
-module.exports = { APP_LINKS, WA_CHANNEL, appLink, withApp, withWhatsApp, deepLinks, beforeTags, primaryPost, leadersWhatsApp, notifyOwner, istToday, loadSocial, links, deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram };
+module.exports = { sendReviewReminder, APP_LINKS, WA_CHANNEL, appLink, withApp, withWhatsApp, deepLinks, beforeTags, primaryPost, leadersWhatsApp, notifyOwner, istToday, loadSocial, links, deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram };

@@ -1,0 +1,59 @@
+name: IndexNow
+
+# Tells Bing (and the other IndexNow engines: Yandex, Seznam, Naver...) the moment pages change, instead of waiting for them to
+# crawl. Bing's index is also what ChatGPT search and Copilot draw on. The key file proving the site is ours is
+# /822a72abb07a7cab6a4cc37537b4fd58.txt (in the repo root, served as is). Runs on every push that changes an edition or the
+# corrections, waits for Vercel to deploy it, then submits the changed pages plus the homepage, sitemap and corrections log.
+on:
+  push:
+    branches: [main]
+    paths: ['archive/20*.html', 'index.html']
+  workflow_dispatch:
+    inputs:
+      urls:
+        description: Extra page paths to submit, space-separated (e.g. /about.html)
+        default: ''
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SITE: https://the-hour-brief.vercel.app
+      KEY: 822a72abb07a7cab6a4cc37537b4fd58
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Work out which pages changed
+        id: pages
+        env:
+          EXTRA: ${{ inputs.urls }}
+        run: |
+          list="/ /sitemap.xml /archive/ /corrections.html /llms.txt"
+          if [ "${{ github.event_name }}" = "push" ]; then
+            for f in $(git diff --name-only HEAD~1 HEAD -- 'archive/20*.html'); do list="$list /$f"; done
+          fi
+          for p in $EXTRA; do list="$list $p"; done
+          echo "paths=$list" >> "$GITHUB_OUTPUT"
+          echo "will submit: $list"
+      - name: Wait until the new version is live (Vercel deploys the same push)
+        run: |
+          d=$(ls -1 archive/20*.html 2>/dev/null | sort | tail -1 | sed 's#archive/##; s#\.html##')
+          for i in $(seq 1 30); do
+            if curl -fsS "$SITE/sitemap.xml" | grep -q "archive/$d.html" && curl -fsS "$SITE/$KEY.txt" | grep -qx "$KEY"; then echo "live"; exit 0; fi
+            sleep 10
+          done
+          echo "the deploy did not show up in 5 minutes; submitting anyway"
+      - name: Submit to IndexNow
+        env:
+          PATHS: ${{ steps.pages.outputs.paths }}
+        run: |
+          body=$(node -e '
+            const site = process.env.SITE, key = process.env.KEY;
+            const urls = [...new Set(process.env.PATHS.split(/\s+/).filter(Boolean))].map((p) => site + p);
+            console.log(JSON.stringify({ host: new URL(site).host, key, keyLocation: `${site}/${key}.txt`, urlList: urls }));')
+          code=$(curl -s -o /tmp/r.txt -w '%{http_code}' -X POST https://api.indexnow.org/indexnow -H 'Content-Type: application/json; charset=utf-8' -d "$body")
+          echo "IndexNow answered $code $(cat /tmp/r.txt)"
+          # 200 accepted, 202 accepted (key being validated); anything else is worth a look but must not fail the push
+          case "$code" in 200|202) ;; *) echo "::warning::IndexNow answered $code" ;; esac

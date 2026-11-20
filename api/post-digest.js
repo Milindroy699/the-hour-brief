@@ -14,6 +14,7 @@
 //   digest (default)   Telegram channel post + edition push (+ re-engagement on Sundays), then retries kit/morning
 //   kit                daily post kit to the owner (Notion, Telegram, owner push) + LinkedIn Page morning post
 //   insight            the second daily push to every app user (today's insight)
+//   review             the owner's 9:00 IST push to review today's Stock Market section (retried by the digest slots)
 //   linkedin-morning   LinkedIn Page: today's edition highlight
 //   linkedin-leaders   LinkedIn Page: the day's Thought Leaders highlight (weekdays: roundups; weekends: Principles)
 //   linkedin-auth      returns a one-time LinkedIn consent link for the Page admin
@@ -27,7 +28,7 @@
 const crypto = require('crypto');
 const { buildDigest } = require('./_digest');
 const { sendEditionPush, sendReengagementPush, checkPushHealth } = require('./_push');
-const { deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram, notifyOwner, istToday: kitDate } = require('./_kit');
+const { deliverKit, sendInsightPush, sendReviewReminder, pairOwnerPhone, pairTelegram, notifyOwner, istToday: kitDate } = require('./_kit');
 const li = require('./_linkedin');
 
 // Which job each Vercel Cron slot runs (see "crons" in vercel.json).
@@ -35,6 +36,7 @@ const JOB_BY_SCHEDULE = {
   '30 4 * * *': 'digest',
   '30 5 * * *': 'digest',
   '0 4 * * *': 'kit',
+  '30 3 * * *': 'review',
   '30 12 * * *': 'insight',
   '30 13 * * *': 'insight',
   '30 9 * * *': 'linkedin-leaders',
@@ -118,6 +120,7 @@ module.exports = async (req, res) => {
       case 'push-check': return send(await checkPushHealth());
       case 'linkedin-member-auth': return send(await li.authLink('member'));
       case 'insight': return send({ ok: true, push: await sendInsightPush({ dry, force }) });
+      case 'review': return send({ ok: true, review: await sendReviewReminder({ dry, force }) });
       case 'linkedin-morning': return send(await li.postMorning({ dry, force }));
       case 'linkedin-leaders': return send(await li.postLeaders({ dry, force }));
       case 'linkedin-auth': return send(await li.authLink());
@@ -191,10 +194,11 @@ module.exports = async (req, res) => {
 
   // Retries for the morning jobs whose own slot ('0 4 * * *') may have run before today's post kit existed, or not at
   // all (Vercel Cron delivery is best effort). Both are dedupe-keyed, so these are no-ops once sent.
-  let kit, linkedin, member;
+  let kit, linkedin, member, review;
+  try { review = await sendReviewReminder({}); } catch (e) { review = { ok: false, error: e.message }; }
   try { member = await morningMember({}); } catch (e) { member = { ok: false, error: e.message }; }
   try { kit = await deliverKit({ memberPosted: posted(member) }); } catch (e) { kit = { ok: false, error: e.message }; }
   try { linkedin = await li.postMorning({}); } catch (e) { linkedin = { ok: false, error: e.message }; }
 
-  res.status(200).json({ ok: true, date: d.date, edition: d.edition, telegram, push, reengagement, member, kit, linkedin });
+  res.status(200).json({ ok: true, date: d.date, edition: d.edition, telegram, push, reengagement, review, member, kit, linkedin });
 };

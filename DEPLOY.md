@@ -99,6 +99,15 @@ daily routine keeps copying `index.html` exactly as before:
 - `vercel.json` sends `X-Robots-Tag: noindex` for `tools/`, `mobile/`, `social/`, `.github/`, `DEPLOY.md` and the `/e /s /q /l` share links.
 - Owner's step: add the site to Google Search Console and Bing Webmaster Tools (HTML-tag verification) and submit `/sitemap.xml`.
 
+## IndexNow (Bing and others) and the 9:00 review reminder
+
+- **IndexNow**: key file `/822a72abb07a7cab6a4cc37537b4fd58.txt` (repo root). `.github/workflows/indexnow.yml` runs on every push that changes
+  `archive/20*.html` or `index.html`, waits for the deploy, and submits the changed editions plus `/`, `/sitemap.xml`, `/archive/`,
+  `/corrections.html`, `/llms.txt` to api.indexnow.org. By hand: run the workflow with extra paths.
+- **Market-review reminder**: cron `30 3 * * *` (09:00 IST, within the hour on Hobby) runs `?job=review` in post-digest.js: a push to the
+  owner's phone opening today's `#mkt`, only once today's edition is live and at most once a day (KV `kit:review:<date>`); the digest
+  slots retry it if the edition was late.
+
 ## Corrections (owner reviews the Stock Market section daily, after publishing, since 2026-11-21)
 
 The site says, on the About page, in every edition's footer (from `index.html`) and in `llms.txt`, that Milind reads each edition's
