@@ -120,7 +120,14 @@ async function saveIgToken(token) {
     const pages = await igCall('GET', '/me/accounts', { fields: 'name,access_token,instagram_business_account{id,username}', access_token: token }, 'graph.facebook.com')
       .catch((e2) => { throw new Error(`that token works with neither Instagram login (${e.message}) nor Facebook login (${e2.message})`); });
     const pg = (pages.data || []).find((x) => x.instagram_business_account);
-    if (!pg) throw new Error('signed in with Facebook, but none of its Pages has an Instagram professional account linked');
+    if (!pg) {
+      const perms = await igCall('GET', '/me/permissions', { access_token: token }, 'graph.facebook.com').catch(() => ({ data: [] }));
+      throw new Error(['Could not connect. What the token can see:',
+        `  token type: ${/^IG/.test(token) ? 'Instagram (IG…)' : /^EAA/.test(token) ? 'Facebook (EAA…)' : 'unknown (' + token.slice(0, 3) + '…)'}, ${token.length} characters`,
+        `  Instagram route: ${e.message}`,
+        `  Facebook route: ${(pages.data || []).length} Page(s) visible, none with an Instagram professional account linked`,
+        `  permissions granted: ${(perms.data || []).filter((x) => x.status === 'granted').map((x) => x.permission).join(', ') || '(none listed)'}`].join('\n'));
+    }
     const ig = pg.instagram_business_account;
     await kv(['SET', 'ig:auth', JSON.stringify({ host: 'graph.facebook.com', token: pg.access_token, userId: ig.id, username: ig.username, page: pg.name, refreshedAt: Date.now() })]);
     return { user_id: ig.id, username: ig.username, account_type: `via the Facebook Page "${pg.name}"`, via: 'Facebook login' };
