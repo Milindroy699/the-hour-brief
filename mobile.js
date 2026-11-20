@@ -82,7 +82,8 @@
     if (NATIVE) return { src: 'app', first: 'app', isNew: false };
     var q = {};
     try { q = Object.fromEntries(new URLSearchParams(location.search)); } catch (e) {}
-    var here = cleanSrc(q.utm_source || q.src) || refSource(q.ref);
+    var here = cleanSrc(q.utm_source || q.src);
+    if ((!here || here === 'share') && q.ref) here = refSource(q.ref) || here;      // "share" is generic; the referrer says more
     if (!here) { try { here = refSource(document.referrer ? new URL(document.referrer).hostname : ''); } catch (e) { here = ''; } }
     var sess = '', first = null;
     try { sess = sessionStorage.getItem('hb-src-s') || ''; } catch (e) {}

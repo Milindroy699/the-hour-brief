@@ -30,6 +30,18 @@ function beforeTags(text, block) {
   return `${t}\n\n${block}`;
 }
 const withApp = (text, src) => beforeTags(text, appBlock(src));
+// Deep links: the day's post is about one story (s.storyId), so its link should open that story, not the top of the edition.
+// The routine writes the texts with an edition link (/e/<date>); this turns it into the story's link (/s/<date>/<id>, which
+// the app opens directly when installed, and the website scrolls to) and tags it with the channel (?src=) for the growth report.
+// Story links already in the text just get the tag. Mirrored in share-kit.html (deepLinks); keep the two in step.
+function deepLinks(text, s, src) {
+  const id = s && /^[a-z]{1,8}-\d{1,3}$/.test(s.storyId || '') ? s.storyId : '';
+  const tag = (u) => (src && !/[?&]src=/.test(u) ? `${u}${u.includes('?') ? '&' : '?'}src=${encodeURIComponent(src)}` : u);
+  return String(text || '')
+    .replace(/https:\/\/the-hour-brief\.vercel\.app\/e\/(\d{4}-\d{2}-\d{2})(\?[^\s#]*)?/g, (m, date) =>
+      tag(id && s.date === date ? `${CANON}/s/${date}/${id}` : `${CANON}/e/${date}`))
+    .replace(/https:\/\/the-hour-brief\.vercel\.app\/s\/\d{4}-\d{2}-\d{2}\/[a-z]{1,8}-\d{1,3}(\?[^\s#]*)?/g, (m) => tag(m));
+}
 
 function istToday() {
   return new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
@@ -51,7 +63,7 @@ function primaryPost(s) {
   if (s.leaders && s.leaders.id && s.leaders.post) {
     return { kind: 'leaders', label: `Voices pick: ${s.leaders.title || s.leaders.id}`, text: s.leaders.post, link: `${CANON}/leaders.html#a=${encodeURIComponent(s.leaders.id)}` };
   }
-  return { kind: 'insight', label: 'Today’s insight', text: s.linkedin, link: `${CANON}/e/${s.date}` };
+  return { kind: 'insight', label: 'Today’s insight', text: deepLinks(s.linkedin, s, 'linkedin'), link: links(s).story };
 }
 
 // WhatsApp version of the weekday Thought Leaders pick, built from its LinkedIn post: a status image with the hook, and
@@ -112,7 +124,7 @@ async function toTelegram(s, l) {
   const chat = await telegramChat();
   if (!chat) return { ok: false, skipped: 'telegram not paired yet (message the bot, then pair)' };
   // The status image to save to WhatsApp status, with its caption ready to paste.
-  await tg('sendPhoto', { chat_id: chat, photo: l.image, caption: `${withApp(s.status, 'whatsapp-status')}\n\nPost kit: ${l.kit}`.slice(0, 1024) });
+  await tg('sendPhoto', { chat_id: chat, photo: l.image, caption: `${withApp(deepLinks(s.status, s, 'whatsapp-status'), 'whatsapp-status')}\n\nPost kit: ${l.kit}`.slice(0, 1024) });
   return { ok: true };
 }
 // The day's LinkedIn post as its own message (its own dedupe key, so it can follow later the same day). When it already
@@ -243,4 +255,4 @@ async function pairTelegram({ dry = false } = {}) {
   return { ok: true, dry, chat: list[0] };
 }
 
-module.exports = { APP_LINKS, appLink, withApp, beforeTags, primaryPost, leadersWhatsApp, notifyOwner, istToday, loadSocial, links, deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram };
+module.exports = { APP_LINKS, appLink, withApp, deepLinks, beforeTags, primaryPost, leadersWhatsApp, notifyOwner, istToday, loadSocial, links, deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram };

@@ -127,9 +127,19 @@
     if (m && m[1].trim()) return m[1].replace(/\s+$/, '') + '\n\n' + block + '\n\n' + m[2].trim();
     return t + '\n\n' + block;
   }
+  // Same as api/_kit.js deepLinks: the edition link in the day's texts becomes the featured story's link, tagged by channel.
+  function deepLinks(text, s, src) {
+    var id = s && /^[a-z]{1,8}-\d{1,3}$/.test(s.storyId || '') ? s.storyId : '';
+    var tag = function (u) { return src && !/[?&]src=/.test(u) ? u + (u.indexOf('?') < 0 ? '?' : '&') + 'src=' + encodeURIComponent(src) : u; };
+    return String(text || '')
+      .replace(/https:\/\/the-hour-brief\.vercel\.app\/e\/(\d{4}-\d{2}-\d{2})(\?[^\s#]*)?/g, function (m, date) {
+        return tag(id && s.date === date ? location.origin + '/s/' + date + '/' + id : location.origin + '/e/' + date);
+      })
+      .replace(/https:\/\/the-hour-brief\.vercel\.app\/s\/\d{4}-\d{2}-\d{2}\/[a-z]{1,8}-\d{1,3}(\?[^\s#]*)?/g, function (m) { return tag(m); });
+  }
   loadSocial(0).catch(function () { return loadSocial(1); }).then(function (s) {
-    s.linkedin = withApp(s.linkedin, 'linkedin');
-    s.status = withApp(s.status, 'whatsapp-status');
+    s.linkedin = withApp(deepLinks(s.linkedin, s, 'linkedin'), 'linkedin');
+    s.status = withApp(deepLinks(s.status, s, 'whatsapp-status'), 'whatsapp-status');
     // Weekdays: the day's post is the punchy Thought Leaders pick; the insight post stays available as an alternative.
     var pick = s.leaders && s.leaders.post ? s.leaders : null;
     var post = pick ? withApp(pick.post, 'linkedin') : s.linkedin;

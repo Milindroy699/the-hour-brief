@@ -42,7 +42,11 @@ function page({ title, description, image, alt, landing, dest }) {
     var q = new URLSearchParams(location.search), add = [];
     var src = (q.get('src') || q.get('utm_source') || '').replace(/[^a-z0-9._-]/gi, '').slice(0, 40);
     var ref = document.referrer ? new URL(document.referrer).hostname : '';
-    if (src && !/[?&]utm_source=/.test(dest)) add.push('utm_source=' + encodeURIComponent(src));
+    if (src) {
+      // the channel this link was posted to beats the generic "share" tag the story link carries
+      if (/[?&]utm_source=/.test(dest)) dest = dest.replace(/([?&]utm_source=)[^&#]*/, '$1' + encodeURIComponent(src));
+      else add.push('utm_source=' + encodeURIComponent(src));
+    }
     if (ref && ref !== location.hostname) add.push('ref=' + encodeURIComponent(ref));
     if (!src && !ref && !/[?&]utm_source=/.test(dest)) add.push('utm_source=shared-link');
     if (add.length) {

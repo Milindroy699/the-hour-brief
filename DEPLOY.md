@@ -54,6 +54,9 @@ Left out on purpose because we do not have them: XP, "Top 8% recall", spatial au
   share pages (`share-page`), QR (`qr`), podcast episodes (`podcast`), posts (`telegram`, `linkedin`, `linkedin-page`,
   `whatsapp-status`). Play gets `utm_source/medium/campaign` as the install referrer; the App Store gets `pt`/`ct` once
   `APPLE_PT` is filled in app.html (App Store Connect › App Analytics › Acquisition › Campaigns › generate a link, copy `pt`).
+- **Deep links in the daily posts:** the routine writes the WhatsApp status / LinkedIn texts with an edition link (`/e/<date>`);
+  `deepLinks()` in api/_kit.js (mirrored in share-kit.html) turns it into the featured story's link (`/s/<date>/<storyId>?src=<channel>`),
+  which the app opens directly (universal / app links) and the website scrolls to. A `?src=` on a share link beats the generic `utm_source=share`.
 - **Podcast links on the site:** `PODCASTS` in mobile.js; a platform shows (footer and Audio screen) once its URL is filled in.
 
 ## SEO and AI-answer engines (on every deploy)
