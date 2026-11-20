@@ -116,6 +116,24 @@ async function saveIgToken(token) {
 // ---- run ----
 async function main() {
   const arg = (n, d) => { const i = process.argv.indexOf(n); return i > 0 ? process.argv[i + 1] : d; };
+  // --check: sign in to each connected platform and read the account name, posting nothing.
+  if (process.argv.includes('--check')) {
+    let bad = 0;
+    if (env('YT_CLIENT_ID') && env('YT_CLIENT_SECRET') && env('YT_REFRESH_TOKEN')) {
+      try {
+        const t = await youtubeToken();
+        const ch = await (await fetch('https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true', { headers: { Authorization: `Bearer ${t}` } })).json();
+        console.log(`youtube: OK, signed in, channel "${ch.items && ch.items[0] ? ch.items[0].snippet.title : '?'}"`);
+      } catch (e) { bad++; console.log(`youtube: NOT OK, ${e.message}`); }
+    } else console.log('youtube: not connected');
+    try {
+      const a = env('KV_REST_API_URL') ? await igAuth() : null;
+      if (!a) console.log('instagram: not connected');
+      else { const me = await igCall('GET', '/me', { fields: 'username', access_token: a.token }); console.log(`instagram: OK, @${me.username}`); }
+    } catch (e) { bad++; console.log(`instagram: NOT OK, ${e.message}`); }
+    process.exitCode = bad ? 1 : 0;
+    return;
+  }
   if (arg('--ig-token')) { const me = await saveIgToken(arg('--ig-token')); console.log(`Instagram connected: @${me.username} (${me.account_type}, id ${me.user_id})`); return; }
   const date = arg('--date');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '')) throw new Error('--date YYYY-MM-DD');

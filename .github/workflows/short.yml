@@ -17,14 +17,36 @@ on:
         description: Make it again even if today's short already matches the recording
         type: boolean
         default: false
+      check:
+        description: Only check the YouTube / Instagram connections (makes and posts nothing)
+        type: boolean
+        default: false
 
 concurrency:
   group: daily-short
   cancel-in-progress: false
 
 jobs:
+  check:
+    if: github.event_name == 'workflow_dispatch' && inputs.check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check the YouTube and Instagram connections
+        env:
+          KV_REST_API_URL: ${{ secrets.KV_REST_API_URL }}
+          KV_REST_API_TOKEN: ${{ secrets.KV_REST_API_TOKEN }}
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+          IG_GRAPH_VERSION: ${{ vars.IG_GRAPH_VERSION }}
+        run: node tools/video/publish.mjs --check
   short:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: (github.event_name == 'workflow_dispatch' && !inputs.check) || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
