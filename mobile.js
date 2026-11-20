@@ -98,11 +98,11 @@
   var STORES = { ios: 'https://apps.apple.com/app/id6817195056', android: 'https://play.google.com/store/apps/details?id=app.thehourbrief' };
   // The show on each podcast app. Paste each link as it goes live; a platform with no link is simply not shown.
   var PODCASTS = [
-    ['spotify', 'Spotify', ''],
-    ['apple', 'Apple Podcasts', ''],
+    ['spotify', 'Spotify', 'https://open.spotify.com/show/1FjOE5ABaOEzUTxwJeaoYr'],
+    ['apple', 'Apple Podcasts', ''],        // Podcasts Connect show 277c6497…: not in Apple's public directory yet (21 Nov)
     ['youtube', 'YouTube Music', ''],
     ['amazon', 'Amazon Music', ''],
-    ['jiosaavn', 'JioSaavn', ''],
+    ['jiosaavn', 'JioSaavn', ''],           // YourCast podcast 624163: no public show page yet (21 Nov)
   ].filter(function (p) { return /^https:\/\//.test(p[2]); });
   // The daily channels (the same post every morning). Paste each invite link once the channel exists; empty ones are not shown.
   var CHANNELS = [
