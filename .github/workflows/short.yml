@@ -44,7 +44,17 @@ jobs:
         with:
           node-version: 22
       - name: Make sure ffmpeg is available
-        run: command -v ffmpeg >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg)
+        timeout-minutes: 6
+        run: |
+          # Most runner images have it. If not, a static build (one download, about a minute) rather than apt, which has hung for
+          # 15+ minutes on a slow mirror; apt only as a time-limited fallback.
+          command -v ffmpeg >/dev/null && command -v ffprobe >/dev/null && exit 0
+          if curl -fsSL --retry 3 --max-time 180 https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz -o /tmp/ff.tar.xz; then
+            tar -xJf /tmp/ff.tar.xz -C /tmp && sudo cp /tmp/ffmpeg-*-amd64-static/ffmpeg /tmp/ffmpeg-*-amd64-static/ffprobe /usr/local/bin/
+          else
+            sudo timeout 240 apt-get update -qq && sudo timeout 240 apt-get install -y -qq ffmpeg
+          fi
+          ffmpeg -version | head -1
       - name: Install tools
         run: |
           (cd tools/audio && npm ci --silent)
