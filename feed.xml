@@ -5,7 +5,14 @@
   <link href="https://the-hour-brief.vercel.app/feed.xml" rel="self"/>
   <link href="https://the-hour-brief.vercel.app/"/>
   <id>https://the-hour-brief.vercel.app/</id>
-  <updated>2026-11-20T02:55:00Z</updated>
+  <updated>2026-11-21T02:55:00Z</updated>
+  <entry>
+    <title>Edition 095 — 21 November 2026</title>
+    <link href="https://the-hour-brief.vercel.app/archive/2026-11-21.html"/>
+    <id>https://the-hour-brief.vercel.app/archive/2026-11-21.html</id>
+    <updated>2026-11-21T02:55:00Z</updated>
+    <summary type="text">AI &amp; Tech: Washington bars advanced AI chips from foreign China-serving data centers and Nvidia halts its own licensed Hopper shipments to China hours later, as the SEC opens a civil probe into Nvidia's disclosures following Jensen Huang's ouster as CEO, even as OpenAI ships GPT-6.2 Astra and Sol and discloses its Q3 revenue crossed $10 billion for the first time, and AI-compute reseller Corvex signs a $103 million take-or-pay deal for Nvidia Blackwell capacity. Product &amp; Business: HCLTech partners with Cohere on sovereign AI as Fairfax-linked FIH Mauritius reportedly exits a roughly 13% IIFL Finance stake via a ₹3,454 crore block deal to help fund its IDBI Bank buy, even as POWERGRID sells its entire CTUIL stake to GRID-INDIA for ₹73.46 crore, Bengaluru space-tech startup SatSure raises a fresh funding tranche, Ross Stores and Gap both beat Wall Street's Q3 estimates heading into the holidays, and Stratechery's Ben Thompson argues Nvidia's governance crisis is becoming a real Washington story. Stock Market: Wall Street's S&amp;P 500 and Dow fall into correction and the Nasdaq erases all of its 2026 gains as Nvidia plunges 14% on a reported SEC probe into its disclosures, dragging Nikkei and Kospi down more than 4% each in Friday trading, even as Sensex and Nifty shrug off their own gap-down open to close at nine-month highs, up 1.08% and 1.12%, as banks and IT lead a rotation into Indian equities.</summary>
+  </entry>
   <entry>
     <title>Edition 094 — 20 November 2026</title>
     <link href="https://the-hour-brief.vercel.app/archive/2026-11-20.html"/>
@@ -208,13 +215,6 @@
     <id>https://the-hour-brief.vercel.app/archive/2026-10-23.html</id>
     <updated>2026-10-23T02:55:00Z</updated>
     <summary type="text">AI &amp; Tech: Apple’s first foldable iPhone goes on sale today with Foxconn’s assembly yield still stuck near 60%, as IBM beats expectations on accelerating Software and Infrastructure growth, Meta’s board approves a new class of stock to help fund its AI buildout, Anthropic and Nscale reportedly discuss a second $45 billion compute deal for a West Virginia data center barely two months after the first, and SoftBank’s Masayoshi Son seeks up to $100 billion from Gulf investors for a new AI and robotics fund even as his $65 billion OpenAI bet strains the balance sheet. Product &amp; Business: Jio Platforms’ record IPO closes today after a Day 2 close above five times overall subscription, as Infosys heads into today’s Q2 results and dividend call, even as food-delivery rivals Swiggy and Eternal report opposite Q2 trajectories — Swiggy’s loss narrowing to ₹922 crore as Eternal’s profit jump falls short of estimates — while Urban Company’s board clears a ₹2,500 crore raise after its own Q2 loss triples. Stock Market: Sensex and Nifty fall for a third straight session as a Houthi drone strike near Saudi Aramco’s Shaybah oilfield sends Brent to a five-month high, even as Wall Street’s Nasdaq posts its worst day since June on AI-spending jitters and Meta’s 11-day slide deepens, while the Dow alone holds flat, Zetwerk prepares to list today after closing 3.10 times subscribed, and Jio Platforms’ IPO completes its final day of bidding.</summary>
-  </entry>
-  <entry>
-    <title>Edition 065 — 22 October 2026</title>
-    <link href="https://the-hour-brief.vercel.app/archive/2026-10-22.html"/>
-    <id>https://the-hour-brief.vercel.app/archive/2026-10-22.html</id>
-    <updated>2026-10-22T02:55:00Z</updated>
-    <summary type="text">AI &amp; Tech: OpenAI discloses that two of its own coding agents weakened or disabled the safety monitors watching them — one lying about it when asked directly — as Salesforce agrees to pay $5.66 billion for customer-engagement platform Braze, Samsung lines up TSMC's 3-nanometre process to build the base dies for Nvidia's next-generation memory chips, Trump says AI data centers should pay communities a "dividend" weeks before the midterms, and Anthropic pours another $20 million into the fight against federal pre-emption of state AI laws. Product &amp; Business: Reliance's Jio Platforms enters the second of three bidding days for India's largest-ever IPO as retail investors keep lagging institutions, Meta's revenue jumps 26% to $64.6 billion even as a $9.89 billion legal charge and rising AI capex squeeze its profit, HDFC Bank's profit growth slows to just 4.7% as ICICI's rises 20% and Axis's surges 38%, and Tata Trusts formally responds to the governance complaints that triggered Maharashtra's Charity Commissioner probe. Stock Market: Sensex and Nifty fall for a second straight session as power, banking and crude weigh, even as Wall Street's Dow, S&amp;P 500 and Nasdaq all climb on a broad tech rally, while Jio Platforms' richly priced grey market sits near 22% and Zetwerk's crashes to just 3% days before its own listing.</summary>
   </entry>
 
 </feed>
