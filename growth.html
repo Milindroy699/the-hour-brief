@@ -598,7 +598,7 @@
     chBox.textContent = '';
     chBox.appendChild(h('div', { class: 'tiles' }, [
       tile('YouTube subscribers', Y ? fmt(Y.subs) : '–', Y ? fmt(ytViews) + ' views on ' + Y.videos.length + ' Shorts' : 'first numbers tonight (20:15)'),
-      tile('Instagram followers', ig.followers != null ? fmt(ig.followers) : '–', ig.posts != null ? ig.posts + ' Reels' : (ig.error || '')),
+      tile('Instagram followers', ig.followers != null ? fmt(ig.followers) : '–', ig.posts != null ? (ig.insights === 'ok' ? fmt((ig.reels || []).reduce(function (n, r) { return n + (+r.views || 0); }, 0)) + ' views on ' + ig.posts + ' Reels' : ig.posts + ' Reels') : (ig.error || '')),
       tile('Telegram subscribers', tg.members != null ? fmt(tg.members) : '–', 't.me/thehourbrief'),
       tile('WhatsApp channel', wa ? fmt(wa.v) : '–', wa ? 'followers, logged ' + short(wa.date) : 'log it below'),
       tile('Podcast downloads', fmt(podTotal), 'last ' + D.length + ' days, all apps'),
@@ -649,9 +649,9 @@
     ]));
     // trend
     var rows = D.slice().reverse().filter(function (d) { return Object.keys(d.chan).length || dl(d) || d.plan.wafollowers || d.plan.spotify; }).map(function (d) {
-      var c = d.chan; return [short(d.date), num(c.yt_subs), num(c.yt_views), num(c.ig_followers), num(c.tg), num(d.plan.wafollowers), num(d.plan.spotify), dl(d) || '–'];
+      var c = d.chan; return [short(d.date), num(c.yt_subs), num(c.yt_views), num(c.ig_followers), num(c.ig_views), num(c.ig_reach), num(c.tg), num(d.plan.wafollowers), num(d.plan.spotify), dl(d) || '–'];
     });
-    chBox.appendChild(card('Day by day', 'Saved each evening (Telegram and Instagram at 19:00, YouTube at 20:15). Blank days: not saved yet.', h('div', { class: 'scroll' }, [table(['Day', 'YT subs', 'YT views', 'IG followers', 'Telegram', 'WhatsApp', 'Spotify', 'Podcast dl'], rows, 7)])));
+    chBox.appendChild(card('Day by day', 'Saved each evening (Telegram and Instagram at 19:00, YouTube at 20:15). Blank days: not saved yet.', h('div', { class: 'scroll' }, [table(['Day', 'YT subs', 'YT views', 'IG followers', 'IG views', 'IG reach', 'Telegram', 'WhatsApp', 'Spotify', 'Podcast dl'], rows, 9)])));
     // setup
     var st = function (ok, txt) { return h('span', { class: 's ' + (ok ? 'ok' : 'wait'), text: txt }); };
     var li2 = function (name, ok, txt, how) { return h('li', {}, [h('span', {}, [document.createTextNode(name), how ? h('div', { class: 'hint', text: how }) : null]), st(ok, txt)]); };
