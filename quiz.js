@@ -628,8 +628,9 @@
     again.type = 'button';
     again.addEventListener('click', function () { practice = true; picks = []; showQuestion(0, true); });
     actions.appendChild(again);
-    card.appendChild(actions);
+    // Straight under the score, above the other buttons: right after the quiz is when a challenge lands (owner, 2026-11-21).
     if (official) card.appendChild(inviteNudge(mine));
+    card.appendChild(actions);
 
     var review = el('ol', 'quiz-review');
     review.hidden = true;
