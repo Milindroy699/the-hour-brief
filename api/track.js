@@ -21,6 +21,7 @@
 // only, so this can't become an arbitrary write primitive:
 //   event:<name>:<date>         counter  total uses that day
 //   event:<name>:devices:<date> SET      deviceIds that used it that day (unique-adoption count)
+const crypto = require('crypto');
 const KV_URL = process.env.KV_REST_API_URL;
 const KV_TOKEN = process.env.KV_REST_API_TOKEN;
 
@@ -157,6 +158,64 @@ async function ops(days) {
   };
 }
 
+// ---- Podcast downloads (the feed's enclosures are /ep/<date>/<file>.mp3, rewritten here by vercel.json) ----
+// Counts one download per listener (IP + app) per episode per day, the way podcast hosts do, then sends the app on to
+// the audio on R2. Range probes after the first byte, HEAD requests and known bots are not counted.
+function podApp(ua) {
+  const u = String(ua || '');
+  if (/bot|crawl|spider|curl|wget|python|node|undici|axios|go-http|java\/|podcastindex|feed|validator|check/i.test(u) && !/Podcasts\/|AppleCoreMedia/i.test(u)) return 'bot';
+  if (/Spotify/i.test(u)) return 'spotify';
+  if (/AppleCoreMedia|Podcasts\/|iTMS|Apple ?Podcasts|AirPods|watchOS/i.test(u)) return 'apple';
+  if (/Amazon|Alexa|Echo|Kindle/i.test(u)) return 'amazon';
+  if (/YouTube|Google-?Podcast|GoogleChirp|GSA\//i.test(u)) return 'google';
+  if (/Overcast/i.test(u)) return 'overcast';
+  if (/Pocket ?Casts/i.test(u)) return 'pocketcasts';
+  if (/Castbox/i.test(u)) return 'castbox';
+  if (/Saavn/i.test(u)) return 'jiosaavn';
+  if (/Podcast ?Addict/i.test(u)) return 'podcastaddict';
+  if (/Castro|Podverse|Fountain|AntennaPod|Podbean|Deezer|Audible|Goodpods/i.test(u)) return (u.match(/Castro|Podverse|Fountain|AntennaPod|Podbean|Deezer|Audible|Goodpods/i)[0]).toLowerCase();
+  if (/Mozilla|Chrome|Safari|Firefox/i.test(u)) return 'browser';
+  return 'other';
+}
+async function podcastDownload(req, res) {
+  const ep = String(req.query.ep || ''), f = String(req.query.f || '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(ep) || !/^[a-z]+\.[0-9a-f]{8}\.mp3$/.test(f)) { res.status(404).end(); return; }
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('X-Robots-Tag', 'noindex');
+  res.setHeader('Location', `${R2}/audio/${ep}/${f}`);
+  const range = String(req.headers.range || '');
+  if (req.method === 'GET' && KV_URL && KV_TOKEN && (!range || /^bytes=0-/.test(range))) {
+    const ua = String(req.headers['user-agent'] || ''), app = podApp(ua);
+    if (app !== 'bot') {
+      const fwd = req.headers['x-forwarded-for'], ip = (fwd ? String(fwd).split(',')[0].trim() : '') || 'unknown';
+      const day = istToday(), who = crypto.createHash('sha256').update(`${ip}|${ua}|${ep}`).digest('hex').slice(0, 16);
+      try {
+        const add = await kv(['SADD', `pod:u:${day}`, who]);
+        const keep = String(400 * 86400);
+        if (add && add.result === 1) await pipeline([['HINCRBY', `pod:dl:${day}`, ep, '1'], ['HINCRBY', `pod:app:${day}`, app, '1'], ['EXPIRE', `pod:u:${day}`, '172800'], ['EXPIRE', `pod:dl:${day}`, keep], ['EXPIRE', `pod:app:${day}`, keep]]);
+      } catch (e) { /* counting never blocks the audio */ }
+    }
+  }
+  res.status(302).end();
+}
+
+// ---- Channels (growth.html's Channels tab): live Telegram / Instagram numbers, the daily snapshots (chan:<date>, written at
+// 19:00 by post-digest via _kit.snapshotChannels, and YouTube's by .github/workflows/stats.yml), podcast downloads, and
+// the numbers no API gives that the owner logs by hand (plan:<date> wafollowers, spotify). ----
+async function channels(days) {
+  const { channelStats } = require('./_kit');
+  const now = Date.now() + 5.5 * 3600 * 1000, dates = [];
+  for (let i = days - 1; i >= 0; i--) dates.push(new Date(now - i * 864e5).toISOString().slice(0, 10));
+  const cmds = [];
+  for (const d of dates) cmds.push(['HGETALL', `chan:${d}`], ['HGETALL', `pod:dl:${d}`], ['HGETALL', `pod:app:${d}`], ['HGETALL', `plan:${d}`]);
+  cmds.push(['GET', 'yt:stats']);
+  const [out, live] = await Promise.all([pipeline(cmds), channelStats().catch((e) => ({ error: e.message }))]);
+  const obj = (r) => { const o = {}; for (let i = 0; r && i + 1 < r.length; i += 2) o[r[i]] = r[i + 1]; return o; };
+  const rows = dates.map((d, i) => ({ date: d, chan: obj(out[i * 4]), dl: obj(out[i * 4 + 1]), apps: obj(out[i * 4 + 2]), plan: obj(out[i * 4 + 3]) }));
+  let yt = null; try { yt = JSON.parse(out[dates.length * 4] || 'null'); } catch (e) { yt = null; }
+  return { generated: new Date().toISOString(), live, youtube: yt, days: rows };
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -169,6 +228,16 @@ module.exports = async (req, res) => {
     if (!KV_URL || !KV_TOKEN) { res.status(500).json({ error: 'storage not configured' }); return; }
     try { res.status(200).json(await report(Math.min(Math.max(parseInt(req.query.days, 10) || 30, 1), 120))); }
     catch (e) { res.status(500).json({ error: 'report failed' }); }
+    return;
+  }
+  if ((req.method === 'GET' || req.method === 'HEAD') && req.query && req.query.ep) { await podcastDownload(req, res); return; }
+  if (req.method === 'GET' && req.query && req.query.action === 'channels') {
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('X-Robots-Tag', 'noindex');
+    if (!STATS_KEY || String(req.query.key || '') !== STATS_KEY) { res.status(401).json({ error: 'wrong or missing key' }); return; }
+    if (!KV_URL || !KV_TOKEN) { res.status(500).json({ error: 'storage not configured' }); return; }
+    try { res.status(200).json(await channels(Math.min(Math.max(parseInt(req.query.days, 10) || 30, 1), 90))); }
+    catch (e) { res.status(500).json({ error: 'channels failed', detail: e.message }); }
     return;
   }
   if (req.method === 'GET' && req.query && req.query.action === 'ops') {
@@ -200,7 +269,7 @@ module.exports = async (req, res) => {
       let b = req.body;
       if (typeof b === 'string') { try { b = JSON.parse(b); } catch (e) { b = {}; } }
       b = b || {};
-      const CHECKS = ['x', 'thread', 'p1', 'p2', 'poll', 'status', 'reddit', 'quote', 'review', 'wachannel'], NUMS = ['replies', 'followers', 'impressions', 'visits'];
+      const CHECKS = ['x', 'thread', 'p1', 'p2', 'poll', 'status', 'reddit', 'quote', 'review', 'wachannel'], NUMS = ['replies', 'followers', 'impressions', 'visits', 'wafollowers', 'spotify', 'apple'];
       const date = String(b.date || ''), field = String(b.field || ''), value = String(b.value == null ? '' : b.value).trim();
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { res.status(400).json({ error: 'bad date' }); return; }
       let v;

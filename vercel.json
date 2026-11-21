@@ -6,6 +6,10 @@
   },
   "rewrites": [
     {
+      "source": "/ep/:date/:file",
+      "destination": "/api/track?ep=:date&f=:file"
+    },
+    {
       "source": "/e/:date",
       "destination": "/api/share?t=e&date=:date"
     },

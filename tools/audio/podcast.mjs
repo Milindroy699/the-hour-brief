@@ -118,7 +118,7 @@ export function buildFeed(episodes, { feedUrl, show = SHOW } = {}) {
       <link>${esc(e.page)}</link>
       <guid isPermaLink="false">${esc(e.guid)}</guid>
       <pubDate>${e.pubDate}</pubDate>
-      <enclosure url="${esc(e.url)}" length="${e.bytes}" type="audio/mpeg"/>
+      <enclosure url="${esc(show.trackBase ? `${show.trackBase}/${e.date}/${e.url.split('/').pop()}` : e.url)}" length="${e.bytes}" type="audio/mpeg"/>
       <itunes:duration>${hms(e.duration)}</itunes:duration>
       <itunes:episodeType>full</itunes:episodeType>${e.number ? `\n      <itunes:episode>${e.number}</itunes:episode>` : ''}
       <itunes:explicit>false</itunes:explicit>
@@ -255,7 +255,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     if (!audioBase || !arg('--audio')) { console.error('Usage: node podcast.mjs --audio DIR --audio-base URL [--feed-url URL] [--out podcast.xml]'); process.exit(2); }
     const eps = collect(path.resolve(arg('--audio')), { repo, audioBase, site });
     if (!eps.length) { console.error('No recorded episodes found: refusing to write an empty feed.'); process.exit(1); }
-    const xml = buildFeed(eps, { feedUrl, show: { ...SHOW, site } });
+    // --track-base: enclosures go through the site's download counter (/ep/<date>/<file>.mp3 → api/track.js → R2)
+    const trackBase = (arg('--track-base', '') || '').replace(/\/$/, '');
+    const xml = buildFeed(eps, { feedUrl, show: { ...SHOW, site, ...(trackBase ? { trackBase } : {}) } });
     const problems = checkFeedXml(xml);
     if (problems.length) { console.error('Feed problems:\n - ' + problems.join('\n - ')); process.exit(1); }
     fs.writeFileSync(path.resolve(arg('--out', 'podcast.xml')), xml);

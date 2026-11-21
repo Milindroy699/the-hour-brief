@@ -328,6 +328,57 @@ async function deliverXSlot({ slot, date = istToday(), force = false, dry = fals
   }
 }
 
+// ---- Channel numbers (growth.html's Channels tab) ----
+// Telegram: the public channel's subscriber count (the bot posts there, so it can read it; per-post views aren't available to
+// bots). Instagram: followers, posts, and each recent Reel's likes / comments, plus views / reach / shares / saves when the
+// token carries the instagram_manage_insights permission (otherwise insights: 'no permission').
+async function channelStats() {
+  const out = { at: new Date().toISOString() };
+  if (process.env.TELEGRAM_BOT_TOKEN) {
+    const chat = process.env.TELEGRAM_CHAT_ID || '@thehourbrief';
+    const r = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/getChatMemberCount?chat_id=${encodeURIComponent(chat)}`, { signal: AbortSignal.timeout(8000) }).then((x) => x.json()).catch(() => null);
+    out.telegram = r && r.ok ? { members: r.result } : { error: (r && r.description) || 'unreachable' };
+  }
+  const raw = ((await kv(['GET', 'ig:auth'])) || {}).result;
+  if (raw) {
+    try {
+      const a = JSON.parse(raw), host = `https://${a.host || 'graph.instagram.com'}`;
+      const g = async (p, params) => { const r = await fetch(`${host}${p}?${new URLSearchParams({ ...params, access_token: a.token })}`, { signal: AbortSignal.timeout(10000) }); const j = await r.json(); if (j.error) throw new Error(j.error.message); return j; };
+      const acct = await g(`/${a.userId}`, { fields: 'username,followers_count,media_count' });
+      const media = await g(`/${a.userId}/media`, { fields: 'id,timestamp,like_count,comments_count,permalink,media_product_type', limit: '12' });
+      let insights = 'ok';
+      const reels = [];
+      for (const m of media.data || []) {
+        const row = { date: (m.timestamp || '').slice(0, 10), likes: m.like_count || 0, comments: m.comments_count || 0, url: m.permalink };
+        if (insights === 'ok') {
+          try {
+            const ins = await g(`/${m.id}/insights`, { metric: 'views,reach,shares,saved' });
+            for (const d of ins.data || []) row[d.name] = (d.values && d.values[0] && d.values[0].value) || d.total_value && d.total_value.value || 0;
+          } catch (e) { insights = /permission/i.test(e.message) ? 'no permission' : e.message; }
+        }
+        reels.push(row);
+      }
+      out.instagram = { account: acct.username, followers: acct.followers_count, posts: acct.media_count, insights, reels };
+    } catch (e) { out.instagram = { error: e.message }; }
+  }
+  return out;
+}
+// Once a day (the 19:00 slot): keep the day's numbers for the trend lines.
+async function snapshotChannels(date = istToday()) {
+  const st = await channelStats();
+  const f = [];
+  if (st.telegram && st.telegram.members != null) f.push('tg', String(st.telegram.members));
+  const ig = st.instagram;
+  if (ig && ig.followers != null) {
+    f.push('ig_followers', String(ig.followers), 'ig_posts', String(ig.posts));
+    const sum = (k) => (ig.reels || []).reduce((n, r) => n + (Number(r[k]) || 0), 0);
+    f.push('ig_likes', String(sum('likes')), 'ig_comments', String(sum('comments')));
+    if (ig.insights === 'ok') f.push('ig_views', String(sum('views')), 'ig_reach', String(sum('reach')));
+  }
+  if (f.length) { await kv(['HSET', `chan:${date}`, ...f]); await kv(['EXPIRE', `chan:${date}`, String(400 * 86400)]); }
+  return { ok: true, saved: f.length / 2, telegram: st.telegram, instagram: ig && { followers: ig.followers, insights: ig.insights, error: ig.error } };
+}
+
 // `only` limits a run to one channel (e.g. resending just the WhatsApp pick by hand with force).
 // The day's vertical video (made by .github/workflows/short.yml from the morning recording), sent to the owner to post as a
 // YouTube Short, an Instagram Reel or a WhatsApp status. Not there yet (the recording or the video is still being made): not
@@ -439,4 +490,4 @@ async function pairTelegram({ dry = false } = {}) {
   return { ok: true, dry, chat: list[0] };
 }
 
-module.exports = { deliverXSlot, xScore, replyTarget, planWeek, PLAN_START, tgWithButtons, weekLink, hasWeekly, xIntent, redditSubmit, sendReviewReminder, APP_LINKS, WA_CHANNEL, appLink, withApp, withWhatsApp, deepLinks, beforeTags, primaryPost, leadersWhatsApp, notifyOwner, istToday, loadSocial, links, deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram };
+module.exports = { channelStats, snapshotChannels, deliverXSlot, xScore, replyTarget, planWeek, PLAN_START, tgWithButtons, weekLink, hasWeekly, xIntent, redditSubmit, sendReviewReminder, APP_LINKS, WA_CHANNEL, appLink, withApp, withWhatsApp, deepLinks, beforeTags, primaryPost, leadersWhatsApp, notifyOwner, istToday, loadSocial, links, deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram };

@@ -69,7 +69,7 @@
   .nums { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
   .nums label { font-size: 0.78rem; color: var(--soft); display: block; }
   .nums input { width: 100%; margin-top: 4px; padding: 9px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; font-variant-numeric: tabular-nums; }
-  .nums .hint { font-size: 0.72rem; color: var(--faint); }
+  .nums .hint, .conn .hint { font-size: 0.72rem; color: var(--faint); }
   .saved { font-size: 0.78rem; color: var(--good); min-height: 1.2em; margin-top: 6px; }
   .daypick { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
   .daypick button { border: 0; background: none; color: var(--soft); padding: 6px 12px; font: inherit; font-size: 0.84rem; cursor: pointer; }
@@ -126,11 +126,13 @@
   <nav class="tabs" role="tablist" aria-label="Sections" id="tabs">
     <button type="button" role="tab" id="t-ops" aria-controls="p-ops" data-tab="ops">Daily run</button>
     <button type="button" role="tab" id="t-plan" aria-controls="p-plan" data-tab="plan">X plan</button>
+    <button type="button" role="tab" id="t-channels" aria-controls="p-channels" data-tab="channels">Channels</button>
     <button type="button" role="tab" id="t-analytics" aria-controls="p-analytics" data-tab="analytics">Analytics</button>
     <button type="button" role="tab" id="t-runbook" aria-controls="p-runbook" data-tab="runbook">Runbook</button>
   </nav>
   <div class="panel" role="tabpanel" id="p-ops" aria-labelledby="t-ops" hidden><section class="plan" id="ops" hidden></section><p class="muted" id="ops-wait">Loading…</p></div>
   <div class="panel" role="tabpanel" id="p-plan" aria-labelledby="t-plan" hidden><section class="plan" id="plan" hidden></section></div>
+  <div class="panel" role="tabpanel" id="p-channels" aria-labelledby="t-channels" hidden><div id="channels"><p class="muted">Loading…</p></div></div>
   <div class="panel" role="tabpanel" id="p-analytics" aria-labelledby="t-analytics" hidden>
   <div class="panel-head">
     <p class="sub" id="sub">Website visitors, where they came from, and how many get the app.</p>
@@ -554,7 +556,7 @@
   }
 
   // ---- Tabs: Daily run · X plan · Analytics · Runbook (the URL hash picks one: #ops, #plan, #analytics, #runbook) ----
-  var TABS = ['ops', 'plan', 'analytics', 'runbook'];
+  var TABS = ['ops', 'plan', 'channels', 'analytics', 'runbook'];
   function showTab(name, focus) {
     if (TABS.indexOf(name) < 0) name = 'ops';
     TABS.forEach(function (t) {
@@ -573,17 +575,103 @@
       if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); showTab(TABS[(i + (e.key === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length], true); }
     });
   });
-  var firstTab = (location.hash.match(/^#(ops|plan|analytics|runbook)$/) || [])[1];
+  var firstTab = (location.hash.match(/^#(ops|plan|channels|analytics|runbook)$/) || [])[1];
   // a link to another tab (#plan from the Telegram scorecard) while the page is already open, or a new #key=
   window.addEventListener('hashchange', function () {
-    var t = (location.hash.match(/^#(ops|plan|analytics|runbook)$/) || [])[1];
+    var t = (location.hash.match(/^#(ops|plan|channels|analytics|runbook)$/) || [])[1];
     if (t && key) showTab(t);
     else if (/[#&]key=/.test(location.hash)) location.reload();
   });
   if (!firstTab) { try { firstTab = localStorage.getItem('hb-growth-tab'); } catch (e) {} }
 
+  // ---- Channels: YouTube, Instagram, Telegram, WhatsApp channel, podcast (api/track.js?action=channels) ----
+  var chBox = document.getElementById('channels'), chData = null;
+  function num(n) { return n == null || n === '' ? '–' : fmt(+n); }
+  function lastVal(days, get) { for (var i = days.length - 1; i >= 0; i--) { var v = get(days[i]); if (v != null && v !== '') return { v: +v, date: days[i].date }; } return null; }
+  function renderChannels() {
+    if (!chData) return;
+    var C = chData, D = C.days, L = C.live || {}, Y = C.youtube, ig = L.instagram || {}, tg = L.telegram || {};
+    var dl = function (d) { var n = 0; for (var k in d.dl) n += +d.dl[k]; return n; };
+    var podTotal = D.reduce(function (n, d) { return n + dl(d); }, 0);
+    var wa = lastVal(D, function (d) { return d.plan.wafollowers; }), sp = lastVal(D, function (d) { return d.plan.spotify; }), ap = lastVal(D, function (d) { return d.plan.apple; });
+    var ytViews = Y ? Y.videos.reduce(function (n, v) { return n + v.views; }, 0) : null;
+    chBox.textContent = '';
+    chBox.appendChild(h('div', { class: 'tiles' }, [
+      tile('YouTube subscribers', Y ? fmt(Y.subs) : '–', Y ? fmt(ytViews) + ' views on ' + Y.videos.length + ' Shorts' : 'first numbers tonight (20:15)'),
+      tile('Instagram followers', ig.followers != null ? fmt(ig.followers) : '–', ig.posts != null ? ig.posts + ' Reels' : (ig.error || '')),
+      tile('Telegram subscribers', tg.members != null ? fmt(tg.members) : '–', 't.me/thehourbrief'),
+      tile('WhatsApp channel', wa ? fmt(wa.v) : '–', wa ? 'followers, logged ' + short(wa.date) : 'log it below'),
+      tile('Podcast downloads', fmt(podTotal), 'last ' + D.length + ' days, all apps'),
+      tile('Spotify followers', sp ? fmt(sp.v) : '–', sp ? 'logged ' + short(sp.date) : 'log it below'),
+    ]));
+    // log by hand
+    var msg = h('div', { class: 'saved', role: 'status' }), today = D[D.length - 1];
+    var field = function (f, label, hint) {
+      var inp = h('input', { type: 'number', inputmode: 'numeric', min: '0', 'aria-label': label }); inp.value = today.plan[f] || '';
+      inp.addEventListener('change', function () {
+        msg.textContent = 'Saving…';
+        fetch('/api/track?action=plan&key=' + encodeURIComponent(key), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date: today.date, field: f, value: inp.value.trim() }) })
+          .then(function (r) { if (!r.ok) throw 0; today.plan[f] = inp.value.trim(); msg.textContent = 'Saved'; setTimeout(function () { msg.textContent = ''; renderChannels(); }, 900); })
+          .catch(function () { msg.textContent = 'Could not save.'; });
+      });
+      return h('div', {}, [h('label', { text: label }), inp, h('div', { class: 'hint', text: hint })]);
+    };
+    chBox.appendChild(card('Numbers no app shares: log them once a week', 'Today’s values. They feed the trend below.', h('div', {}, [h('div', { class: 'nums' }, [
+      field('wafollowers', 'WhatsApp channel followers', 'WhatsApp › the channel › its name › Followers'),
+      field('spotify', 'Spotify followers', 'creators.spotify.com › Analytics'),
+      field('apple', 'Apple Podcasts listeners', 'Podcasts Connect › Analytics'),
+    ]), msg])));
+    // YouTube
+    var ytBody;
+    if (!Y) ytBody = h('p', { class: 'muted', text: 'Saved every night at 20:15 by GitHub (stats.yml); the first numbers arrive tonight.' });
+    else {
+      var A = Y.analytics || {};
+      ytBody = h('div', {}, [
+        table(['Short', 'Views', 'Likes', 'Comments'], Y.videos.map(function (v) { return [short(v.date) + (v.privacy !== 'public' ? ' (' + v.privacy + ')' : ''), v.views, v.likes, v.comments]; }), 1),
+        h('p', { class: 'note', style: 'margin-top:10px', text: A.views != null ? 'Last 28 days: ' + fmt(A.views) + ' views, ' + fmt(A.minutesWatched) + ' minutes watched, ' + Math.round(A.avgViewPct) + '% of each Short watched on average, ' + fmt(A.subsGained) + ' subscribers gained.' : 'Watch time and % watched: not connected yet (see “Turn on more numbers”).' }),
+        h('p', { class: 'note', text: 'Updated ' + new Date(Y.at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) }),
+      ]);
+    }
+    // Instagram
+    var igBody = ig.error ? h('p', { class: 'err', text: ig.error }) : table(['Reel', 'Likes', 'Comments', 'Views', 'Reach'], (ig.reels || []).map(function (r) { return [short(r.date), r.likes, r.comments, r.views != null ? r.views : '–', r.reach != null ? r.reach : '–']; }), 1);
+    chBox.appendChild(h('div', { class: 'grid2' }, [card('YouTube Shorts', 'Per Short, newest first.', ytBody), card('Instagram Reels', ig.insights === 'ok' ? 'Per Reel, newest first.' : 'Views and reach need the insights permission (see below).', igBody)]));
+    // podcast
+    var apps = {}, eps = {};
+    D.forEach(function (d) { for (var a in d.apps) apps[a] = (apps[a] || 0) + +d.apps[a]; for (var e in d.dl) eps[e] = (eps[e] || 0) + +d.dl[e]; });
+    var appName = { apple: 'Apple Podcasts', amazon: 'Amazon Music', spotify: 'Spotify', google: 'YouTube / Google', overcast: 'Overcast', pocketcasts: 'Pocket Casts', castbox: 'Castbox', jiosaavn: 'JioSaavn', podcastaddict: 'Podcast Addict', browser: 'Web browser', other: 'Other apps' };
+    chBox.appendChild(h('div', { class: 'grid2' }, [
+      card('Podcast downloads per day', 'Every app except Spotify (Spotify keeps its own copy of the audio; its numbers are in Spotify for Creators). Counted from 21 Nov.', bars(D, dl, 'Podcast downloads per day', function (d) { var p = []; for (var a in d.apps) p.push((appName[a] || a) + ' ' + d.apps[a]); return p.join(', ') || 'none'; })),
+      card('Downloads by app and episode', 'Last ' + D.length + ' days.', h('div', {}, [
+        table(['App', 'Downloads'], Object.keys(apps).map(function (a) { return [appName[a] || a, apps[a]]; }).sort(function (a, b) { return b[1] - a[1]; }), 1),
+        h('div', { style: 'height:12px' }),
+        table(['Episode', 'Downloads'], Object.keys(eps).sort().reverse().slice(0, 10).map(function (e) { return [short(e), eps[e]]; }), 1),
+      ])),
+    ]));
+    // trend
+    var rows = D.slice().reverse().filter(function (d) { return Object.keys(d.chan).length || dl(d) || d.plan.wafollowers || d.plan.spotify; }).map(function (d) {
+      var c = d.chan; return [short(d.date), num(c.yt_subs), num(c.yt_views), num(c.ig_followers), num(c.tg), num(d.plan.wafollowers), num(d.plan.spotify), dl(d) || '–'];
+    });
+    chBox.appendChild(card('Day by day', 'Saved each evening (Telegram and Instagram at 19:00, YouTube at 20:15). Blank days: not saved yet.', h('div', { class: 'scroll' }, [table(['Day', 'YT subs', 'YT views', 'IG followers', 'Telegram', 'WhatsApp', 'Spotify', 'Podcast dl'], rows, 7)])));
+    // setup
+    var st = function (ok, txt) { return h('span', { class: 's ' + (ok ? 'ok' : 'wait'), text: txt }); };
+    var li2 = function (name, ok, txt, how) { return h('li', {}, [h('span', {}, [document.createTextNode(name), how ? h('div', { class: 'hint', text: how }) : null]), st(ok, txt)]); };
+    chBox.appendChild(card('Turn on more numbers', 'One-time setup steps; each turns on more of the numbers above.', h('ul', { class: 'conn' }, [
+      li2('Instagram views, reach, shares, saves', ig.insights === 'ok', ig.insights === 'ok' ? 'on' : 'needs permission', 'Replace the Instagram token and tick instagram_manage_insights (Claude has the steps).'),
+      li2('YouTube watch time and % watched', !!(Y && Y.analytics && Y.analytics.views != null), Y && Y.analytics && Y.analytics.views != null ? 'on' : 'needs one sign-in', 'Re-run the YouTube sign-in once so it includes the analytics permission (Claude has the command).'),
+      li2('Podcast downloads (all apps but Spotify)', podTotal > 0, podTotal > 0 ? 'on' : 'starting', 'Counted through the site since 21 Nov; numbers appear as apps fetch new episodes.'),
+      li2('Telegram views per post, WhatsApp channel stats, Spotify', false, 'only in their apps', 'No API: log WhatsApp and Spotify followers above once a week.'),
+    ])));
+  }
+  function loadChannels() {
+    fetch('/api/track?action=channels&days=30&key=' + encodeURIComponent(key), { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function (d) { chData = d; renderChannels(); })
+      .catch(function () { chBox.innerHTML = '<p class="err">Could not load the channel numbers. Try again in a minute.</p>'; });
+  }
+
   function load() {
     if (!key) { askKey(); return; }
+    if (!chData) loadChannels();
     document.getElementById('gate').textContent = '';
     main = document.getElementById('main');
     document.getElementById('tabs').hidden = false;

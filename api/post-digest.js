@@ -28,7 +28,7 @@
 const crypto = require('crypto');
 const { buildDigest } = require('./_digest');
 const { sendEditionPush, sendReengagementPush, checkPushHealth } = require('./_push');
-const { deliverKit, deliverXSlot, sendInsightPush, sendReviewReminder, pairOwnerPhone, pairTelegram, notifyOwner, istToday: kitDate } = require('./_kit');
+const { deliverKit, deliverXSlot, snapshotChannels, sendInsightPush, sendReviewReminder, pairOwnerPhone, pairTelegram, notifyOwner, istToday: kitDate } = require('./_kit');
 const li = require('./_linkedin');
 
 // Which job each Vercel Cron slot runs (see "crons" in vercel.json).
@@ -113,10 +113,13 @@ module.exports = async (req, res) => {
   let xslot;
   const xs = X_SLOT_BY_SCHEDULE[req.headers['x-vercel-cron-schedule']];
   if (xs && !q.job) { try { xslot = await deliverXSlot({ slot: xs }); } catch (e) { xslot = { ok: false, error: e.message }; } }
+  // 19:00: keep the day's channel numbers (Telegram subscribers, Instagram) for the Channels tab
+  if (xs === 'score' && !q.job) { try { xslot = { ...(xslot || {}), channels: await snapshotChannels() }; } catch (e) { xslot = { ...(xslot || {}), channels: { ok: false, error: e.message } }; } }
   const send = (body, status = 200) => res.status(status).json({ job, ...(xslot ? { x: xslot } : {}), ...body });
   try {
     switch (job) {
       case 'x': return send(await deliverXSlot({ slot: String(q.slot || ''), dry, force }));
+      case 'channels': return send(await snapshotChannels());
       case 'digest': break;
       case 'kit': {
         if (q.only) return send({ ok: true, kit: await deliverKit({ dry, force, only: String(q.only) }) });

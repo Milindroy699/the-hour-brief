@@ -20,7 +20,11 @@ SITE_ARGS=()
 # The address podcast apps subscribe to is the site's /podcast.xml (vercel.json proxies it to the R2 copy), not the r2.dev link:
 # r2.dev can be rate-limited and cannot redirect, so a feed submitted there could never move. The audio files stay on R2.
 FEED_URL="${PODCAST_SITE:-https://the-hour-brief.vercel.app}"; FEED_URL="${FEED_URL%/}/podcast.xml"
-node podcast.mjs --audio "$WORK/manifests" --audio-base "$R2_PUBLIC_URL" --feed-url "$FEED_URL" --out "$WORK/podcast.xml" --episodes-out "$WORK/episodes.json" ${SITE_ARGS[@]+"${SITE_ARGS[@]}"}
+# Each episode's audio link goes through the site's download counter (/ep/..., api/track.js), which sends the app on to R2,
+# so downloads from every podcast app are counted on the growth dashboard. Not in tests (PODCAST_SITE set).
+TRACK_ARGS=()
+[ -z "${PODCAST_SITE:-}" ] && TRACK_ARGS=(--track-base "https://the-hour-brief.vercel.app/ep")
+node podcast.mjs --audio "$WORK/manifests" --audio-base "$R2_PUBLIC_URL" --feed-url "$FEED_URL" --out "$WORK/podcast.xml" --episodes-out "$WORK/episodes.json" ${SITE_ARGS[@]+"${SITE_ARGS[@]}"} ${TRACK_ARGS[@]+"${TRACK_ARGS[@]}"}
 
 if [ "${FEED_DRY:-}" = "1" ]; then
   echo "FEED_DRY=1: not uploading. Feed is at $WORK/podcast.xml"; cat "$WORK/podcast.xml" | head -40; exit 0

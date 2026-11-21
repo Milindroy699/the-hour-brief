@@ -16,7 +16,7 @@ const PORT = 8765, REDIRECT = `http://127.0.0.1:${PORT}/callback`;
 const state = Math.random().toString(36).slice(2);
 const url = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
   client_id: clientId, redirect_uri: REDIRECT, response_type: 'code', access_type: 'offline', prompt: 'consent', state,
-  scope: 'https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly',
+  scope: 'https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/yt-analytics.readonly',   // analytics: watch time etc. on the growth dashboard
 });
 
 const server = http.createServer(async (req, res) => {

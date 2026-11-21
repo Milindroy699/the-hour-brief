@@ -1,0 +1,28 @@
+name: Channel stats
+
+# Saves the YouTube channel's numbers for the growth dashboard (growth.html › Channels): subscribers, each recent Short's
+# views / likes / comments, and, once youtube-auth.mjs has been re-run with the analytics permission, 28-day watch time.
+# Read-only: it posts nothing. The YouTube sign-in lives only in these secrets, which is why this runs here and not on Vercel.
+# Telegram and Instagram numbers are saved by the site itself (post-digest.js, 19:00 IST).
+on:
+  schedule:
+    - cron: '45 14 * * *'        # 20:15 IST, after the day's Short has had the day to collect views
+  workflow_dispatch:
+
+jobs:
+  youtube:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Save YouTube stats
+        env:
+          KV_REST_API_URL: ${{ secrets.KV_REST_API_URL }}
+          KV_REST_API_TOKEN: ${{ secrets.KV_REST_API_TOKEN }}
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+        run: node tools/video/publish.mjs --stats-save

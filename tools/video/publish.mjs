@@ -154,6 +154,32 @@ async function saveIgToken(token, igId) {
   }
 }
 
+// ---- YouTube numbers for the dashboard (--stats-save, run nightly by .github/workflows/stats.yml) ----
+// Data API: subscribers and each recent upload's views / likes / comments. YouTube Analytics API (needs the
+// yt-analytics.readonly scope, granted by re-running youtube-auth.mjs): watch time, average % watched, subscribers gained,
+// over the last 28 days. Saved to KV yt:stats (latest) and chan:<IST date> (yt_subs, yt_views) for the trend.
+async function youtubeStats() {
+  const t = await youtubeToken();
+  const yt = async (p) => (await fetch(`https://www.googleapis.com/youtube/v3/${p}`, { headers: { Authorization: `Bearer ${t}` } })).json();
+  const me = await yt('channels?part=statistics,contentDetails,snippet&mine=true');
+  const c0 = me.items && me.items[0];
+  if (!c0) throw new Error('no channel');
+  const pl = await yt(`playlistItems?part=contentDetails&maxResults=30&playlistId=${c0.contentDetails.relatedPlaylists.uploads}`);
+  const ids = (pl.items || []).map((x) => x.contentDetails.videoId);
+  const videos = [];
+  if (ids.length) {
+    const v = await yt(`videos?part=statistics,snippet,status,contentDetails&id=${ids.join(',')}`);
+    for (const x of v.items || []) videos.push({ id: x.id, date: x.snippet.publishedAt.slice(0, 10), title: x.snippet.title, privacy: x.status.privacyStatus,
+      views: +x.statistics.viewCount || 0, likes: +x.statistics.likeCount || 0, comments: +x.statistics.commentCount || 0, url: `https://youtube.com/shorts/${x.id}` });
+  }
+  const out = { at: new Date().toISOString(), channel: c0.snippet.title, subs: +c0.statistics.subscriberCount || 0, totalViews: +c0.statistics.viewCount || 0, videos, analytics: null };
+  const end = new Date().toISOString().slice(0, 10), start = new Date(Date.now() - 28 * 864e5).toISOString().slice(0, 10);
+  const a = await fetch(`https://youtubeanalytics.googleapis.com/v2/reports?${new URLSearchParams({ ids: 'channel==MINE', startDate: start, endDate: end, metrics: 'views,estimatedMinutesWatched,averageViewPercentage,subscribersGained,likes,shares' })}`, { headers: { Authorization: `Bearer ${t}` } }).then((r) => r.json()).catch(() => null);
+  if (a && a.rows && a.rows[0]) { const r = a.rows[0]; out.analytics = { days: 28, views: r[0], minutesWatched: r[1], avgViewPct: r[2], subsGained: r[3], likes: r[4], shares: r[5] }; }
+  else out.analytics = { error: a && a.error ? (a.error.status === 'PERMISSION_DENIED' || a.error.code === 403 ? 'no permission (re-run youtube-auth.mjs)' : a.error.message) : 'unavailable' };
+  return out;
+}
+
 // ---- run ----
 async function main() {
   const arg = (n, d) => { const i = process.argv.indexOf(n); return i > 0 ? process.argv[i + 1] : d; };
@@ -187,6 +213,16 @@ async function main() {
       else { const me = await igCall('GET', `/${a.userId}`, { fields: 'username', access_token: a.token }, a.host); console.log(`instagram: OK, @${me.username} (via ${a.host || 'graph.instagram.com'}${a.expiresAt ? ', token expires ' + new Date(a.expiresAt).toISOString().slice(0, 10) : ''})`); }
     } catch (e) { bad++; console.log(`instagram: NOT OK, ${e.message}`); }
     process.exitCode = bad ? 1 : 0;
+    return;
+  }
+  if (process.argv.includes('--stats-save')) {
+    const st = await youtubeStats();
+    const istDate = new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
+    const sumViews = st.videos.reduce((n, v) => n + v.views, 0);
+    await kv(['SET', 'yt:stats', JSON.stringify(st)]);
+    await kv(['HSET', `chan:${istDate}`, 'yt_subs', String(st.subs), 'yt_views', String(sumViews), 'yt_videos', String(st.videos.length)]);
+    await kv(['EXPIRE', `chan:${istDate}`, String(400 * 86400)]);
+    console.log(`youtube: ${st.subs} subscribers, ${st.videos.length} uploads, ${sumViews} views on them; analytics: ${JSON.stringify(st.analytics)}`);
     return;
   }
   if (arg('--ig-token')) { const me = await saveIgToken(arg('--ig-token'), arg('--ig-id')); console.log(`Instagram connected: @${me.username} (${me.account_type}, id ${me.user_id})`); return; }
