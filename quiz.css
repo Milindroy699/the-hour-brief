@@ -270,3 +270,11 @@
 .qz-groupform .quiz-actions { flex-direction: column; align-items: stretch; gap: 10px; }
 .qz-groupform .qz-input { letter-spacing: normal; text-transform: none; width: 100%; box-sizing: border-box; }
 .qz-groupform select.qz-input { appearance: auto; }
+.qz-linkbtn { background: none; border: 0; padding: 0; font: inherit; font-weight: 700; color: var(--brand, #451edb); text-decoration: underline; cursor: pointer; }
+/* the invite nudge on the score screen */
+.qz-nudge { margin-top: 16px; padding: 14px 16px; border-radius: 12px; background: var(--brand-soft, #f4f1fd); text-align: left; }
+.qz-nudge-title { margin: 0 0 4px; font-weight: 800; font-size: 1rem; color: var(--ink); }
+.qz-nudge-text { margin: 0 0 12px; font-size: 0.9rem; color: var(--ink); opacity: 0.85; }
+.qz-nudge .quiz-btn { width: 100%; }
+.qz-nudge-code { margin: 0 0 12px; font-size: 0.95rem; color: var(--ink); text-align: center; }
+.qz-nudge-code b { font-size: 1.35rem; letter-spacing: 0.14em; margin-left: 6px; color: var(--brand, #451edb); }

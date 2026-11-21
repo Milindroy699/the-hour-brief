@@ -146,6 +146,8 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') { res.status(204).end(); return; }
+  // A failure a phone saw (quiz.js lgReport): written to the function log so it can be traced. Nothing is stored.
+  if (req.query && req.query.diag) { console.warn('league client error:', String(req.query.diag).replace(/[\r\n]+/g, ' ').slice(0, 400)); res.status(204).end(); return; }
   if (!KV_URL || !KV_TOKEN) { res.status(500).json({ error: 'storage not configured' }); return; }
   res.setHeader('Cache-Control', 'no-store');
   const bad = (msg, code = 400) => res.status(code).json({ error: msg });
@@ -179,7 +181,8 @@ module.exports = async (req, res) => {
     const group = body.kind && KINDS[body.kind];
     let typed = null;
     if (group) { typed = cleanName(body.name); if (typed.error) return bad(typed.error); }
-    if (await limited(req, group ? 'create-group' : 'create', group ? 3 : 5)) return bad('too many leagues created today', 429);
+    // Per network per day. A college or office Wi-Fi is one address for hundreds of people, so these are generous.
+    if (await limited(req, group ? 'create-group' : 'create', group ? 10 : 20)) return bad('too many leagues created today', 429);
     let code = null;
     for (let i = 0; i < 6 && !code; i++) {
       const c = newCode();
@@ -201,7 +204,7 @@ module.exports = async (req, res) => {
   if (!CODE_RE.test(code)) return bad('invalid code');
 
   if (body.action === 'join') {
-    if (await limited(req, 'join', 30)) return bad('too many requests', 429);
+    if (await limited(req, 'join', 400)) return bad('too many requests', 429);
     const [meta, mem] = await pipe([['HMGET', `lg:${code}`, 'name', 'max'], ['HGETALL', `lg:${code}:m`]]);
     const [lname, lmax] = meta.result || [];
     if (!lname) return bad('league not found', 404);
@@ -225,7 +228,7 @@ module.exports = async (req, res) => {
     const total = parseInt(body.total, 10);
     if (!DATE_RE.test(date) || !(total >= 1 && total <= 10) || !(score >= 0 && score <= total)) return bad('invalid request');
     if (!withinWindow(date)) return res.status(200).json({ ok: false, reason: 'closed' });
-    if (await limited(req, 'score', 60)) return bad('too many requests', 429);
+    if (await limited(req, 'score', 1000)) return bad('too many requests', 429);
     const isMember = (await kv(['HGET', `lg:${code}:m`, mid])).result;
     if (!isMember) return bad('not a member', 403);
     const key = `lg:${code}:s:${date}`;
