@@ -21,7 +21,7 @@
   textarea { width: 100%; min-height: 15em; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); font: inherit; font-size: .92rem; line-height: 1.5; resize: vertical; }
   .row { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 0; }
   button, a.btn { min-height: 46px; padding: 0 18px; border-radius: 10px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); font: inherit; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
-  button.primary { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+  button.primary, a.btn.primary { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
   button:focus-visible, a.btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
   .hint { color: var(--soft); font-size: .9rem; margin: 10px 0 0; }
   .ok { color: var(--up); font-weight: 600; min-height: 1.5em; }
@@ -92,6 +92,32 @@
       <textarea id="li2" readonly aria-label="Alternative LinkedIn post" style="margin-top:10px"></textarea>
       <div class="row"><button id="copy-li2" type="button">Copy this one</button></div>
     </details>
+    <div id="x-box" hidden>
+      <h2>X post</h2>
+      <textarea id="xt" readonly aria-label="X post text" style="min-height:7em"></textarea>
+      <div class="row">
+        <a class="btn primary" id="x-open" target="_blank" rel="noopener">Post on X</a>
+        <button id="x-copy" type="button">Copy</button>
+      </div>
+      <p class="hint">Opens X with the post filled in; you check it and tap Post.</p>
+    </div>
+    <div id="weekly" hidden>
+      <h2>Weekly recap · <a href="#" id="wk-page" target="_blank" rel="noopener">the page</a></h2>
+      <p class="meta">The LinkedIn post above is the recap today (it goes to your profile on its own). X and Reddit are yours to post.</p>
+      <h3>X</h3>
+      <textarea id="wk-x" readonly aria-label="Weekly X post" style="min-height:7em"></textarea>
+      <div class="row">
+        <a class="btn primary" id="wk-x-open" target="_blank" rel="noopener">Post on X</a>
+        <button id="wk-x-copy" type="button">Copy</button>
+      </div>
+      <h3>Reddit</h3>
+      <textarea id="wk-rt" readonly aria-label="Reddit title" style="min-height:3em"></textarea>
+      <div class="row"><button id="wk-rt-copy" type="button">Copy title</button></div>
+      <textarea id="wk-rb" readonly aria-label="Reddit post body" style="min-height:14em"></textarea>
+      <div class="row"><button id="wk-rb-copy" type="button">Copy body</button></div>
+      <div class="row" id="wk-subs"></div>
+      <p class="hint">Read each community’s rules first and post as yourself. If Reddit opens without the text, paste the title and body.</p>
+    </div>
   </section>
 
   <h2 style="margin-top:40px">Channel post</h2>
@@ -242,6 +268,38 @@
     $('status-cap').value = s.status;
     $('li').value = post;
     $('social').hidden = false;
+    // X (same as api/_kit.js toTelegramX): the day's X post, opened in X ready to post.
+    var xIntent = function (t) { return 'https://x.com/intent/post?text=' + encodeURIComponent(t); };
+    if (s.x) {
+      var xt = deepLinks(s.x, s, 'x');
+      $('xt').value = xt; $('x-open').href = xIntent(xt); $('x-box').hidden = false;
+      $('x-copy').addEventListener('click', function () { copy(xt); });
+    }
+    // Sundays: the weekly recap (same as api/_kit.js toTelegramWeekly). Its LinkedIn post is the main post above.
+    var w = s.weekly && s.weekly.items && s.weekly.items.length && s.weekly.linkedin ? s.weekly : null;
+    if (w) {
+      var wl = function (t, src) { return String(t || '').replace(/https:\/\/the-hour-brief\.vercel\.app\/week\.html\?d=\d{4}-\d{2}-\d{2}(&src=[\w.-]+)?/g, location.origin + '/week.html?d=' + s.date + '&src=' + src); };
+      post = withApp(wl(w.linkedin, 'linkedin'), 'linkedin');
+      $('li').value = post;
+      $('li-label').textContent = 'Weekly recap: What actually mattered';
+      $('wk-page').href = '/week.html?d=' + s.date;
+      if (w.x) { var wx = wl(w.x, 'x'); $('wk-x').value = wx; $('wk-x-open').href = xIntent(wx); $('wk-x-copy').addEventListener('click', function () { copy(wx); }); }
+      var r = w.reddit || {};
+      if (r.title && r.body) {
+        var rb = wl(r.body, 'reddit');
+        $('wk-rt').value = r.title; $('wk-rb').value = rb;
+        $('wk-rt-copy').addEventListener('click', function () { copy(r.title); });
+        $('wk-rb-copy').addEventListener('click', function () { copy(rb); });
+        (r.subs || []).slice(0, 3).forEach(function (sub) {
+          sub = String(sub).replace(/^\/?r\//, '');
+          if (!/^\w{2,21}$/.test(sub)) return;
+          var a = document.createElement('a'); a.className = 'btn'; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Post to r/' + sub;
+          a.href = 'https://www.reddit.com/r/' + sub + '/submit?type=TEXT&title=' + encodeURIComponent(r.title) + '&text=' + encodeURIComponent(rb);
+          $('wk-subs').appendChild(a);
+        });
+      }
+      $('weekly').hidden = false;
+    }
     $('copy-cap').addEventListener('click', function () { copy(s.status); });
     $('copy-li').addEventListener('click', function () {
       copy(post).then(function () {

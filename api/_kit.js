@@ -62,8 +62,20 @@ async function loadSocial(date) {
   }
 }
 
-// The day's LinkedIn post: on weekdays the punchy Thought Leaders pick, otherwise the edition insight's post.
+// The weekly recap ("What actually mattered this week", Sundays): its page, and its links tagged by channel.
+const weekLink = (s, src) => `${CANON}/week.html?d=${s.date}${src ? `&src=${encodeURIComponent(src)}` : ''}`;
+const weekLinks = (text, s, src) => String(text || '').replace(/https:\/\/the-hour-brief\.vercel\.app\/week\.html\?d=\d{4}-\d{2}-\d{2}(&src=[\w.-]+)?/g, () => weekLink(s, src));
+const hasWeekly = (s) => !!(s && s.weekly && s.weekly.linkedin && Array.isArray(s.weekly.items) && s.weekly.items.length);
+// Post-to-X and post-to-Reddit links that open the app (or site) with the text filled in. Posting stays a human tap.
+const xIntent = (text) => `https://x.com/intent/post?text=${encodeURIComponent(text)}`;
+const redditSubmit = (sub, title, body) => `https://www.reddit.com/r/${encodeURIComponent(sub)}/submit?type=TEXT&title=${encodeURIComponent(title)}&text=${encodeURIComponent(body)}`;
+
+// The day's LinkedIn post: on Sundays the weekly recap, on weekdays the punchy Thought Leaders pick, otherwise the edition
+// insight's post.
 function primaryPost(s) {
+  if (hasWeekly(s)) {
+    return { kind: 'weekly', label: 'Weekly recap: What actually mattered', text: weekLinks(s.weekly.linkedin, s, 'linkedin'), link: weekLink(s, 'linkedin') };
+  }
   if (s.leaders && s.leaders.id && s.leaders.post) {
     return { kind: 'leaders', label: `Voices pick: ${s.leaders.title || s.leaders.id}`, text: s.leaders.post, link: `${CANON}/leaders.html#a=${encodeURIComponent(s.leaders.id)}` };
   }
@@ -186,6 +198,39 @@ async function toOwnerPush(s, l) {
   return { ok: out.successCount > 0, ...out };
 }
 
+// X: the day's X post, with a link that opens X with it filled in (X's API is paid per post; the owner posts by hand).
+async function toTelegramX(s) {
+  if (!s.x) return { ok: true, skipped: 'no X post in today’s kit' };
+  if (!process.env.TELEGRAM_BOT_TOKEN) return { ok: false, skipped: 'telegram bot not set up' };
+  const chat = await telegramChat();
+  if (!chat) return { ok: false, skipped: 'telegram not paired yet' };
+  const text = deepLinks(s.x, s, 'x');
+  await tg('sendMessage', { chat_id: chat, text: `X post · tap to post: ${xIntent(text)}\n\n${text}`.slice(0, 4096), link_preview_options: { is_disabled: true } });
+  return { ok: true };
+}
+// Sundays: the weekly recap's X post and its Reddit post (title, body, and a submit link per suggested community). The
+// LinkedIn version is the day's LinkedIn post (primaryPost), so it goes out with the others.
+async function toTelegramWeekly(s) {
+  if (!hasWeekly(s)) return { ok: true, skipped: 'no weekly recap today' };
+  if (!process.env.TELEGRAM_BOT_TOKEN) return { ok: false, skipped: 'telegram bot not set up' };
+  const chat = await telegramChat();
+  if (!chat) return { ok: false, skipped: 'telegram not paired yet' };
+  const w = s.weekly;
+  if (w.x) {
+    const xt = weekLinks(w.x, s, 'x');
+    await tg('sendMessage', { chat_id: chat, text: `🗓 Weekly recap · X post · tap to post: ${xIntent(xt)}\n\n${xt}`.slice(0, 4096), link_preview_options: { is_disabled: true } });
+  }
+  const r = w.reddit;
+  if (r && r.title && r.body) {
+    const body = weekLinks(r.body, s, 'reddit');
+    const subs = (Array.isArray(r.subs) ? r.subs : []).map((x) => String(x).replace(/^\/?r\//, '')).filter((x) => /^\w{2,21}$/.test(x)).slice(0, 3);
+    const open = subs.map((sub) => `r/${sub}: ${redditSubmit(sub, r.title, body)}`).join('\n\n');
+    await tg('sendMessage', { chat_id: chat, text: `🗓 Weekly recap · Reddit (read each community’s rules first; post as yourself)\n\n${open}`.slice(0, 4096), link_preview_options: { is_disabled: true } });
+    await tg('sendMessage', { chat_id: chat, text: `Title:\n${r.title}\n\nBody:\n${body}`.slice(0, 4096), link_preview_options: { is_disabled: true } });
+  }
+  return { ok: true };
+}
+
 // `only` limits a run to one channel (e.g. resending just the WhatsApp pick by hand with force).
 // The day's vertical video (made by .github/workflows/short.yml from the morning recording), sent to the owner to post as a
 // YouTube Short, an Instagram Reel or a WhatsApp status. Not there yet (the recording or the video is still being made): not
@@ -209,7 +254,7 @@ async function deliverKit({ date = istToday(), force = false, dry = false, only 
   const l = links(s);
   if (dry) return { ok: true, dry: true, date, social: s, links: l };
   const result = { ok: true, date };
-  for (const [name, fn] of [['telegram', toTelegram], ['telegramPost', toTelegramPost], ['telegramLeaders', toTelegramLeaders], ['telegramShort', toTelegramShort], ['ownerPush', toOwnerPush]]) {
+  for (const [name, fn] of [['telegram', toTelegram], ['telegramPost', toTelegramPost], ['telegramLeaders', toTelegramLeaders], ['telegramShort', toTelegramShort], ['telegramX', toTelegramX], ['telegramWeekly', toTelegramWeekly], ['ownerPush', toOwnerPush]]) {
     if (only && name !== only) continue;
     const key = `kit:${name}:${date}`;
     if (!(await claim(key, force))) { result[name] = { ok: true, skipped: 'already sent' }; continue; }
@@ -297,4 +342,4 @@ async function pairTelegram({ dry = false } = {}) {
   return { ok: true, dry, chat: list[0] };
 }
 
-module.exports = { sendReviewReminder, APP_LINKS, WA_CHANNEL, appLink, withApp, withWhatsApp, deepLinks, beforeTags, primaryPost, leadersWhatsApp, notifyOwner, istToday, loadSocial, links, deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram };
+module.exports = { weekLink, hasWeekly, xIntent, redditSubmit, sendReviewReminder, APP_LINKS, WA_CHANNEL, appLink, withApp, withWhatsApp, deepLinks, beforeTags, primaryPost, leadersWhatsApp, notifyOwner, istToday, loadSocial, links, deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram };

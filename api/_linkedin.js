@@ -180,8 +180,8 @@ async function postMember({ date = istToday(), force = false, dry = false } = {}
   const post = {
     text: withApp(p.text, 'linkedin'),
     link: p.link,
-    title: p.kind === 'leaders' ? (s.leaders.title || 'Voices') : (s.storyTitle || `The Hour Brief · Edition ${s.edition}`),
-    description: p.kind === 'leaders' ? `${PILLAR_LABEL[s.leaders.category] || 'Voices'} · Voices on The Hour Brief` : 'Today’s edition of The Hour Brief',
+    title: p.kind === 'weekly' ? (s.weekly.title || 'What actually mattered this week') : p.kind === 'leaders' ? (s.leaders.title || 'Voices') : (s.storyTitle || `The Hour Brief · Edition ${s.edition}`),
+    description: p.kind === 'weekly' ? 'The week’s five stories that mattered, on The Hour Brief' : p.kind === 'leaders' ? `${PILLAR_LABEL[s.leaders.category] || 'Voices'} · Voices on The Hour Brief` : 'Today’s edition of The Hour Brief',
   };
   if (dry) return { ok: true, dry: true, date, kind: p.kind, post };
   return { date, kind: p.kind, ...(await once(`li:posted:member:${date}`, () => publishMember(post), { force })) };

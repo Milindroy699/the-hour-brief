@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>What actually mattered this week — The Hour Brief</title>
+<meta name="description" content="The five stories from this week's Hour Brief that actually mattered, and why: AI, business and Indian markets in two minutes.">
+<meta name="robots" content="noindex, follow">
+<meta property="og:site_name" content="The Hour Brief">
+<meta property="og:type" content="article">
+<meta property="og:title" content="What actually mattered this week">
+<meta property="og:description" content="The five stories from this week's Hour Brief that actually mattered, and why. Two minutes.">
+<meta property="og:image" content="https://the-hour-brief.vercel.app/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="What actually mattered this week">
+<meta name="twitter:image" content="https://the-hour-brief.vercel.app/og-image.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/brand/icon-192.png">
+<link rel="apple-touch-icon" href="/brand/apple-touch-icon.png">
+<style>
+  :root {
+    --bg: #f2f3ee; --paper: #ffffff; --paper-2: #e7e9e1;
+    --ink: #17191c; --ink-soft: #52585a; --ink-faint: #838a8a; --line: #d7dad2;
+    --brand: #5b3e96; --brand-soft: #efe9f7;
+    --shadow: 0 1px 2px rgba(23,25,28,0.06), 0 10px 28px rgba(23,25,28,0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #131417; --paper: #1b1d21; --paper-2: #24262b;
+      --ink: #edeeec; --ink-soft: #a9adaf; --ink-faint: #757a7c; --line: #2c2f34;
+      --brand: #a487d9; --brand-soft: #241f34;
+      --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #131417; --paper: #1b1d21; --paper-2: #24262b;
+    --ink: #edeeec; --ink-soft: #a9adaf; --ink-faint: #757a7c; --line: #2c2f34;
+    --brand: #a487d9; --brand-soft: #241f34;
+    --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.4);
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--bg); }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, "Inter", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .masthead-band { background: var(--ink); color: var(--bg); padding: 30px 24px 26px; }
+  .masthead-inner { max-width: 720px; margin: 0 auto; display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; }
+  .wordmark { font-weight: 800; font-size: 2.1rem; letter-spacing: -0.01em; margin: 0; text-transform: uppercase; }
+  .wordmark span { color: var(--brand); }
+  .back-link { font-size: 0.78rem; letter-spacing: 0.03em; text-transform: uppercase; color: color-mix(in srgb, var(--bg) 70%, transparent); text-decoration: none; white-space: nowrap; }
+  .back-link:hover { color: var(--bg); }
+
+  .page { max-width: 720px; margin: 0 auto; padding: 40px 24px 96px; }
+  h1 { font-family: Georgia, "Iowan Old Style", "Times New Roman", serif; font-size: 1.8rem; margin: 0 0 8px; }
+  .lede { color: var(--ink-soft); font-size: 1.02rem; line-height: 1.6; margin: 0 0 36px; }
+
+  section { margin-bottom: 32px; }
+  h2 { font-family: Georgia, "Iowan Old Style", "Times New Roman", serif; font-size: 1.2rem; margin: 0 0 10px; }
+  p { line-height: 1.65; color: var(--ink-soft); margin: 0 0 12px; font-size: 0.96rem; }
+  strong { color: var(--ink); }
+  ul { margin: 0 0 12px; padding-left: 20px; color: var(--ink-soft); line-height: 1.65; font-size: 0.96rem; }
+  li { margin-bottom: 6px; }
+
+  .callout {
+    background: var(--paper); border: 1px solid var(--line); border-radius: 10px;
+    padding: 16px 18px; box-shadow: var(--shadow); font-size: 0.92rem; color: var(--ink-soft); line-height: 1.6;
+  }
+  .callout strong { color: var(--ink); }
+
+  footer.colophon { margin-top: 48px; padding-top: 22px; border-top: 1px solid var(--line); font-size: 0.8rem; color: var(--ink-faint); }
+  footer.colophon a { color: var(--ink-soft); }
+</style>
+<link rel="stylesheet" href="/mobile.css" media="(max-width: 640px)">
+<script defer src="/_vercel/insights/script.js"></script>
+<script defer src="/capacitor-bridge.js"></script>
+<script defer src="/mobile.js"></script>
+<style>
+  .week { list-style: none; padding: 0; margin: 0; counter-reset: wk; }
+  .week li { counter-increment: wk; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 18px 18px 16px 58px; margin-bottom: 14px; box-shadow: var(--shadow); position: relative; }
+  .week li::before { content: counter(wk); position: absolute; left: 18px; top: 16px; width: 28px; height: 28px; border-radius: 50%; background: var(--brand-soft); color: var(--brand); font-weight: 800; display: grid; place-items: center; font-size: 0.95rem; }
+  .week .lane { font-size: 0.74rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); margin: 0 0 4px; }
+  .week h2 { font-size: 1.08rem; line-height: 1.35; margin: 0 0 8px; }
+  .week h2 a { color: var(--ink); text-decoration: none; }
+  .week h2 a:hover { text-decoration: underline; }
+  .week p.why { margin: 0; }
+  .week .more { display: inline-block; margin-top: 10px; font-size: 0.86rem; font-weight: 700; color: var(--brand); text-decoration: none; }
+  .loading { color: var(--ink-faint); }
+</style>
+</head>
+<body>
+<div class="masthead-band">
+  <div class="masthead-inner">
+    <p class="wordmark">The Hour <span>Brief</span></p>
+    <a class="back-link" href="/">← Today's edition</a>
+  </div>
+</div>
+
+<div class="page">
+  <h1 id="title">What actually mattered this week</h1>
+  <p class="lede" id="lede">The five stories from the week's editions worth remembering, and why each one matters.</p>
+  <ol class="week" id="week"><li class="loading">Loading…</li></ol>
+  <footer class="colophon">
+    <a href="/">Today's edition</a> · <a href="/archive/">Past editions</a> · <a href="/app?src=week-page">Get the app</a> · <a href="/about.html">How this is made</a>
+  </footer>
+</div>
+<script>
+// Written every Sunday by the "Daily post writer" routine into social/<date>.json (the "weekly" field). ?d=<Sunday> picks
+// the week; without it, the latest recap from the last 8 days.
+(function () {
+  var LANE = { ai: 'AI & Tech', biz: 'Business', mkt: 'Stock Market' };
+  var list = document.getElementById('week');
+  function ist(daysAgo) { return new Date(Date.now() + 5.5 * 3600 * 1000 - daysAgo * 86400000).toISOString().slice(0, 10); }
+  function get(d) { return fetch('/social/' + d + '.json', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (s) { return s && s.weekly && s.weekly.items && s.weekly.items.length ? s : null; }).catch(function () { return null; }); }
+  var asked = (new URLSearchParams(location.search).get('d') || '').match(/^\d{4}-\d{2}-\d{2}$/);
+  var tries = asked ? [asked[0]] : [0, 1, 2, 3, 4, 5, 6, 7].map(ist);
+  (function next(i) {
+    if (i >= tries.length) { list.innerHTML = '<li class="loading">No weekly recap yet. One is written every Sunday.</li>'; return; }
+    get(tries[i]).then(function (s) { if (s) show(s); else next(i + 1); });
+  })(0);
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function show(s) {
+    var w = s.weekly;
+    if (w.title) { document.getElementById('title').textContent = w.title; document.title = w.title + ' — The Hour Brief'; }
+    var from = w.from ? new Date(w.from + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '';
+    var to = new Date(s.date + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+    document.getElementById('lede').textContent = (from ? from + ' – ' : 'Week to ') + to + '. ' + (w.intro || 'The five stories worth remembering, and why each one matters.');
+    list.textContent = '';
+    w.items.forEach(function (it) {
+      var li = el('li');
+      li.appendChild(el('p', 'lane', (LANE[it.lane] || '') + (it.date ? ' · ' + new Date(it.date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' }) : '')));
+      var h = el('h2'), a = el('a', '', it.headline || '');
+      var href = it.date && it.storyId ? '/s/' + it.date + '/' + encodeURIComponent(it.storyId) + '?src=week-page' : (it.date ? '/e/' + it.date : '/');
+      a.href = href; h.appendChild(a); li.appendChild(h);
+      if (it.why) li.appendChild(el('p', 'why', it.why));
+      var m = el('a', 'more', 'Read the story →'); m.href = href; li.appendChild(m);
+      list.appendChild(li);
+    });
+  }
+})();
+</script>
+</body>
+</html>
