@@ -73,7 +73,8 @@ async function igCall(method, p, params, host) {
   const url = `${IG(host)}${p}${method === 'GET' ? '?' + new URLSearchParams(params) : ''}`;
   const r = await fetch(url, method === 'GET' ? {} : { method, headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(params) });
   const j = await r.json().catch(() => ({}));
-  if (!r.ok || j.error) throw new Error(`instagram ${p}: ${(j.error && j.error.message) || r.status}`);
+  // Meta sometimes quotes the token back in its error ("Malformed access token EAA…"): never print it.
+  if (!r.ok || j.error) throw new Error(`instagram ${p}: ${String((j.error && j.error.message) || r.status).replace(/\b(EAA|IG)[A-Za-z0-9_-]{20,}/g, '<token hidden>')}`);
   return j;
 }
 async function igAuth() {
