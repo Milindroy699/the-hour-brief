@@ -794,9 +794,24 @@
   var lastDates = [];
   var DAY_LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
   function addDays(d, n) { return new Date(Date.parse(d + 'T00:00:00Z') + n * 86400000).toISOString().slice(0, 10); }
+  // In the app: tell the server this phone's last played edition and its streak (no score, no answers), so the 21:00
+  // "keep your streak" push goes only to phones that played yesterday and not yet today. Once per (date, streak).
+  function reportStreak(dates, results) {
+    var dev; try { dev = localStorage.getItem('hb-device-id-v1'); } catch (e) { dev = null; }
+    if (!dev || !dates || !dates.length) return;
+    var latest = dates[dates.length - 1], prev = dates.length > 1 ? dates[dates.length - 2] : null;
+    var played = results[latest] ? latest : (prev && results[prev] ? prev : null);
+    if (!played) return;
+    var n = streakEndingAt(dates, results, played), flag = played + '|' + n;
+    try { if (localStorage.getItem('hb-qd-last') === flag) return; } catch (e) { /* send anyway */ }
+    fetch('/api/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: 'quiz_done', deviceId: dev, date: played, streak: n }) })
+      .then(function (r) { if (r.ok) { try { localStorage.setItem('hb-qd-last', flag); } catch (e) { /* ignore */ } } }).catch(function () { /* next visit */ });
+  }
+
   function refreshStreak(dates) {
     if (dates) lastDates = dates;
     var results = load().r, mine = results[DATE];
+    reportStreak(lastDates, results);
     var latest = lastDates.length ? lastDates[lastDates.length - 1] : DATE;
     var streak = mine ? streakEndingAt(lastDates, results, DATE)
       : (latest === DATE ? streakEndingAt(lastDates, results, lastDates.length > 1 ? lastDates[lastDates.length - 2] : prevDay(DATE)) : 0);

@@ -28,7 +28,7 @@
 const crypto = require('crypto');
 const { buildDigest } = require('./_digest');
 const { sendEditionPush, sendReengagementPush, checkPushHealth } = require('./_push');
-const { deliverKit, deliverXSlot, snapshotChannels, morningPushPayload, sendInsightPush, sendReviewReminder, pairOwnerPhone, pairTelegram, notifyOwner, istToday: kitDate } = require('./_kit');
+const { deliverKit, deliverXSlot, snapshotChannels, morningPushPayload, sendStreakReminder, sendInsightPush, sendReviewReminder, pairOwnerPhone, pairTelegram, notifyOwner, istToday: kitDate } = require('./_kit');
 const li = require('./_linkedin');
 
 // Which job each Vercel Cron slot runs (see "crons" in vercel.json).
@@ -39,6 +39,7 @@ const JOB_BY_SCHEDULE = {
   '30 3 * * *': 'review',
   '30 12 * * *': 'insight',
   '30 13 * * *': 'insight',
+  '30 15 * * *': 'streak',
   '30 9 * * *': 'linkedin-leaders',
   '30 10 * * *': 'linkedin-leaders',
 };
@@ -120,6 +121,7 @@ module.exports = async (req, res) => {
     switch (job) {
       case 'x': return send(await deliverXSlot({ slot: String(q.slot || ''), dry, force }));
       case 'channels': return send(await snapshotChannels());
+      case 'streak': return send({ ok: true, streak: await sendStreakReminder({ dry, force }) });
       case 'digest': break;
       case 'kit': {
         if (q.only) return send({ ok: true, kit: await deliverKit({ dry, force, only: String(q.only) }) });

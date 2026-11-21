@@ -132,6 +132,10 @@
     {
       "path": "/api/post-digest",
       "schedule": "30 13 * * *"
+    },
+    {
+      "path": "/api/post-digest",
+      "schedule": "30 15 * * *"
     }
   ]
 }

@@ -27,7 +27,7 @@ const KV_TOKEN = process.env.KV_REST_API_TOKEN;
 
 // app_link_*: visits to the smart app link (/app), by platform it sent them to.
 // push_*: the app's notification permission state and token errors, reported once per launch (diagnostics).
-const ALLOWED_EVENTS = new Set(['listen_play', 'app_link_ios', 'app_link_android', 'app_link_desktop', 'push_perm_granted', 'push_perm_denied', 'push_perm_other', 'push_reg_error', 'push_open', 'nav_fail_loaded', 'nav_fail_loading',
+const ALLOWED_EVENTS = new Set(['listen_play', 'app_link_ios', 'app_link_android', 'app_link_desktop', 'push_perm_granted', 'push_perm_denied', 'push_perm_other', 'push_reg_error', 'push_open', 'quiz_done', 'nav_fail_loaded', 'nav_fail_loading',
   // the website (mobile.js): one visit a day per browser by kind, and the phone "Get the app" bar
   'web_open_ios', 'web_open_android', 'web_open_desktop', 'install_nudge_shown', 'install_nudge_tap',
   // growth: a tap on a podcast-app link (place = which app), and the app prompts' views (place = where)
@@ -109,7 +109,7 @@ const OPS_KEYS = [                     // [id, key prefix] — the key is `<pref
   ['review', 'kit:review'], ['ownerKit', 'kit:telegram'], ['ownerLinkedin', 'kit:telegramPost'], ['ownerShort', 'kit:telegramShort'],
   ['linkedinProfile', 'li:posted:member'], ['linkedinPage', 'li:posted:morning'], ['linkedinVoices', 'li:posted:leaders'],
   ['youtube', 'short:youtube'], ['instagram', 'short:instagram'],
-  ['pushOpens', 'event:push_open'],
+  ['pushOpens', 'event:push_open'], ['pushStreak', 'push:streak-sent'],
   ['xThread', 'kit:x:thread'], ['xReplies', 'kit:x:replies'], ['xAfternoon', 'kit:x:afternoon'], ['xEvening', 'kit:x:evening'], ['xScore', 'kit:x:score'], ['xMorning', 'kit:telegramX'],
 ];
 const head = (url) => fetch(url, { method: 'HEAD', cache: 'no-store', signal: AbortSignal.timeout(6000) }).then((r) => r.ok).catch(() => null);
@@ -323,6 +323,13 @@ module.exports = async (req, res) => {
 
   if (event) {
     if (!ALLOWED_EVENTS.has(event)) { res.status(400).json({ error: 'unknown event' }); return; }
+    // The quiz in the app: this phone's last played edition and its streak (for the 21:00 "keep your streak" push).
+    if (event === 'quiz_done' && deviceId) {
+      const d = String(body.date || ''), n = parseInt(body.streak, 10);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(d) && Math.abs(Date.parse(d + 'T00:00:00Z') - Date.now()) < 4 * 864e5 && n >= 0 && n < 5000) {
+        jobs.push(kv(['HSET', 'quiz:last', deviceId, `${d}|${n}`]), kv(['SADD', `quiz:done:${d}`, deviceId]), kv(['EXPIRE', `quiz:done:${d}`, String(4 * 86400)]));
+      }
+    }
     jobs.push(kv(['INCR', `event:${event}:${today}`]));
     if (deviceId) jobs.push(kv(['SADD', `event:${event}:devices:${today}`, deviceId]));
     // growth tallies, by source (and place); unknown values fall back to a bucket rather than being dropped

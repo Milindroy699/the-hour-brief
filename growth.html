@@ -479,7 +479,7 @@ https://the-hour-brief.vercel.app/app?src=x-pinned</pre>
     ]],
     ['Posted automatically', [
       ['telegramChannel', 'Telegram channel post', '11:00', 'auto'], ['pushMorning', 'Morning push to app users', '11:00', 'auto'], ['pushInsight', 'Evening insight push', '19:00', 'auto'],
-      ['pushWeekly', 'Weekly comeback push', '11:00', 'auto', 'sun'], ['pushOpens', 'Push notifications tapped', '23:59', 'auto', 'count'], ['linkedinProfile', 'LinkedIn: your profile', '10:30', 'auto'], ['linkedinPage', 'LinkedIn: the Page', '10:30', 'auto', 'page'],
+      ['pushWeekly', 'Weekly comeback push', '11:00', 'auto', 'sun'], ['pushStreak', '“Keep your streak” push (21:00)', '21:30', 'auto', 'streak'], ['pushOpens', 'Push notifications tapped', '23:59', 'auto', 'count'], ['linkedinProfile', 'LinkedIn: your profile', '10:30', 'auto'], ['linkedinPage', 'LinkedIn: the Page', '10:30', 'auto', 'page'],
       ['youtube', 'YouTube Short', '11:30', 'auto'], ['instagram', 'Instagram Reel', '11:30', 'auto'],
     ]],
     ['Sent to you (Telegram, phone)', [
@@ -498,7 +498,7 @@ https://the-hour-brief.vercel.app/app?src=x-pinned</pre>
   // When each job started: earlier days show "·", not a miss. Jobs tracked by a once-a-day key were only kept 3 days until
   // 22 Nov 2026, so a missing key before then reads "no record" (?), not "missed".
   var SINCE = { kit: '2026-11-17', linkedinProfile: '2026-11-18', ownerKit: '2026-11-17', ownerLinkedin: '2026-11-17', short: '2026-11-20', youtube: '2026-11-20', instagram: '2026-11-20',
-    ownerShort: '2026-11-20', telegramChannel: '2026-11-21', pushOpens: '2026-11-22', review: '2026-11-22', xMorning: '2026-11-22', weekly: '2026-11-22', pushWeekly: '2026-11-22', 'plan.review': '2026-11-21', 'plan.status': '2026-11-21', 'plan.wachannel': '2026-11-21' };
+    ownerShort: '2026-11-20', telegramChannel: '2026-11-21', pushOpens: '2026-11-22', pushStreak: '2026-11-22', review: '2026-11-22', xMorning: '2026-11-22', weekly: '2026-11-22', pushWeekly: '2026-11-22', 'plan.review': '2026-11-21', 'plan.status': '2026-11-21', 'plan.wachannel': '2026-11-21' };
   var FILE_BASED = /^(edition|audio|podcast|kit|xpack|short|weekly)$/, KEYS_KEPT_FROM = '2026-11-22';
   var opsBox = document.getElementById('ops'), opsData = null;
   function nowIst() { var d = new Date(Date.now() + 5.5 * 3600 * 1000); return d.toISOString().slice(11, 16); }
@@ -508,6 +508,7 @@ https://the-hour-brief.vercel.app/app?src=x-pinned</pre>
     if (tag === 'x' && row.date < PLAN_START) return { k: 'na', t: '·', label: 'before the X plan' };
     if (tag === 'page' && !(opsData.connections.linkedinPage || {}).ok) return { k: 'na', t: '–', label: 'not connected yet' };
     if (SINCE[id] && row.date < SINCE[id]) return { k: 'na', t: '·', label: 'not running yet' };
+    if (tag === 'streak') { var sv = row[id]; if (sv) return { k: 'ok', t: '✓', label: 'sent' }; if (isToday && nowIst() < at) return { k: 'due', t: '◷', label: 'due by ' + at }; return { k: 'na', t: '·', label: 'nobody to remind (or not sent)' }; }
     if (tag === 'count') { var c = row[id]; return c ? { k: 'ok', t: String(c), label: c + ' taps' } : { k: 'na', t: '0', label: 'no taps' }; }
     var v;
     if (id.indexOf('plan.') === 0) {

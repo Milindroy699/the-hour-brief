@@ -482,6 +482,38 @@ async function sendInsightPush({ date = istToday(), force = false, dry = false }
   }
 }
 
+// ---- "Keep your streak" (21:00 IST): only phones that played yesterday's quiz and not today's ----
+// quiz.js reports each phone's last played edition and streak (quiz:last, quiz:done:<date>, via api/track.js); the
+// phone's push token comes from push:device-token. One push per phone, worded with its own streak.
+async function sendStreakReminder({ date = istToday(), force = false, dry = false } = {}) {
+  const { loadEdition, editionInfo } = require('./_edition');
+  if (editionInfo(await loadEdition('latest')).d !== date) return { ok: true, skipped: 'today’s edition is not out' };
+  const pairs = (r) => { const a = (r && r.result) || [], o = {}; for (let i = 0; i + 1 < a.length; i += 2) o[a[i]] = a[i + 1]; return o; };
+  const [last, tokens, done] = await Promise.all([kv(['HGETALL', 'quiz:last']), kv(['HGETALL', 'push:device-token']), kv(['SMEMBERS', `quiz:done:${date}`])]);
+  const L = pairs(last), T = pairs(tokens), D = new Set((done && done.result) || []);
+  const yesterday = new Date(Date.parse(date + 'T00:00:00Z') - 864e5).toISOString().slice(0, 10);
+  const byStreak = {};
+  for (const [dev, v] of Object.entries(L)) {
+    const [d, n] = String(v).split('|');
+    if (d !== yesterday || D.has(dev) || !T[dev]) continue;
+    (byStreak[n] = byStreak[n] || []).push(T[dev]);
+  }
+  const targets = Object.values(byStreak).reduce((a, b) => a + b.length, 0);
+  const plan = Object.entries(byStreak).map(([n, toks]) => ({ streak: +n, phones: toks.length,
+    payload: { title: +n >= 2 ? `Keep your ${n}-day streak alive 🔥` : 'Keep your streak going 🔥', body: 'Today’s quiz is waiting: 5 questions, about a minute.', url: `${CANON}/archive/${date}.html#quiz` } }));
+  if (dry) return { ok: true, dry: true, date, targets, plan };
+  if (!targets) return { ok: true, skipped: 'nobody to remind', date };
+  if (!process.env.FIREBASE_PROJECT_ID) return { ok: false, skipped: 'firebase not configured' };
+  const key = `push:streak-sent:${date}`;
+  if (!(await claim(key, force))) return { ok: true, skipped: 'already sent', date };
+  try {
+    let sent = 0;
+    for (const p of plan) { const r = await sendToTokens(byStreak[p.streak], p.payload); sent += r.successCount || 0; }
+    await kv(['SET', key, String(sent), 'EX', DEDUPE_TTL]);
+    return { ok: true, date, targets, sent };
+  } catch (e) { if (!force) await release(key); return { ok: false, error: e.message }; }
+}
+
 // ---- One-time pairing of the owner's phone ----
 // The owner relaunches the app; the one device that checked in within the last few minutes (and has a push token)
 // becomes the owner device and gets a confirmation push. Refuses if more than one device is that fresh.
@@ -510,4 +542,4 @@ async function pairTelegram({ dry = false } = {}) {
   return { ok: true, dry, chat: list[0] };
 }
 
-module.exports = { morningPushPayload, channelStats, snapshotChannels, deliverXSlot, xScore, replyTarget, planWeek, PLAN_START, tgWithButtons, weekLink, hasWeekly, xIntent, redditSubmit, sendReviewReminder, APP_LINKS, WA_CHANNEL, appLink, withApp, withWhatsApp, deepLinks, beforeTags, primaryPost, leadersWhatsApp, notifyOwner, istToday, loadSocial, links, deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram };
+module.exports = { sendStreakReminder, morningPushPayload, channelStats, snapshotChannels, deliverXSlot, xScore, replyTarget, planWeek, PLAN_START, tgWithButtons, weekLink, hasWeekly, xIntent, redditSubmit, sendReviewReminder, APP_LINKS, WA_CHANNEL, appLink, withApp, withWhatsApp, deepLinks, beforeTags, primaryPost, leadersWhatsApp, notifyOwner, istToday, loadSocial, links, deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram };
