@@ -1617,6 +1617,30 @@
   // showed it half-drawn, then the fonts and pictures popping in, which read as a flicker (owner, 2026-11-19).
   // Voices (leaders.html) calls it too, once its roundups are drawn (window.HBReveal).
   var revealing = false;
+  // Voices opens from a saved copy of its articles (leaders.html, localStorage hb-voices-v1). A reader who has never opened
+  // it would wait for the network on the first tap; so, a few seconds after any other screen settles, fetch that copy
+  // quietly (once a session, only if there is none yet or it is over 6 hours old), and warm the page itself.
+  (function warmVoices() {
+    if (/\/leaders\.html$/.test(location.pathname)) return;
+    var run = function () {
+      try {
+        if (sessionStorage.getItem('hb-voices-warm')) return;
+        sessionStorage.setItem('hb-voices-warm', '1');
+        var have = localStorage.getItem('hb-voices-v1'), at = +localStorage.getItem('hb-voices-warm-at') || 0;
+        if (have && Date.now() - at < 6 * 3600 * 1000) return;
+        fetch('/leaders-data.json', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+          if (!d || !d.briefs || !d.briefs.length) return;
+          var old = null; try { old = JSON.parse(have || 'null'); } catch (e) { old = null; }
+          localStorage.setItem('hb-voices-v1', JSON.stringify({ briefs: d.briefs, stats: (old && old.stats) || {} }));
+          localStorage.setItem('hb-voices-warm-at', String(Date.now()));
+        }).catch(function () { /* the page just loads it itself */ });
+        var l = document.createElement('link'); l.rel = 'prefetch'; l.href = '/leaders.html'; document.head.appendChild(l);
+      } catch (e) { /* storage blocked: nothing to warm */ }
+    };
+    var later = function () { setTimeout(function () { (window.requestIdleCallback || function (f) { f(); })(run); }, 3500); };
+    if (document.readyState === 'complete') later(); else window.addEventListener('load', later);
+  })();
+
   function bootDone() {
     var h = document.documentElement;
     if (!h.classList.contains('hb-boot') || h.classList.contains('hb-reveal') || revealing) return;

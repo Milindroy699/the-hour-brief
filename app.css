@@ -980,3 +980,24 @@ html.hb-leaving .tab-switch, html.hb-leaving .hb-getapp, html.hb-boot .tab-switc
   html.hb-leaving::before, html.hb-leaving::after, html.hb-boot::after, html.hb-boot:not(.hb-from-loader)::after,
   html.hb-leaving body::before, html.hb-boot body::before { animation: none; opacity: 1; }
 }
+
+/* ---- Native feel, in the apps only (html.hb-native, mobile.js) — owner, 2026-11-21: "make it feel like a native app" ----
+   Buttons and labels can't be selected or long-pressed into iOS's link menu; story text still can. Every tappable thing
+   presses down a little; no grey tap flash; the page doesn't rubber-band. */
+html.hb-native { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; overscroll-behavior-y: none; }
+html.hb-native body { overscroll-behavior-y: none; }
+html.hb-native * { -webkit-tap-highlight-color: transparent; }
+html.hb-native button, html.hb-native .tab, html.hb-native .tab-bar, html.hb-native .masthead-band, html.hb-native .hub-top,
+html.hb-native .chip, html.hb-native .quiz-opt, html.hb-native .qz-tab, html.hb-native .hub-row, html.hb-native .dk-pager,
+html.hb-native nav, html.hb-native label, html.hb-native .quiz-actions, html.hb-native .qz-code, html.hb-native .rd-item {
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+}
+html.hb-native a, html.hb-native img { -webkit-touch-callout: none; }
+html.hb-native :is(button, .tab, .chip, .quiz-opt, .hub-row, .rd-item, a.btn, .qz-tab, .tl-card, .item[data-story-id] a) {
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+html.hb-native :is(button, .tab, .chip, .quiz-opt, .hub-row, .rd-item, a.btn, .qz-tab):active:not(:disabled) { transform: scale(0.96); }
+html.hb-native :is(.tl-card, .hub-card):active { transform: scale(0.985); }
+@media (prefers-reduced-motion: reduce) {
+  html.hb-native :is(button, .tab, .chip, .quiz-opt, .hub-row, .rd-item, a.btn, .qz-tab, .tl-card, .hub-card):active { transform: none; }
+}
