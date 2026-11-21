@@ -114,7 +114,9 @@ async function toInstagram(meta, date, { dry }) {
 // One-time: store a long-lived token (from the Meta app's "Generate token" for the Instagram account) and its account id.
 async function saveIgToken(token, igId) {
   // A Unified-login token that can't list its accounts: the Instagram account id comes from the Meta app page (--ig-id).
-  if (igId) {
+  // An Instagram-login token (IG…) goes to graph.instagram.com below whatever --ig-id says: graph.facebook.com rejects it
+  // with "Invalid application ID".
+  if (igId && !/^IG/.test(token)) {
     const acct = await igCall('GET', `/${igId}`, { fields: 'username', access_token: token }, 'graph.facebook.com');
     await kv(['SET', 'ig:auth', JSON.stringify({ host: 'graph.facebook.com', token, userId: igId, username: acct.username, refreshedAt: Date.now() })]);
     return { user_id: igId, username: acct.username, account_type: 'Unified login', via: 'Unified login' };
