@@ -1001,3 +1001,6 @@ html.hb-native :is(.tl-card, .hub-card):active { transform: scale(0.985); }
 @media (prefers-reduced-motion: reduce) {
   html.hb-native :is(button, .tab, .chip, .quiz-opt, .hub-row, .rd-item, a.btn, .qz-tab, .tl-card, .hub-card):active { transform: none; }
 }
+/* a picture that wasn't in when the screen was revealed fades in when it lands (mobile.js whenSettled) */
+img.hb-img-wait { opacity: 0; }
+img { transition: opacity 0.3s ease; }

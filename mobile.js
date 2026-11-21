@@ -1654,7 +1654,7 @@
   window.HBReveal = bootDone;
   // Ready = the web fonts are in and the pictures on screen are decoded (each wait capped), and after a tab trip the
   // loader has been up long enough to turn once (LOADER_MIN from the tap), so a quick trip doesn't flash it.
-  var LOADER_MIN = 650, SETTLE_MAX = 2000;
+  var LOADER_MIN = 650, SETTLE_MAX = 2000, IMAGE_MAX = 350;
   function whenSettled(done) {
     var at = +document.documentElement.getAttribute('data-hb-loader-at') || 0, fired = false;
     function finish() {
@@ -1662,15 +1662,21 @@
       fired = true;
       setTimeout(done, at ? Math.max(0, LOADER_MIN - (Date.now() - at)) : 0);
     }
-    var waits = [];
+    // Pictures get at most IMAGE_MAX: past that the page shows and each late picture fades in when it lands (img.hb-img-wait
+    // in app.css), as a native app does, instead of holding the whole screen behind the loader (owner, 2026-11-21).
+    var waits = [], pics = [];
     if (document.fonts && document.fonts.ready) waits.push(document.fonts.ready);
     Array.prototype.forEach.call(document.images, function (im) {
       if (im.complete || im.loading === 'lazy') return;
       var r = im.getBoundingClientRect();
       if (!r.width || r.bottom < 0 || r.top > window.innerHeight) return;
-      waits.push(new Promise(function (res) { im.addEventListener('load', res); im.addEventListener('error', res); }));
+      pics.push(new Promise(function (res) {
+        var land = function () { im.classList.remove('hb-img-wait'); res(); };
+        im.addEventListener('load', land); im.addEventListener('error', land);
+        setTimeout(function () { if (!im.complete) im.classList.add('hb-img-wait'); res(); }, IMAGE_MAX);
+      }));
     });
-    Promise.all(waits).then(finish, finish);
+    Promise.all(waits.concat(pics)).then(finish, finish);
     setTimeout(finish, SETTLE_MAX);
   }
   function bootScreen() {                             // the tab to light while hidden, so the bar doesn't flick across
