@@ -50,7 +50,7 @@ Checked from this Mac (2026-09-29, developer account now active): a real, fully 
 - **What's New (1.1.2):** A new look, and a new way to read: the brief now opens as swipe cards, one story at a time (switch to the full scrolling list any time). Choose which sections you see and in what order. A recorded AI voice (labelled as AI) reads each morning's edition, with a floating audio button and the cards turning to each story as it is read. Plus a daily quiz, private friends leagues, and a daily reminder.
 - **What's New (v1.0, for reference):** Welcome to The Hour Brief. A fresh edition every morning, built for one sitting: AI & tech, product & business, and the markets.
 
-**Description**  _(updated 2026-11-21: 2133/4000; adds Voices, college/office leagues; no email sign-up, no reordering, stories show in full, podcast + channels + reviewed market section)_
+**Description**  _(updated 2026-11-21: 2150/4000; adds Voices, college/office leagues; no email sign-up, no reordering, stories show in full, podcast + channels + reviewed market section)_
 
 ```
 The Hour Brief is your daily news summary for India: what moved in AI and technology, what's shaping business and startups in India and worldwide, and what the stock market did and why. One short brief every morning, built for one sitting.
@@ -66,7 +66,7 @@ Voices, for deeper reading:
 • Every piece names who said it and links to the original
 
 Read it, listen to it, or both:
-• Listen in about 7 minutes: each morning's brief is read aloud in an AI-generated Indian-English voice, with chapters, offline playback and the screen off. The same episode is also a podcast on Spotify.
+• Listen in about 7 minutes: each morning's brief is read aloud in an AI-generated Indian-English voice, with chapters, offline playback and the screen off. The same episode is also a podcast on Spotify and Amazon Music.
 • Swipe through one story at a time, or switch to the full list
 • Every story has a short summary, a one-line takeaway, and a link to its original source
 • Hide the sections you don't want

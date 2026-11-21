@@ -26,6 +26,7 @@ const AUDIO_BASE_DEFAULT = 'https://pub-1dafea4a948540db8413a044895e083c.r2.dev'
 const WHATSAPP = 'https://whatsapp.com/channel/0029Vb9RU0kCXC3F1pRY6q2L';
 const TELEGRAM = 'https://t.me/thehourbrief';
 const SPOTIFY = 'https://open.spotify.com/show/1FjOE5ABaOEzUTxwJeaoYr';
+const AMAZON = 'https://music.amazon.com/podcasts/191ea61e-41ab-4d99-aa47-012a56027de9/the-hour-brief';
 const W = 1080, H = 1920;
 const LANES = [['ai', 'AI & Tech'], ['biz', 'Business'], ['mkt', 'Markets']];
 const C = { bg: '#0c0d15', ink: '#ffffff', soft: '#c9c5ea', faint: '#8e8ab0', violet: '#8b6cf6', violetDeep: '#5e43f3', line: 'rgba(255,255,255,0.14)' };
@@ -35,7 +36,7 @@ const END_SECONDS = 3.5;                    // the silent end card, only if the 
 // pace or wording gets a new hash and is recorded again. Places listed in `also` must match what is really live.
 export const OUTRO = [
   { kind: 'app', say: 'That’s today’s brief in a minute. For every story and the full audio, get the free Hour Brief app, on iPhone and Android.' },
-  { kind: 'also', say: 'You can also listen on Spotify, and get the brief every morning on WhatsApp and Telegram.', also: ['Spotify', 'WhatsApp', 'Telegram'] },
+  { kind: 'also', say: 'You can also listen on Spotify and Amazon Music, and get the brief every morning on WhatsApp and Telegram.', also: ['Spotify', 'Amazon Music', 'WhatsApp', 'Telegram'] },
   { kind: 'bye', say: 'Search The Hour Brief, or tap the link. See you tomorrow.' },
 ];
 const OUTRO_GAP = 0.35;                      // a breath between the last takeaway and the outro
@@ -263,7 +264,7 @@ export function postText({ date, edition, heads, when }) {
       title: clip(`3 things that mattered today: ${lead}`, 92) + ' #Shorts',
       description: [`The Hour Brief${edition ? `, Edition ${edition}` : ''} · ${when}`, '', ...items, '',
         `Read the full brief and get the free app: ${SITE}/app?src=youtube-shorts`,
-        `Listen on Spotify: ${SPOTIFY}`, `Every morning on WhatsApp: ${WHATSAPP}`, `and Telegram: ${TELEGRAM}`, '', 'Narrated by an AI-generated voice. Not investment advice.', '', tags].join('\n'),
+        `Listen on Spotify: ${SPOTIFY}`, `or Amazon Music: ${AMAZON}`, `Every morning on WhatsApp: ${WHATSAPP}`, `and Telegram: ${TELEGRAM}`, '', 'Narrated by an AI-generated voice. Not investment advice.', '', tags].join('\n'),
     },
     instagram: {
       caption: [`3 things that mattered today (${when}) 👇`, '', ...items, '',
