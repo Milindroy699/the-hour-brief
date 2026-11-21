@@ -926,8 +926,11 @@ html.hb-deck-open .hb-player { display: none; }
    leaders.html), carried on from the same point of the turn (--hb-spin-delay counts from the tap), and keeps it up
    until its screen is really ready: fonts in, pictures decoded, and at least one full turn (mobile.js bootDone). Then
    the bar fills and the loader fades off the finished page (html.hb-reveal). The tab bar (9985) stays on top. */
+/* bottom: 0, not the tab bar's measured height: on iPhone that measurement could lag a frame while Voices revealed, leaving
+   a strip above the tabs where the page's dark cover card showed through (a black bar, owner 2026-11-21). The tab bar
+   (z 9985) sits above this cover anyway. */
 html.hb-leaving::before, html.hb-boot::before {
-  content: ""; position: fixed; left: 0; right: 0; top: 0; bottom: var(--hb-tab-h, 0px); z-index: 9984;
+  content: ""; position: fixed; left: 0; right: 0; top: 0; bottom: 0; z-index: 9984;
   background: var(--bg); pointer-events: none;
 }
 html.hb-leaving::after, html.hb-boot::after {
