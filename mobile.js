@@ -245,6 +245,42 @@
     });
   }
 
+  // ---- Default pictures in the list (preview build, owner 2026-11-21) ----
+  // The stories carry no pictures of their own, so each section rotates through six of the brand's abstract ones
+  // (brand/stories/, drawn by tools/brand/story-art.mjs): the first story of a section gets a wide banner, the rest a
+  // small square beside the headline. The rotation starts at a different picture each day, so the list doesn't look
+  // the same every morning. Decorative only (empty alt), and only in the app layout.
+  var ART_SET = { ai: 'tech', biz: 'biz', mkt: 'mkt' }, ART_LANES = ['ai', 'biz', 'mkt'], ART_N = 6, ART_EXT = '.svg';
+  // The picture for a story: its section's set, starting at a different picture each day. Also used by cards.js.
+  function storyArtSrc(item) {
+    var lane = item && item.closest && item.closest('section.lane');
+    var key = lane && ART_LANES.filter(function (l) { return lane.classList.contains(l); })[0];
+    if (!key) return '';
+    var k = Array.prototype.indexOf.call(lane.querySelectorAll('.item[data-story-id]'), item);
+    if (k < 0) return '';
+    var d = editionDate() || '', day = d ? Math.floor(Date.parse(d + 'T00:00:00Z') / 86400000) : 0;
+    var n = ((day + ART_LANES.indexOf(key) * 2 + k) % ART_N + ART_N) % ART_N + 1;
+    return '/brand/stories/' + ART_SET[key] + '-' + n + ART_EXT;
+  }
+  window.HBStoryArtSrc = storyArtSrc;
+  function storyArt() {
+    if (!reader()) return;
+    ART_LANES.forEach(function (lane) {
+      document.querySelectorAll('section.lane.' + lane + ' .item[data-story-id]').forEach(function (it, k) {
+        var inner = it.querySelector(':scope > div');
+        if (!inner || inner.querySelector(':scope > .story-art')) return;
+        var img = mk('img', 'story-art ' + (k ? 'story-art-thumb' : 'story-art-lead'));
+        img.src = storyArtSrc(it);
+        img.alt = '';
+        img.decoding = 'async';
+        if (k > 1) img.loading = 'lazy';
+        img.width = k ? 72 : 800;
+        img.height = k ? 72 : 450;
+        inner.insertBefore(img, inner.firstChild);
+      });
+    });
+  }
+
   function laneToggles() {
     document.querySelectorAll('.lane-head').forEach(function (head) {
       var h2 = head.querySelector('h2');
@@ -1554,6 +1590,7 @@
     applyTextSize();
     applyPrefs();
     collapsibleStories();
+    storyArt();
     laneToggles();
     laneDigests();
     readTimes();

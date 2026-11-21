@@ -297,6 +297,8 @@
     var b = face('story', 'Story ' + c.n + ' of ' + c.of + ' in ' + c.name);
     b.card.setAttribute('data-id', it.getAttribute('data-story-id'));
     b.scroll.appendChild(mk('p', 'dk-kick', c.name + ' · Story ' + c.n + ' of ' + c.of));   // now the only place a story names its section, with the header gone
+    var art = window.HBStoryArtSrc && window.HBStoryArtSrc(it);       // the list's default picture for this story (mobile.js)
+    if (art) { var im = mk('img', 'dk-art'); im.src = art; im.alt = ''; im.decoding = 'async'; b.scroll.appendChild(im); }
     b.scroll.appendChild(heading('h3', 'dk-title', headline));
     var paras = it.querySelectorAll('.story-body > p');
     if (!paras.length) paras = it.querySelectorAll(':scope > div > p:not(.takeaway)');

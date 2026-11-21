@@ -443,6 +443,7 @@
     var score = picks.reduce(function (s, p, k) { return s + (p === questions[k].answer ? 1 : 0); }, 0);
     var res = { s: score, t: N, a: picks.slice() };
     if (!practice) {
+      res.h = new Date().getHours();               // the hour it was finished, for the Early bird badge
       var all = load();
       all.r[DATE] = res;
       save(all);
@@ -462,8 +463,38 @@
     { id: 'streak30', icon: '\uD83C\uDFC6', name: 'Month master', desc: 'Play 30 days in a row', goal: 30, val: function (s) { return s.best; } },
     { id: 'played10', icon: '\uD83D\uDCDA', name: 'Regular', desc: 'Finish 10 quizzes', goal: 10, val: function (s) { return s.played; } },
     { id: 'perfect5', icon: '\uD83E\uDDE0', name: 'Sharp mind', desc: 'Get 5 perfect scores', goal: 5, val: function (s) { return s.perfects; } },
-    { id: 'champ', icon: '\uD83D\uDC51', name: 'League champion', desc: 'Top a friends league for a day', goal: 1, val: function (s) { return s.champ; } }
+    { id: 'champ', icon: '\uD83D\uDC51', name: 'League champion', desc: 'Top a friends league for a day', goal: 1, val: function (s) { return s.champ; } },
+    { id: 'earlybird', icon: '\uD83C\uDF05', name: 'Early bird', desc: 'Finish 5 quizzes before 8 AM', goal: 5, val: function (s) { return s.early; } },
+    { id: 'century', icon: '\uD83D\uDCAF', name: 'Century', desc: 'Finish 100 quizzes', goal: 100, val: function (s) { return s.played; } }
   ];
+
+  // ---------- reward art (brand/rewards/, cut by tools/brand/rewards_cutout.py) ----------
+  var ART = '/brand/rewards/';
+  var BADGE_ART = { first: 'first', perfect: 'perfect', streak3: 'streak3', streak7: 'streak7', streak30: 'streak30', played10: 'regular',
+    perfect5: 'sharp', champ: 'champion', earlybird: 'earlybird', century: 'century' };
+  function badgeImg(b, cls) {
+    var im = el('img', cls || 'qz-medallion');
+    im.src = ART + 'badges/' + (BADGE_ART[b.id] || 'locked') + '.webp';
+    im.alt = '';
+    im.decoding = 'async';
+    return im;
+  }
+  // Result tiers: the medal on the score screen
+  var TIERS = { perfect: 'Perfect', sharp: 'Sharp', solid: 'Solid', keepgoing: 'Keep going' };
+  function tierOf(res) {
+    var r = res.s / res.t;
+    return r === 1 ? 'perfect' : r >= 0.8 ? 'sharp' : r >= 0.5 ? 'solid' : 'keepgoing';
+  }
+  // Streak flame stages: the flame grows at 3, 7, 30 and 100 days
+  var STAGES = [['spark', 'Spark', 1], ['flame', 'Flame', 3], ['blaze', 'Blaze', 7], ['inferno', 'Inferno', 30], ['legend', 'Legend', 100]];
+  function stageOf(n) { var st = STAGES[0]; STAGES.forEach(function (s) { if (n >= s[2]) st = s; }); return st; }
+  function flameImg(n, cls) {
+    var im = el('img', cls || 'qz-flame');
+    im.src = ART + 'flames/' + stageOf(Math.max(1, n))[0] + '.webp';
+    im.alt = '';
+    im.decoding = 'async';
+    return im;
+  }
 
   function computeStats(dates) {
     var o = load(), results = o.r, keys = Object.keys(results).sort();
@@ -474,7 +505,11 @@
     } else {
       keys.forEach(function (k, i) { run = i > 0 && prevDay(k) === keys[i - 1] ? run + 1 : 1; if (run > best) best = run; });
     }
-    return { played: keys.length, perfects: perfects, best: Math.max(best, o.bs || 0), champ: o.champ || 0 };
+    var early = keys.filter(function (k) { return typeof results[k].h === 'number' && results[k].h < 8; }).length;
+    var right = 0, asked = 0;
+    keys.forEach(function (k) { right += results[k].s || 0; asked += results[k].t || 0; });
+    return { played: keys.length, perfects: perfects, best: Math.max(best, o.bs || 0), champ: o.champ || 0, early: early,
+      acc: asked ? Math.round(right / asked * 100) : 0 };
   }
 
   function awardBadges(dates) {
@@ -485,6 +520,7 @@
       if (!o.b[b.id] && b.val(st) >= b.goal) { o.b[b.id] = DATE; fresh.push(b); }
     });
     save(o);
+    if (fresh.length) renderTrophySoon();
     return { fresh: fresh, stats: st };
   }
 
@@ -535,37 +571,12 @@
     close.focus({ preventScroll: true });
   }
 
-  function openBadges(returnTo) {
-    getEditions().then(function (dates) {
-      var st = computeStats(dates), got = load().b || {};
-      openSheet('Your badges', function (box) {
-        box.appendChild(el('p', 'qz-stats', st.played + ' played \u00B7 best streak ' + st.best + ' \u00B7 ' + st.perfects + ' perfect'));
-        var ul = el('ul', 'qz-badges');
-        BADGES.forEach(function (b) {
-          var earned = !!got[b.id];
-          var li = el('li', earned ? 'qz-earned' : 'qz-locked');
-          var icon = el('span', 'qz-badge-icon', b.icon);
-          icon.setAttribute('aria-hidden', 'true');
-          var text = el('div');
-          text.appendChild(el('b', '', b.name));
-          text.appendChild(el('span', 'qz-badge-desc', b.desc));
-          text.appendChild(el('span', 'qz-badge-state', earned ? 'Earned ' + prettyDate(got[b.id]) : Math.min(b.val(st), b.goal) + ' / ' + b.goal));
-          li.appendChild(icon);
-          li.appendChild(text);
-          ul.appendChild(li);
-        });
-        box.appendChild(ul);
-      }, returnTo);
-    });
-  }
-
   function message(res) {
-    var r = res.s / res.t;
-    if (r === 1) return 'Perfect. You read closely.';
-    if (r >= 0.8) return 'Sharp reading.';
-    if (r >= 0.6) return 'Solid. A couple slipped by.';
-    if (r >= 0.4) return 'Not bad. The answers are all in today’s stories.';
-    return 'Tough one. Check the review below.';
+    var miss = res.t - res.s, t = tierOf(res);
+    if (t === 'perfect') return 'Every answer right. You read this morning closely.';
+    if (t === 'sharp') return 'Sharp reading. ' + (miss === 1 ? 'Just one slipped by.' : miss + ' slipped by.');
+    if (t === 'solid') return 'Good morning’s work. The ' + (miss === 1 ? 'one' : miss) + ' you missed ' + (miss === 1 ? 'is' : 'are') + ' below, with the answer' + (miss === 1 ? '' : 's') + '.';
+    return 'Tough set today. Every answer is below, and tomorrow is a fresh ' + (res.t === 5 ? 'five' : res.t) + '.';
   }
 
   function showResult(res, official, fresh, focus) {
@@ -574,17 +585,20 @@
     picks = res.a ? res.a.slice() : [];
     card.appendChild(progress(N, true));
 
+    var tier = tierOf(res);
+    var hero = el('div', 'qz-hero qz-tier-' + tier);
+    var medal = el('img', 'qz-medal');
+    medal.src = ART + 'medals/' + tier + '.webp';
+    medal.alt = '';
+    hero.appendChild(medal);
+    hero.appendChild(el('span', 'qz-tier', TIERS[tier]));
     var score = el('p', 'quiz-score');
+    score.setAttribute('aria-label', res.s + ' of ' + res.t + ' correct');
     score.appendChild(el('b', '', String(res.s)));
-    score.appendChild(el('span', '', '/ ' + res.t));
-    card.appendChild(score);
-    var sq = squares(res);
-    if (sq) {
-      var sqEl = el('p', 'quiz-squares', sq);
-      sqEl.setAttribute('aria-label', res.s + ' of ' + res.t + ' correct');
-      card.appendChild(sqEl);
-    }
-    card.appendChild(el('p', 'quiz-msg', message(res)));
+    score.appendChild(el('span', '', 'of ' + res.t));
+    hero.appendChild(score);
+    hero.appendChild(el('p', 'quiz-msg', message(res)));
+    card.appendChild(hero);
 
     var mine = load().r[DATE] || res;
     if (friendBeat !== null && official) {
@@ -593,9 +607,30 @@
         : 'Your friend scored ' + friendBeat + '/' + N + '. Retake for practice?';
       card.appendChild(el('p', 'quiz-versus', vs));
     }
-    var streakEl = el('p', 'quiz-streak');
+    var streakEl = el('div', 'quiz-streak qz-res-streak');
     streakEl.hidden = true;
     card.appendChild(streakEl);
+    // The ones you missed, right under the score: the question, the answer, and the story it came from
+    var missed = questions.map(function (q, i) { return i; }).filter(function (i) { return res.a && res.a[i] !== questions[i].answer; });
+    if (missed.length && res.a) {
+      var mbox = el('div', 'qz-missed');
+      mbox.appendChild(el('p', 'qz-missed-head', 'Review missed (' + missed.length + ')'));
+      missed.forEach(function (i) {
+        var q = questions[i], row = el('div', 'qz-miss');
+        row.appendChild(el('p', 'qz-miss-q', q.q));
+        var ans = el('p', 'qz-miss-a');
+        ans.appendChild(el('span', '', 'Answer: ' + q.options[q.answer]));
+        if (q.story && document.getElementById(q.story)) {
+          var go = el('button', 'qz-miss-go', 'Read the story');
+          go.type = 'button';
+          go.addEventListener('click', function () { jumpToStory(q.story); });
+          ans.appendChild(go);
+        }
+        row.appendChild(ans);
+        mbox.appendChild(row);
+      });
+      card.appendChild(mbox);
+    }
     var freshBox = el('div', 'quiz-fresh');
     freshBox.hidden = true;
     freshBox.setAttribute('role', 'status');
@@ -622,7 +657,7 @@
     actions.appendChild(reviewBtn);
     var badgesBtn = el('button', 'quiz-btn', 'Badges');
     badgesBtn.type = 'button';
-    badgesBtn.addEventListener('click', function () { openBadges(badgesBtn); });
+    badgesBtn.addEventListener('click', function () { setTab('badges', true); });
     actions.appendChild(badgesBtn);
     var again = el('button', 'quiz-btn', 'Retake for practice');
     again.type = 'button';
@@ -656,21 +691,30 @@
     getEditions().then(function (dates) {
       var results = load().r;
       streakN = streakEndingAt(dates, results, DATE);
-      if (streakN >= 2) { streakEl.textContent = ''; streakEl.appendChild(document.createTextNode('🔥 ')); streakEl.appendChild(el('b', '', streakN + '-day streak')); streakEl.hidden = false; }
-      else if (streakN === 1 && dates[dates.length - 1] === DATE) { streakEl.textContent = 'Come back tomorrow to start a streak.'; streakEl.hidden = false; }
+      if (streakN >= 1 && official) {
+        streakEl.textContent = '';
+        streakEl.appendChild(flameImg(streakN));
+        var stx = el('span', 'qz-res-st-tx');
+        stx.appendChild(el('b', '', 'Day ' + streakN));
+        stx.appendChild(document.createTextNode(streakN === 1 ? ' · come back tomorrow to start a streak' : (tier === 'keepgoing' ? ' · your streak is safe, you played' : ' · keep it going tomorrow')));
+        streakEl.appendChild(stx);
+        streakEl.hidden = false;
+      }
       var awarded = official ? awardBadges(dates) : { fresh: [], stats: computeStats(dates) };
       if (awarded.fresh.length) {
         freshBox.textContent = '';
         freshBox.appendChild(el('p', 'quiz-fresh-title', awarded.fresh.length > 1 ? 'New badges unlocked' : 'New badge unlocked'));
         awarded.fresh.forEach(function (b) {
           var row = el('p', 'quiz-fresh-row');
-          row.appendChild(el('span', '', b.icon + ' '));
+          row.appendChild(badgeImg(b, 'qz-fresh-img'));
           row.appendChild(el('b', '', b.name));
           row.appendChild(document.createTextNode(' \u2014 ' + b.desc));
           freshBox.appendChild(row);
         });
         freshBox.hidden = false;
       }
+      // Fresh from finishing today's quiz: the milestone screen (3, 7, 14, 30… days), then each new badge
+      if (fresh && official) celebrate(streakN, awarded.fresh);
       badgesBtn.textContent = 'Badges (' + earnedCount() + ')';
       if (fresh) maybeAskReview(awarded.stats, mine.s, streakN);
       updateChip(dates);
@@ -818,7 +862,10 @@
     var st = computeStats(lastDates);
     streakBox.textContent = '';
     var top = el('div', 'qz-st-top');
-    top.appendChild(el('span', 'qz-st-pill' + (streak ? ' on' : ''), (streak ? '🔥 ' + streak + '-day streak' : 'Start a streak')));
+    var pill = el('span', 'qz-st-pill' + (streak ? ' on' : ''));
+    if (streak) pill.appendChild(flameImg(streak, 'qz-pill-flame'));
+    pill.appendChild(document.createTextNode(streak ? streak + '-day streak · ' + stageOf(streak)[1] : 'Start a streak'));
+    top.appendChild(pill);
     if (st.best >= 2) top.appendChild(el('span', 'qz-st-best', 'Best streak ' + st.best));
     streakBox.appendChild(top);
     var wd = new Date(Date.parse(DATE + 'T00:00:00Z')).getUTCDay();
@@ -1042,7 +1089,7 @@
       codeEl.appendChild(document.createTextNode('Your league code '));
       codeEl.appendChild(el('b', '', lg.code));
       codeEl.hidden = false;
-      line.textContent = 'Friends join with the link, or by entering the code under Challenge. Your league is below.';
+      line.textContent = 'Friends join with the link, or by entering the code under Challenge › Leagues, where your league’s board is.';
       btn.textContent = 'Share the invite';
       btn.disabled = false;
       btn.onclick = function () { inviteScore(lg, res); };
@@ -1296,8 +1343,297 @@
     }).catch(function () { /* invite will still work from the code box */ });
   }
 
+  // ---------- celebrations: the streak milestone screen and the new-badge card ----------
+  var MILESTONES = [3, 7, 14, 30, 50, 100, 150, 200, 365];
+  var CONFETTI = { a: 49, b: 58 };                 // brand/rewards/confetti/a00-a48, b00-b57
+  function confetti(host) {
+    if (reduceMotion) return;
+    var layer = el('div', 'qz-confetti');
+    layer.setAttribute('aria-hidden', 'true');
+    for (var k = 0; k < 34; k++) {
+      var set = Math.random() < 0.5 ? 'a' : 'b', n = Math.floor(Math.random() * CONFETTI[set]);
+      var im = el('img');
+      im.src = ART + 'confetti/' + set + ('0' + n).slice(-2) + '.webp';
+      im.alt = '';
+      im.style.left = (Math.random() * 100).toFixed(1) + '%';
+      im.style.width = im.style.height = (14 + Math.random() * 16).toFixed(0) + 'px';
+      im.style.animationDelay = (Math.random() * 0.9).toFixed(2) + 's';
+      im.style.animationDuration = (2.4 + Math.random() * 1.8).toFixed(2) + 's';
+      im.style.setProperty('--qz-spin', (Math.random() * 720 - 360).toFixed(0) + 'deg');
+      im.style.setProperty('--qz-drift', (Math.random() * 80 - 40).toFixed(0) + 'px');
+      layer.appendChild(im);
+    }
+    host.appendChild(layer);
+    setTimeout(function () { layer.remove(); }, 5200);
+  }
+  function overlay(cls, label) {
+    var prev = document.activeElement;
+    var bg = el('div', 'qz-cele ' + cls);
+    bg.setAttribute('role', 'dialog');
+    bg.setAttribute('aria-modal', 'true');
+    bg.setAttribute('aria-label', label);
+    document.body.appendChild(bg);
+    document.documentElement.classList.add('qz-cele-open');
+    requestAnimationFrame(function () { bg.classList.add('in'); });
+    function close(then) {
+      document.removeEventListener('keydown', key);
+      bg.classList.remove('in');
+      bg.classList.add('out');
+      setTimeout(function () {
+        bg.remove();
+        if (!document.querySelector('.qz-cele')) document.documentElement.classList.remove('qz-cele-open');
+        if (typeof then === 'function') then(); else if (prev && prev.focus) { try { prev.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }
+      }, reduceMotion ? 0 : 220);
+    }
+    function key(e) { if (e.key === 'Escape') close(bg._done); }
+    document.addEventListener('keydown', key);
+    return { bg: bg, close: close };
+  }
+  function weekDots(box, gold) {
+    var results = load().r, wd = new Date(Date.parse(DATE + 'T00:00:00Z')).getUTCDay();
+    var monday = new Date(Date.parse(DATE + 'T00:00:00Z') - ((wd + 6) % 7) * 86400000).toISOString().slice(0, 10);
+    var row = el('div', 'qz-ms-week');
+    for (var k = 0; k < 7; k++) {
+      var d = new Date(Date.parse(monday + 'T00:00:00Z') + k * 86400000).toISOString().slice(0, 10);
+      var c = el('span', 'qz-ms-day' + (gold || results[d] ? ' on' : '') + (d === DATE ? ' today' : ''));
+      c.appendChild(el('i'));
+      c.appendChild(el('small', '', ['M', 'T', 'W', 'T', 'F', 'S', 'S'][k]));
+      row.appendChild(c);
+    }
+    box.appendChild(row);
+  }
+  function milestoneLine(n) {
+    var base = n === 3 ? 'Three mornings in a row. That’s a habit starting.'
+      : n === 7 ? 'A full week of mornings.'
+      : n === 14 ? 'Two weeks of mornings.'
+      : n === 30 ? 'A month of mornings. That’s a ritual.'
+      : n + ' mornings in a row.';
+    var next = STAGES.filter(function (s) { return s[2] > n; })[0];
+    return base + (next ? ' Your flame grows again at ' + next[2] + '.' : ' Your flame is a legend now.');
+  }
+  function showMilestone(n, badge, done) {
+    var o = overlay('qz-milestone', n + '-day streak');
+    o.bg._done = done;
+    var box = el('div', 'qz-ms-box');
+    var fl = flameImg(n, 'qz-ms-flame');
+    box.appendChild(fl);
+    box.appendChild(el('p', 'qz-ms-num', String(n)));
+    box.appendChild(el('p', 'qz-ms-cap', 'days in a row'));
+    box.appendChild(el('p', 'qz-ms-line', milestoneLine(n)));
+    weekDots(box, false);
+    if (badge) {
+      var bc = el('div', 'qz-ms-badge');
+      bc.appendChild(badgeImg(badge, 'qz-ms-badge-img'));
+      var bt = el('div');
+      bt.appendChild(el('span', 'qz-ms-badge-k', 'New badge'));
+      bt.appendChild(el('b', '', badge.name));
+      bt.appendChild(el('small', '', 'Added to your trophy case'));
+      bc.appendChild(bt);
+      box.appendChild(bc);
+    }
+    var sh = el('button', 'quiz-btn primary', 'Share my streak');
+    sh.type = 'button';
+    sh.addEventListener('click', function () {
+      share('I’m on a ' + n + '-day streak on The Hour Brief’s daily news quiz. Five questions on the morning’s news. Can you keep up?', location.origin + '/app?src=streak');
+    });
+    var go = el('button', 'qz-ms-go', 'Continue');
+    go.type = 'button';
+    go.addEventListener('click', function () { o.close(done); });
+    box.appendChild(sh);
+    box.appendChild(go);
+    o.bg.appendChild(box);
+    confetti(o.bg);
+    haptic(true);
+    setTimeout(function () { try { sh.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }, 60);
+  }
+  function showBadge(b, done) {
+    var o = overlay('qz-badgepop', 'New badge: ' + b.name);
+    o.bg._done = done;
+    o.bg.addEventListener('click', function (e) { if (e.target === o.bg) o.close(done); });
+    var card = el('div', 'qz-bp-card');
+    var x = el('button', 'qz-bp-x', '×');
+    x.type = 'button';
+    x.setAttribute('aria-label', 'Close');
+    x.addEventListener('click', function () { o.close(done); });
+    card.appendChild(x);
+    card.appendChild(el('p', 'qz-bp-k', 'New badge'));
+    card.appendChild(badgeImg(b, 'qz-bp-img'));
+    card.appendChild(el('h2', 'qz-bp-name', b.name));
+    card.appendChild(el('p', 'qz-bp-desc', b.desc));
+    var got = Object.keys(load().b || {}).length, all = BADGES.length;
+    var prog = el('div', 'qz-bp-prog');
+    var pl = el('div', 'qz-bp-pl');
+    pl.appendChild(el('span', '', 'Collection'));
+    pl.appendChild(el('b', '', 'Badge ' + got + ' of ' + all));
+    prog.appendChild(pl);
+    var segs = el('div', 'qz-bp-segs');
+    for (var k = 0; k < all; k++) segs.appendChild(el('i', k < got ? 'on' : ''));
+    prog.appendChild(segs);
+    card.appendChild(prog);
+    var see = el('button', 'quiz-btn primary', 'See all badges');
+    see.type = 'button';
+    see.addEventListener('click', function () { o.close(function () { setTab('badges', true); if (done) done(); }); });
+    var sh = el('button', 'qz-bp-share', 'Share');
+    sh.type = 'button';
+    sh.addEventListener('click', function () {
+      share('I just earned the “' + b.name + '” badge on The Hour Brief’s daily news quiz (' + b.desc.charAt(0).toLowerCase() + b.desc.slice(1) + ').', location.origin + '/app?src=badge');
+    });
+    card.appendChild(see);
+    card.appendChild(sh);
+    o.bg.appendChild(card);
+    confetti(o.bg);
+    haptic(true);
+    setTimeout(function () { try { see.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }, 60);
+  }
+  // The milestone (if today's streak is one), carrying the streak badge it unlocked; then the other new badges, one at a time
+  function celebrate(streak, fresh) {
+    var list = (fresh || []).slice();
+    var queue = function () { var b = list.shift(); if (b) setTimeout(function () { showBadge(b, queue); }, 250); };
+    if (MILESTONES.indexOf(streak) !== -1) {
+      var sb = null;
+      list = list.filter(function (b) { if (!sb && /^streak/.test(b.id)) { sb = b; return false; } return true; });
+      setTimeout(function () { showMilestone(streak, sb, queue); }, 500);
+    } else if (list.length) setTimeout(queue, 500);
+  }
+
+  // ---------- Daily quiz | Leagues | Badges ----------
+  var panes = null, segBtns = {}, curTab = 'quiz';
+  var TAB_NAMES = [['quiz', 'Daily quiz'], ['leagues', 'Leagues'], ['badges', 'Badges']];
+  function buildTabs() {
+    var head = section.querySelector('.lane-head');
+    var seg = el('div', 'qz-seg');
+    seg.setAttribute('role', 'tablist');
+    seg.setAttribute('aria-label', 'Challenge');
+    panes = {};
+    TAB_NAMES.forEach(function (t) {
+      var b = el('button', 'qz-seg-btn', t[1]);
+      b.type = 'button';
+      b.id = 'qz-tab-' + t[0];
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-controls', 'qz-pane-' + t[0]);
+      b.addEventListener('click', function () { setTab(t[0], false); });
+      segBtns[t[0]] = b;
+      seg.appendChild(b);
+      var p = el('div', 'qz-pane qz-pane-' + t[0]);
+      p.id = 'qz-pane-' + t[0];
+      p.setAttribute('role', 'tabpanel');
+      p.setAttribute('aria-labelledby', b.id);
+      panes[t[0]] = p;
+    });
+    seg.addEventListener('keydown', function (e) {
+      var i = TAB_NAMES.map(function (t) { return t[0]; }).indexOf(curTab);
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        var nx = TAB_NAMES[(i + (e.key === 'ArrowRight' ? 1 : 2)) % 3][0];
+        setTab(nx, false);
+        segBtns[nx].focus();
+      }
+    });
+    if (head) head.insertAdjacentElement('afterend', seg); else section.insertBefore(seg, section.firstChild);
+    seg.insertAdjacentElement('afterend', panes.quiz);
+    panes.quiz.insertAdjacentElement('afterend', panes.leagues);
+    panes.leagues.insertAdjacentElement('afterend', panes.badges);
+    panes.quiz.appendChild(streakBox);
+    panes.quiz.appendChild(root);
+    panes.quiz.appendChild(pastBox);
+    panes.leagues.appendChild(joinBox);
+    panes.leagues.appendChild(lgBox);
+    var want = 'quiz';
+    try { want = sessionStorage.getItem('hb-qz-tab') || 'quiz'; } catch (e) { /* ignore */ }
+    if (/[?&]join=/.test(location.search)) want = 'leagues';
+    setTab(panes[want] ? want : 'quiz', false, true);
+  }
+  function setTab(name, scroll, quiet) {
+    if (!panes || !panes[name]) return;
+    curTab = name;
+    TAB_NAMES.forEach(function (t) {
+      var on = t[0] === name;
+      segBtns[t[0]].setAttribute('aria-selected', String(on));
+      segBtns[t[0]].tabIndex = on ? 0 : -1;
+      segBtns[t[0]].classList.toggle('on', on);
+      panes[t[0]].hidden = !on;
+    });
+    if (!quiet) { try { sessionStorage.setItem('hb-qz-tab', name); } catch (e) { /* ignore */ } }
+    if (name === 'badges') renderTrophy();
+    if (scroll) bringIntoView(section.querySelector('.qz-seg'), 'top', true);
+  }
+
+  // ---------- the trophy case (Badges tab) ----------
+  var trophyT = 0;
+  function renderTrophySoon() { clearTimeout(trophyT); trophyT = setTimeout(function () { if (curTab === 'badges') renderTrophy(); }, 30); }
+  function renderTrophy() {
+    if (!panes) return;
+    getEditions().then(function (dates) {
+      var st = computeStats(dates), got = load().b || {}, box = panes.badges;
+      var results = load().r;
+      var cur = streakEndingAt(dates, results, results[DATE] ? DATE : (dates.length > 1 ? dates[dates.length - 2] : prevDay(DATE)));
+      box.textContent = '';
+      var earned = BADGES.filter(function (b) { return got[b.id]; }).length;
+      var head = el('div', 'qz-tc-head');
+      var ht = el('div');
+      ht.appendChild(el('h3', '', 'Trophy case'));
+      ht.appendChild(el('p', '', earned + ' of ' + BADGES.length + ' badges earned on this phone'));
+      head.appendChild(ht);
+      box.appendChild(head);
+      var grid = el('div', 'qz-tc-stats');
+      [['Days played', st.played, ''], ['Best streak', st.best, st.best === 1 ? 'day' : 'days'], ['Perfect scores', st.perfects, ''], ['Accuracy', st.acc, '%']].forEach(function (x) {
+        var c = el('div', 'qz-tc-stat');
+        c.appendChild(el('span', 'qz-tc-k', x[0]));
+        var v = el('b', '', String(x[1]));
+        if (x[2]) v.appendChild(el('small', '', x[2] === '%' ? '%' : ' ' + x[2]));
+        c.appendChild(v);
+        grid.appendChild(c);
+      });
+      box.appendChild(grid);
+      // The flame's stages, the current one lit
+      var evo = el('div', 'qz-tc-evo');
+      var eh = el('div', 'qz-tc-evo-h');
+      eh.appendChild(el('span', 'qz-tc-k', 'Streak flame'));
+      eh.appendChild(el('b', '', cur ? stageOf(cur)[1] + ' · ' + cur + (cur === 1 ? ' day' : ' days') : 'Play today to light it'));
+      evo.appendChild(eh);
+      var row = el('div', 'qz-tc-stages');
+      var reached = Math.max(cur, 0);
+      STAGES.forEach(function (s) {
+        var c = el('div', 'qz-tc-stage' + (reached >= s[2] ? ' on' : '') + (cur && stageOf(cur)[0] === s[0] ? ' cur' : ''));
+        var im = el('img');
+        im.src = ART + 'flames/' + s[0] + '.webp';
+        im.alt = '';
+        c.appendChild(im);
+        c.appendChild(el('b', '', s[1]));
+        c.appendChild(el('small', '', s[2] + (s[2] === 1 ? ' day' : '+ days')));
+        row.appendChild(c);
+      });
+      evo.appendChild(row);
+      box.appendChild(evo);
+      var ul = el('ul', 'qz-tc-badges');
+      BADGES.forEach(function (b) {
+        var on = !!got[b.id];
+        var li = el('li', on ? 'on' : 'locked');
+        li.appendChild(badgeImg(b, 'qz-tc-img'));
+        li.appendChild(el('b', '', b.name));
+        li.appendChild(el('small', '', on ? 'Earned ' + prettyDate(got[b.id]) : Math.min(b.val(st), b.goal) + ' / ' + b.goal));
+        li.title = b.desc;
+        li.setAttribute('aria-label', b.name + ': ' + b.desc + (on ? ', earned' : ', ' + Math.min(b.val(st), b.goal) + ' of ' + b.goal));
+        ul.appendChild(li);
+      });
+      box.appendChild(ul);
+      box.appendChild(el('p', 'qz-tc-note', 'Badges are kept on this phone. Sign-in, coming soon, will carry them to your other devices.'));
+    });
+  }
+
+  // Preview build only: ?demo=streak7 (or streak3, streak30…) shows the milestone screen, ?demo=badge the new-badge card,
+  // so they can be reviewed without waiting a week. Nothing is saved.
+  function demo() {
+    var m = /[?&]demo=([a-z0-9]+)/.exec(location.search);
+    if (!m) return;
+    var v = m[1], n = /^streak(\d+)$/.exec(v);
+    if (n) { var b = BADGES.filter(function (x) { return x.id === 'streak' + n[1]; })[0] || null; setTimeout(function () { showMilestone(+n[1], b, null); }, 800); }
+    else if (v === 'badge') setTimeout(function () { showBadge(BADGES[1], null); }, 800);
+  }
+
   // ---------- start ----------
   root.insertAdjacentElement('afterend', pastBox);            // between the quiz and the leagues
+  buildTabs();
   if (saved && Array.isArray(saved.a)) showResult(saved, true);
   else showQuestion(0, false);
   refreshStreak([]);
@@ -1307,4 +1643,5 @@
   lgLoad().leagues.forEach(function (lg) { refreshBoard(lg.code); });
   syncScores();
   handleJoinParam();
+  demo();
 })();

@@ -376,6 +376,12 @@ section.lane { margin-bottom: 40px; }
 .item p { font-size: 0.97rem; line-height: 1.62; color: var(--ink-soft); }
 .item .takeaway { font-size: 0.9rem; margin-top: 12px; }
 .item .src a { color: var(--ink-soft); }
+/* Default pictures (mobile.js storyArt): a wide banner on a section's first story, a small square beside the others */
+.item > div:has(> .story-art) { display: flow-root; min-width: 0; }
+.story-art { display: block; object-fit: cover; background: #14122B; border: 1px solid var(--line); }
+.story-art-lead { width: 100%; height: auto; aspect-ratio: 16 / 8; border-radius: 18px; margin: 2px 0 14px; }
+.story-art-thumb { float: right; width: 72px; height: 72px; border-radius: 14px; margin: 2px 0 8px 14px; }
+@media (min-width: 641px) { .story-art-thumb { width: 96px; height: 96px; } }
 .vote-btn, .story-share, .story-save { border-color: var(--line); background: var(--paper); box-shadow: none; }
 .story-save[aria-pressed="true"] { color: var(--hb-primary-2); border-color: var(--hb-primary); }
 .item.hb-listening, .lane-head.hb-listening { box-shadow: inset 3px 0 0 var(--hb-primary); background: rgba(var(--hb-primary-rgb), 0.07); }
@@ -1007,3 +1013,4 @@ html.hb-native :is(.tl-card, .hub-card):active { transform: scale(0.985); }
 /* a picture that wasn't in when the screen was revealed fades in when it lands (mobile.js whenSettled) */
 img.hb-img-wait { opacity: 0; }
 img { transition: opacity 0.3s ease; }
+.dk-art { display: block; width: 100%; height: auto; aspect-ratio: 16 / 7; object-fit: cover; margin: 0 0 14px; border-radius: 16px; background: #14122B; }
