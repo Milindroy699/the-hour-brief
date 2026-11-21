@@ -1,9 +1,10 @@
 // Store screenshots, framed: a caption on the brand background above the real app UI (headless Chrome, the app look,
 // the latest edition in the repo, light mode except the last). Replaces screenshots.mjs's bare shots (2026-11-21).
-//   node tools/brand/store-shots.mjs [--raw-only]
+//   node tools/brand/store-shots.mjs [--raw-only] [--only 6.3in]
 // -> mobile/play-store/screenshots/        1080x1920  (Google Play phone)
 //    mobile/app-store/screenshots/         1320x2868  (iPhone 6.9-inch)
 //    mobile/app-store/screenshots-6.5in/   1242x2688  (iPhone 6.5-inch)
+//    mobile/app-store/screenshots-6.3in/   1206x2622  (iPhone with Dynamic Island, medium display)
 //    mobile/app-store/screenshots-ipad/    2064x2752  (iPad 13-inch)
 // Leagues show sample generated names (a mocked league API); everything else is the real edition.
 import fs from 'node:fs';
@@ -111,9 +112,12 @@ const SETS = [
   { dir: 'mobile/play-store/screenshots', W: 1080, H: 1920 },
   { dir: 'mobile/app-store/screenshots', W: 1320, H: 2868 },
   { dir: 'mobile/app-store/screenshots-6.5in', W: 1242, H: 2688 },
+  { dir: 'mobile/app-store/screenshots-6.3in', W: 1206, H: 2622 },          // "iPhone with Dynamic Island (medium display)"
+
   { dir: 'mobile/app-store/screenshots-ipad', W: 2064, H: 2752, ipad: true },
 ];
-for (const set of SETS) {
+const ONLY = process.argv.includes('--only') ? process.argv[process.argv.indexOf('--only') + 1] : '';
+for (const set of SETS.filter((x) => !ONLY || x.dir.includes(ONLY))) {
   // the UI is captured at a phone (or iPad) CSS size whose shape matches the frame's picture area
   const W = set.W, H = set.H, pad = Math.round(W * 0.07), imgW = W - pad * 2, imgH = H - Math.round(H * 0.2) - Math.round(H * 0.035);
   const cssW = set.ipad ? 820 : 393, dpr = 3, cssH = Math.round(cssW * imgH / imgW);
