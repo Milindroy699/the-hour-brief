@@ -28,7 +28,7 @@
 const crypto = require('crypto');
 const { buildDigest } = require('./_digest');
 const { sendEditionPush, sendReengagementPush, checkPushHealth } = require('./_push');
-const { deliverKit, deliverXSlot, snapshotChannels, sendInsightPush, sendReviewReminder, pairOwnerPhone, pairTelegram, notifyOwner, istToday: kitDate } = require('./_kit');
+const { deliverKit, deliverXSlot, snapshotChannels, morningPushPayload, sendInsightPush, sendReviewReminder, pairOwnerPhone, pairTelegram, notifyOwner, istToday: kitDate } = require('./_kit');
 const li = require('./_linkedin');
 
 // Which job each Vercel Cron slot runs (see "crons" in vercel.json).
@@ -124,7 +124,11 @@ module.exports = async (req, res) => {
       case 'kit': {
         if (q.only) return send({ ok: true, kit: await deliverKit({ dry, force, only: String(q.only) }) });
         const member = await morningMember({ dry, force });
-        return send({ ok: true, member, kit: await deliverKit({ dry, force, memberPosted: posted(member) }), linkedin: await li.postMorning({ dry, force }) });
+        // 9:30: the morning push goes out here once today's edition is live (the 10:00 digest slot retries it)
+        let push;
+        try { const d = await buildDigest(); push = d && d.date === istToday() ? await sendEditionPush(d, { force, dry, payload: await morningPushPayload(d) }) : { ok: true, skipped: 'edition not out yet' }; }
+        catch (e) { push = { ok: false, error: e.message }; }
+        return send({ ok: true, push, member, kit: await deliverKit({ dry, force, memberPosted: posted(member) }), linkedin: await li.postMorning({ dry, force }) });
       }
       case 'linkedin-member': return send(await morningMember({ dry, force }));
       case 'push-check': return send(await checkPushHealth());
@@ -154,7 +158,7 @@ module.exports = async (req, res) => {
 
   // Independent of Telegram below: its own dedupe key, its own failure handling. One failing
   // (e.g. Telegram not configured, which is the current state) never blocks the other.
-  const push = await sendEditionPush(d, { force });
+  const push = await sendEditionPush(d, { force, payload: await morningPushPayload(d).catch(() => null) });
 
   // Sundays only — dedupe-keyed by date, so if both daily cron windows land on the same Sunday
   // (the usual retry pattern), only the first actually sends.

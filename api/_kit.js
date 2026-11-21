@@ -442,10 +442,30 @@ async function sendReviewReminder({ force = false, dry = false } = {}) {
 }
 
 // ---- The second daily push, to every app user ----
+// The morning push (9:30, retried 10:00): the post kit's hook, opening its story. Without a kit yet, the AI lane's line.
+async function morningPushPayload(d) {
+  const s = await loadSocial(d.date);
+  if (s && s.push && s.push.title && s.push.body) return { title: s.push.title.slice(0, 65), body: s.push.body.slice(0, 180), url: links(s).story };
+  const line = String((d.lanes && (d.lanes.mkt || d.lanes.ai)) || '').replace(/^Today’s \w+ story is /, '');
+  return { title: 'Today’s brief is out', body: (line.charAt(0).toUpperCase() + line.slice(1)).slice(0, 150).replace(/\s+\S*$/, '…'), url: d.editionUrl };
+}
+
+// The evening push (18:00): today's quiz as a teaser (its first question), opening the quiz. A second, different reason to
+// come back. Falls back to the post kit's hook if the edition has no quiz.
 async function sendInsightPush({ date = istToday(), force = false, dry = false } = {}) {
   const s = await loadSocial(date);
-  if (!s || !s.push || !s.push.title || !s.push.body) return { ok: false, date, skipped: 'no social post for this date yet' };
-  const payload = { title: s.push.title.slice(0, 65), body: s.push.body.slice(0, 180), url: links(s).story };
+  let payload = null;
+  try {
+    const { loadEdition, editionInfo } = require('./_edition');
+    const html = await loadEdition('latest');
+    if (html && editionInfo(html).d === date) {
+      const m = /<script[^>]*id="quiz-data"[^>]*>([\s\S]*?)<\/script>/.exec(html);
+      const qs = m ? (JSON.parse(m[1]).questions || []) : [];
+      if (qs[0] && qs[0].q) payload = { title: `Today’s quiz: ${qs.length} questions, 1 minute`, body: qs[0].q.slice(0, 170), url: `${CANON}/archive/${date}.html#quiz` };
+    }
+  } catch (e) { payload = null; }
+  if (!payload && s && s.push && s.push.title && s.push.body) payload = { title: s.push.title.slice(0, 65), body: s.push.body.slice(0, 180), url: links(s).story };
+  if (!payload) return { ok: false, date, skipped: 'no quiz or post kit for this date yet' };
   if (dry) return { ok: true, dry: true, date, payload };
   if (!process.env.FIREBASE_PROJECT_ID) return { ok: false, skipped: 'firebase not configured' };
   const tokens = await allTokens();
@@ -490,4 +510,4 @@ async function pairTelegram({ dry = false } = {}) {
   return { ok: true, dry, chat: list[0] };
 }
 
-module.exports = { channelStats, snapshotChannels, deliverXSlot, xScore, replyTarget, planWeek, PLAN_START, tgWithButtons, weekLink, hasWeekly, xIntent, redditSubmit, sendReviewReminder, APP_LINKS, WA_CHANNEL, appLink, withApp, withWhatsApp, deepLinks, beforeTags, primaryPost, leadersWhatsApp, notifyOwner, istToday, loadSocial, links, deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram };
+module.exports = { morningPushPayload, channelStats, snapshotChannels, deliverXSlot, xScore, replyTarget, planWeek, PLAN_START, tgWithButtons, weekLink, hasWeekly, xIntent, redditSubmit, sendReviewReminder, APP_LINKS, WA_CHANNEL, appLink, withApp, withWhatsApp, deepLinks, beforeTags, primaryPost, leadersWhatsApp, notifyOwner, istToday, loadSocial, links, deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram };

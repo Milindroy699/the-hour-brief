@@ -634,6 +634,7 @@
       P.PushNotifications.addListener('registrationError', function () { pushEvent('push_reg_error'); });
     }
     P.PushNotifications.addListener('pushNotificationActionPerformed', function (action) {
+      pushEvent('push_open');                     // counted on growth.html › Daily run (do the pushes bring people back?)
       var data = action && action.notification && action.notification.data;
       if (data && data.url) { location.assign(destFor(data.url)); }
     });

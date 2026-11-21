@@ -101,12 +101,15 @@ async function sendToTokens(tokens, { title, body, url }) {
 // Sends the "today's edition is ready" push, independently dedupe-keyed from post-digest.js's
 // own Telegram dedupe so a Telegram failure never blocks the push, or vice versa. `d` is a
 // buildDigest() result the caller already has (post-digest.js and push-edition.js both do).
-async function sendEditionPush(d, { force } = {}) {
-  const payload = {
+// `payload` (from _kit.morningPushPayload): the day's sharpest-insight hook, opening its story (owner, 2026-11-21: installs
+// were allowing notifications but not coming back to "Edition N is ready").
+async function sendEditionPush(d, { force, payload: custom, dry } = {}) {
+  const payload = custom || {
     title: `Edition ${d.edition} is ready`,
     body: 'AI & Tech, Product & Business, and the Markets — today’s brief is in.',
     url: d.editionUrl,
   };
+  if (dry) return { ok: true, dry: true, payload };
   const tokens = await allTokens();
   if (!tokens.length) return { ok: true, skipped: 'no registered devices' };
   if (!process.env.FIREBASE_PROJECT_ID) return { ok: false, skipped: 'firebase not configured' };

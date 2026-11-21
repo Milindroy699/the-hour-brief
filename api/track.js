@@ -27,7 +27,7 @@ const KV_TOKEN = process.env.KV_REST_API_TOKEN;
 
 // app_link_*: visits to the smart app link (/app), by platform it sent them to.
 // push_*: the app's notification permission state and token errors, reported once per launch (diagnostics).
-const ALLOWED_EVENTS = new Set(['listen_play', 'app_link_ios', 'app_link_android', 'app_link_desktop', 'push_perm_granted', 'push_perm_denied', 'push_perm_other', 'push_reg_error', 'nav_fail_loaded', 'nav_fail_loading',
+const ALLOWED_EVENTS = new Set(['listen_play', 'app_link_ios', 'app_link_android', 'app_link_desktop', 'push_perm_granted', 'push_perm_denied', 'push_perm_other', 'push_reg_error', 'push_open', 'nav_fail_loaded', 'nav_fail_loading',
   // the website (mobile.js): one visit a day per browser by kind, and the phone "Get the app" bar
   'web_open_ios', 'web_open_android', 'web_open_desktop', 'install_nudge_shown', 'install_nudge_tap',
   // growth: a tap on a podcast-app link (place = which app), and the app prompts' views (place = where)
@@ -109,6 +109,7 @@ const OPS_KEYS = [                     // [id, key prefix] — the key is `<pref
   ['review', 'kit:review'], ['ownerKit', 'kit:telegram'], ['ownerLinkedin', 'kit:telegramPost'], ['ownerShort', 'kit:telegramShort'],
   ['linkedinProfile', 'li:posted:member'], ['linkedinPage', 'li:posted:morning'], ['linkedinVoices', 'li:posted:leaders'],
   ['youtube', 'short:youtube'], ['instagram', 'short:instagram'],
+  ['pushOpens', 'event:push_open'],
   ['xThread', 'kit:x:thread'], ['xReplies', 'kit:x:replies'], ['xAfternoon', 'kit:x:afternoon'], ['xEvening', 'kit:x:evening'], ['xScore', 'kit:x:score'], ['xMorning', 'kit:telegramX'],
 ];
 const head = (url) => fetch(url, { method: 'HEAD', cache: 'no-store', signal: AbortSignal.timeout(6000) }).then((r) => r.ok).catch(() => null);
@@ -130,7 +131,7 @@ async function ops(days) {
   const per = OPS_KEYS.length + 1;
   const rows = dates.map((d, i) => {
     const got = {};
-    OPS_KEYS.forEach(([id], k) => { const v = out[i * per + k]; got[id] = v == null ? null : (/^https?:/.test(v) ? v : true); });
+    OPS_KEYS.forEach(([id], k) => { const v = out[i * per + k]; got[id] = v == null ? null : id === 'pushOpens' ? Number(v) || 0 : (/^https?:/.test(v) ? v : true); });
     const plan = {}; const pr = out[i * per + OPS_KEYS.length] || []; for (let j = 0; j + 1 < pr.length; j += 2) plan[pr[j]] = pr[j + 1];
     let social = null; try { social = socials[i] ? JSON.parse(socials[i]) : null; } catch (e) { social = null; }
     return {
