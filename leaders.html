@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- First thing on the page: its background, so the moment between two pages in the app never shows the app's dark frame (a black flash on iPhone switching to and from Voices, owner 2026-11-21). -->
+<style>html{background:#faf9fd}@media (prefers-color-scheme:dark){html{background:#121316}}</style>
 <script>if ("scrollRestoration" in history) history.scrollRestoration = "manual";</script>
 <script>
 // The page stays hidden until the app bar is built (see the reveal script below); meanwhile the hourglass loader
