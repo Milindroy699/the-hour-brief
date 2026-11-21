@@ -1231,7 +1231,13 @@
       if (n.length < 3) { setLgMsg('Give the league a name (3 to 40 characters).'); return; }
       startLeague(kind.value, n);
     });
-    if (groupFocus) { groupFocus = false; setTimeout(function () { try { name.focus(); } catch (x) { /* ignore */ } }, 0); }   // only when just opened
+    // Just opened: on a phone, bring the form into view and let the reader tap the name field (opening the keyboard
+    // straight away scrolled the page before the form had laid out); with a mouse, put the cursor in the name field.
+    if (groupFocus) {
+      groupFocus = false;
+      var touch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+      setTimeout(function () { try { if (touch) f.scrollIntoView({ block: 'center', behavior: 'smooth' }); else name.focus(); } catch (x) { /* ignore */ } }, 60);
+    }
     return f;
   }
 

@@ -397,6 +397,8 @@ footer.colophon { border-top-color: var(--line); }
   box-shadow: 0 -2px 12px rgba(18, 19, 22, 0.04);
 }
 .tab-bar[hidden] { display: none; }
+/* keyboard up (mobile.js typingMode): out of the way of the field being typed in */
+html.hb-typing .tab-bar, html.hb-typing .tab-switch, html.hb-typing .hb-getapp { visibility: hidden; pointer-events: none; }
 /* The List | Cards switch: a floating glassy pill, not part of the tab bar's own box (appended straight to body in
    tabBar() in mobile.js, so the desktop/iPad tab bar's own centring transform never affects it) — centred just
    above the tab bar in List, top-right of the deck in Cards (see html.hb-deck-open below). An earlier version of

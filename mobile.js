@@ -1422,6 +1422,30 @@
     if (window.visualViewport) window.visualViewport.addEventListener('resize', set);
     [300, 1000, 2500].forEach(function (ms) { setTimeout(set, ms); });   // belt and braces for a late safe-area inset
   }
+  // Typing on a phone (owner, 2026-11-21): with the keyboard up, iOS parks the focused field just above the keyboard,
+  // which is exactly where the fixed tab bar sits, so the field (and its button) were hidden behind it. While a text field
+  // has focus the tab bar and the List | Cards switch step aside (visibility, so --hb-tab-h keeps its measurement), and
+  // the field is brought to the middle of what is left of the screen once the keyboard is up.
+  (function typingMode() {
+    if (!window.matchMedia || !window.matchMedia('(pointer: coarse)').matches) return;
+    var root = document.documentElement, t = null;
+    function isField(el) {
+      if (!el || !el.tagName) return false;
+      if (el.tagName === 'TEXTAREA' || el.isContentEditable) return true;
+      return el.tagName === 'INPUT' && !/^(button|submit|reset|checkbox|radio|range|file|color|image|hidden)$/i.test(el.type || 'text');
+    }
+    document.addEventListener('focusin', function (e) {
+      if (!isField(e.target)) return;
+      clearTimeout(t);
+      root.classList.add('hb-typing');
+      var el = e.target;
+      setTimeout(function () { if (document.activeElement === el) { try { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (x) { el.scrollIntoView(); } } }, 380);
+    });
+    document.addEventListener('focusout', function () {
+      clearTimeout(t);
+      t = setTimeout(function () { if (!isField(document.activeElement)) root.classList.remove('hb-typing'); }, 200);   // moving between fields keeps it
+    });
+  })();
   function syncTabs() {
     var bar = document.querySelector('.tab-bar');
     if (!bar || bar.hidden) return;
