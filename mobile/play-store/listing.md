@@ -45,7 +45,7 @@ Internal / closed testing note: `Testing build 1.0.0 — please check that it in
 - **Contact:** milindroy101292@gmail.com · https://the-hour-brief.vercel.app · contact page https://the-hour-brief.vercel.app/contact.html
 - **Privacy policy:** https://the-hour-brief.vercel.app/privacy.html
 
-**Full description**  _(updated 2026-11-21: 1718/4000; no email sign-up, no reordering, stories show in full, podcast + channels + reviewed market section)_
+**Full description**  _(updated 2026-11-21: 2133/4000; adds Voices, college/office leagues; no email sign-up, no reordering, stories show in full, podcast + channels + reviewed market section)_
 
 ```
 The Hour Brief is your daily news summary for India: what moved in AI and technology, what's shaping business and startups in India and worldwide, and what the stock market did and why. One short brief every morning, built for one sitting.
@@ -54,6 +54,11 @@ Every edition has three sections:
 • AI & Tech: the AI and tech news that actually mattered today
 • Product & Business: business and startup news from India and around the world
 • Stock Market: how Sensex, Nifty and the US markets closed, the day's movers, and why
+
+Voices, for deeper reading:
+• Every week, one long read each on Tech & AI, Business, Product and Finance: the best thinking from the people worth listening to, from the week's podcasts, newsletters and talks
+• Weekend essays on principles for work and life
+• Every piece names who said it and links to the original
 
 Read it, listen to it, or both:
 • Listen in about 7 minutes: each morning's brief is read aloud in an AI-generated Indian-English voice, with chapters, offline playback and the screen off. The same episode is also a podcast on Spotify.
@@ -65,13 +70,13 @@ Read it, listen to it, or both:
 Daily current affairs quiz:
 • Five quick questions on the day's news, about a minute
 • Streaks and badges, and a score you can share
-• Private friends leagues: invite friends, your class or your team with one link and compare scores every day (no sign-up, no typed names)
+• Leagues: play against your friends, or start one for your college class or office team (up to 300 players), and compare scores every day. No sign-up.
 
 Also:
 • Past editions archive, light and dark mode, no ads, no account needed
 • The brief every morning on WhatsApp and Telegram too
 
-How it's made: each edition is researched and written with AI from public reporting and market data, and every item links to its source. The Stock Market section is reviewed by a person each morning after it publishes, and corrections are noted on the story. Nothing here is investment advice.
+How it's made: each edition is researched and written with AI from public reporting and market data, and every item links to its source. Voices pieces are written with AI from the podcasts, newsletters and talks they cite. The Stock Market section is reviewed by a person each morning after it publishes, and corrections are noted on the story. Nothing here is investment advice.
 
 Free. No ads. No sign-up.
 ```

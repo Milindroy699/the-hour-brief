@@ -44,13 +44,13 @@ Checked from this Mac (2026-09-29, developer account now active): a real, fully 
 - **Support URL:** https://the-hour-brief.vercel.app/contact.html (the contact page: email and topics)
 - **Marketing URL:** https://the-hour-brief.vercel.app
 - **Privacy Policy URL:** https://the-hour-brief.vercel.app/privacy.html
-- **Promotional text (164/170, can be changed any time without a new version):** Today’s AI, business and stock market news in one short brief every morning. Read it, or listen in 7 minutes, then take the 1-minute quiz. Free, no ads, no sign-up.
+- **Promotional text (161/170, can be changed any time without a new version):** Today’s AI, business and stock market news in one short brief every morning, plus weekly long reads from the best minds. Listen in 7 minutes, then take the quiz.
 - **Keywords (99/100):** `sensex,nifty,share,finance,tech,startup,india,briefing,summary,podcast,quiz,current,affairs,economy`
   _(2026-11-21: no word repeats the name or subtitle, since Apple already indexes those and combines words across all three: "share" + "Market" = share market, "current" + "affairs", "news" + "summary"/"podcast". Name, subtitle and keywords only change with a new app version.)_
 - **What's New (1.1.2):** A new look, and a new way to read: the brief now opens as swipe cards, one story at a time (switch to the full scrolling list any time). Choose which sections you see and in what order. A recorded AI voice (labelled as AI) reads each morning's edition, with a floating audio button and the cards turning to each story as it is read. Plus a daily quiz, private friends leagues, and a daily reminder.
 - **What's New (v1.0, for reference):** Welcome to The Hour Brief. A fresh edition every morning, built for one sitting: AI & tech, product & business, and the markets.
 
-**Description**  _(updated 2026-11-21: 1718/4000; no email sign-up, no reordering, stories show in full, podcast + channels + reviewed market section)_
+**Description**  _(updated 2026-11-21: 2133/4000; adds Voices, college/office leagues; no email sign-up, no reordering, stories show in full, podcast + channels + reviewed market section)_
 
 ```
 The Hour Brief is your daily news summary for India: what moved in AI and technology, what's shaping business and startups in India and worldwide, and what the stock market did and why. One short brief every morning, built for one sitting.
@@ -59,6 +59,11 @@ Every edition has three sections:
 • AI & Tech: the AI and tech news that actually mattered today
 • Product & Business: business and startup news from India and around the world
 • Stock Market: how Sensex, Nifty and the US markets closed, the day's movers, and why
+
+Voices, for deeper reading:
+• Every week, one long read each on Tech & AI, Business, Product and Finance: the best thinking from the people worth listening to, from the week's podcasts, newsletters and talks
+• Weekend essays on principles for work and life
+• Every piece names who said it and links to the original
 
 Read it, listen to it, or both:
 • Listen in about 7 minutes: each morning's brief is read aloud in an AI-generated Indian-English voice, with chapters, offline playback and the screen off. The same episode is also a podcast on Spotify.
@@ -70,13 +75,13 @@ Read it, listen to it, or both:
 Daily current affairs quiz:
 • Five quick questions on the day's news, about a minute
 • Streaks and badges, and a score you can share
-• Private friends leagues: invite friends, your class or your team with one link and compare scores every day (no sign-up, no typed names)
+• Leagues: play against your friends, or start one for your college class or office team (up to 300 players), and compare scores every day. No sign-up.
 
 Also:
 • Past editions archive, light and dark mode, no ads, no account needed
 • The brief every morning on WhatsApp and Telegram too
 
-How it's made: each edition is researched and written with AI from public reporting and market data, and every item links to its source. The Stock Market section is reviewed by a person each morning after it publishes, and corrections are noted on the story. Nothing here is investment advice.
+How it's made: each edition is researched and written with AI from public reporting and market data, and every item links to its source. Voices pieces are written with AI from the podcasts, newsletters and talks they cite. The Stock Market section is reviewed by a person each morning after it publishes, and corrections are noted on the story. Nothing here is investment advice.
 
 Free. No ads. No sign-up.
 ```
