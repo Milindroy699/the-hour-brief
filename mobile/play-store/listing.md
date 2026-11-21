@@ -45,7 +45,7 @@ Internal / closed testing note: `Testing build 1.0.0 — please check that it in
 - **Contact:** milindroy101292@gmail.com · https://the-hour-brief.vercel.app · contact page https://the-hour-brief.vercel.app/contact.html
 - **Privacy policy:** https://the-hour-brief.vercel.app/privacy.html
 
-**Full description**  _(updated 2026-11-21: 2150/4000; adds Voices, college/office leagues; no email sign-up, no reordering, stories show in full, podcast + channels + reviewed market section)_
+**Full description**  _(updated 2026-11-21: 2166/4000; adds Voices, college/office leagues; no email sign-up, no reordering, stories show in full, podcast + channels + reviewed market section)_
 
 ```
 The Hour Brief is your daily news summary for India: what moved in AI and technology, what's shaping business and startups in India and worldwide, and what the stock market did and why. One short brief every morning, built for one sitting.
@@ -61,7 +61,7 @@ Voices, for deeper reading:
 • Every piece names who said it and links to the original
 
 Read it, listen to it, or both:
-• Listen in about 7 minutes: each morning's brief is read aloud in an AI-generated Indian-English voice, with chapters, offline playback and the screen off. The same episode is also a podcast on Spotify and Amazon Music.
+• Listen in about 7 minutes: each morning's brief is read aloud in an AI-generated Indian-English voice, with chapters, offline playback and the screen off. The same episode is also a podcast on Spotify, Apple Podcasts and Amazon Music.
 • Swipe through one story at a time, or switch to the full list
 • Every story has a short summary, a one-line takeaway, and a link to its original source
 • Hide the sections you don't want

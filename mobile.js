@@ -100,7 +100,7 @@
   // The show on each podcast app. Paste each link as it goes live; a platform with no link is simply not shown.
   var PODCASTS = [
     ['spotify', 'Spotify', 'https://open.spotify.com/show/1FjOE5ABaOEzUTxwJeaoYr'],
-    ['apple', 'Apple Podcasts', ''],        // Podcasts Connect show 277c6497…: not in Apple's public directory yet (21 Nov)
+    ['apple', 'Apple Podcasts', 'https://podcasts.apple.com/us/podcast/the-hour-brief/id6837406304'],
     ['youtube', 'YouTube Music', ''],
     ['amazon', 'Amazon Music', 'https://music.amazon.com/podcasts/191ea61e-41ab-4d99-aa47-012a56027de9/the-hour-brief'],
     ['jiosaavn', 'JioSaavn', ''],           // YourCast podcast 624163: no public show page yet (21 Nov)
