@@ -4,7 +4,7 @@ Screenshots (in git, upload from here), all light + dark, numbered in the order 
 `mobile/app-store/screenshots/` iPhone 6.9-inch, 7 × 1320×2868 (cover, swipe cards, feed, highlights, Audio, quiz, Your sections)
 `mobile/app-store/screenshots-6.5in/` iPhone 6.5-inch, 7 × 1242×2688 (same seven) — this is the size App Store Connect's "Prepare for Submission" page actually asked for on this app's first version; use these if the 6.9-inch ones don't fit that tab.
 `mobile/app-store/screenshots-ipad/` iPad 13-inch, 7 × 2064×2752 (same seven; needed because the app runs on iPad)
-Remake them any time from the live UI: `node tools/brand/screenshots.mjs --only app-store`.
+**2026-11-21: new framed set, 6 shots each (caption on the brand background + the current app UI): 01 cards, 02 story, 03 listen, 04 quiz, 05 Voices, 06 dark list.** Remake any time: `node tools/brand/store-shots.mjs` (writes all four sets). Upload in order 01–06; delete the old seven in App Store Connect first.
 App icon: 1024×1024, RGB, no alpha (checked), already in `ios/App/App/Assets.xcassets`.
 
 ## Your steps, in order (values to type in)
