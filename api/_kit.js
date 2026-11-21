@@ -198,6 +198,18 @@ async function toOwnerPush(s, l) {
   return { ok: out.successCount > 0, ...out };
 }
 
+// A message with one-tap buttons under it (Telegram inline keyboard: each button opens its URL). If Telegram refuses a
+// button (say a URL it thinks too long), the message goes out anyway, with the links written into the text.
+async function tgWithButtons(chat, text, buttons) {
+  try {
+    return await tg('sendMessage', { chat_id: chat, text: text.slice(0, 4096), link_preview_options: { is_disabled: true },
+      reply_markup: { inline_keyboard: buttons.map((b) => [{ text: b.text, url: b.url }]) } });
+  } catch (e) {
+    const links = buttons.map((b) => `${b.text}: ${b.url}`).join('\n\n');
+    return tg('sendMessage', { chat_id: chat, text: `${text}\n\n${links}`.slice(0, 4096), link_preview_options: { is_disabled: true } });
+  }
+}
+
 // X: the day's X post, with a link that opens X with it filled in (X's API is paid per post; the owner posts by hand).
 async function toTelegramX(s) {
   if (!s.x) return { ok: true, skipped: 'no X post in today’s kit' };
@@ -205,7 +217,7 @@ async function toTelegramX(s) {
   const chat = await telegramChat();
   if (!chat) return { ok: false, skipped: 'telegram not paired yet' };
   const text = deepLinks(s.x, s, 'x');
-  await tg('sendMessage', { chat_id: chat, text: `X post · tap to post: ${xIntent(text)}\n\n${text}`.slice(0, 4096), link_preview_options: { is_disabled: true } });
+  await tgWithButtons(chat, `X post · tap the button, check it, then Post\n\n${text}`, [{ text: '𝕏  Post on X', url: xIntent(text) }]);
   return { ok: true };
 }
 // Sundays: the weekly recap's X post and its Reddit post (title, body, and a submit link per suggested community). The
@@ -218,15 +230,14 @@ async function toTelegramWeekly(s) {
   const w = s.weekly;
   if (w.x) {
     const xt = weekLinks(w.x, s, 'x');
-    await tg('sendMessage', { chat_id: chat, text: `🗓 Weekly recap · X post · tap to post: ${xIntent(xt)}\n\n${xt}`.slice(0, 4096), link_preview_options: { is_disabled: true } });
+    await tgWithButtons(chat, `🗓 Weekly recap · X post\n\n${xt}`, [{ text: '𝕏  Post on X', url: xIntent(xt) }]);
   }
   const r = w.reddit;
   if (r && r.title && r.body) {
     const body = weekLinks(r.body, s, 'reddit');
     const subs = (Array.isArray(r.subs) ? r.subs : []).map((x) => String(x).replace(/^\/?r\//, '')).filter((x) => /^\w{2,21}$/.test(x)).slice(0, 3);
-    const open = subs.map((sub) => `r/${sub}: ${redditSubmit(sub, r.title, body)}`).join('\n\n');
-    await tg('sendMessage', { chat_id: chat, text: `🗓 Weekly recap · Reddit (read each community’s rules first; post as yourself)\n\n${open}`.slice(0, 4096), link_preview_options: { is_disabled: true } });
-    await tg('sendMessage', { chat_id: chat, text: `Title:\n${r.title}\n\nBody:\n${body}`.slice(0, 4096), link_preview_options: { is_disabled: true } });
+    await tgWithButtons(chat, `🗓 Weekly recap · Reddit (read each community’s rules first; post as yourself, one community a week)\n\nTitle:\n${r.title}\n\nBody:\n${body}`,
+      subs.map((sub) => ({ text: `Post to r/${sub}`, url: redditSubmit(sub, r.title, body) })));
   }
   return { ok: true };
 }
@@ -342,4 +353,4 @@ async function pairTelegram({ dry = false } = {}) {
   return { ok: true, dry, chat: list[0] };
 }
 
-module.exports = { weekLink, hasWeekly, xIntent, redditSubmit, sendReviewReminder, APP_LINKS, WA_CHANNEL, appLink, withApp, withWhatsApp, deepLinks, beforeTags, primaryPost, leadersWhatsApp, notifyOwner, istToday, loadSocial, links, deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram };
+module.exports = { tgWithButtons, weekLink, hasWeekly, xIntent, redditSubmit, sendReviewReminder, APP_LINKS, WA_CHANNEL, appLink, withApp, withWhatsApp, deepLinks, beforeTags, primaryPost, leadersWhatsApp, notifyOwner, istToday, loadSocial, links, deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram };
