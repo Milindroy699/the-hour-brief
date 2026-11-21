@@ -165,6 +165,20 @@ async function main() {
         const t = await youtubeToken();
         const ch = await (await fetch('https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true', { headers: { Authorization: `Bearer ${t}` } })).json();
         console.log(`youtube: OK, signed in, channel "${ch.items && ch.items[0] ? ch.items[0].snippet.title : '?'}"`);
+        // read-only engagement: the channel's totals and the last uploads' views / likes / comments
+        const yt = async (p) => (await fetch(`https://www.googleapis.com/youtube/v3/${p}`, { headers: { Authorization: `Bearer ${t}` } })).json();
+        const me = await yt('channels?part=statistics,contentDetails&mine=true');
+        const c0 = me.items && me.items[0];
+        if (c0) {
+          const st = c0.statistics;
+          console.log(`youtube stats: ${st.subscriberCount} subscribers, ${st.viewCount} views, ${st.videoCount} videos`);
+          const pl = await yt(`playlistItems?part=contentDetails&maxResults=15&playlistId=${c0.contentDetails.relatedPlaylists.uploads}`);
+          const ids = (pl.items || []).map((x) => x.contentDetails.videoId).join(',');
+          if (ids) {
+            const v = await yt(`videos?part=statistics,snippet,status&id=${ids}`);
+            for (const x of v.items || []) console.log(`  ${x.snippet.publishedAt.slice(0, 10)} ${x.status.privacyStatus} views ${x.statistics.viewCount || 0} likes ${x.statistics.likeCount || 0} comments ${x.statistics.commentCount || 0}  ${x.snippet.title.slice(0, 60)}`);
+          }
+        }
       } catch (e) { bad++; console.log(`youtube: NOT OK, ${e.message}`); }
     } else console.log('youtube: not connected');
     try {
