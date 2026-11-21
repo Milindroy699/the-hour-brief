@@ -99,6 +99,18 @@
   .conn li { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--grid); font-size: 0.88rem; }
   .conn li:last-child { border-bottom: 0; }
   .conn .s { font-weight: 600; text-align: right; max-width: 62%; }
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin: 0 0 16px; overflow-x: auto; }
+  .tabs button { border: 0; background: none; color: var(--soft); font: inherit; font-weight: 600; padding: 10px 14px; border-bottom: 2px solid transparent; margin-bottom: -1px; cursor: pointer; white-space: nowrap; }
+  .tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--bar); }
+  .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .panel-head .sub { margin: 0; }
+  .rb h2 { font-size: 1.02rem; margin: 0 0 8px; }
+  .rb ul { margin: 0; padding-left: 20px; font-size: 0.9rem; line-height: 1.6; }
+  .rb li { margin-bottom: 6px; }
+  .rb a { color: var(--bar); }
+  .rbt td, .rbt th { text-align: left; vertical-align: top; font-size: 0.88rem; line-height: 1.5; }
+  .rbt td:first-child { white-space: nowrap; color: var(--soft); width: 1%; padding-right: 14px; }
+  .rbt td:last-child { white-space: nowrap; color: var(--faint); font-size: 0.8rem; }
   .conn .s.ok { color: var(--good); } .conn .s.bad { color: var(--warn); } .conn .s.wait { color: var(--soft); }
 </style>
 </head>
@@ -107,16 +119,27 @@
   <header>
     <div>
       <h1>Growth</h1>
-      <p class="sub" id="sub">Website visitors, where they came from, and how many get the app.</p>
+      <p class="sub">The Hour Brief: what ran today, the X plan, the numbers, and how to run it all.</p>
     </div>
+  </header>
+  <div id="gate"></div>
+  <nav class="tabs" role="tablist" aria-label="Sections" id="tabs">
+    <button type="button" role="tab" id="t-ops" aria-controls="p-ops" data-tab="ops">Daily run</button>
+    <button type="button" role="tab" id="t-plan" aria-controls="p-plan" data-tab="plan">X plan</button>
+    <button type="button" role="tab" id="t-analytics" aria-controls="p-analytics" data-tab="analytics">Analytics</button>
+    <button type="button" role="tab" id="t-runbook" aria-controls="p-runbook" data-tab="runbook">Runbook</button>
+  </nav>
+  <div class="panel" role="tabpanel" id="p-ops" aria-labelledby="t-ops" hidden><section class="plan" id="ops" hidden></section><p class="muted" id="ops-wait">Loading…</p></div>
+  <div class="panel" role="tabpanel" id="p-plan" aria-labelledby="t-plan" hidden><section class="plan" id="plan" hidden></section></div>
+  <div class="panel" role="tabpanel" id="p-analytics" aria-labelledby="t-analytics" hidden>
+  <div class="panel-head">
+    <p class="sub" id="sub">Website visitors, where they came from, and how many get the app.</p>
     <div class="range" role="group" aria-label="Date range">
       <button type="button" data-days="7">7 days</button>
       <button type="button" data-days="30" aria-pressed="true">30 days</button>
       <button type="button" data-days="90">90 days</button>
     </div>
-  </header>
-  <section class="plan" id="ops" hidden></section>
-  <section class="plan" id="plan" hidden></section>
+  </div>
   <main id="main"><p class="muted">Loading…</p></main>
   <ul class="foot">
     <li><b>Visitors</b>: browsers that opened the website that day (each counted once a day); not the apps. <b>New</b>: first day this browser ever visited.</li>
@@ -125,6 +148,56 @@
     <li>Installs can't be tied to one visit here. For installs by campaign: Google Play Console › Grow users › Acquisition (from the utm tags), and App Store Connect › App Analytics › Acquisition › Campaigns (once the provider token is set in app.html).</li>
     <li>Sources and places are recorded from 21 Nov 2026; earlier days show totals only.</li>
   </ul>
+  </div>
+  <div class="panel" role="tabpanel" id="p-runbook" aria-labelledby="t-runbook" hidden>
+    <section class="plan rb">
+      <h2>Every day</h2>
+      <p class="note">Times are IST. “Auto” runs by itself; check its row on Daily run. “You” is yours; tick it on Daily run or X plan.</p>
+      <table class="rbt">
+        <thead><tr><th>When</th><th>What</th><th>Who</th></tr></thead>
+        <tbody>
+          <tr><td>~7:00–9:00</td><td>Edition published, audio recorded, podcast feed updated (Spotify, Apple, Amazon pick it up), post kit and X pack written</td><td>Auto</td></tr>
+          <tr><td>9:00</td><td>Phone reminder: read today’s <b>Stock Market</b> section and fix anything wrong (the site says you review it daily). Note any fix as “Corrected” on the story.</td><td>You</td></tr>
+          <tr><td>9:30</td><td>Telegram: status image + caption → post your <b>WhatsApp status</b>; LinkedIn post (already on your profile); X morning post → tap <b>Post on X</b></td><td>You</td></tr>
+          <tr><td>10:00</td><td>Telegram channel post and the morning push go out; the X <b>thread</b> arrives → post 1 with the button, reply 2, 3… under it</td><td>Auto + you</td></tr>
+          <tr><td>~10:30</td><td>Short / Reel made and posted to YouTube and Instagram; the video arrives on Telegram → share to your <b>WhatsApp channel</b> / status if you like</td><td>Auto + you</td></tr>
+          <tr><td>11:00</td><td><b>Reply round 1</b> (15–20 min): open the 🔎 searches, reply to fresh posts from bigger accounts with one fact each. No links. Or say “start the X session” to Claude.</td><td>You</td></tr>
+          <tr><td>15:00</td><td>X afternoon post → tap, check, Post</td><td>You</td></tr>
+          <tr><td>18:00</td><td>X evening post, the <b>quiz poll</b> (make it in X), <b>reply round 2</b>; the evening insight push goes to app users</td><td>Auto + you</td></tr>
+          <tr><td>19:00</td><td>Scorecard on Telegram → open X plan, tick what you did, log <b>replies, followers, impressions, profile visits</b></td><td>You</td></tr>
+        </tbody>
+      </table>
+    </section>
+    <section class="plan rb">
+      <h2>Sundays</h2>
+      <ul>
+        <li><b>Weekly recap</b> (“What actually mattered this week”) is written and posted to your LinkedIn profile on its own. Its X post comes on Telegram with a button.</li>
+        <li><b>Reddit</b>: the recap’s Reddit draft comes on Telegram. One community a week, read its rules first, stay for comments in the first hour.</li>
+        <li><b>Review</b> (10 min): X plan → replies per day vs target, followers trend, visits and app taps from X. Analytics → which sources bring visitors and app taps. Do more of what moved; if X visits stay flat for two weeks while replies go up, change topics, not volume.</li>
+      </ul>
+    </section>
+    <section class="plan rb">
+      <h2>When something shows ✕</h2>
+      <ul>
+        <li><b>Edition / audio / podcast late</b>: the morning pipeline is stuck. Tell Claude; usually a failed run or an empty Sarvam (voice) balance.</li>
+        <li><b>Post kit or X pack missing</b>: the “Daily post writer” routine didn’t run or failed. Telegram, LinkedIn and X posts wait for it; tell Claude.</li>
+        <li><b>YouTube Short / Instagram Reel missing</b>: the video was made but not posted. Usually an expired Instagram token or a YouTube sign-in; Connections turns red too.</li>
+        <li><b>LinkedIn profile</b>: the connection lasts 60 days. Reconnect before the date in Connections (a reminder comes on Telegram a week before).</li>
+        <li><b>Telegram messages missing</b>: the bot lost its chat. Message the bot, then ask Claude to re-pair it.</li>
+        <li><b>A league name reported</b> (Telegram 🚩): look within a day; tap the link to replace it if it’s offensive.</li>
+      </ul>
+    </section>
+    <section class="plan rb">
+      <h2>Links</h2>
+      <ul>
+        <li><a href="/share-kit.html">Post kit</a> — today’s status image, captions, LinkedIn and X posts, Short captions, channel post</li>
+        <li><a href="/week.html">Weekly recap page</a> · <a href="/corrections.html">Corrections log</a> · <a href="/app?src=growth-page">App link</a></li>
+        <li>Podcast: <a href="https://open.spotify.com/show/1FjOE5ABaOEzUTxwJeaoYr" target="_blank" rel="noopener">Spotify</a> · <a href="https://podcasts.apple.com/us/podcast/the-hour-brief/id6837406304" target="_blank" rel="noopener">Apple</a> · <a href="https://music.amazon.com/podcasts/191ea61e-41ab-4d99-aa47-012a56027de9/the-hour-brief" target="_blank" rel="noopener">Amazon</a> · <a href="https://studio.youtube.com" target="_blank" rel="noopener">YouTube Studio</a></li>
+        <li>Channels: <a href="https://whatsapp.com/channel/0029Vb9RU0kCXC3F1pRY6q2L" target="_blank" rel="noopener">WhatsApp</a> · <a href="https://t.me/thehourbrief" target="_blank" rel="noopener">Telegram</a></li>
+        <li>Where the tracking tags come from: links you post use <code>?src=</code> (x, x-reply, x-pinned, reddit, instagram, whatsapp…); they show under Analytics › Where visitors come from.</li>
+      </ul>
+    </section>
+  </div>
 </div>
 <script>
 (function () {
@@ -148,7 +221,11 @@
   var short = function (d) { var p = d.split('-'); return +p[2] + ' ' + ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+p[1] - 1]; };
 
   function askKey(msg) {
-    main.textContent = '';
+    var gate = document.getElementById('gate');
+    document.getElementById('tabs').hidden = true;
+    document.querySelectorAll('.panel').forEach(function (p) { p.hidden = true; });
+    gate.textContent = '';
+    main = gate;
     var inp = h('input', { type: 'password', placeholder: 'Stats key', 'aria-label': 'Stats key' });
     var go = h('button', { type: 'button', text: 'Show the report' });
     go.addEventListener('click', function () { key = inp.value.trim(); try { localStorage.setItem(KEY_STORE, key); } catch (e) {} load(); });
@@ -358,7 +435,7 @@
       xTally = {};
       ((res[1] && res[1].days) || []).forEach(function (d) { xTally[d.date] = d.tally; });
       renderPlan();
-      if (location.hash === '#plan') planBox.scrollIntoView();
+
     }).catch(function () { /* the plan log is optional; the report below still shows */ });
   }
 
@@ -472,12 +549,45 @@
   function loadOps() {
     fetch('/api/track?action=ops&days=7&key=' + encodeURIComponent(key), { cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
-      .then(function (d) { opsData = d; renderOps(); if (location.hash === '#ops') opsBox.scrollIntoView(); })
+      .then(function (d) { opsData = d; var w = document.getElementById('ops-wait'); if (w) w.remove(); renderOps(); })
       .catch(function () { /* optional */ });
   }
 
+  // ---- Tabs: Daily run · X plan · Analytics · Runbook (the URL hash picks one: #ops, #plan, #analytics, #runbook) ----
+  var TABS = ['ops', 'plan', 'analytics', 'runbook'];
+  function showTab(name, focus) {
+    if (TABS.indexOf(name) < 0) name = 'ops';
+    TABS.forEach(function (t) {
+      var on = t === name, b = document.getElementById('t-' + t);
+      b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1;
+      document.getElementById('p-' + t).hidden = !on;
+      if (on && focus) b.focus();
+    });
+    try { localStorage.setItem('hb-growth-tab', name); } catch (e) {}
+    if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
+  }
+  document.querySelectorAll('.tabs button').forEach(function (b) {
+    b.addEventListener('click', function () { showTab(b.dataset.tab); });
+    b.addEventListener('keydown', function (e) {
+      var i = TABS.indexOf(b.dataset.tab);
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); showTab(TABS[(i + (e.key === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length], true); }
+    });
+  });
+  var firstTab = (location.hash.match(/^#(ops|plan|analytics|runbook)$/) || [])[1];
+  // a link to another tab (#plan from the Telegram scorecard) while the page is already open, or a new #key=
+  window.addEventListener('hashchange', function () {
+    var t = (location.hash.match(/^#(ops|plan|analytics|runbook)$/) || [])[1];
+    if (t && key) showTab(t);
+    else if (/[#&]key=/.test(location.hash)) location.reload();
+  });
+  if (!firstTab) { try { firstTab = localStorage.getItem('hb-growth-tab'); } catch (e) {} }
+
   function load() {
     if (!key) { askKey(); return; }
+    document.getElementById('gate').textContent = '';
+    main = document.getElementById('main');
+    document.getElementById('tabs').hidden = false;
+    if (!document.querySelector('.panel:not([hidden])')) showTab(firstTab || 'ops');
     if (!opsData) loadOps();
     if (!planData) loadPlan();
     main.innerHTML = '<p class="muted">Loading…</p>';
