@@ -28,7 +28,7 @@
 const crypto = require('crypto');
 const { buildDigest } = require('./_digest');
 const { sendEditionPush, sendReengagementPush, checkPushHealth } = require('./_push');
-const { deliverKit, sendInsightPush, sendReviewReminder, pairOwnerPhone, pairTelegram, notifyOwner, istToday: kitDate } = require('./_kit');
+const { deliverKit, deliverXSlot, sendInsightPush, sendReviewReminder, pairOwnerPhone, pairTelegram, notifyOwner, istToday: kitDate } = require('./_kit');
 const li = require('./_linkedin');
 
 // Which job each Vercel Cron slot runs (see "crons" in vercel.json).
@@ -42,6 +42,8 @@ const JOB_BY_SCHEDULE = {
   '30 9 * * *': 'linkedin-leaders',
   '30 10 * * *': 'linkedin-leaders',
 };
+// The X growth plan's Telegram parts ride on these same slots (see deliverXSlot in _kit.js); each sends at most once a day.
+const X_SLOT_BY_SCHEDULE = { '30 4 * * *': 'thread', '30 5 * * *': 'replies', '30 9 * * *': 'afternoon', '30 12 * * *': 'evening', '30 13 * * *': 'score' };
 
 const KV_URL = process.env.KV_REST_API_URL;
 const KV_TOKEN = process.env.KV_REST_API_TOKEN;
@@ -107,9 +109,14 @@ module.exports = async (req, res) => {
   const dry = q.dry === '1';
   const force = q.force === '1';
   const job = q.job || JOB_BY_SCHEDULE[req.headers['x-vercel-cron-schedule']] || 'digest';
-  const send = (body, status = 200) => res.status(status).json({ job, ...body });
+  // A cron slot that also carries part of the X plan sends it first (independently: a failure there never blocks the job).
+  let xslot;
+  const xs = X_SLOT_BY_SCHEDULE[req.headers['x-vercel-cron-schedule']];
+  if (xs && !q.job) { try { xslot = await deliverXSlot({ slot: xs }); } catch (e) { xslot = { ok: false, error: e.message }; } }
+  const send = (body, status = 200) => res.status(status).json({ job, ...(xslot ? { x: xslot } : {}), ...body });
   try {
     switch (job) {
+      case 'x': return send(await deliverXSlot({ slot: String(q.slot || ''), dry, force }));
       case 'digest': break;
       case 'kit': {
         if (q.only) return send({ ok: true, kit: await deliverKit({ dry, force, only: String(q.only) }) });
@@ -200,5 +207,5 @@ module.exports = async (req, res) => {
   try { kit = await deliverKit({ memberPosted: posted(member) }); } catch (e) { kit = { ok: false, error: e.message }; }
   try { linkedin = await li.postMorning({}); } catch (e) { linkedin = { ok: false, error: e.message }; }
 
-  res.status(200).json({ ok: true, date: d.date, edition: d.edition, telegram, push, reengagement, review, member, kit, linkedin });
+  res.status(200).json({ ok: true, date: d.date, edition: d.edition, telegram, push, reengagement, review, member, kit, linkedin, ...(xslot ? { x: xslot } : {}) });
 };

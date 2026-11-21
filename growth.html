@@ -56,6 +56,27 @@
   .foot { font-size: 0.8rem; color: var(--soft); line-height: 1.6; margin-top: 18px; }
   .foot li { margin-bottom: 4px; }
   .err { color: var(--warn); }
+  /* the growth plan (top section) */
+  .plan { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 14px; scroll-margin-top: 12px; }
+  .plan-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .plan h2 { font-size: 1.05rem; margin: 0; }
+  .plan .note { font-size: 0.8rem; color: var(--soft); margin: 2px 0 12px; }
+  .checks { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 6px 14px; margin-bottom: 12px; }
+  .checks label { display: flex; gap: 10px; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; font-size: 0.9rem; }
+  .checks label.on { border-color: var(--good); }
+  .checks input { width: 18px; height: 18px; accent-color: var(--good); flex: none; }
+  .checks .t { color: var(--faint); font-size: 0.76rem; margin-left: auto; white-space: nowrap; }
+  .nums { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .nums label { font-size: 0.78rem; color: var(--soft); display: block; }
+  .nums input { width: 100%; margin-top: 4px; padding: 9px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; font-variant-numeric: tabular-nums; }
+  .nums .hint { font-size: 0.72rem; color: var(--faint); }
+  .saved { font-size: 0.78rem; color: var(--good); min-height: 1.2em; margin-top: 6px; }
+  .daypick { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .daypick button { border: 0; background: none; color: var(--soft); padding: 6px 12px; font: inherit; font-size: 0.84rem; cursor: pointer; }
+  .daypick button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+  .meter { height: 8px; border-radius: 4px; background: var(--grid); overflow: hidden; margin-top: 6px; }
+  .meter i { display: block; height: 100%; background: var(--bar); border-radius: 4px; }
+  td.ok { color: var(--good); }
 </style>
 </head>
 <body>
@@ -71,6 +92,7 @@
       <button type="button" data-days="90">90 days</button>
     </div>
   </header>
+  <section class="plan" id="plan" hidden></section>
   <main id="main"><p class="muted">Loading…</p></main>
   <ul class="foot">
     <li><b>Visitors</b>: browsers that opened the website that day (each counted once a day); not the apps. <b>New</b>: first day this browser ever visited.</li>
@@ -224,8 +246,96 @@
     document.getElementById('sub').textContent = 'Last ' + D.length + ' days · updated ' + new Date(r.generated).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
   }
 
+  // ---- The growth plan: today's X checklist, the numbers read off X, and what X sent to the site (from the tallies) ----
+  // Saved through /api/track?action=plan (KV plan:<date>). The Telegram scorecard at 19:00 links here (#plan).
+  var PLAN_START = '2026-11-22';
+  function planWeek(d) { return Math.max(1, Math.floor((Date.parse(d) - Date.parse(PLAN_START)) / (7 * 864e5)) + 1); }
+  function replyTarget(d) { return [25, 25, 40, 50][Math.min(planWeek(d), 4) - 1] || 60; }
+  function istDate(back) { return new Date(Date.now() + 5.5 * 3600 * 1000 - back * 864e5).toISOString().slice(0, 10); }
+  var TASKS = [['x', 'Morning X post', '9:30'], ['thread', 'X thread', '10:00'], ['p1', 'Afternoon X post', '15:00'], ['p2', 'Evening X post', '18:00'],
+    ['poll', 'Quiz poll on X', '18:00'], ['quote', 'One quote post', 'any time'], ['status', 'WhatsApp status', 'morning'], ['reddit', 'Reddit recap', 'Sundays']];
+  var planBox = document.getElementById('plan'), planDay = 0, planData = null, xTally = null;
+  function xOf(t) { var v = 0, c = 0; for (var f in t || {}) { var p = f.split('|'); if (/^x(-|$)/.test(p[2] || '')) { if (p[0] === 'v') v += t[f]; else if (p[0] === 'c') c += t[f]; } } return { v: v, c: c }; }
+  function savePlan(date, field, value, msgEl) {
+    msgEl.textContent = 'Saving…';
+    fetch('/api/track?action=plan&key=' + encodeURIComponent(key), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date: date, field: field, value: value }) })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function () {
+        var row = planData.filter(function (d) { return d.date === date; })[0];
+        if (row) { if (value === '' ) delete row.plan[field]; else row.plan[field] = value; }
+        msgEl.textContent = 'Saved'; setTimeout(function () { msgEl.textContent = ''; }, 1500); renderPlan();
+      })
+      .catch(function () { msgEl.textContent = 'Could not save. Try again.'; msgEl.className = 'saved err'; });
+  }
+  function renderPlan() {
+    if (!planData) return;
+    var date = istDate(planDay), row = planData.filter(function (d) { return d.date === date; })[0] || { date: date, plan: {} }, P = row.plan;
+    var target = replyTarget(date), replies = +P.replies || 0;
+    planBox.textContent = '';
+    var pick = h('div', { class: 'daypick', role: 'group', 'aria-label': 'Day' });
+    [['Today', 0], ['Yesterday', 1]].forEach(function (o) {
+      var b = h('button', { type: 'button', text: o[0], 'aria-pressed': String(planDay === o[1]) });
+      b.addEventListener('click', function () { planDay = o[1]; renderPlan(); });
+      pick.appendChild(b);
+    });
+    planBox.appendChild(h('div', { class: 'plan-head' }, [h('h2', { text: 'Growth plan · week ' + planWeek(date) + (date < PLAN_START ? ' (starts ' + short(PLAN_START) + ')' : '') }), pick]));
+    planBox.appendChild(h('p', { class: 'note', text: short(date) + ': posts come to Telegram at the times shown. Replies are the main lever: aim for ' + target + ' today, no links in them.' }));
+    var msg = h('div', { class: 'saved', role: 'status' });
+    var checks = h('div', { class: 'checks' });
+    var isSun = new Date(date + 'T00:00:00Z').getUTCDay() === 0;
+    TASKS.forEach(function (t) {
+      if (t[0] === 'reddit' && !isSun) return;
+      var on = P[t[0]] === '1';
+      var cb = h('input', { type: 'checkbox' }); cb.checked = on;
+      cb.addEventListener('change', function () { savePlan(date, t[0], cb.checked ? '1' : '', msg); });
+      checks.appendChild(h('label', { class: on ? 'on' : '' }, [cb, h('span', { text: t[1] }), h('span', { class: 't', text: t[2] })]));
+    });
+    planBox.appendChild(checks);
+    function num(field, label, hint, extra) {
+      var inp = h('input', { type: 'number', inputmode: 'numeric', min: '0', 'aria-label': label });
+      inp.value = P[field] || '';
+      inp.addEventListener('change', function () { savePlan(date, field, inp.value.trim(), msg); });
+      return h('div', {}, [h('label', { text: label }), inp, extra || null, hint ? h('div', { class: 'hint', text: hint }) : null]);
+    }
+    var meter = h('div', { class: 'meter' }, [h('i', { style: 'width:' + Math.min(100, Math.round(100 * replies / target)) + '%' })]);
+    planBox.appendChild(h('div', { class: 'nums' }, [
+      num('replies', 'Replies today (target ' + target + ')', replies + ' of ' + target, meter),
+      num('followers', 'Followers (end of day)', 'from your X profile'),
+      num('impressions', 'Impressions today', 'X › Analytics'),
+      num('visits', 'Profile visits today', 'X › Analytics'),
+    ]));
+    planBox.appendChild(msg);
+    // the last 14 days
+    var rows = planData.slice().reverse().map(function (d) {
+      var p = d.plan, done = TASKS.filter(function (t) { return p[t[0]] === '1'; }).length, xt = xOf((xTally || {})[d.date]);
+      return [short(d.date), done ? String(done) : '–', p.replies ? +p.replies : '–', p.followers ? +p.followers : '–', p.impressions ? +p.impressions : '–', xt.v, xt.c];
+    });
+    var withF = planData.filter(function (d) { return +d.plan.followers; });
+    var grid = h('div', { class: 'grid2' }, [
+      card('Replies per day', 'Logged here; the target grows each week of the plan.', bars(planData, function (d) { return +d.plan.replies || 0; }, 'Replies per day', function (d) { return 'target ' + replyTarget(d.date); })),
+      card('From X to the site', 'Visits from links posted on X (src=x, x-thread, x-reply, x-pinned…), per day.', bars(planData, function (d) { return xOf((xTally || {})[d.date]).v; }, 'Visits from X per day', function (d) { return xOf((xTally || {})[d.date]).c + ' app taps'; })),
+    ]);
+    planBox.appendChild(h('div', { style: 'margin-top:14px' }, [grid]));
+    if (withF.length >= 2) planBox.appendChild(h('p', { class: 'note', text: 'Followers: ' + fmt(+withF[0].plan.followers) + ' on ' + short(withF[0].date) + ' → ' + fmt(+withF[withF.length - 1].plan.followers) + ' on ' + short(withF[withF.length - 1].date) + '.' }));
+    planBox.appendChild(card('Last 14 days', 'Tasks = checklist items done. X visits and app taps come from the site’s own tracking.', table(['Day', 'Tasks', 'Replies', 'Followers', 'Impressions', 'X visits', 'X app taps'], rows, 2)));
+    planBox.hidden = false;
+  }
+  function loadPlan() {
+    Promise.all([
+      fetch('/api/track?action=plan&days=14&key=' + encodeURIComponent(key), { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); }),
+      fetch('/api/track?action=report&days=14&key=' + encodeURIComponent(key), { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }),
+    ]).then(function (res) {
+      planData = res[0].days;
+      xTally = {};
+      ((res[1] && res[1].days) || []).forEach(function (d) { xTally[d.date] = d.tally; });
+      renderPlan();
+      if (location.hash === '#plan') planBox.scrollIntoView();
+    }).catch(function () { /* the plan log is optional; the report below still shows */ });
+  }
+
   function load() {
     if (!key) { askKey(); return; }
+    if (!planData) loadPlan();
     main.innerHTML = '<p class="muted">Loading…</p>';
     fetch('/api/track?action=report&days=' + days + '&key=' + encodeURIComponent(key), { cache: 'no-store' })
       .then(function (res) { if (res.status === 401) throw new Error('key'); if (!res.ok) throw new Error('http ' + res.status); return res.json(); })

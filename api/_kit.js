@@ -242,6 +242,92 @@ async function toTelegramWeekly(s) {
   return { ok: true };
 }
 
+// ---- The X growth plan (owner, 2026-11-21: "I will post manually, let me know through Telegram") ----
+// The routine writes social.xpack (see social/README.md); these send it to the owner's Telegram through the day, each part
+// once (kit:x:<slot>:<date>), with one-tap "Post on X" buttons. Posting stays by hand: X forbids automated replies.
+//   thread     10:00 IST  the day's thread, one message per post (post 1 with a button, the rest to reply under it)
+//   replies    11:00 IST  reply round 1: facts to use + "find threads" searches (X Latest)
+//   afternoon  15:00 IST  standalone post 1
+//   evening    18:00 IST  standalone post 2 + the quiz poll + reply round 2
+//   score      19:00 IST  the day's scorecard: X visits / app taps / installs, and the plan checklist (growth.html)
+const PLAN_START = '2026-11-22';
+// reply target per day by week of the plan (week 1, 2, 3, then on)
+function planWeek(date) { return Math.max(1, Math.floor((Date.parse(date) - Date.parse(PLAN_START)) / (7 * 864e5)) + 1); }
+const replyTarget = (date) => [25, 25, 40, 50][Math.min(planWeek(date), 4) - 1] || 60;
+// Tag the site links in a post with where it was posted (no deep-link rewriting: each post already links its own story).
+const tagLinks = (text, src) => String(text || '').replace(/https:\/\/the-hour-brief\.vercel\.app\/[^\s]*/g, (u) => (/[?&]src=/.test(u) ? u : `${u}${u.includes('?') ? '&' : '?'}src=${encodeURIComponent(src)}`));
+const xSearch = (q) => `https://x.com/search?q=${encodeURIComponent(q)}&f=live`;
+const hasXPack = (s) => !!(s && s.xpack && Array.isArray(s.xpack.thread) && s.xpack.thread.length);
+
+async function xScore(date) {
+  const [g, plan] = await Promise.all([kv(['HGETALL', `g:${date}`]), kv(['HGETALL', `plan:${date}`])]);
+  const t = {}, p = {};
+  const ga = (g && g.result) || [], pa = (plan && plan.result) || [];
+  for (let i = 0; i + 1 < ga.length; i += 2) t[ga[i]] = Number(ga[i + 1]) || 0;
+  for (let i = 0; i + 1 < pa.length; i += 2) p[pa[i]] = pa[i + 1];
+  let visits = 0, fresh = 0, taps = 0, installs = 0;
+  for (const [f, n] of Object.entries(t)) {
+    const q = f.split('|');
+    if (q[0] === 'i') installs += n;
+    else if (/^x(-|$)/.test(q[2] || '')) { if (q[0] === 'v') visits += n; else if (q[0] === 'n') fresh += n; else if (q[0] === 'c') taps += n; }
+  }
+  return { visits, fresh, taps, installs, plan: p };
+}
+
+async function deliverXSlot({ slot, date = istToday(), force = false, dry = false } = {}) {
+  const s = await loadSocial(date);
+  if (slot !== 'score' && !hasXPack(s)) return { ok: true, skipped: 'no X pack today yet' };
+  if (!process.env.TELEGRAM_BOT_TOKEN) return { ok: false, skipped: 'telegram bot not set up' };
+  const chat = await telegramChat();
+  if (!chat) return { ok: false, skipped: 'telegram not paired yet' };
+  const key = `kit:x:${slot}:${date}`;
+  if (!dry && !(await claim(key, force))) return { ok: true, skipped: 'already sent' };
+  const x = (s && s.xpack) || {};
+  const send = (text, buttons) => (dry ? Promise.resolve({ text, buttons }) : buttons && buttons.length ? tgWithButtons(chat, text, buttons) : tg('sendMessage', { chat_id: chat, text: text.slice(0, 4096), link_preview_options: { is_disabled: true } }));
+  const out = [];
+  try {
+    if (slot === 'thread') {
+      const posts = x.thread.map((t) => tagLinks(t, 'x-thread'));
+      out.push(await send(`🧵 Today’s X thread (${posts.length} posts)\nPost 1 with the button, then reply to your own post with 2, 3… in order.\n\n1/${posts.length}\n${posts[0]}`, [{ text: '𝕏  Post 1 on X', url: xIntent(posts[0]) }]));
+      for (let i = 1; i < posts.length; i++) out.push(await send(`${i + 1}/${posts.length}\n${posts[i]}`));
+    } else if (slot === 'replies' || slot === 'evening') {
+      if (slot === 'evening') {
+        const p2 = x.posts && x.posts[1];
+        if (p2) { const t = tagLinks(p2.text || p2, 'x'); out.push(await send(`⏰ 18:00 post\n\n${t}`, [{ text: '𝕏  Post on X', url: xIntent(t) }])); }
+        if (x.poll && x.poll.question && Array.isArray(x.poll.options)) {
+          out.push(await send(`📊 Today’s quiz as an X poll (in X: new post → the poll icon; 1 day)\n\n${x.poll.question}\n\n${x.poll.options.map((o, i) => `Option ${i + 1}: ${o}`).join('\n')}\n\nAt 19:00 or later, reply to your poll with the answer:\n${tagLinks(x.poll.answer || '', 'x-poll')}`));
+        }
+      }
+      const r = x.replies || {};
+      const target = replyTarget(date);
+      const facts = (r.facts || []).slice(0, 10).map((f, i) => `${i + 1}. ${typeof f === 'string' ? f : f.fact}`).join('\n');
+      const searches = (r.searches || []).slice(0, 5);
+      out.push(await send(`💬 Reply round ${slot === 'replies' ? '1' : '2'} · today’s target: ${target} replies in total\nOpen a search, pick fresh posts from bigger accounts, and add one fact or angle. No links, no “great post”.${facts ? `\n\nFacts to use:\n${facts}` : ''}`,
+        searches.map((q) => ({ text: `🔎 ${q}`, url: xSearch(q) }))));
+    } else if (slot === 'afternoon') {
+      const p1 = x.posts && x.posts[0];
+      if (!p1) return { ok: true, skipped: 'no afternoon post' };
+      const t = tagLinks(p1.text || p1, 'x');
+      out.push(await send(`⏰ 15:00 post\n\n${t}`, [{ text: '𝕏  Post on X', url: xIntent(t) }]));
+    } else if (slot === 'score') {
+      const sc = await xScore(date);
+      const p = sc.plan, done = (k) => (p[k] === '1' ? '✅' : '⬜');
+      const replies = parseInt(p.replies, 10) || 0;
+      out.push(await send([`📈 Today on X (${date}, week ${planWeek(date)} of the plan)`,
+        `From X to the site: ${sc.visits} visits (${sc.fresh} new) · ${sc.taps} “Get the app” taps`,
+        `All app installs today: ${sc.installs}`, '',
+        `${done('x')} morning post  ${done('thread')} thread  ${done('p1')} 15:00  ${done('p2')} 18:00  ${done('poll')} poll`,
+        `💬 replies logged: ${replies} / ${replyTarget(date)}`, '',
+        'Tick what you did and log followers and impressions (X › Premium/Analytics, or your profile) on the dashboard:'].join('\n'),
+      [{ text: '📊 Open the dashboard', url: `${CANON}/growth.html#plan` }]));
+    }
+    return { ok: true, sent: out.length, ...(dry ? { preview: out } : {}) };
+  } catch (e) {
+    if (!dry && !force) await release(key);
+    return { ok: false, error: e.message };
+  }
+}
+
 // `only` limits a run to one channel (e.g. resending just the WhatsApp pick by hand with force).
 // The day's vertical video (made by .github/workflows/short.yml from the morning recording), sent to the owner to post as a
 // YouTube Short, an Instagram Reel or a WhatsApp status. Not there yet (the recording or the video is still being made): not
@@ -353,4 +439,4 @@ async function pairTelegram({ dry = false } = {}) {
   return { ok: true, dry, chat: list[0] };
 }
 
-module.exports = { tgWithButtons, weekLink, hasWeekly, xIntent, redditSubmit, sendReviewReminder, APP_LINKS, WA_CHANNEL, appLink, withApp, withWhatsApp, deepLinks, beforeTags, primaryPost, leadersWhatsApp, notifyOwner, istToday, loadSocial, links, deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram };
+module.exports = { deliverXSlot, xScore, replyTarget, planWeek, PLAN_START, tgWithButtons, weekLink, hasWeekly, xIntent, redditSubmit, sendReviewReminder, APP_LINKS, WA_CHANNEL, appLink, withApp, withWhatsApp, deepLinks, beforeTags, primaryPost, leadersWhatsApp, notifyOwner, istToday, loadSocial, links, deliverKit, sendInsightPush, pairOwnerPhone, pairTelegram };

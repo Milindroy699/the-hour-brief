@@ -113,6 +113,39 @@ module.exports = async (req, res) => {
     catch (e) { res.status(500).json({ error: 'report failed' }); }
     return;
   }
+  // The growth plan's daily log (growth.html's Plan section): what the owner did each day and the X numbers they read off X.
+  //   GET  ?action=plan&key=&days=N        -> { days: [{ date, plan: {field: value} }] }
+  //   POST ?action=plan&key=  { date, field, value }   (fields below; checkboxes are '1' / '', numbers are digits)
+  if (req.query && req.query.action === 'plan') {
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('X-Robots-Tag', 'noindex');
+    if (!STATS_KEY || String(req.query.key || '') !== STATS_KEY) { res.status(401).json({ error: 'wrong or missing key' }); return; }
+    if (!KV_URL || !KV_TOKEN) { res.status(500).json({ error: 'storage not configured' }); return; }
+    if (req.method === 'GET') {
+      const n = Math.min(Math.max(parseInt(req.query.days, 10) || 14, 1), 120);
+      const now = Date.now() + 5.5 * 3600 * 1000, dates = [];
+      for (let i = n - 1; i >= 0; i--) dates.push(new Date(now - i * 864e5).toISOString().slice(0, 10));
+      const out = await pipeline(dates.map((d) => ['HGETALL', `plan:${d}`]));
+      res.status(200).json({ days: dates.map((d, i) => ({ date: d, plan: (() => { const o = {}; const r = out[i] || []; for (let j = 0; j + 1 < r.length; j += 2) o[r[j]] = r[j + 1]; return o; })() })) });
+      return;
+    }
+    if (req.method === 'POST') {
+      let b = req.body;
+      if (typeof b === 'string') { try { b = JSON.parse(b); } catch (e) { b = {}; } }
+      b = b || {};
+      const CHECKS = ['x', 'thread', 'p1', 'p2', 'poll', 'status', 'reddit', 'quote'], NUMS = ['replies', 'followers', 'impressions', 'visits'];
+      const date = String(b.date || ''), field = String(b.field || ''), value = String(b.value == null ? '' : b.value).trim();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { res.status(400).json({ error: 'bad date' }); return; }
+      let v;
+      if (CHECKS.includes(field)) v = value === '1' ? '1' : '';
+      else if (NUMS.includes(field)) { if (value !== '' && !/^\d{1,9}$/.test(value)) { res.status(400).json({ error: 'numbers only' }); return; } v = value; }
+      else if (field === 'note') v = value.slice(0, 280);
+      else { res.status(400).json({ error: 'unknown field' }); return; }
+      await pipeline(v === '' ? [['HDEL', `plan:${date}`, field]] : [['HSET', `plan:${date}`, field, v], ['EXPIRE', `plan:${date}`, String(400 * 86400)]]);
+      res.status(200).json({ ok: true, date, field, value: v });
+      return;
+    }
+  }
   if (req.method !== 'POST') { res.status(405).json({ error: 'method not allowed' }); return; }
   if (!KV_URL || !KV_TOKEN) { res.status(500).json({ error: 'storage not configured' }); return; }
 

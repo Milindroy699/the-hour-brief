@@ -24,9 +24,18 @@ morning (~09:00 IST) by the "Daily post writer" Claude Code routine from that da
     "linkedin": "80-150 words, the five as numbered lines, link https://the-hour-brief.vercel.app/week.html?d=<date> (auto-posted to the owner's profile)",
     "x": "<=260 characters counting the link as 23",
     "reddit": { "title": "<=120 chars", "body": "150-300 words, Reddit markdown, one disclosed link", "subs": ["IndianStockMarket", "indianstartups"] } },
+  "xpack": { "the day's X plan, sent to the owner's Telegram through the day (api/_kit.js deliverXSlot)",
+    "thread": ["5-7 posts, each <=270 chars counting a link as 23; only the last has a link"],
+    "posts": [ { "time": "15:00", "text": "standalone post + its story link" }, { "time": "18:00", "text": "..." } ],
+    "poll": { "question": "from the day's quiz", "options": ["2-4 options, <=25 chars each"], "answer": "reply to post under the poll" },
+    "replies": { "facts": ["8 one-sentence facts from the edition, for replies"], "searches": ["4 X searches, <=30 chars"] } },
   "generatedAt": "ISO timestamp"
 }
 ```
+
+X plan timetable (IST, Telegram): 9:30 `x` with a Post button · 10:00 thread · 11:00 reply round 1 (facts + X
+search buttons) · 15:00 posts[0] · 18:00 posts[1] + poll + reply round 2 · 19:00 scorecard (X visits / app taps /
+installs + the checklist) linking to growth.html#plan, where the owner ticks tasks and logs followers / impressions.
 
 On Sundays the day's LinkedIn post (and the owner's automatic profile post) is `weekly.linkedin`; the recap's
 page is `/week.html?d=<date>` (rendered from this file). X and Reddit are posted by hand: Telegram and
