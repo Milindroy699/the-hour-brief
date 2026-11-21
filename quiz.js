@@ -1134,6 +1134,20 @@
     row.appendChild(inv);
     row.appendChild(leave);
     card.appendChild(row);
+    // A college / office league's name is typed by whoever started it: anyone in it can report it (we review within a day).
+    if (lg.kind && lg.kind !== 'friends') {
+      var rep = el('button', 'qz-linkbtn qz-report', 'Report this league’s name');
+      rep.type = 'button';
+      rep.addEventListener('click', function () {
+        if (!rep.dataset.sure) { rep.dataset.sure = '1'; rep.textContent = 'Tap again to report it as offensive'; setTimeout(function () { rep.dataset.sure = ''; rep.textContent = 'Report this league’s name'; }, 4000); return; }
+        rep.disabled = true;
+        lgDoing = 'report';
+        lgPost({ action: 'report', code: lg.code, mid: lgLoad().mid }).then(function (r) {
+          setLgMsg(r.ok ? 'Thanks. We’ll review the name within a day. You can also leave the league any time.' : lgError(r));
+        }).catch(function (e) { setLgMsg(lgError({ err: e })); });
+      });
+      card.appendChild(rep);
+    }
     return card;
   }
 

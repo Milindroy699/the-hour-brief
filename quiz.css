@@ -278,3 +278,4 @@
 .qz-nudge .quiz-btn { width: 100%; }
 .qz-nudge-code { margin: 0 0 12px; font-size: 0.95rem; color: var(--ink); text-align: center; }
 .qz-nudge-code b { font-size: 1.35rem; letter-spacing: 0.14em; margin-left: 6px; color: var(--brand, #451edb); }
+.qz-report { display: block; margin: 10px auto 0; font-size: 0.8rem; font-weight: 600; color: var(--ink-faint, #838a8a); }

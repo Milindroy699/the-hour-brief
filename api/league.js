@@ -90,6 +90,12 @@ function withinWindow(date) {
   return Number.isFinite(t) && Math.abs(Date.now() - t) <= 3 * DAY_MS;
 }
 
+// Reporting a typed league name (App Store guideline 1.2: user-generated content needs a report mechanism and action on it):
+// a report sends the owner a Telegram note with a signed one-tap link that swaps the name for a generated one.
+const SIGN_KEY = () => process.env.CRON_SECRET || KV_TOKEN || '';
+const signRm = (code) => crypto.createHmac('sha256', SIGN_KEY()).update(`rmname:${code}`).digest('hex').slice(0, 32);
+const sameSig = (a, b) => a.length === b.length && crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
+
 // Rate limit: returns true if this IP is over `max` actions for `bucket` today.
 async function limited(req, bucket, max) {
   const key = `lgl:${bucket}:${ipHash(req)}`;
@@ -154,6 +160,18 @@ module.exports = async (req, res) => {
 
   if (req.method === 'GET') {
     const q = req.query || {};
+    // The owner's one-tap "remove this name" link from a report (signed; see signRm).
+    if (q.rmname) {
+      const c = String(q.rmname).toUpperCase();
+      const page = (msg) => res.status(200).setHeader('Content-Type', 'text/html; charset=utf-8').send(`<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><body style="font:17px/1.5 -apple-system,system-ui,sans-serif;padding:32px;max-width:520px;margin:auto">${msg}</body>`);
+      if (!CODE_RE.test(c) || !sameSig(String(q.sig || ''), signRm(c))) return page('That link is not valid.');
+      const old = (await kv(['HGET', `lg:${c}`, 'name'])).result;
+      if (!old) return page('That league no longer exists.');
+      const name = leagueName();
+      await kv(['HSET', `lg:${c}`, 'name', name, 'renamed', String(Date.now())]);
+      console.warn(`league ${c} renamed after a report`);
+      return page(`Done. League <b>${c}</b> is now called <b>${name}</b>. Its players see the new name the next time their leaderboard loads.`);
+    }
     const code = String(q.code || '').toUpperCase();
     if (!CODE_RE.test(code)) return bad('invalid code');
     if (q.meta === '1') {
@@ -215,6 +233,20 @@ module.exports = async (req, res) => {
     const handle = handleFor(mid, new Set(Object.values(members)));
     await pipe([['HSET', `lg:${code}:m`, mid, handle], ['EXPIRE', `lg:${code}:m`, String(TTL)], ['EXPIRE', `lg:${code}`, String(TTL)]]);
     return res.status(200).json({ ok: true, code, name: meta.result, handle });
+  }
+
+  if (body.action === 'report') {
+    if (await limited(req, 'report', 20)) return bad('too many requests', 429);
+    const m = (await kv(['HMGET', `lg:${code}`, 'name', 'kind'])).result || [];
+    if (!m[0]) return bad('league not found', 404);
+    if (!KINDS[m[1]]) return res.status(200).json({ ok: true, generated: true });   // a friends league's name is generated
+    const n = parseInt((await kv(['HLEN', `lg:${code}:m`])).result, 10) || 0;
+    const { CANON } = require('./_edition');
+    const { notifyOwner, istToday } = require('./_kit');
+    const link = `${CANON}/api/league?rmname=${code}&sig=${signRm(code)}`;
+    const r = await notifyOwner(`🚩 A league name was reported\n\n“${m[0]}” (${KINDS[m[1]]} league, code ${code}, ${n} players)\n\nIf it's offensive, tap to replace it with a generated name:\n${link}`, `lgreport:${code}:${istToday()}`);
+    console.warn(`league ${code} reported`, JSON.stringify(r));
+    return res.status(200).json({ ok: true });
   }
 
   if (body.action === 'leave') {
