@@ -24,6 +24,18 @@ Assets (git-ignored, upload from here): `mobile/dist/play-store/`
 
 ### Release notes ("What's new", max 500 chars — paste with the tags)
 
+1.1.4 (versionCode 10), 2026-11-21:
+```
+<en-US>
+• Morning notifications with the day's sharpest story, plus an evening quiz teaser
+• Leagues: play the daily quiz against friends, your class or your office; invite with a 6-character code
+• Voices: weekly long reads on what the best minds in tech, business, product and finance are saying
+• The brief is now a podcast on Spotify, Apple Podcasts and Amazon Music
+• Steadier loading and a cleaner swipe-card reader
+</en-US>
+```
+
+
 ```
 <en-US>
 Welcome to The Hour Brief for Android.

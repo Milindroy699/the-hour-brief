@@ -47,6 +47,14 @@ Checked from this Mac (2026-09-29, developer account now active): a real, fully 
 - **Promotional text (161/170, can be changed any time without a new version):** Today’s AI, business and stock market news in one short brief every morning, plus weekly long reads from the best minds. Listen in 7 minutes, then take the quiz.
 - **Keywords (99/100):** `sensex,nifty,share,finance,tech,startup,india,briefing,summary,podcast,quiz,current,affairs,economy`
   _(2026-11-21: no word repeats the name or subtitle, since Apple already indexes those and combines words across all three: "share" + "Market" = share market, "current" + "affairs", "news" + "summary"/"podcast". Name, subtitle and keywords only change with a new app version.)_
+- **What's New (1.1.4)** _(2026-11-21; paste this one)_:
+  ```
+  • Morning notifications that tell you the day's sharpest story, plus an evening quiz teaser
+  • Leagues: play the daily quiz against friends, your class or your office, and invite them with a 6-character code
+  • Voices: weekly long reads on what the best minds in tech, business, product and finance are saying
+  • The daily brief is now a podcast on Spotify, Apple Podcasts and Amazon Music
+  • Steadier loading and a cleaner swipe-card reader
+  ```
 - **What's New (1.1.2):** A new look, and a new way to read: the brief now opens as swipe cards, one story at a time (switch to the full scrolling list any time). Choose which sections you see and in what order. A recorded AI voice (labelled as AI) reads each morning's edition, with a floating audio button and the cards turning to each story as it is read. Plus a daily quiz, private friends leagues, and a daily reminder.
 - **What's New (v1.0, for reference):** Welcome to The Hour Brief. A fresh edition every morning, built for one sitting: AI & tech, product & business, and the markets.
 
