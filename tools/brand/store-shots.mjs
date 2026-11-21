@@ -6,6 +6,7 @@
 //    mobile/app-store/screenshots-6.5in/   1242x2688  (iPhone 6.5-inch)
 //    mobile/app-store/screenshots-6.3in/   1206x2622  (iPhone with Dynamic Island, medium display)
 //    mobile/app-store/screenshots-ipad/    2064x2752  (iPad 13-inch)
+//    mobile/app-store/screenshots-duo/     1398x2034  (iPhone Duo)
 // Leagues show sample generated names (a mocked league API); everything else is the real edition.
 import fs from 'node:fs';
 import os from 'node:os';
@@ -115,6 +116,7 @@ const SETS = [
   { dir: 'mobile/app-store/screenshots-6.3in', W: 1206, H: 2622 },          // "iPhone with Dynamic Island (medium display)"
 
   { dir: 'mobile/app-store/screenshots-ipad', W: 2064, H: 2752, ipad: true },
+  { dir: 'mobile/app-store/screenshots-duo', W: 1398, H: 2034, ipad: true },       // "iPhone Duo" (unfolded, tablet-like width)
 ];
 const ONLY = process.argv.includes('--only') ? process.argv[process.argv.indexOf('--only') + 1] : '';
 for (const set of SETS.filter((x) => !ONLY || x.dir.includes(ONLY))) {
