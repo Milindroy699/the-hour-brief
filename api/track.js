@@ -99,6 +99,64 @@ async function report(days) {
   };
 }
 
+// ---- The daily run (growth.html's "Daily run" board): did each automated job happen each day, and is each connection healthy ----
+// Every job already leaves a once-a-day key (kept 8 days) or a file; this only reads them. Manual tasks come from plan:<date>.
+const SITE = 'https://the-hour-brief.vercel.app';
+const R2 = (process.env.R2_PUBLIC_URL || 'https://pub-1dafea4a948540db8413a044895e083c.r2.dev').replace(/\/$/, '');
+const OPS_KEYS = [                     // [id, key prefix] — the key is `<prefix>:<date>`
+  ['telegramChannel', 'digest:tg'], ['pushMorning', 'push:edition-sent'], ['pushInsight', 'push:insight-sent'], ['pushWeekly', 'push:reeng-sent'],
+  ['review', 'kit:review'], ['ownerKit', 'kit:telegram'], ['ownerLinkedin', 'kit:telegramPost'], ['ownerShort', 'kit:telegramShort'],
+  ['linkedinProfile', 'li:posted:member'], ['linkedinPage', 'li:posted:morning'], ['linkedinVoices', 'li:posted:leaders'],
+  ['youtube', 'short:youtube'], ['instagram', 'short:instagram'],
+  ['xThread', 'kit:x:thread'], ['xReplies', 'kit:x:replies'], ['xAfternoon', 'kit:x:afternoon'], ['xEvening', 'kit:x:evening'], ['xScore', 'kit:x:score'], ['xMorning', 'kit:telegramX'],
+];
+const head = (url) => fetch(url, { method: 'HEAD', cache: 'no-store', signal: AbortSignal.timeout(6000) }).then((r) => r.ok).catch(() => null);
+const getText = (url) => fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(8000) }).then((r) => (r.ok ? r.text() : '')).catch(() => null);
+async function ops(days) {
+  const now = Date.now() + 5.5 * 3600 * 1000, dates = [];
+  for (let i = 0; i < days; i++) dates.push(new Date(now - i * 864e5).toISOString().slice(0, 10));   // today first
+  const cmds = [];
+  for (const d of dates) { for (const [, k] of OPS_KEYS) cmds.push(['GET', `${k}:${d}`]); cmds.push(['HGETALL', `plan:${d}`]); }
+  cmds.push(['GET', 'kit:telegram-chat'], ['SCARD', 'push:owner'], ['GET', 'ig:auth'], ['SCARD', 'push:tokens:ios'], ['SCARD', 'push:tokens:android'], ['GET', 'li:member-auth'], ['GET', 'li:auth']);
+  const [out, editions, feed, socials, audio, shorts] = await Promise.all([
+    pipeline(cmds),
+    getText(`${SITE}/editions.json`),
+    getText(`${SITE}/podcast.xml`),
+    Promise.all(dates.map((d) => getText(`${SITE}/social/${d}.json`))),
+    Promise.all(dates.map((d) => head(`${R2}/audio/${d}/manifest.json`))),
+    Promise.all(dates.map((d) => head(`${R2}/shorts/${d}.json`))),
+  ]);
+  const per = OPS_KEYS.length + 1;
+  const rows = dates.map((d, i) => {
+    const got = {};
+    OPS_KEYS.forEach(([id], k) => { const v = out[i * per + k]; got[id] = v == null ? null : (/^https?:/.test(v) ? v : true); });
+    const plan = {}; const pr = out[i * per + OPS_KEYS.length] || []; for (let j = 0; j + 1 < pr.length; j += 2) plan[pr[j]] = pr[j + 1];
+    let social = null; try { social = socials[i] ? JSON.parse(socials[i]) : null; } catch (e) { social = null; }
+    return {
+      date: d, sunday: new Date(d + 'T00:00:00Z').getUTCDay() === 0,
+      edition: editions == null ? null : editions.includes(d), audio: audio[i], podcast: feed == null ? null : feed.includes(`hourbrief-${d}`),
+      kit: !!social, xpack: !!(social && social.xpack), weekly: !!(social && social.weekly), voices: !!(social && social.leaders),
+      short: shorts[i], ...got, plan,
+    };
+  });
+  const tail = out.slice(dates.length * per);
+  const json = (v) => { try { return v ? JSON.parse(v) : null; } catch (e) { return null; } };
+  const member = json(tail[5]), page = json(tail[6]), ig = json(tail[2]);
+  const lastOf = (id) => { const r = rows.find((x) => x[id]); return r ? r.date : null; };
+  return {
+    generated: new Date().toISOString(), days: rows,
+    connections: {
+      telegram: { ok: !!tail[0] },
+      ownerPhone: { ok: (Number(tail[1]) || 0) > 0 },
+      pushDevices: { ios: Number(tail[3]) || 0, android: Number(tail[4]) || 0 },
+      linkedinProfile: member ? { ok: (member.accessExp || member.expiresAt || 0) > Date.now(), expires: new Date(member.accessExp || member.expiresAt || 0).toISOString().slice(0, 10) } : { ok: false },
+      linkedinPage: { ok: !!page, note: page ? '' : 'waiting for LinkedIn to approve the Community Management API' },
+      instagram: { ok: !!ig, account: ig && ig.username, lastPost: lastOf('instagram') },
+      youtube: { lastPost: lastOf('youtube') },
+    },
+  };
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -111,6 +169,15 @@ module.exports = async (req, res) => {
     if (!KV_URL || !KV_TOKEN) { res.status(500).json({ error: 'storage not configured' }); return; }
     try { res.status(200).json(await report(Math.min(Math.max(parseInt(req.query.days, 10) || 30, 1), 120))); }
     catch (e) { res.status(500).json({ error: 'report failed' }); }
+    return;
+  }
+  if (req.method === 'GET' && req.query && req.query.action === 'ops') {
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('X-Robots-Tag', 'noindex');
+    if (!STATS_KEY || String(req.query.key || '') !== STATS_KEY) { res.status(401).json({ error: 'wrong or missing key' }); return; }
+    if (!KV_URL || !KV_TOKEN) { res.status(500).json({ error: 'storage not configured' }); return; }
+    try { res.status(200).json(await ops(Math.min(Math.max(parseInt(req.query.days, 10) || 7, 1), 8))); }
+    catch (e) { res.status(500).json({ error: 'ops failed', detail: e.message }); }
     return;
   }
   // The growth plan's daily log (growth.html's Plan section): what the owner did each day and the X numbers they read off X.
@@ -133,7 +200,7 @@ module.exports = async (req, res) => {
       let b = req.body;
       if (typeof b === 'string') { try { b = JSON.parse(b); } catch (e) { b = {}; } }
       b = b || {};
-      const CHECKS = ['x', 'thread', 'p1', 'p2', 'poll', 'status', 'reddit', 'quote'], NUMS = ['replies', 'followers', 'impressions', 'visits'];
+      const CHECKS = ['x', 'thread', 'p1', 'p2', 'poll', 'status', 'reddit', 'quote', 'review', 'wachannel'], NUMS = ['replies', 'followers', 'impressions', 'visits'];
       const date = String(b.date || ''), field = String(b.field || ''), value = String(b.value == null ? '' : b.value).trim();
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { res.status(400).json({ error: 'bad date' }); return; }
       let v;

@@ -14,7 +14,7 @@
 const { CANON } = require('./_edition');
 const { kv, allTokens, sendToTokens } = require('./_push');
 
-const DEDUPE_TTL = String(3 * 86400);
+const DEDUPE_TTL = String(8 * 86400);   // 8 days: growth.html's Daily run board reads these as the week's record
 
 // App install link appended to everything that goes out: the smart link /app (app.html) sends phones to their own store
 // and shows desktops a QR code. `src` says where the link was shared; it reaches Google Play as the install referrer.

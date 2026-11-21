@@ -113,7 +113,7 @@ async function sendEditionPush(d, { force } = {}) {
 
   const key = `push:edition-sent:${d.date}`;
   if (!force) {
-    const claimed = await kv(['SET', key, '1', 'EX', '259200', 'NX']);
+    const claimed = await kv(['SET', key, '1', 'EX', '691200', 'NX']);
     if (claimed.result === null) return { ok: true, skipped: 'already pushed', date: d.date };
   }
   try {
@@ -141,7 +141,7 @@ async function sendReengagementPush({ force, days = 7 } = {}) {
 
   const key = `push:reeng-sent:${today}`;
   if (!force) {
-    const claimed = await kv(['SET', key, '1', 'EX', '259200', 'NX']);
+    const claimed = await kv(['SET', key, '1', 'EX', '691200', 'NX']);
     if (claimed.result === null) return { ok: true, skipped: 'already sent today', date: today };
   }
   try {

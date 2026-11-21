@@ -77,6 +77,29 @@
   .meter { height: 8px; border-radius: 4px; background: var(--grid); overflow: hidden; margin-top: 6px; }
   .meter i { display: block; height: 100%; background: var(--bar); border-radius: 4px; }
   td.ok { color: var(--good); }
+  /* the daily run board */
+  .ops-sum { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 12px; }
+  .pill { font-size: 0.8rem; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--soft); }
+  .pill.bad { border-color: var(--warn); color: var(--warn); }
+  .pill.good { border-color: var(--good); color: var(--good); }
+  .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table.ops { min-width: 560px; }
+  table.ops td, table.ops th { text-align: center; padding: 6px 4px; }
+  table.ops td:first-child, table.ops th:first-child { text-align: left; white-space: nowrap; position: sticky; left: 0; background: var(--card); padding-right: 10px; }
+  table.ops tr.grp td { text-align: left; font-size: 0.74rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--faint); padding-top: 14px; border-bottom: 0; }
+  table.ops .who { font-size: 0.7rem; color: var(--faint); margin-left: 6px; }
+  .st { display: inline-flex; width: 26px; height: 26px; border-radius: 8px; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; text-decoration: none; }
+  .st.ok { color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); }
+  .st.miss { color: var(--warn); background: color-mix(in srgb, var(--warn) 16%, transparent); }
+  .st.due { color: var(--soft); border: 1px dashed var(--line); }
+  .st.na { color: var(--faint); }
+  button.st { border: 1px dashed var(--line); background: none; cursor: pointer; font: inherit; }
+  button.st.ok { border: 0; }
+  .conn { list-style: none; padding: 0; margin: 0; }
+  .conn li { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--grid); font-size: 0.88rem; }
+  .conn li:last-child { border-bottom: 0; }
+  .conn .s { font-weight: 600; text-align: right; max-width: 62%; }
+  .conn .s.ok { color: var(--good); } .conn .s.bad { color: var(--warn); } .conn .s.wait { color: var(--soft); }
 </style>
 </head>
 <body>
@@ -92,6 +115,7 @@
       <button type="button" data-days="90">90 days</button>
     </div>
   </header>
+  <section class="plan" id="ops" hidden></section>
   <section class="plan" id="plan" hidden></section>
   <main id="main"><p class="muted">Loading…</p></main>
   <ul class="foot">
@@ -253,7 +277,8 @@
   function replyTarget(d) { return [25, 25, 40, 50][Math.min(planWeek(d), 4) - 1] || 60; }
   function istDate(back) { return new Date(Date.now() + 5.5 * 3600 * 1000 - back * 864e5).toISOString().slice(0, 10); }
   var TASKS = [['x', 'Morning X post', '9:30'], ['thread', 'X thread', '10:00'], ['p1', 'Afternoon X post', '15:00'], ['p2', 'Evening X post', '18:00'],
-    ['poll', 'Quiz poll on X', '18:00'], ['quote', 'One quote post', 'any time'], ['status', 'WhatsApp status', 'morning'], ['reddit', 'Reddit recap', 'Sundays']];
+    ['poll', 'Quiz poll on X', '18:00'], ['quote', 'One quote post', 'any time'], ['status', 'WhatsApp status', 'morning'], ['wachannel', 'WhatsApp channel post', 'morning'],
+    ['review', 'Reviewed the Stock Market section', 'after 9:00'], ['reddit', 'Reddit recap', 'Sundays']];
   var planBox = document.getElementById('plan'), planDay = 0, planData = null, xTally = null;
   function xOf(t) { var v = 0, c = 0; for (var f in t || {}) { var p = f.split('|'); if (/^x(-|$)/.test(p[2] || '')) { if (p[0] === 'v') v += t[f]; else if (p[0] === 'c') c += t[f]; } } return { v: v, c: c }; }
   function savePlan(date, field, value, msgEl) {
@@ -261,9 +286,13 @@
     fetch('/api/track?action=plan&key=' + encodeURIComponent(key), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date: date, field: field, value: value }) })
       .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
       .then(function () {
-        var row = planData.filter(function (d) { return d.date === date; })[0];
-        if (row) { if (value === '' ) delete row.plan[field]; else row.plan[field] = value; }
-        msgEl.textContent = 'Saved'; setTimeout(function () { msgEl.textContent = ''; }, 1500); renderPlan();
+        // keep both sections (the plan and the daily run) in step
+        [planData, opsData && opsData.days].forEach(function (list) {
+          var row = (list || []).filter(function (d) { return d.date === date; })[0];
+          if (row) { if (value === '') delete row.plan[field]; else row.plan[field] = value; }
+        });
+        msgEl.className = 'saved'; msgEl.textContent = 'Saved'; setTimeout(function () { msgEl.textContent = ''; }, 1500);
+        renderPlan(); renderOps();
       })
       .catch(function () { msgEl.textContent = 'Could not save. Try again.'; msgEl.className = 'saved err'; });
   }
@@ -333,8 +362,123 @@
     }).catch(function () { /* the plan log is optional; the report below still shows */ });
   }
 
+  // ---- The daily run: every automated job and every manual task, today and the last 6 days, plus connection health ----
+  // Data: /api/track?action=ops (job keys kept 8 days, files on the site / R2, plan:<date> for what you ticked).
+  // `at` = IST time it should be done by (a little after its slot); before then today shows "due", after it "late".
+  var OPS = [
+    ['Made automatically', [
+      ['edition', 'Edition published', '09:00', 'auto'], ['audio', 'Audio recorded (AI voice)', '09:45', 'auto'], ['podcast', 'Podcast feed updated', '10:00', 'auto'],
+      ['kit', 'Post kit written', '09:30', 'auto'], ['xpack', 'X pack written', '09:30', 'auto', 'x'], ['short', 'Short / Reel video made', '10:45', 'auto'], ['weekly', 'Weekly recap written', '09:30', 'auto', 'sun'],
+    ]],
+    ['Posted automatically', [
+      ['telegramChannel', 'Telegram channel post', '11:00', 'auto'], ['pushMorning', 'Morning push to app users', '11:00', 'auto'], ['pushInsight', 'Evening insight push', '19:00', 'auto'],
+      ['pushWeekly', 'Weekly comeback push', '11:00', 'auto', 'sun'], ['linkedinProfile', 'LinkedIn: your profile', '10:30', 'auto'], ['linkedinPage', 'LinkedIn: the Page', '10:30', 'auto', 'page'],
+      ['youtube', 'YouTube Short', '11:30', 'auto'], ['instagram', 'Instagram Reel', '11:30', 'auto'],
+    ]],
+    ['Sent to you (Telegram, phone)', [
+      ['review', 'Market-review reminder', '10:00', 'auto'], ['ownerKit', 'Post kit: status image + caption', '10:00', 'auto'], ['ownerLinkedin', 'LinkedIn post text', '10:00', 'auto'],
+      ['ownerShort', 'Short video to share', '11:00', 'auto'], ['xMorning', 'X: morning post', '10:00', 'auto', 'x'], ['xThread', 'X: thread', '10:30', 'auto', 'x'], ['xReplies', 'X: reply round 1', '11:30', 'auto', 'x'],
+      ['xAfternoon', 'X: afternoon post', '15:30', 'auto', 'x'], ['xEvening', 'X: evening post, poll, replies', '18:30', 'auto', 'x'], ['xScore', 'X: scorecard', '19:30', 'auto', 'x'],
+    ]],
+    ['Done by you', [
+      ['plan.review', 'Reviewed the Stock Market section', '10:30', 'you'], ['plan.status', 'WhatsApp status', '12:00', 'you'], ['plan.wachannel', 'WhatsApp channel post', '12:00', 'you'],
+      ['plan.x', 'X: morning post', '11:00', 'you', 'x'], ['plan.thread', 'X: thread', '12:00', 'you', 'x'], ['plan.replies', 'X: replies (vs target)', '21:00', 'you', 'x'],
+      ['plan.p1', 'X: afternoon post', '16:00', 'you', 'x'], ['plan.p2', 'X: evening post', '19:00', 'you', 'x'], ['plan.poll', 'X: quiz poll', '19:00', 'you', 'x'], ['plan.reddit', 'Reddit recap', '21:00', 'you', 'sun'],
+    ]],
+  ];
+  // Podcast apps: kept by hand here (the site's own list is PODCASTS in mobile.js).
+  var PODS = [['Spotify', 'live'], ['Apple Podcasts', 'live'], ['Amazon Music', 'live'], ['YouTube Music', 'waiting for YouTube to verify the channel, then submit the feed in Studio'], ['JioSaavn', 'submitted, no public page yet']];
+  // When each job started: earlier days show "·", not a miss. Jobs tracked by a once-a-day key were only kept 3 days until
+  // 22 Nov 2026, so a missing key before then reads "no record" (?), not "missed".
+  var SINCE = { kit: '2026-11-17', linkedinProfile: '2026-11-18', ownerKit: '2026-11-17', ownerLinkedin: '2026-11-17', short: '2026-11-20', youtube: '2026-11-20', instagram: '2026-11-20',
+    ownerShort: '2026-11-20', telegramChannel: '2026-11-21', review: '2026-11-22', xMorning: '2026-11-22', weekly: '2026-11-22', pushWeekly: '2026-11-22', 'plan.review': '2026-11-21', 'plan.status': '2026-11-21', 'plan.wachannel': '2026-11-21' };
+  var FILE_BASED = /^(edition|audio|podcast|kit|xpack|short|weekly)$/, KEYS_KEPT_FROM = '2026-11-22';
+  var opsBox = document.getElementById('ops'), opsData = null;
+  function nowIst() { var d = new Date(Date.now() + 5.5 * 3600 * 1000); return d.toISOString().slice(11, 16); }
+  function cell(row, item, isToday) {
+    var id = item[0], at = item[2], tag = item[4];
+    if (tag === 'sun' && !row.sunday) return { k: 'na', t: '·', label: 'not on this day' };
+    if (tag === 'x' && row.date < PLAN_START) return { k: 'na', t: '·', label: 'before the X plan' };
+    if (tag === 'page' && !(opsData.connections.linkedinPage || {}).ok) return { k: 'na', t: '–', label: 'not connected yet' };
+    if (SINCE[id] && row.date < SINCE[id]) return { k: 'na', t: '·', label: 'not running yet' };
+    var v;
+    if (id.indexOf('plan.') === 0) {
+      var f = id.slice(5);
+      if (f === 'replies') { var n = +row.plan.replies || 0, tg = replyTarget(row.date); return n ? { k: n >= tg ? 'ok' : 'miss', t: String(n), label: n + ' of ' + tg + ' replies' } : (isToday ? { k: 'due', t: '0', label: 'none logged yet' } : { k: 'miss', t: '0', label: 'none logged' }); }
+      v = row.plan[f] === '1';
+    } else v = row[id];
+    if (v) return { k: 'ok', t: '✓', label: 'done', href: typeof v === 'string' && /^https?:/.test(v) ? v : null };
+    if (v === null && /^(edition|podcast)$/.test(id)) return { k: 'na', t: '?', label: 'could not check' };
+    if (!FILE_BASED.test(id) && id.indexOf('plan.') !== 0 && row.date < KEYS_KEPT_FROM && !isToday) return { k: 'na', t: '?', label: 'no record kept for that day' };
+    if (isToday && nowIst() < at) return { k: 'due', t: '◷', label: 'due by ' + at };
+    return { k: 'miss', t: '✕', label: isToday ? 'late (due ' + at + ')' : 'missed' };
+  }
+  function toggleManual(row, field, btn) {
+    btn.disabled = true;
+    savePlan(row.date, field, row.plan[field] === '1' ? '' : '1', opsMsg);
+  }
+  var opsMsg = h('div', { class: 'saved', role: 'status' });
+  function renderOps() {
+    if (!opsData) return;
+    var D = opsData.days, today = D[0];
+    opsBox.textContent = '';
+    opsBox.appendChild(h('div', { class: 'plan-head' }, [h('h2', { text: 'Daily run' }), h('span', { class: 'note', style: 'margin:0', text: 'checked ' + new Date(opsData.generated).toLocaleTimeString('en-IN', { timeStyle: 'short' }) })]));
+    // today's summary
+    var done = 0, late = [], due = 0, mine = 0, total = 0;
+    OPS.forEach(function (g) { g[1].forEach(function (it) { var c = cell(today, it, true); if (c.k === 'na') return; total++; if (c.k === 'ok') done++; else if (c.k === 'miss') late.push(it[1]); else { due++; if (it[3] === 'you') mine++; } }); });
+    var sum = h('div', { class: 'ops-sum' }, [h('span', { class: 'pill good', text: '✓ ' + done + ' of ' + total + ' done today' }), due ? h('span', { class: 'pill', text: '◷ ' + due + ' still due' + (mine ? ' (' + mine + ' yours)' : '') }) : null,
+      late.length ? h('span', { class: 'pill bad', text: '✕ late: ' + late.slice(0, 4).join(', ') + (late.length > 4 ? ' +' + (late.length - 4) : '') }) : null]);
+    opsBox.appendChild(sum);
+    var t = h('table', { class: 'ops' });
+    t.appendChild(h('thead', {}, [h('tr', {}, [h('th', { text: '' })].concat(D.map(function (r, i) { return h('th', { text: i === 0 ? 'Today' : short(r.date) }); })))]));
+    var tb = h('tbody');
+    OPS.forEach(function (g) {
+      tb.appendChild(h('tr', { class: 'grp' }, [h('td', { text: g[0], colspan: String(D.length + 1) })]));
+      g[1].forEach(function (it) {
+        var tr = h('tr', {}, [h('td', {}, [document.createTextNode(it[1]), h('span', { class: 'who', text: it[2] })])]);
+        D.forEach(function (r, i) {
+          var c = cell(r, it, i === 0), td = h('td'), title = short(r.date) + ': ' + it[1] + ', ' + c.label;
+          var manual = it[0].indexOf('plan.') === 0 && it[0] !== 'plan.replies' && c.k !== 'na' && i < 2;
+          var el;
+          if (manual) { el = h('button', { type: 'button', class: 'st ' + c.k, title: title + ' (tap to change)', 'aria-label': title + ', tap to change', text: c.t }); el.addEventListener('click', function () { toggleManual(r, it[0].slice(5), el); }); }
+          else if (c.href) el = h('a', { class: 'st ok', href: c.href, target: '_blank', rel: 'noopener', title: title + ' (open)', 'aria-label': title, text: c.t });
+          else el = h('span', { class: 'st ' + c.k, title: title, 'aria-label': title, text: c.t });
+          td.appendChild(el); tr.appendChild(td);
+        });
+        tb.appendChild(tr);
+      });
+    });
+    t.appendChild(tb);
+    opsBox.appendChild(h('div', { class: 'scroll' }, [t]));
+    opsBox.appendChild(opsMsg);
+    opsBox.appendChild(h('p', { class: 'note', text: '✓ done (tap a ✓ on YouTube or Instagram to open the post) · ◷ due by the time shown · ✕ late or missed · – not connected · · not on that day. Your own tasks can be ticked here for today and yesterday.' }));
+    // connections
+    var C = opsData.connections, li = function (name, ok, txt) { return h('li', {}, [h('span', { text: name }), h('span', { class: 's ' + ok, text: txt })]); };
+    var lp = C.linkedinProfile || {}, daysLeft = lp.expires ? Math.round((Date.parse(lp.expires) - Date.now()) / 864e5) : null;
+    var stale = function (d) { if (!d) return 'bad'; return (Date.parse(today.date) - Date.parse(d)) / 864e5 > 1 ? 'bad' : 'ok'; };
+    var conn = h('ul', { class: 'conn' }, [
+      li('Telegram (your daily messages)', C.telegram.ok ? 'ok' : 'bad', C.telegram.ok ? 'connected' : 'not paired'),
+      li('Your phone (review reminder)', C.ownerPhone.ok ? 'ok' : 'bad', C.ownerPhone.ok ? 'paired' : 'not paired'),
+      li('App users who get pushes', 'ok', fmt(C.pushDevices.ios + C.pushDevices.android) + ' (iPhone ' + C.pushDevices.ios + ', Android ' + C.pushDevices.android + ')'),
+      li('LinkedIn: your profile', !lp.ok ? 'bad' : daysLeft !== null && daysLeft <= 10 ? 'bad' : 'ok', lp.ok ? 'connected, renew by ' + short(lp.expires) + (daysLeft !== null ? ' (' + daysLeft + ' days)' : '') : 'reconnect needed'),
+      li('LinkedIn: the Page', C.linkedinPage.ok ? 'ok' : 'wait', C.linkedinPage.ok ? 'connected' : 'waiting for LinkedIn approval'),
+      li('Instagram Reels', C.instagram.ok ? stale(C.instagram.lastPost) : 'bad', C.instagram.ok ? '@' + (C.instagram.account || '') + ', last Reel ' + (C.instagram.lastPost ? short(C.instagram.lastPost) : 'none this week') : 'not connected'),
+      li('YouTube Shorts', stale(C.youtube.lastPost), C.youtube.lastPost ? 'last Short ' + short(C.youtube.lastPost) : 'none this week'),
+    ]);
+    var pods = h('ul', { class: 'conn' }, PODS.map(function (p) { return li(p[0], p[1] === 'live' ? 'ok' : 'wait', p[1]); }));
+    opsBox.appendChild(h('div', { class: 'grid2', style: 'margin-top:12px' }, [card('Connections', 'Accounts the automation posts through. Red means a step will stop working.', conn), card('Podcast apps', 'Where the daily episode is listed.', pods)]));
+    opsBox.hidden = false;
+  }
+  function loadOps() {
+    fetch('/api/track?action=ops&days=7&key=' + encodeURIComponent(key), { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function (d) { opsData = d; renderOps(); if (location.hash === '#ops') opsBox.scrollIntoView(); })
+      .catch(function () { /* optional */ });
+  }
+
   function load() {
     if (!key) { askKey(); return; }
+    if (!opsData) loadOps();
     if (!planData) loadPlan();
     main.innerHTML = '<p class="muted">Loading…</p>';
     fetch('/api/track?action=report&days=' + days + '&key=' + encodeURIComponent(key), { cache: 'no-store' })

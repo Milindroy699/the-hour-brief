@@ -168,7 +168,7 @@ module.exports = async (req, res) => {
     const useKv = !!(KV_URL && KV_TOKEN);
     let claimed = true;
     if (useKv && !force) {
-      const claim = await kv(['SET', key, '1', 'EX', '259200', 'NX']);
+      const claim = await kv(['SET', key, '1', 'EX', '691200', 'NX']);
       claimed = claim.result !== null;
     }
     if (!claimed) {
