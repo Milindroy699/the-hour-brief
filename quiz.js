@@ -1497,10 +1497,17 @@
   }
 
   // ---------- Daily quiz | Leagues | Badges ----------
-  var panes = null, segBtns = {}, curTab = 'quiz';
+  var panes = null, segBtns = {}, curTab = 'quiz', headTag = null, headTitle = null;
   var TAB_NAMES = [['quiz', 'Daily quiz'], ['leagues', 'Leagues'], ['badges', 'Badges']];
+  // The header above the tabs follows the tab (owner, 2026-11-22: "Badges" under a "Daily quiz" heading didn't read as one
+  // screen): the kicker names the screen, the title says what this tab is.
+  var TAB_TITLES = { leagues: 'Play against your friends, class or team', badges: 'Your trophy case' };
   function buildTabs() {
     var head = section.querySelector('.lane-head');
+    headTag = head && head.querySelector('.lane-tag');
+    headTitle = head && head.querySelector('h2');
+    if (headTag) headTag.textContent = 'Challenge';
+    if (headTitle) TAB_TITLES.quiz = headTitle.textContent;
     var seg = el('div', 'qz-seg');
     seg.setAttribute('role', 'tablist');
     seg.setAttribute('aria-label', 'Challenge');
@@ -1553,6 +1560,7 @@
       segBtns[t[0]].classList.toggle('on', on);
       panes[t[0]].hidden = !on;
     });
+    if (headTitle && TAB_TITLES[name]) headTitle.textContent = TAB_TITLES[name];
     if (!quiet) { try { sessionStorage.setItem('hb-qz-tab', name); } catch (e) { /* ignore */ } }
     if (name === 'badges') renderTrophy();
     if (scroll) bringIntoView(section.querySelector('.qz-seg'), 'top', true);
@@ -1569,12 +1577,7 @@
       var cur = streakEndingAt(dates, results, results[DATE] ? DATE : (dates.length > 1 ? dates[dates.length - 2] : prevDay(DATE)));
       box.textContent = '';
       var earned = BADGES.filter(function (b) { return got[b.id]; }).length;
-      var head = el('div', 'qz-tc-head');
-      var ht = el('div');
-      ht.appendChild(el('h3', '', 'Trophy case'));
-      ht.appendChild(el('p', '', earned + ' of ' + BADGES.length + ' badges earned on this phone'));
-      head.appendChild(ht);
-      box.appendChild(head);
+      box.appendChild(el('p', 'qz-tc-count', earned + ' of ' + BADGES.length + ' badges earned on this phone'));
       var grid = el('div', 'qz-tc-stats');
       [['Days played', st.played, ''], ['Best streak', st.best, st.best === 1 ? 'day' : 'days'], ['Perfect scores', st.perfects, ''], ['Accuracy', st.acc, '%']].forEach(function (x) {
         var c = el('div', 'qz-tc-stat');

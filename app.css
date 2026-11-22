@@ -1014,3 +1014,36 @@ html.hb-native :is(.tl-card, .hub-card):active { transform: scale(0.985); }
 img.hb-img-wait { opacity: 0; }
 img { transition: opacity 0.3s ease; }
 .dk-art { display: block; width: 100%; height: auto; aspect-ratio: 16 / 7; object-fit: cover; margin: 0 0 14px; border-radius: 16px; background: #14122B; }
+
+/* ---- Floating tab bar on phones (preview, owner 2026-11-22) ----
+   A pill floating above the home indicator, the List | Cards switch sitting just above it. While the reader scrolls
+   down it shrinks to icons only (html.hb-tabs-mini, mobile.js tabsMini) and comes back the moment scrolling stops.
+   --hb-tab-h is measured once at full size and held while it shrinks (watchTabBarH skips mini and the transition),
+   so nothing anchored to it jumps. Screens that scroll inside themselves (Audio, Challenge) run under the bar. */
+@media (max-width: 640px) {
+  .tab-bar {
+    left: 12px; right: 12px; bottom: max(10px, calc(env(safe-area-inset-bottom, 0px) - 6px));
+    padding: 5px 6px; border: 1px solid var(--line); border-top-color: var(--line); border-radius: 30px;
+    background: rgba(var(--hb-paper-rgb), 0.9);
+    -webkit-backdrop-filter: blur(18px) saturate(1.4); backdrop-filter: blur(18px) saturate(1.4);
+    box-shadow: 0 12px 32px rgba(18, 19, 22, 0.18), 0 1px 0 rgba(255, 255, 255, 0.35) inset;
+    transition: left .3s cubic-bezier(.2, .8, .2, 1), right .3s cubic-bezier(.2, .8, .2, 1), padding .3s cubic-bezier(.2, .8, .2, 1), bottom .3s cubic-bezier(.2, .8, .2, 1);
+  }
+  .tab { min-height: 52px; transition: min-height .3s cubic-bezier(.2, .8, .2, 1); }
+  .tab-ic { transition: background .18s ease, color .18s ease, height .3s cubic-bezier(.2, .8, .2, 1), width .3s cubic-bezier(.2, .8, .2, 1); }
+  .tab-lb { display: block; max-height: 14px; overflow: hidden; transition: max-height .3s cubic-bezier(.2, .8, .2, 1), opacity .2s ease; }
+  html.hb-tabs-mini .tab-bar { left: 64px; right: 64px; padding: 4px 6px; }
+  html.hb-tabs-mini .tab { min-height: 40px; gap: 0; }
+  html.hb-tabs-mini .tab-ic { height: 32px; width: 48px; }
+  html.hb-tabs-mini .tab-lb { max-height: 0; opacity: 0; }
+  /* the switch rides down with the bar's top edge and shrinks a touch */
+  .tab-switch { transition: transform .3s cubic-bezier(.2, .8, .2, 1), opacity .2s ease; }
+  html.hb-tabs-mini:not(.hb-deck-open) .tab-switch { transform: translateX(-50%) translateY(14px) scale(.92); }
+  /* full-screen hubs run to the bottom edge, their content scrolling under the floating bar */
+  .hb-hub { bottom: 0; }
+  .hub-scroll { padding-bottom: calc(var(--hb-tab-h) + 28px); }
+  html.hb-quiz-page body.hb-listening .hub-scroll { padding-bottom: calc(var(--hb-tab-h) + 130px); }
+}
+@media (max-width: 640px) and (prefers-reduced-motion: reduce) {
+  .tab-bar, .tab, .tab-ic, .tab-lb, .tab-switch { transition: none; }
+}

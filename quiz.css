@@ -367,8 +367,8 @@ html.qz-cele-open, html.qz-cele-open body { overflow: hidden; }
 @keyframes qz-fall { 0% { transform: translate(0, 0) rotate(0); opacity: 0; } 8% { opacity: 1; } 85% { opacity: 1; } 100% { transform: translate(var(--qz-drift, 0), 110vh) rotate(var(--qz-spin, 360deg)); opacity: 0; } }
 
 /* Trophy case (Badges tab) */
-.qz-tc-head h3 { margin: 0; font-family: var(--hb-serif, Georgia, serif); font-size: 1.5rem; font-weight: 500; }
-.qz-tc-head p { margin: 2px 0 14px; font-size: 0.88rem; color: var(--ink-faint, #6d6a7c); }
+.qz-tc-count { margin: -4px 2px 14px; font-size: 0.88rem; color: var(--ink-faint, #6d6a7c); }
+.qz-pane-leagues .qz-lg-title { display: none; }   /* the header above the tabs already says Leagues */
 .qz-tc-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
 .qz-tc-stat { padding: 14px 16px; border: 1px solid var(--line, rgba(18, 19, 22, .1)); border-radius: 20px; background: var(--paper, #fff); }
 .qz-tc-k { display: block; font-family: var(--hb-label, inherit); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint, #6d6a7c); }

@@ -1441,11 +1441,43 @@
   // --hb-tab-h, kept exactly in sync with .tab-bar's own real rendered height, continuously, for as long as the
   // page lives — not measured once and hoped to stay right. Fires immediately on observe() with the current size,
   // then again on every future change (the tab row's label wrapping, a safe-area change, a late web font).
+  // Phones: the floating tab bar shrinks to icons while the reader scrolls down, and comes back once scrolling stops
+  // (owner, 2026-11-22). Any scroller counts: the list (the window), Audio and Challenge (.hub-scroll), a card's own
+  // scroll; sideways swipes through the deck don't (only vertical movement is read).
+  var tabsMoving = false;
+  function tabsMini(remeasure) {
+    if (tabsMini.on || !window.matchMedia || !window.matchMedia('(max-width: 640px)').matches) return;
+    tabsMini.on = true;
+    var root = document.documentElement, last = new WeakMap(), idle = 0, settle = 0;
+    function mini(on) {
+      if (root.classList.contains('hb-tabs-mini') === on) return;
+      tabsMoving = true;
+      clearTimeout(settle);
+      root.classList.toggle('hb-tabs-mini', on);
+      if (!on) settle = setTimeout(function () { tabsMoving = false; remeasure(); }, 360);
+    }
+    document.addEventListener('scroll', function (e) {
+      var t = e.target, win = t === document || t === document.documentElement;
+      var y = win ? window.scrollY : t.scrollTop, prev = last.get(t);
+      last.set(t, y);
+      if (prev === undefined || y === prev) return;
+      if (y - prev > 3 && y > 40) mini(true);
+      else if (y - prev < -6) mini(false);
+      clearTimeout(idle);
+      idle = setTimeout(function () { mini(false); }, 420);
+    }, { capture: true, passive: true });
+  }
   function watchTabBarH(bar) {
     // The distance from the bar's own top edge to the bottom of the viewport, not just the bar's own height — on
     // the desktop layout .tab-bar floats with its own bottom:16px gap below it, which also needs reserving; on
     // phones it's flush (bottom:0), so this is simply the bar's height there, same result either way.
-    var set = function () { var h = window.innerHeight - bar.getBoundingClientRect().top; if (h > 0) document.documentElement.style.setProperty('--hb-tab-h', Math.ceil(h) + 'px'); };
+    // Not while the phone's floating bar is shrunk for scrolling, or easing back: --hb-tab-h keeps its full-size value
+    // so nothing anchored to it moves (tabsMini below).
+    var set = function () {
+      if (tabsMoving) return;
+      var h = window.innerHeight - bar.getBoundingClientRect().top; if (h > 0) document.documentElement.style.setProperty('--hb-tab-h', Math.ceil(h) + 'px');
+    };
+    tabsMini(set);
     // border-box, not the default content-box: the bar's bottom padding is the phone's safe area, which iOS can report
     // a moment after launch. That grew the bar by ~34px without changing its content box, so nothing re-measured and
     // the cards' pager sat behind the tab bar on a cold start (owner, 2026-11-18).
