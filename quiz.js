@@ -246,6 +246,7 @@
     return c;
   }
   function shareScore(res, streak) {
+    if (window.HBUse) window.HBUse('quiz_share');
     var text = shareText(res, streak), url = shareUrl(res);
     cardAssets().then(function (logo) { shareCard(res, streak, text, url, logo); });
   }
@@ -399,6 +400,7 @@
   }
 
   function answer(i, idx, btns, card) {
+    if (i === 0 && window.HBUse) window.HBUse(practice ? 'quiz_retake_start' : 'quiz_start');
     if (picks.length > i) return;
     var q = questions[i];
     var ok = idx === q.answer;
@@ -440,6 +442,7 @@
   }
 
   function finish() {
+    if (window.HBUse) window.HBUse(practice ? 'quiz_retake' : 'quiz_done');
     var score = picks.reduce(function (s, p, k) { return s + (p === questions[k].answer ? 1 : 0); }, 0);
     var res = { s: score, t: N, a: picks.slice() };
     if (!practice) {
@@ -994,6 +997,7 @@
       st = lgLoad();
       st.leagues.push(lg);
       lgSave(st);
+      if (window.HBUse) window.HBUse('league_create');
       afterJoin(r.d.code);
       return lg;
     }).catch(function (e) { lgBusy = false; setLgMsg(lgError({ err: e })); return null; });
@@ -1008,6 +1012,7 @@
       if (!r.ok) { setLgMsg(lgError(r)); return false; }
       st.leagues.push({ code: code, name: r.d.name, kind: r.d.kind || (boards[code] && boards[code].kind) || 'friends' });
       lgSave(st);
+      if (window.HBUse) window.HBUse('league_join');
       afterJoin(code);
       return true;
     }).catch(function (e) { setLgMsg(lgError({ err: e })); return false; });
@@ -1061,12 +1066,14 @@
     return box;
   }
   function inviteScore(lg, res) {
+    if (window.HBUse) window.HBUse('league_invite');
     share('I got ' + res.s + '/' + res.t + ' on today’s Hour Brief news quiz. Can you beat me? Join my league “' + lg.name + '”: open the link, or get the app and enter code ' + lg.code + ' under Challenge.', inviteLink(lg) + '&src=quiz-invite');
   }
 
   function inviteLink(lg) { return location.origin + '/l/' + lg.code + '?n=' + encodeURIComponent(lg.name); }
   // The code is in the message itself: someone who installs the app from the invite arrives without the link, and types it.
   function invite(lg) {
+    if (window.HBUse) window.HBUse('league_invite');
     var group = lg.kind && lg.kind !== 'friends';
     share((group ? 'Join “' + lg.name + '” on The Hour Brief: a 1-minute daily news quiz, with a leaderboard for all of us.'
       : 'Join my Hour Brief quiz league “' + lg.name + '” and beat me at today’s news quiz.') +
