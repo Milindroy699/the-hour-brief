@@ -12,6 +12,7 @@ Disallow: /leaders-pending/
 Disallow: /.github/
 Disallow: /share-kit.html
 Disallow: /growth.html
+Disallow: /app-analytics.html
 Disallow: /DEPLOY.md
 Disallow: /e/
 Disallow: /s/

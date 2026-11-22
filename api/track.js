@@ -223,6 +223,32 @@ async function channels(days) {
   return { generated: new Date().toISOString(), live, youtube: yt, days: rows };
 }
 
+async function appStats(n) {
+  const dates = [], now = Date.now() + 5.5 * 3600 * 1000;
+  for (let i = n - 1; i >= 0; i--) dates.push(new Date(now - i * 864e5).toISOString().slice(0, 10));
+  const cmds = [['HGETALL', 'device:firstseen'], ['HGETALL', 'device:platform']];
+  for (const d of dates) cmds.push(['HGETALL', `f:${d}`], ['SMEMBERS', `active:${d}`], ['HGET', `g:${d}`, 'i|ios'], ['HGET', `g:${d}`, 'i|android']);
+  const r = await pipeline(cmds);
+  const first = {}, plat = {};
+  for (let i = 0; r[0] && i < r[0].length; i += 2) first[r[0][i]] = r[0][i + 1];
+  for (let i = 0; r[1] && i < r[1].length; i += 2) plat[r[1][i]] = r[1][i + 1];
+  const active = dates.map((d, i) => new Set(r[2 + 4 * i + 1] || []));
+  const byDay = {};
+  for (const [dev, d] of Object.entries(first)) (byDay[d] = byDay[d] || []).push(dev);
+  return {
+    days: dates.map((d, i) => {
+      const cohort = {};
+      for (const pf of ['ios', 'android']) {
+        const devs = (byDay[d] || []).filter((x) => plat[x] === pf);
+        const d1 = i + 1 < dates.length ? devs.filter((x) => active[i + 1].has(x)).length : null;
+        const d7 = i + 7 < dates.length ? devs.filter((x) => active.slice(i + 1, i + 8).some((s) => s.has(x))).length : null;
+        cohort[pf] = { n: devs.length, d1, d7 };
+      }
+      return { date: d, f: pairs(r[2 + 4 * i]), appActive: active[i].size, installs: { ios: Number(r[2 + 4 * i + 2]) || 0, android: Number(r[2 + 4 * i + 3]) || 0 }, cohort };
+    }),
+  };
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -238,17 +264,16 @@ module.exports = async (req, res) => {
     return;
   }
   if ((req.method === 'GET' || req.method === 'HEAD') && req.query && req.query.ep) { await podcastDownload(req, res); return; }
-  if (req.method === 'GET' && req.query && req.query.action === 'features') {
+  // App analytics (app-analytics.html): ?action=app&days=N -> the last N days (IST), oldest first, each with the feature counts
+  // (f:<date>), the apps' active devices, installs by platform, and that day's install cohort: how many of the phones first
+  // seen that day opened the app again the next day (d1) and within the next 7 days (d7); null until that window has passed.
+  if (req.method === 'GET' && req.query && (req.query.action === 'app' || req.query.action === 'features')) {
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Robots-Tag', 'noindex');
     if (!STATS_KEY || String(req.query.key || '') !== STATS_KEY) { res.status(401).json({ error: 'wrong or missing key' }); return; }
     if (!KV_URL || !KV_TOKEN) { res.status(500).json({ error: 'storage not configured' }); return; }
-    try {
-      const n = Math.min(Math.max(parseInt(req.query.days, 10) || 14, 1), 180), dates = [], now = Date.now() + 5.5 * 3600 * 1000;
-      for (let i = n - 1; i >= 0; i--) dates.push(new Date(now - i * 864e5).toISOString().slice(0, 10));
-      const rows = await pipeline(dates.flatMap((d) => [['HGETALL', `f:${d}`], ['SCARD', `active:${d}`]]));
-      res.status(200).json({ days: dates.map((d, i) => ({ date: d, f: pairs(rows[2 * i]), appActive: Number(rows[2 * i + 1]) || 0 })) });
-    } catch (e) { res.status(500).json({ error: 'features failed' }); }
+    try { res.status(200).json(await appStats(Math.min(Math.max(parseInt(req.query.days, 10) || 14, 1), 180))); }
+    catch (e) { res.status(500).json({ error: 'app stats failed' }); }
     return;
   }
   if (req.method === 'GET' && req.query && req.query.action === 'channels') {
