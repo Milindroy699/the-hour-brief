@@ -1500,13 +1500,13 @@
   var panes = null, segBtns = {}, curTab = 'quiz', headTag = null, headTitle = null;
   var TAB_NAMES = [['quiz', 'Daily quiz'], ['leagues', 'Leagues'], ['badges', 'Badges']];
   // The header above the tabs follows the tab (owner, 2026-11-22: "Badges" under a "Daily quiz" heading didn't read as one
-  // screen): the kicker names the screen, the title says what this tab is.
+  // screen): the title says what this tab is.
   var TAB_TITLES = { leagues: 'Play against your friends, class or team', badges: 'Your trophy case' };
   function buildTabs() {
     var head = section.querySelector('.lane-head');
     headTag = head && head.querySelector('.lane-tag');
     headTitle = head && head.querySelector('h2');
-    if (headTag) headTag.textContent = 'Challenge';
+    if (headTag) headTag.classList.add('qz-tag-off');   // no label above the title: the tab bar already says Challenge (owner, 2026-11-22)
     if (headTitle) TAB_TITLES.quiz = headTitle.textContent;
     var seg = el('div', 'qz-seg');
     seg.setAttribute('role', 'tablist');

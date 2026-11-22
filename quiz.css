@@ -396,3 +396,5 @@ html.qz-cele-open, html.qz-cele-open body { overflow: hidden; }
   .qz-medal, .qz-ms-flame, .qz-bp-img { animation: none; }
   .qz-cele, .qz-bp-card { transition: none; }
 }
+.lane-head .lane-tag.qz-tag-off { display: none; }
+:root .quiz .lane-head:has(.qz-tag-off) h2 { margin-top: 0; }

@@ -1021,13 +1021,22 @@ img { transition: opacity 0.3s ease; }
    --hb-tab-h is measured once at full size and held while it shrinks (watchTabBarH skips mini and the transition),
    so nothing anchored to it jumps. Screens that scroll inside themselves (Audio, Challenge) run under the bar. */
 @media (max-width: 640px) {
+  /* Glass (owner, 2026-11-22: "more highlight and glassmorphism so it looks distinct"): see-through, a strong blur
+     that picks up the colours underneath, a bright top edge, a violet rim and glow. */
   .tab-bar {
     left: 12px; right: 12px; bottom: max(10px, calc(env(safe-area-inset-bottom, 0px) - 6px));
-    padding: 5px 6px; border: 1px solid var(--line); border-top-color: var(--line); border-radius: 30px;
-    background: rgba(var(--hb-paper-rgb), 0.9);
-    -webkit-backdrop-filter: blur(18px) saturate(1.4); backdrop-filter: blur(18px) saturate(1.4);
-    box-shadow: 0 12px 32px rgba(18, 19, 22, 0.18), 0 1px 0 rgba(255, 255, 255, 0.35) inset;
+    padding: 5px 6px; border: 1px solid rgba(255, 255, 255, 0.75); border-radius: 30px;
+    background: linear-gradient(180deg, rgba(var(--hb-paper-rgb), 0.74), rgba(var(--hb-paper-rgb), 0.56));
+    -webkit-backdrop-filter: blur(26px) saturate(1.9); backdrop-filter: blur(26px) saturate(1.9);
+    box-shadow: 0 0 0 1px rgba(var(--hb-primary-rgb), 0.16), 0 14px 34px rgba(var(--hb-primary-rgb), 0.22), 0 3px 10px rgba(18, 19, 22, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -10px 18px rgba(var(--hb-primary-rgb), 0.05);
     transition: left .3s cubic-bezier(.2, .8, .2, 1), right .3s cubic-bezier(.2, .8, .2, 1), padding .3s cubic-bezier(.2, .8, .2, 1), bottom .3s cubic-bezier(.2, .8, .2, 1);
+  }
+  .tab-switch {
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    background: linear-gradient(180deg, rgba(var(--hb-paper-rgb), 0.8), rgba(var(--hb-paper-rgb), 0.62));
+    -webkit-backdrop-filter: blur(22px) saturate(1.9); backdrop-filter: blur(22px) saturate(1.9);
+    box-shadow: 0 0 0 1px rgba(var(--hb-primary-rgb), 0.2), 0 10px 26px rgba(var(--hb-primary-rgb), 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.95);
   }
   .tab { min-height: 52px; transition: min-height .3s cubic-bezier(.2, .8, .2, 1); }
   .tab-ic { transition: background .18s ease, color .18s ease, height .3s cubic-bezier(.2, .8, .2, 1), width .3s cubic-bezier(.2, .8, .2, 1); }
@@ -1039,10 +1048,24 @@ img { transition: opacity 0.3s ease; }
   /* the switch rides down with the bar's top edge and shrinks a touch */
   .tab-switch { transition: transform .3s cubic-bezier(.2, .8, .2, 1), opacity .2s ease; }
   html.hb-tabs-mini:not(.hb-deck-open) .tab-switch { transform: translateX(-50%) translateY(14px) scale(.92); }
+  /* Cards: the deck's violet background runs to the bottom edge behind the bar (it stopped above it, leaving a white
+     strip), and the List | Cards switch sits below the cards, centred over the pager, where it is in List (owner,
+     2026-11-22; the pager's "Cover · 1 / 22" gives way to it, its arrows stay). */
+  .hb-deck { bottom: 0; padding-bottom: var(--hb-tab-h); }
+  .dk-fab { bottom: calc(96px + var(--hb-tab-h)); }
+  html.hb-deck-open .tab-switch { top: auto; right: auto; left: 50%; bottom: calc(var(--hb-tab-h) + 5px); transform: translateX(-50%); }
+  html.hb-deck-open .dk-pager .dk-count { visibility: hidden; }
+  html.hb-tabs-mini.hb-deck-open .tab-switch { transform: translateX(-50%) translateY(14px) scale(.92); }
   /* full-screen hubs run to the bottom edge, their content scrolling under the floating bar */
   .hb-hub { bottom: 0; }
   .hub-scroll { padding-bottom: calc(var(--hb-tab-h) + 28px); }
   html.hb-quiz-page body.hb-listening .hub-scroll { padding-bottom: calc(var(--hb-tab-h) + 130px); }
+}
+@media (max-width: 640px) and (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .tab-bar, :root:not([data-theme="light"]) .tab-switch { border-color: rgba(255, 255, 255, 0.14); box-shadow: 0 0 0 1px rgba(var(--hb-primary-rgb), 0.3), 0 14px 34px rgba(0, 0, 0, 0.45), 0 0 26px rgba(var(--hb-primary-rgb), 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.16); }
+}
+@media (max-width: 640px) {
+  :root[data-theme="dark"] .tab-bar, :root[data-theme="dark"] .tab-switch { border-color: rgba(255, 255, 255, 0.14); box-shadow: 0 0 0 1px rgba(var(--hb-primary-rgb), 0.3), 0 14px 34px rgba(0, 0, 0, 0.45), 0 0 26px rgba(var(--hb-primary-rgb), 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.16); }
 }
 @media (max-width: 640px) and (prefers-reduced-motion: reduce) {
   .tab-bar, .tab, .tab-ic, .tab-lb, .tab-switch { transition: none; }
