@@ -1584,6 +1584,15 @@
       var h = window.innerHeight - bar.getBoundingClientRect().top; if (h > 0) document.documentElement.style.setProperty('--hb-tab-h', Math.ceil(h) + 'px');
     };
     tabsMini(set);
+    // The phone bar floats (2026-11-22): when iOS reports the home-indicator space a moment after launch, the bar MOVES up
+    // rather than growing, which the ResizeObserver below never sees, and --hb-tab-h stayed 18px short (the List | Cards
+    // switch then sat over the bar; found in the Simulator). A marker the height of that space tells us when it changes.
+    var safe = document.createElement('div');
+    safe.setAttribute('aria-hidden', 'true');
+    safe.style.cssText = 'position:fixed;left:0;bottom:0;width:1px;height:env(safe-area-inset-bottom,0px);visibility:hidden;pointer-events:none';
+    document.body.appendChild(safe);
+    if (window.ResizeObserver) { try { new ResizeObserver(function () { set(); setTimeout(set, 400); }).observe(safe); } catch (e) { /* the timers below still run */ } }
+    bar.addEventListener('transitionend', function (e) { if (e.target === bar) set(); });
     // border-box, not the default content-box: the bar's bottom padding is the phone's safe area, which iOS can report
     // a moment after launch. That grew the bar by ~34px without changing its content box, so nothing re-measured and
     // the cards' pager sat behind the tab bar on a cold start (owner, 2026-11-18).
