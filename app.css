@@ -1108,3 +1108,10 @@ img { transition: opacity 0.3s ease; }
 .dk-week-full::after { content: " \2192"; }
 .dk-week .dk-actions { border-top-color: rgba(255, 255, 255, 0.12); background: transparent; }
 .dk-week .dk-hint { background: #fff; color: #2a1f78; }
+
+/* ---- In the apps: no page footers (mobile.js appFooter); an edition keeps one quiet line ---- */
+html.hb-native footer.colophon, html.hb-native .site-links { display: none !important; }
+.hb-app-foot { margin: 28px 16px 8px; text-align: center; font-size: 0.78rem; line-height: 1.6; color: var(--ink-faint); }
+.hb-app-foot a { color: var(--ink-soft); }
+.rd-sheet-note { margin: 0 0 12px; font-size: 0.9rem; line-height: 1.5; color: var(--ink-soft); }
+a.rd-item { text-decoration: none; color: inherit; }

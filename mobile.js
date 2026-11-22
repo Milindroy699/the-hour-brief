@@ -1295,6 +1295,43 @@
     else if (navigator.clipboard) p = navigator.clipboard.writeText(payload.url).then(function () { toast('Link copied'); });
     if (p && p.catch) p.catch(function () {});
   }
+  var REFRESH_SVG = '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>';
+  // A fresh copy of this page from the server, past any cached one: cached copies of shared data are dropped (the Voices
+  // list, the section list; they refill on their own), the reader's own things stay (saved stories, quiz results and
+  // streak, badges, leagues, settings), then the page reloads with a one-off query so nothing in between can serve the old one.
+  function forceRefresh() {
+    try { ['hb-voices-v1', 'hb-lanes-v1'].forEach(function (k) { localStorage.removeItem(k); }); } catch (e) { /* nothing cached */ }
+    var done = function () {
+      var u = new URL(location.href);
+      u.searchParams.set('fresh', Date.now().toString(36));
+      showLeaving(null);
+      setTimeout(function () { location.replace(u.pathname + u.search + u.hash); }, 120);
+    };
+    if (window.caches && caches.keys) caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); }).then(done, done);
+    else done();
+  }
+  // ?fresh= has done its job once the page is up: take it out of the address so a later share or refresh doesn't carry it
+  if (/[?&]fresh=/.test(location.search)) { try { var fu = new URL(location.href); fu.searchParams.delete('fresh'); history.replaceState(history.state, '', fu.pathname + fu.search + fu.hash); } catch (e) { /* keep it */ } }
+  function openPodcasts(returnTo) {
+    openSheet('Podcast apps', function (body) {
+      body.appendChild(mk('p', 'rd-sheet-note', 'The same daily brief as Audio, as an episode every morning. Follow it in your podcast app.'));
+      var ul = mk('ul', 'rd-menu');
+      PODCASTS.filter(function (p) { return p[2]; }).forEach(function (p) {
+        var li = mk('li');
+        var a = mk('a', 'rd-item');
+        a.href = p[2]; a.target = '_blank'; a.rel = 'noopener';
+        a.setAttribute('data-act', 'pod-' + p[0]);
+        a.innerHTML = ICON.audio;
+        var t = mk('span', '', p[1]);
+        t.appendChild(mk('small', '', 'Open The Hour Brief in ' + p[1]));
+        a.appendChild(t);
+        a.addEventListener('click', function () { track('podcast_out', { place: p[0] }); closeSheet(); });
+        li.appendChild(a);
+        ul.appendChild(li);
+      });
+      body.appendChild(ul);
+    }, returnTo);
+  }
   function openMenu(returnTo) {
     openSheet('Menu', function (body) {
       var ul = mk('ul', 'rd-menu');
@@ -1335,6 +1372,11 @@
           document.body.appendChild(a); a.click(); a.remove();
         });
       });
+      // The daily episode in podcast apps (owner, 2026-11-22: it was only in the website's footer, which the app doesn't show).
+      var pods = PODCASTS.filter(function (p) { return p[2]; });
+      if (pods.length) item('podcasts', ICON.audio, 'Listen in a podcast app', pods.map(function (p) { return p[1]; }).join(' · '), function () { openPodcasts(returnTo); });
+      // The apps have no reload button (owner, 2026-11-22: "give a force refresh option in the app")
+      if (NATIVE) item('refresh', REFRESH_SVG, 'Refresh', 'Load the latest edition and app updates', function () { closeSheet(); forceRefresh(); });
       body.appendChild(ul);
       var foot = mk('div', 'rd-menu-foot');
       [['Contact us', '/contact.html'], ['About', '/about.html'], ['Privacy', '/privacy.html']].forEach(function (l, i) {
@@ -1745,6 +1787,7 @@
     aboutToggle();
     storyButtons();
     siteLinks();
+    appFooter();
     readerTools();
     pauseCard();
     appBar();
@@ -1756,6 +1799,25 @@
   }
 
   // ---- Contact / About / Privacy: one row at the top of the footer (above the pills only if a page has no footer) ----
+  // In the apps (owner, 2026-11-22) the page footers go: the tab bar and the Menu already do their navigating (Past editions,
+  // Today, Contact / About / Privacy), and RSS and "Get the app" mean nothing inside the app. app.css hides footer.colophon
+  // and the Contact row under html.hb-native. An edition keeps one quiet line: it is financial news, so the disclaimer stays.
+  // The website keeps its full footer (search, trust, and the cross-sell to the app).
+  function appFooter() {
+    if (!NATIVE || !isFeed() || document.querySelector('.hb-app-foot')) return;
+    var foot = document.querySelector('footer.colophon');
+    if (!foot) return;
+    var p = mk('p', 'hb-app-foot');
+    p.appendChild(document.createTextNode('Not investment advice · Every story links to its source · '));
+    [['How this is made', '/about.html'], ['Corrections', '/corrections.html']].forEach(function (l, i) {
+      if (i) p.appendChild(document.createTextNode(' · '));
+      var a = mk('a', '', l[0]);
+      a.href = l[1];
+      p.appendChild(a);
+    });
+    foot.parentNode.insertBefore(p, foot);
+  }
+
   function siteLinks() {
     var nav = document.querySelector('.nav');
     var footer = document.querySelector('footer.colophon');
