@@ -39,10 +39,14 @@ const TOTAL = STORIES + 3 + 2;
 const QUIET = { n: 0, last: LONG_AGO, done: true };     // no hint
 let ids = [];
 
-async function open({ native = true, width = 390, height = 844, dark = false, prefs = null, tip = QUIET, view = 'list', size = null, hash = '', query = '', wait = 1800, tts = false, extra = '', hint = true, nudge = null } = {}) {
+// The Sunday recap card (2026-11-22) joins the front of the deck on a Sunday edition. Every test but the recap's own runs
+// without it (social/<date>.json answers 404), so card positions don't depend on the weekday of the edition under test.
+const NO_WEEK = `(() => { const f = window.fetch; window.fetch = (u, o) => String(u).indexOf('/social/') >= 0 ? Promise.resolve(new Response('', { status: 404 })) : f(u, o); })();`;
+async function open({ native = true, width = 390, height = 844, dark = false, prefs = null, tip = QUIET, view = 'list', size = null, hash = '', query = '', wait = 1800, tts = false, extra = '', hint = true, nudge = null, week = null } = {}) {
   for (const id of ids) await c.unpreload(id);
   ids = [];
   const pre = [tts ? `window.HB_AUDIO_BASE = ${JSON.stringify(B + '/__audio')}; ${FAKE_TTS}` : NO_AUDIO];
+  pre.push(week ? `(() => { const f = window.fetch; window.fetch = (u, o) => String(u).indexOf('/social/') >= 0 ? Promise.resolve(new Response(JSON.stringify(${JSON.stringify(week)}), { status: 200 })) : f(u, o); })();` : NO_WEEK);
   if (extra) pre.push(extra);
   if (native) pre.push(NATIVE);
   for (const p of pre) ids.push(await c.preload(p));
@@ -85,14 +89,15 @@ await c.sleep(400);   // nothing is meant to move at all any more; give any inci
 // rect should land in exactly the same place, pixel for pixel, whichever one is showing — the original design
 // intent before either of those redesigns, and the standing rule again now.
 t = await J(`(() => { const pr = document.querySelector('.tab-switch').getBoundingClientRect(); return { btns: [...document.querySelectorAll('.tab-switch button')].map((b) => b.getAttribute('aria-pressed')), top: Math.round(pr.top), centreX: Math.round((pr.left + pr.right) / 2) }; })()`);
-// Since df048ad (2026-10-14) the switch floats centred above the tab bar in List and moves to the top right of the deck in
-// Cards (under the deck's header, html.hb-deck-open .tab-switch in app.css).
-check('opening Cards presses the Cards button and moves the switch to the top right of the deck, under its header', eq(t.btns, ['false', 'true']) && t.top < listPos.top / 3 && t.centreX > listPos.centreX, JSON.stringify({ t, listPos }));
-t = await J(`(() => { const tab = document.querySelector('.tab-bar').getBoundingClientRect(), lb = document.querySelector('.tab-lb'); return { barH: Math.round(tab.height), barBottom: Math.round(tab.bottom), innerH: innerHeight, lbVisible: !!lb && getComputedStyle(lb).opacity !== '0' && lb.textContent.length > 0, noChevron: !document.querySelector('.vs-expand') }; })()`);
+// Since 2026-11-22 (owner) the switch sits below the cards in Cards too, centred over the pager just above the tab bar:
+// the same spot as in List, give or take the pager's few pixels.
+check('opening Cards presses the Cards button and keeps the switch centred below the cards, just above the tab bar', eq(t.btns, ['false', 'true']) && Math.abs(t.top - listPos.top) <= 16 && Math.abs(t.centreX - listPos.centreX) <= 2, JSON.stringify({ t, listPos }));
+t = await J(`(() => { const tab = document.querySelector('.tab-bar').getBoundingClientRect(), lb = document.querySelector('.tab-lb'), dk = document.querySelector('.hb-deck').getBoundingClientRect(); return { barH: Math.round(tab.height), barBottom: Math.round(tab.bottom), barL: Math.round(tab.left), barR: Math.round(innerWidth - tab.right), deckBottom: Math.round(dk.bottom), innerH: innerHeight, lbVisible: !!lb && getComputedStyle(lb).opacity !== '0' && lb.textContent.length > 0, noChevron: !document.querySelector('.vs-expand') }; })()`);
 check('Cards open: the tab bar is still the full, labelled bar — exactly as in List, never tucked away or shrunk (no expand/collapse button exists any more either)', t.barH >= 60 && t.lbVisible && t.noChevron, JSON.stringify(t));
-// Regression check for the real bug this replaced: with the tab bar always present and always opaque, there must be
-// no gap at all between it and the bottom of the screen for whatever is behind the fixed deck to bleed through.
-check('the tab bar reaches the very bottom of the screen, flush with no gap underneath it', t.barBottom >= t.innerH - 1, JSON.stringify(t));
+// Since 2026-11-22 the phone tab bar floats: a pill inset from the edges and the bottom. What must not come back is the old
+// bug of something showing through underneath it: the deck itself now runs to the very bottom, behind the bar.
+check('the tab bar floats: inset from both sides and from the bottom of the screen', t.barL >= 8 && t.barR >= 8 && t.innerH - t.barBottom >= 6 && t.innerH - t.barBottom <= 40, JSON.stringify(t));
+check('and the deck (its violet background) runs to the very bottom behind it, so nothing white shows under the bar', t.deckBottom >= t.innerH - 1, JSON.stringify(t));
 await c.ev(`document.querySelectorAll('.tab-switch button')[0].click()`); await c.sleep(900);
 check('List, clicked from the switch while Cards was open, closes the deck (the deck’s own header has no separate List button any more)', (await c.ev(`!HBCards.isOpen() && !document.querySelector('.dk-tolist')`)) === true);
 check('and List is pressed again, back on the switch', eq(await J(`[...document.querySelectorAll('.tab-switch button')].map((b) => b.getAttribute('aria-pressed'))`), ['true', 'false']));
@@ -141,7 +146,7 @@ await c.shot(`${OUT}/cards_story.png`);
 // text is copied as text, never as markup
 await c.ev(`HBCards.close(); document.querySelector('#ai-1 h3').textContent = '<img src=x onerror="window.__xss=1"> Tom & Jerry'; 'ok'`);
 await openDeck();
-t = await J(`({ imgs: document.querySelectorAll('.hb-deck .dk-story img').length, xss: window.__xss || 0, title: document.querySelector('.dk-story .dk-title').textContent })`);
+t = await J(`({ imgs: document.querySelectorAll('.hb-deck .dk-story img:not(.dk-art)').length, xss: window.__xss || 0, title: document.querySelector('.dk-story .dk-title').textContent })`);
 check('markup in a headline is shown as text and never runs', t.imgs === 0 && t.xss === 0 && /^<img src=x/.test(t.title), JSON.stringify(t));
 
 // order follows the reader's own choices
@@ -668,6 +673,31 @@ check('with reduced motion on, moving between cards is instant', (await pos()) =
 await c.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }] });
 
 // ---------- 10. nothing broke ----------
+// ---- The Sunday recap (2026-11-22): on a Sunday edition the deck starts on its own "This week" card, then today's cover;
+// the list gets a card above "Before the news"; any other day, neither. The recap comes from social/<date>.json (stubbed here).
+{
+  const ed = (HTML.match(/data-edition-date="(\d{4}-\d{2}-\d{2})"/) || [])[1];
+  const sunday = !!ed && new Date(ed + 'T00:00:00Z').getUTCDay() === 0;
+  const WEEK = { date: ed, weekly: { title: 'What actually mattered this week', from: '2026-11-16', intro: 'A test intro.', items: [1, 2, 3, 4, 5].map((n) => ({ date: ed, lane: 'ai', headline: 'Test story ' + n + ' <b>bold</b>', why: 'Why ' + n })) } };
+  await open({ week: WEEK, view: 'cards', wait: 2600 });
+  await waitFor(`!!window.HBCards && HBCards.isOpen()`, 4000);
+  await c.sleep(400);
+  t = await J(`(() => { const k = [...document.querySelectorAll('.hb-deck .dk-card')].map((x) => x.className.match(/dk-(week|cover|intro|story|end)/)[1]); const w = document.querySelector('.dk-week'); return { k: k.slice(0, 3), n: w ? w.querySelectorAll('.dk-week-list li').length : 0, b: w ? w.querySelector('.dk-week-list b').textContent : '', pos: document.querySelector('.dk-count').textContent, listCard: !!document.querySelector('.hb-week') }; })()`);
+  if (sunday) {
+    check('Sunday: the deck opens on the "This week" card, then today\'s cover', eq(t.k, ['week', 'cover', 'intro']) && /^This week · 1 \//.test(t.pos), JSON.stringify(t));
+    check('it lists the five stories, headlines shown as text (markup never runs)', t.n === 5 && t.b === 'Test story 1 <b>bold</b>', JSON.stringify(t));
+    check('the list has the recap card above "Before the news" too', t.listCard, JSON.stringify(t));
+    await c.ev(`document.querySelector('.dk-week .dk-hint').click()`); await c.sleep(900);
+    t = await J(`document.querySelector('.dk-count').textContent`);
+    check('"Today\'s brief" moves on to the cover', /^Cover · 2 \//.test(t), t);
+    await c.ev(`document.querySelector('.dk-cover .dk-hint').click()`); await c.sleep(900);
+    t = await J(`document.querySelector('.dk-count').textContent`);
+    check('and the cover\'s "See today\'s stories" to the first section, as before', /· 3 \//.test(t) && !/Cover/.test(t), t);
+  } else {
+    check('not a Sunday edition: no recap card in the deck or the list', t.k[0] === 'cover' && !t.listCard, JSON.stringify(t));
+  }
+}
+
 const errs = c.errors.filter((e) => !/r2\.dev|__audio|net::ERR|Failed to load resource|CORS/.test(e));
 check('no script errors anywhere in the run', errs.length === 0, errs.join(' | '));
 

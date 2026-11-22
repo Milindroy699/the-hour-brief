@@ -945,7 +945,7 @@
   var useQ, useT;
   function usePf() { return NATIVE ? (Cap0.getPlatform && Cap0.getPlatform() === 'android' ? 'android' : 'ios') : 'web'; }
   function use(f) {
-    if (/^(localhost|127\.)/.test(location.hostname)) return;
+    if (/^(localhost|127\.)/.test(location.hostname) && !window.HB_COUNT_TEST) return;     // not from test servers (unless a test asks)
     if (!useQ) useQ = [];
     var first = 0;
     try { var k = 'hb-use-' + f, day = localDay(); if (localStorage.getItem(k) !== day) { localStorage.setItem(k, day); first = 1; } } catch (e) { /* counted, not as a person */ }

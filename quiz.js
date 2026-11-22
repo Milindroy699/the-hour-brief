@@ -1453,7 +1453,7 @@
     haptic(true);
     setTimeout(function () { try { sh.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }, 60);
   }
-  function showBadge(b, done) {
+  function showBadge(b, done, nth) {
     var o = overlay('qz-badgepop', 'New badge: ' + b.name);
     o.bg._done = done;
     o.bg.addEventListener('click', function (e) { if (e.target === o.bg) o.close(done); });
@@ -1467,7 +1467,7 @@
     card.appendChild(badgeImg(b, 'qz-bp-img'));
     card.appendChild(el('h2', 'qz-bp-name', b.name));
     card.appendChild(el('p', 'qz-bp-desc', b.desc));
-    var got = Object.keys(load().b || {}).length, all = BADGES.length;
+    var got = nth || Object.keys(load().b || {}).length, all = BADGES.length;     // nth: this badge's place when several came at once
     var prog = el('div', 'qz-bp-prog');
     var pl = el('div', 'qz-bp-pl');
     pl.appendChild(el('span', '', 'Collection'));
@@ -1495,10 +1495,12 @@
   // The milestone (if today's streak is one), carrying the streak badge it unlocked; then the other new badges, one at a time
   function celebrate(streak, fresh) {
     var list = (fresh || []).slice();
-    var queue = function () { var b = list.shift(); if (b) setTimeout(function () { showBadge(b, queue); }, 250); };
+    var shown = Object.keys(load().b || {}).length - list.length;      // earned before today's, so each card counts up in turn
+    var queue = function () { var b = list.shift(); if (b) { shown++; var n = shown; setTimeout(function () { showBadge(b, queue, n); }, 250); } };
     if (MILESTONES.indexOf(streak) !== -1) {
       var sb = null;
       list = list.filter(function (b) { if (!sb && /^streak/.test(b.id)) { sb = b; return false; } return true; });
+      if (sb) shown++;
       setTimeout(function () { showMilestone(streak, sb, queue); }, 500);
     } else if (list.length) setTimeout(queue, 500);
   }
@@ -1535,7 +1537,9 @@
       panes[t[0]] = p;
     });
     seg.addEventListener('keydown', function (e) {
-      var i = TAB_NAMES.map(function (t) { return t[0]; }).indexOf(curTab);
+      var focused = e.target && e.target.id ? e.target.id.replace('qz-tab-', '') : curTab;     // from the tab that has focus
+      var i = TAB_NAMES.map(function (t) { return t[0]; }).indexOf(focused);
+      if (i < 0) i = TAB_NAMES.map(function (t) { return t[0]; }).indexOf(curTab);
       if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
         e.preventDefault();
         var nx = TAB_NAMES[(i + (e.key === 'ArrowRight' ? 1 : 2)) % 3][0];
