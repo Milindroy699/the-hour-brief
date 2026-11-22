@@ -36,7 +36,7 @@ export const SITE = {
 const LANES = [['ai', 'AI & Tech'], ['biz', 'Product & Business'], ['mkt', 'Stock Market']];
 // Other public pages worth a canonical link and a sitemap entry (path from the site root).
 const PAGES = ['about.html', 'corrections.html', 'podcasts.html', 'leaders.html', 'contact.html', 'privacy.html', 'app.html', 'archive/index.html'];
-const NOINDEX = ['share-kit.html', 'growth.html', 'app-analytics.html'];
+const NOINDEX = ['share-kit.html', 'growth.html', 'app-analytics.html', 'substack.html'];
 // A correction note inside a story (see DEPLOY.md, "Corrections"): <p class="correction" data-corrected="YYYY-MM-DD">…</p>
 const CORRECTION = /<p class="correction" data-corrected="(\d{4}-\d{2}-\d{2})">([\s\S]*?)<\/p>/g;
 export const REVIEW_START = '2026-11-21';            // the owner reads each edition's Stock Market section after it publishes, from this date
@@ -228,6 +228,7 @@ Disallow: /.github/
 Disallow: /share-kit.html
 Disallow: /growth.html
 Disallow: /app-analytics.html
+Disallow: /substack.html
 Disallow: /DEPLOY.md
 Disallow: /e/
 Disallow: /s/

@@ -239,6 +239,11 @@ async function toTelegramWeekly(s) {
     await tgWithButtons(chat, `🗓 Weekly recap · Reddit (read each community’s rules first; post as yourself, one community a week)\n\nTitle:\n${r.title}\n\nBody:\n${body}`,
       subs.map((sub) => ({ text: `Post to r/${sub}`, url: redditSubmit(sub, r.title, body) })));
   }
+  // Substack (owner, 2026-11-22): no publishing API, so substack.html lays the week out as posts ready to paste (the recap and
+  // the week's Voices long reads, each with title, subtitle, formatted body and a cover image).
+  const sub = process.env.SUBSTACK_URL ? String(process.env.SUBSTACK_URL).replace(/\/+$/, '') : '';
+  await tgWithButtons(chat, `📰 Substack · this week's posts are ready to paste: the recap, and this week's Voices long reads.\n\nOpen the drafts, then for each one: Copy title, Copy subtitle, Copy post (paste into the body), add the Cover image, publish and send.`,
+    [{ text: '📰 Open the Substack drafts', url: `${CANON}/substack.html?d=${s.date}&src=telegram` }].concat(sub ? [{ text: 'Open Substack', url: `${sub}/publish/post?type=newsletter` }] : []));
   return { ok: true };
 }
 

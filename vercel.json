@@ -73,7 +73,7 @@
       ]
     },
     {
-      "source": "/:file(DEPLOY\\.md|share-kit\\.html|growth\\.html|app-analytics\\.html|requirements\\.txt)",
+      "source": "/:file(DEPLOY\\.md|share-kit\\.html|growth\\.html|app-analytics\\.html|substack\\.html|requirements\\.txt)",
       "headers": [
         {
           "key": "X-Robots-Tag",
