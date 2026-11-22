@@ -84,6 +84,7 @@
     var it = document.querySelector('.item[data-story-id="' + id + '"]');
     if (!it) return;
     if (window.HBQuizPage && window.HBQuizPage.isOpen && window.HBQuizPage.isOpen()) window.HBQuizPage.close();   // the story lives in the normal page, which the dedicated quiz page (mobile.js) replaces while it's open
+    if (window.HBOpenStory && window.HBOpenStory(id)) return;      // reading in Cards: the deck opens on this story's card
 
     it.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
     it.classList.remove('deeplinked');

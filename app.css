@@ -191,9 +191,12 @@ html .item { scroll-margin-top: calc(var(--hb-head-h, 0px) + 72px); }
 .masthead-tagline { margin: 14px 18px 0; font-size: 1rem; line-height: 1.4; color: var(--ink-soft); }
 .ab-logo { flex: none; width: 34px; height: 34px; border-radius: 9px; box-shadow: 0 0 0 1px var(--line); }
 .ab-brand { flex: 1 1 auto; min-width: 0; }
+/* The header's name is the same size on every screen (List, Cards, Audio, Challenge, Voices, past editions) and does not
+   grow with Text size: that setting is for reading, and the header bar's height is fixed. (2026-11-22: the apps had an
+   extra rule in capacitor-bridge.js that made it bigger on the list page only.) */
 .wordmark {
   font-family: var(--hb-label);
-  font-size: 1.22rem;
+  font-size: 19.5px;
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.1;
@@ -1115,3 +1118,6 @@ html.hb-native footer.colophon, html.hb-native .site-links { display: none !impo
 .hb-app-foot a { color: var(--ink-soft); }
 .rd-sheet-note { margin: 0 0 12px; font-size: 0.9rem; line-height: 1.5; color: var(--ink-soft); }
 a.rd-item { text-decoration: none; color: inherit; }
+/* With the footer gone in the apps the quiz is the end of the page: too little below the question for "Play the quiz" (from
+   the cards) to bring it up under the header, so it stopped halfway down. The quiz area keeps a screen's height. */
+html.hb-native #quiz-root { min-height: calc(100vh - 80px); }

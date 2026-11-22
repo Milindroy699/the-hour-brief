@@ -1482,6 +1482,14 @@
     quizPrevFocus = null;
   }
   window.HBQuizPage = { close: closeQuizPage, isOpen: function () { return quizOvShown; } };
+  // A story asked for from elsewhere on the page (the quiz's "Read the story"): in Cards, the deck opens on that story's
+  // card (it used to land on the first card: closing Challenge put the deck back at the start); in List, the caller scrolls.
+  window.HBOpenStory = function (id) {
+    closeQuizPage();
+    if (!(cardsOk() && (deckOpen() || getView() === 'cards'))) return false;
+    openCards({ id: id });
+    return true;
+  };
   // listen.js builds the same header row (see buildHub() there) — it is a separate file/closure, so the actions it
   // needs are handed across here rather than duplicated.
   window.HBChrome = { textSize: openTextSize, saved: openSaved, menu: openMenu, refreshSaved: refreshSaved, back: backTarget, icons: { aa: ICON.aa, star: STAR_SVG, sliders: SLIDERS_SVG, back: ICON.back } };

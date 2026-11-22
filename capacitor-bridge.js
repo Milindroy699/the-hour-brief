@@ -239,7 +239,6 @@
         'border:1px solid color-mix(in srgb, currentColor 32%, transparent);}' +
       '#cap-share.cap-icon{display:inline-flex;align-items:center;justify-content:center;width:34px;height:31px;padding:0 !important}' +
       '#cap-remind svg,#cap-share.cap-icon svg{width:18px;height:18px;fill:none}#cap-remind.on svg{fill:currentColor}' +
-      '@media (max-width:640px){.masthead-inner .wordmark{font-size:1.28rem}}' +
       '#cap-sheet-bg{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);display:flex;' +
         'align-items:flex-end;justify-content:center}' +
       '#cap-sheet{width:100%;max-width:520px;box-sizing:border-box;background:var(--paper,#f2f3ee);' +
