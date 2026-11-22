@@ -296,11 +296,13 @@
       if (!w || !w.items || !w.items.length) return null;
       var fmt = function (x, y) { return new Date(x + 'T00:00:00Z').toLocaleDateString('en-IN', y ? { day: 'numeric', month: 'short', timeZone: 'UTC' } : { day: 'numeric', timeZone: 'UTC' }); };
       var range = w.from ? (w.from.slice(5, 7) === d.slice(5, 7) ? fmt(w.from) : fmt(w.from, 1)) + '–' + fmt(d, 1) : fmt(d, 1);
-      return { date: d, range: range, title: w.title || 'What actually mattered this week', intro: w.intro || '', items: w.items, url: '/week.html?d=' + d };
+      return (weeklyNow = { date: d, range: range, title: w.title || 'What actually mattered this week', intro: w.intro || '', items: w.items, url: '/week.html?d=' + d });
     }).catch(function () { return null; });
     return weeklyP;
   }
   window.HBWeekly = getWeekly;
+  var weeklyNow = null;
+  window.HBWeeklyNow = function () { return weeklyNow; };
   function openWeekly(url, src) { var u = url + (url.indexOf('?') < 0 ? '?' : '&') + 'src=' + src; if (typeof leaveTo === 'function') leaveTo(u); else location.href = u; }
   function weeklyCard() {
     if (!reader() || !isFeed() || document.querySelector('.hb-week')) return;

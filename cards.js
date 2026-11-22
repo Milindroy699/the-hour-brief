@@ -99,6 +99,10 @@
 
   function collect() {
     var out = [{ kind: 'cover', name: 'The Hour Brief' }], lanes = [];
+    // Sundays: the week's recap is a card of its own, and the deck starts on it (owner, 2026-11-22). mobile.js fetches it;
+    // if it arrives after the deck is up, weeklyArrived() below adds it.
+    var wk = window.HBWeeklyNow && window.HBWeeklyNow();
+    if (wk) out.unshift({ kind: 'week', name: 'This week', w: wk });
     document.querySelectorAll('section.lane[id]').forEach(function (l) { if (laneShown(l)) lanes.push(l); });
     var secTotal = lanes.filter(function (l) { return l.id !== 'quiz' && l.querySelector('.item[data-story-id]'); }).length, sec = 0;
     lanes.forEach(function (lane) {
@@ -174,20 +178,6 @@
     // 2026-11-18). The cover opens on the edition line, then the tagline.
     var tgSrc = document.querySelector('.tagline');
     if (tgSrc) b.scroll.appendChild(mk('p', 'dk-tagline', plain(tgSrc)));
-    // Sundays: the week's recap, under the tagline (mobile.js getWeekly; nothing on other days)
-    if (window.HBWeekly) {
-      var wk = mk('div', 'dk-week-slot');
-      b.scroll.appendChild(wk);
-      window.HBWeekly().then(function (w) {
-        if (!w) { wk.remove(); return; }
-        var a = mk('a', 'hb-week hb-week-sm');
-        a.href = w.url + '&src=app-cards';
-        a.appendChild(mk('span', 'hb-week-k', 'This week · ' + w.range));
-        a.appendChild(mk('b', 'hb-week-t', w.title));
-        a.appendChild(mk('span', 'hb-week-go', 'Read all ' + w.items.length + ' stories'));
-        wk.appendChild(a);
-      });
-    }
     var qt = document.querySelector('.pause-text');
     if (qt) {
       var fig = mk('figure', 'dk-quote');
@@ -210,12 +200,48 @@
       b.scroll.appendChild(fig);
     }
     var start = btn('dk-hint', 'See today’s stories');
-    start.addEventListener('click', function () { goTo(1, true); });
+    start.addEventListener('click', function () { goTo(cards.indexOf(c) + 1, true); });
     var bar = mk('div', 'dk-actions dk-startbar');
     bar.appendChild(start);
     b.face.appendChild(bar);
     return b.card;
   }
+
+  // The Sunday recap: the week's five stories, each with why it mattered, then on to today's cover.
+  var LANE_NAMES = { ai: 'AI & Tech', biz: 'Business', mkt: 'Stock Market' };
+  function buildWeek(c) {
+    var w = c.w, b = face('week', 'This week: ' + w.title);
+    b.scroll.appendChild(mk('p', 'dk-kick', 'This week · ' + w.range));
+    b.scroll.appendChild(heading('h2', 'dk-title dk-title-lg', w.title));
+    if (w.intro) b.scroll.appendChild(mk('p', 'dk-week-intro', w.intro));
+    var ol = mk('ol', 'dk-week-list');
+    w.items.forEach(function (it) {
+      var li = mk('li');
+      var when = it.date ? new Date(it.date + 'T00:00:00Z').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }) : '';
+      li.appendChild(mk('span', 'dk-week-meta', (LANE_NAMES[it.lane] || '') + (when ? ' · ' + when : '')));
+      li.appendChild(mk('b', '', it.headline || ''));
+      if (it.why) li.appendChild(mk('p', '', it.why));
+      ol.appendChild(li);
+    });
+    b.scroll.appendChild(ol);
+    var full = mk('a', 'dk-week-full', 'Open the full recap');
+    full.href = w.url + '&src=app-cards';
+    b.scroll.appendChild(full);
+    var next = btn('dk-hint', 'Today’s brief');
+    next.addEventListener('click', function () { goTo(cards.indexOf(c) + 1, true); });
+    var bar = mk('div', 'dk-actions dk-startbar');
+    bar.appendChild(next);
+    b.face.appendChild(bar);
+    return b.card;
+  }
+  // The recap came back after the deck was drawn: add its card, and start on it if the reader hasn't moved yet.
+  function weeklyArrived() {
+    if (!shown || cards.some(function (x) { return x.kind === 'week'; }) || !(window.HBWeeklyNow && window.HBWeeklyNow())) return;
+    var atStart = idx === 0;
+    render();
+    goTo(atStart ? 0 : idx + 1, false);
+  }
+  if (window.HBWeekly) window.HBWeekly().then(function () { weeklyArrived(); });
 
   // The closing card's audio and quiz tiles follow Listen and the quiz chip, which are built a moment after the page.
   function syncClosing() {
@@ -626,7 +652,7 @@
     cards = collect();
     track.textContent = '';
     cards.forEach(function (c, i) {
-      c.el = c.kind === 'cover' ? buildCover(c) : c.kind === 'intro' ? buildIntro(c) : c.kind === 'story' ? buildStory(c) : buildEnd(c);
+      c.el = c.kind === 'week' ? buildWeek(c) : c.kind === 'cover' ? buildCover(c) : c.kind === 'intro' ? buildIntro(c) : c.kind === 'story' ? buildStory(c) : buildEnd(c);
       c.el.style.zIndex = String(cards.length - i);      // stacked deck: every card sits above the ones after it (fixed, never animated)
       track.appendChild(c.el);
     });
