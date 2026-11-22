@@ -45,7 +45,8 @@
   } catch (e) { /* mobile.js draws it */ }
 })();
 </script>
-<meta name="apple-itunes-app" content="app-id=6817195056">
+<script>/* Safari's app banner: "Open" takes an app user to this exact page in the app (app-argument), not just the app's home */document.write('<meta name="apple-itunes-app" content="app-id=6817195056, app-argument=' + location.href.replace(/["<>]/g, encodeURIComponent) + '">');</script>
+<noscript><meta name="apple-itunes-app" content="app-id=6817195056"></noscript>
 <title>Voices — The Hour Brief</title>
 <meta name="description" content="Voices: the week's best thinking from the people worth listening to in tech & AI, business, product and finance, plus weekend essays on principles for work and life.">
 <link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png">

@@ -65,7 +65,8 @@
      through and switching screens flashed black (owner, 2026-11-18). -->
 <style>html.hb-boot { background-color: var(--bg, #faf9fd); } html.hb-boot:not(.hb-reveal) body { visibility: hidden; } html.hb-boot .tab-bar { visibility: visible; }</style>
 <!-- iPhone Safari's own "Open in the App Store" banner for website visitors (other browsers get mobile.js's bar) -->
-<meta name="apple-itunes-app" content="app-id=6817195056">
+<script>/* Safari's app banner: "Open" takes an app user to this exact page in the app (app-argument), not just the app's home */document.write('<meta name="apple-itunes-app" content="app-id=6817195056, app-argument=' + location.href.replace(/["<>]/g, encodeURIComponent) + '">');</script>
+<noscript><meta name="apple-itunes-app" content="app-id=6817195056"></noscript>
 <title>The Hour Brief</title>
 <meta name="description" content="A free daily one-hour digest of AI/tech, product & business (India + global), and the Indian stock market — every item links to its original source.">
 <meta property="og:title" content="The Hour Brief">
