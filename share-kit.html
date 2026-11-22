@@ -29,53 +29,44 @@
   summary { cursor: pointer; font-weight: 600; }
   code { background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; font-size: .85em; }
   ol li { margin: 6px 0; }
+  .ktabs { position: sticky; top: 0; z-index: 5; display: flex; gap: 4px; overflow-x: auto; margin: 8px -16px 6px; padding: 8px 16px; background: var(--bg); border-bottom: 1px solid var(--line); scrollbar-width: none; }
+  .ktabs::-webkit-scrollbar { display: none; }
+  .ktabs button { flex: none; min-height: 38px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: var(--soft); font-weight: 600; font-size: .92rem; }
+  .ktabs button[aria-selected="true"] { background: var(--brand); color: var(--brand-ink); }
+  .ktabs button.sun::after { content: ""; display: inline-block; width: 7px; height: 7px; margin-left: 6px; border-radius: 50%; background: #e8b04b; vertical-align: middle; }
+  .kpane > h2:first-child, .kpane > div > h2:first-child { margin-top: 14px; }
 </style>
 </head>
 <body>
 <main>
   <h1>Post kit</h1>
   <p class="meta" id="meta-social">Loading today’s post…</p>
-  <section id="social" hidden>
-    <p class="lead" id="insight"></p>
+  <p class="lead" id="insight"></p>
+  <!-- One tab per channel (owner, 2026-11-22). The URL hash picks one (#whatsapp, #linkedin, #x, #shorts, #reddit, #substack,
+       #telegram); the last one used is remembered. A dot marks a tab with something only on Sundays (the weekly recap). -->
+  <nav class="ktabs" role="tablist" aria-label="Channels" id="ktabs">
+    <button type="button" role="tab" data-tab="whatsapp">WhatsApp</button>
+    <button type="button" role="tab" data-tab="linkedin">LinkedIn</button>
+    <button type="button" role="tab" data-tab="x">X</button>
+    <button type="button" role="tab" data-tab="shorts">Shorts / Reels</button>
+    <button type="button" role="tab" data-tab="reddit">Reddit</button>
+    <button type="button" role="tab" data-tab="substack">Substack</button>
+    <button type="button" role="tab" data-tab="telegram">Telegram</button>
+  </nav>
+  <p class="ok" id="status" role="status" aria-live="polite"></p>
 
-    <h2>WhatsApp status</h2>
-    <img class="card status" id="status-img" alt="Status image for today’s insight">
-    <div class="row">
-      <button class="primary" id="share-img" type="button" hidden>Share image…</button>
-      <a class="btn" id="save-img" download>Save image</a>
-    </div>
-    <p class="hint">On your phone, Share image → WhatsApp → My Status. Then paste the caption.</p>
-    <textarea id="status-cap" readonly aria-label="WhatsApp status caption" style="min-height:6em"></textarea>
-    <div class="row"><button id="copy-cap" type="button">Copy caption</button></div>
-
-    <div id="short" hidden>
-      <h2>Short / Reel</h2>
-      <p class="meta" id="short-meta"></p>
-      <video class="card status" id="short-video" controls playsinline preload="metadata"></video>
+  <section class="kpane" id="p-whatsapp" role="tabpanel" hidden>
+    <div id="social" hidden>
+      <h2>WhatsApp status</h2>
+      <img class="card status" id="status-img" alt="Status image for today’s insight">
       <div class="row">
-        <button class="primary" id="short-share" type="button" hidden>Share video…</button>
-        <a class="btn" id="short-save" download>Save video</a>
+        <button class="primary" id="share-img" type="button" hidden>Share image…</button>
+        <a class="btn" id="save-img" download>Save image</a>
       </div>
-      <p class="hint">On your phone, Share video → YouTube (Short) or Instagram (Reel) or WhatsApp → My Status, then paste its caption.</p>
-      <label class="meta" for="short-yt">YouTube Shorts: title, then description</label>
-      <textarea id="short-yt" readonly style="min-height:9em"></textarea>
-      <div class="row"><button id="copy-yt" type="button">Copy title</button><button id="copy-ytd" type="button">Copy description</button></div>
-      <label class="meta" for="short-ig">Instagram Reel caption</label>
-      <textarea id="short-ig" readonly style="min-height:8em"></textarea>
-      <div class="row"><button id="copy-ig" type="button">Copy caption</button></div>
-      <label class="meta" for="short-wa">WhatsApp status caption</label>
-      <textarea id="short-wa" readonly style="min-height:4em"></textarea>
-      <div class="row"><button id="copy-swa" type="button">Copy caption</button></div>
+      <p class="hint">On your phone, Share image → WhatsApp → My Status. Then paste the caption.</p>
+      <textarea id="status-cap" readonly aria-label="WhatsApp status caption" style="min-height:6em"></textarea>
+      <div class="row"><button id="copy-cap" type="button">Copy caption</button></div>
     </div>
-
-    <h2>LinkedIn post</h2>
-    <p class="meta" id="li-label"></p>
-    <textarea id="li" readonly aria-label="LinkedIn post text"></textarea>
-    <div class="row">
-      <button class="primary" id="copy-li" type="button">Copy &amp; open LinkedIn</button>
-      <button id="share-li" type="button" hidden>Share…</button>
-    </div>
-    <p class="hint">The text is copied first, so if LinkedIn opens without it, just paste.</p>
     <div id="wa-leaders" hidden>
       <h2>WhatsApp · Voices pick</h2>
       <img class="card status" id="wl-img" alt="Status image for today’s Voices pick">
@@ -87,11 +78,35 @@
       <div class="row"><button id="wl-copy" type="button">Copy message</button></div>
       <p class="hint">Status: share the image, then paste the first two lines. Chats and groups: paste the whole message.</p>
     </div>
+    <h2>WhatsApp channel</h2>
+    <p class="meta" id="meta">Loading…</p>
+    <img class="card" id="card" alt="Preview card that appears when the link is posted" hidden>
+    <textarea id="wa" readonly aria-label="WhatsApp post text"></textarea>
+    <div class="row">
+      <button class="primary" id="copy-wa" type="button">Copy for WhatsApp</button>
+      <a class="btn" id="open-wa" target="_blank" rel="noopener">Open WhatsApp</a>
+      <button id="share" type="button" hidden>Share…</button>
+    </div>
+    <p class="hint">WhatsApp has no posting API for channels, so this is one tap: copy, open your channel, paste, send. The links expand into the preview card automatically.</p>
+  </section>
+
+  <section class="kpane" id="p-linkedin" role="tabpanel" hidden>
+    <h2>LinkedIn post</h2>
+    <p class="meta" id="li-label"></p>
+    <textarea id="li" readonly aria-label="LinkedIn post text"></textarea>
+    <div class="row">
+      <button class="primary" id="copy-li" type="button">Copy &amp; open LinkedIn</button>
+      <button id="share-li" type="button" hidden>Share…</button>
+    </div>
+    <p class="hint">The text is copied first, so if LinkedIn opens without it, just paste. On Sundays this is the weekly recap, and it goes to your profile on its own.</p>
     <details id="li-alt" hidden>
       <summary>Other option: today’s insight post</summary>
       <textarea id="li2" readonly aria-label="Alternative LinkedIn post" style="margin-top:10px"></textarea>
       <div class="row"><button id="copy-li2" type="button">Copy this one</button></div>
     </details>
+  </section>
+
+  <section class="kpane" id="p-x" role="tabpanel" hidden>
     <div id="x-box" hidden>
       <h2>X post</h2>
       <textarea id="xt" readonly aria-label="X post text" style="min-height:7em"></textarea>
@@ -99,45 +114,63 @@
         <a class="btn primary" id="x-open" target="_blank" rel="noopener">Post on X</a>
         <button id="x-copy" type="button">Copy</button>
       </div>
-      <p class="hint">Opens X with the post filled in; you check it and tap Post.</p>
+      <p class="hint">Opens X with the post filled in; you check it and tap Post. The thread, replies and the afternoon and evening posts arrive on Telegram through the day.</p>
     </div>
-    <div id="weekly" hidden>
-      <h2>Weekly recap · <a href="#" id="wk-page" target="_blank" rel="noopener">the page</a></h2>
-      <p class="meta">The LinkedIn post above is the recap today (it goes to your profile on its own). X and Reddit are yours to post.</p>
-      <h3>X</h3>
+    <div id="wk-x-box" hidden>
+      <h2>Weekly recap on X · <a href="#" id="wk-page" target="_blank" rel="noopener">the page</a></h2>
       <textarea id="wk-x" readonly aria-label="Weekly X post" style="min-height:7em"></textarea>
       <div class="row">
         <a class="btn primary" id="wk-x-open" target="_blank" rel="noopener">Post on X</a>
         <button id="wk-x-copy" type="button">Copy</button>
       </div>
-      <h3>Reddit</h3>
+    </div>
+  </section>
+
+  <section class="kpane" id="p-shorts" role="tabpanel" hidden>
+    <div id="short" hidden>
+      <h2>Short / Reel</h2>
+      <p class="meta" id="short-meta"></p>
+      <video class="card status" id="short-video" controls playsinline preload="metadata"></video>
+      <div class="row">
+        <button class="primary" id="short-share" type="button" hidden>Share video…</button>
+        <a class="btn" id="short-save" download>Save video</a>
+      </div>
+      <p class="hint">YouTube and Instagram are posted automatically. By hand: Share video → WhatsApp → My Status, then paste its caption.</p>
+      <label class="meta" for="short-yt">YouTube Shorts: title, then description</label>
+      <textarea id="short-yt" readonly style="min-height:9em"></textarea>
+      <div class="row"><button id="copy-yt" type="button">Copy title</button><button id="copy-ytd" type="button">Copy description</button></div>
+      <label class="meta" for="short-ig">Instagram Reel caption</label>
+      <textarea id="short-ig" readonly style="min-height:8em"></textarea>
+      <div class="row"><button id="copy-ig" type="button">Copy caption</button></div>
+      <label class="meta" for="short-wa">WhatsApp status caption</label>
+      <textarea id="short-wa" readonly style="min-height:4em"></textarea>
+      <div class="row"><button id="copy-swa" type="button">Copy caption</button></div>
+    </div>
+    <p class="meta" id="short-none">Today’s video isn’t ready yet. It’s made after the morning recording (about 10:45).</p>
+  </section>
+
+  <section class="kpane" id="p-reddit" role="tabpanel" hidden>
+    <div id="wk-reddit" hidden>
+      <h2>Weekly recap on Reddit</h2>
       <textarea id="wk-rt" readonly aria-label="Reddit title" style="min-height:3em"></textarea>
       <div class="row"><button id="wk-rt-copy" type="button">Copy title</button></div>
       <textarea id="wk-rb" readonly aria-label="Reddit post body" style="min-height:14em"></textarea>
       <div class="row"><button id="wk-rb-copy" type="button">Copy body</button></div>
       <div class="row" id="wk-subs"></div>
-      <p class="hint">Read each community’s rules first and post as yourself. If Reddit opens without the text, paste the title and body.</p>
+      <p class="hint">Read each community’s rules first and post as yourself, one community a week. If Reddit opens without the text, paste the title and body.</p>
     </div>
+    <p class="meta" id="reddit-none">Reddit is weekly: the recap’s Reddit post is here on Sundays.</p>
   </section>
 
-  <h2 style="margin-top:40px">Channel post</h2>
-  <p class="meta" id="meta">Loading…</p>
-  <img class="card" id="card" alt="Preview card that appears when the link is posted" hidden>
+  <section class="kpane" id="p-substack" role="tabpanel" hidden>
+    <div id="substack-kit"><p class="meta">Loading…</p></div>
+  </section>
 
-  <h2>WhatsApp channel</h2>
-  <textarea id="wa" readonly aria-label="WhatsApp post text"></textarea>
-  <div class="row">
-    <button class="primary" id="copy-wa" type="button">Copy for WhatsApp</button>
-    <a class="btn" id="open-wa" target="_blank" rel="noopener">Open WhatsApp</a>
-    <button id="share" type="button" hidden>Share…</button>
-  </div>
-  <p class="ok" id="status" role="status" aria-live="polite"></p>
-  <p class="hint">WhatsApp has no posting API for channels, so this is one tap: copy, open your channel, paste, send. The links expand into the preview card automatically.</p>
-
-  <h2>Telegram (by hand)</h2>
-  <textarea id="tg" readonly aria-label="Telegram post text" style="min-height:11em"></textarea>
-  <div class="row"><button id="copy-tg" type="button">Copy plain text</button></div>
-
+  <section class="kpane" id="p-telegram" role="tabpanel" hidden>
+    <h2>Telegram</h2>
+    <p class="hint" style="margin-top:0">The channel post goes out on its own around 11:00. This is the same text, for posting by hand if it ever doesn’t.</p>
+    <textarea id="tg" readonly aria-label="Telegram post text" style="min-height:11em"></textarea>
+    <div class="row"><button id="copy-tg" type="button">Copy plain text</button></div>
   <details>
     <summary>Set up automatic Telegram posting</summary>
     <ol>
@@ -148,11 +181,39 @@
     </ol>
     <p class="hint">Once set up it posts around 10:00 IST after each edition, once per day, and retries an hour later if the edition wasn’t ready.</p>
   </details>
+  </section>
 </main>
+<script src="/kit-substack.js"></script>
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
   var status = $('status'), timer;
+  // ---- Channel tabs ----
+  var TABS = ['whatsapp', 'linkedin', 'x', 'shorts', 'reddit', 'substack', 'telegram'];
+  function showTab(name, focus) {
+    if (TABS.indexOf(name) < 0) name = 'whatsapp';
+    TABS.forEach(function (t) {
+      var on = t === name, b = document.querySelector('.ktabs [data-tab="' + t + '"]');
+      b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1;
+      $('p-' + t).hidden = !on;
+      if (on && focus) b.focus();
+    });
+    if (name === 'substack' && window.HBSubstack) window.HBSubstack.mount($('substack-kit'));
+    try { localStorage.setItem('hb-kit-tab', name); } catch (e) {}
+    if (location.hash !== '#' + name) history.replaceState(null, '', location.pathname + location.search + '#' + name);
+  }
+  document.querySelectorAll('.ktabs button').forEach(function (b) {
+    b.setAttribute('aria-controls', 'p-' + b.dataset.tab);
+    b.addEventListener('click', function () { showTab(b.dataset.tab); });
+    b.addEventListener('keydown', function (e) {
+      var i = TABS.indexOf(b.dataset.tab);
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); showTab(TABS[(i + (e.key === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length], true); }
+    });
+  });
+  var firstTab = (location.hash || '').slice(1);
+  if (TABS.indexOf(firstTab) < 0) { try { firstTab = localStorage.getItem('hb-kit-tab') || 'whatsapp'; } catch (e) { firstTab = 'whatsapp'; } }
+  showTab(firstTab);
+  window.addEventListener('hashchange', function () { var t = location.hash.slice(1); if (TABS.indexOf(t) >= 0) showTab(t); });
   function say(msg) { status.textContent = msg; clearTimeout(timer); timer = setTimeout(function () { status.textContent = ''; }, 2500); }
   // The day's vertical video (tools/video/short.mjs, published by .github/workflows/short.yml). Hidden until it exists.
   function loadShort(date) {
@@ -181,6 +242,7 @@
         }).catch(function () {});
       }
       $('short').hidden = false;
+      $('short-none').hidden = true;
       if (location.hash === '#short') $('short').scrollIntoView();
     }).catch(function () { /* no video today (yet) */ });
   }
@@ -298,7 +360,10 @@
           $('wk-subs').appendChild(a);
         });
       }
-      $('weekly').hidden = false;
+      $('wk-x-box').hidden = !w.x;
+      $('wk-reddit').hidden = !(r.title && r.body);
+      $('reddit-none').hidden = !!(r.title && r.body);
+      ['x', 'reddit', 'substack', 'linkedin'].forEach(function (t) { var b = document.querySelector('.ktabs [data-tab="' + t + '"]'); if (b) { b.classList.add('sun'); b.title = 'Weekly recap today'; } });
     }
     $('copy-cap').addEventListener('click', function () { copy(s.status); });
     $('copy-li').addEventListener('click', function () {
