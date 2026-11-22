@@ -120,6 +120,7 @@
     track: function (event, extra) { track(event, extra); }
   };
   countWebVisit();                                   // every page with this script, not just editions: a visit from Google can land on Voices
+  countUses();
 
   // "Get the app" + "Listen on" block at the foot of every page on the website (editions, past editions, Voices, About...):
   // the store badges go through /app (counted, tagged for the stores), the podcast links are counted as they leave.
@@ -934,6 +935,66 @@
     return { n: 0, last: '', done: false, secOn: '' };
   }
   function tipSave(st) { try { localStorage.setItem(TIP_KEY, JSON.stringify(st)); return true; } catch (e) { return false; } }
+  // ---- Feature use counts, by platform (owner, 2026-11-22: "which features are doing well vs not") ----
+  // Each use is a plain count for the day, split iOS / Android / web, plus "people": the first use of that feature on this
+  // device that day (a day flag in localStorage, no ID is sent). Batched and sent a few seconds later, or when the page
+  // is left. Read by growth.html › Features (api/track.js stores f:<date>).
+  // (countUses() runs near the top of this file, before these lines: so no var initialisers here, they wouldn't have run yet.)
+  var useQ, useT;
+  function usePf() { return NATIVE ? (Cap0.getPlatform && Cap0.getPlatform() === 'android' ? 'android' : 'ios') : 'web'; }
+  function use(f) {
+    if (/^(localhost|127\.)/.test(location.hostname)) return;
+    if (!useQ) useQ = [];
+    var first = 0;
+    try { var k = 'hb-use-' + f, day = localDay(); if (localStorage.getItem(k) !== day) { localStorage.setItem(k, day); first = 1; } } catch (e) { /* counted, not as a person */ }
+    useQ.push([f, first]);
+    clearTimeout(useT);
+    useT = setTimeout(flushUses, 3000);
+  }
+  function flushUses() {
+    clearTimeout(useT);
+    if (!useQ || !useQ.length) return;
+    var body = JSON.stringify({ uses: useQ.splice(0, 40), pf: usePf() });
+    try {
+      if (navigator.sendBeacon && navigator.sendBeacon('/api/track', new Blob([body], { type: 'application/json' }))) return;
+      fetch('/api/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, keepalive: true }).catch(function () {});
+    } catch (e) { /* not counted */ }
+  }
+  function countUses() {
+    window.HBUse = use;
+    use('open');
+    var p = location.pathname;
+    if (p === '/' || p === '/index.html') use('today');
+    else if (/^\/archive\/(index\.html)?$/.test(p)) use('past_editions');
+    else if (/^\/archive\//.test(p)) use('past_edition_read');
+    else if (p === '/leaders.html' || p === '/voices') use('voices');
+    else if (p === '/week.html') use('weekly');
+    var art = function () { if (/^#a=/.test(location.hash) && (p === '/leaders.html' || p === '/voices')) use('voices_article'); };
+    art();
+    window.addEventListener('hashchange', art);
+    // Screens that open over the page: the classes cards.js, listen.js and openQuizPage set on <html>
+    var was = {};
+    var SCREENS = { 'hb-deck-open': 'cards_view', 'hb-hub-open': 'audio_open', 'hb-quiz-page': 'challenge_open' };
+    var look = function () {
+      Object.keys(SCREENS).forEach(function (c) {
+        var on = document.documentElement.classList.contains(c);
+        if (on && !was[c]) use(SCREENS[c]);
+        was[c] = on;
+      });
+    };
+    if (window.MutationObserver) new MutationObserver(look).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    // Taps, by what was tapped (one listener for the whole page, so nothing else has to know about counting)
+    var TAPS = [['.story-save', 'story_save'], ['.story-share', 'story_share'], ['.vote-btn', 'story_vote'], ['.src a, .dk-src a', 'source_out'],
+      ['#cap-share', 'edition_share'], ['#cap-remind', 'reminder'], ['.ab-menu', 'menu'], ['.rd-item[data-act="sections"]', 'sections'],
+      ['.rd-item[data-act="textsize"]', 'text_size'], ['.reader-saved', 'saved_list']];
+    document.addEventListener('click', function (e) {
+      var t = e.target && e.target.closest ? e.target : null;
+      if (!t) return;
+      for (var i = 0; i < TAPS.length; i++) if (t.closest(TAPS[i][0])) { use(TAPS[i][1]); return; }
+    }, true);
+    window.addEventListener('pagehide', flushUses);
+    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') flushUses(); });
+  }
   function localDay() {
     var d = new Date();
     return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
@@ -1019,6 +1080,7 @@
   // A plain count (no identifier is sent): the once-a-day check below happens on the device.
   // Also carries the visit's source (see GROWTH_SRC) so each count can be split by where readers came from.
   function track(event, extra) {
+    if (event === 'channel_out' || event === 'podcast_out') use(event);
     if (/^(localhost|127\.)/.test(location.hostname)) return;     // not from test servers
     var body = { event: event, src: GROWTH_SRC.src };
     if (extra) for (var k in extra) body[k] = extra[k];

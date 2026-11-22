@@ -39,6 +39,12 @@ const ALLOWED_EVENTS = new Set(['listen_play', 'app_link_ios', 'app_link_android
 //                         c|<store>|<src>|<place> store clicks via /app   p|<place>|<src> podcast-app taps   s|<place> prompts shown
 //                         j|<channel>|<src> taps on the WhatsApp / Telegram channel links
 //                         i|<platform> installs (a device's first launch of the app)
+// Features counted by mobile.js use() (and listen.js / quiz.js through window.HBUse). Keep in step with growth.html FEATURES.
+const FEATURES = new Set(['open', 'today', 'cards_view', 'story_save', 'story_share', 'story_vote', 'source_out', 'edition_share', 'saved_list',
+  'past_editions', 'past_edition_read', 'weekly', 'audio_open', 'audio_play', 'audio_done', 'voices', 'voices_article',
+  'challenge_open', 'quiz_start', 'quiz_done', 'quiz_retake_start', 'quiz_retake', 'quiz_share', 'league_create', 'league_join', 'league_invite',
+  'badges_view', 'menu', 'sections', 'text_size', 'reminder', 'channel_out', 'podcast_out']);
+
 const SLUG = /^[a-z0-9][a-z0-9._-]{0,39}$/;
 const slug = (v, d) => { const x = String(v || '').toLowerCase().slice(0, 40); return SLUG.test(x) ? x : d; };
 const STATS_KEY = process.env.STATS_KEY;
@@ -232,6 +238,19 @@ module.exports = async (req, res) => {
     return;
   }
   if ((req.method === 'GET' || req.method === 'HEAD') && req.query && req.query.ep) { await podcastDownload(req, res); return; }
+  if (req.method === 'GET' && req.query && req.query.action === 'features') {
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('X-Robots-Tag', 'noindex');
+    if (!STATS_KEY || String(req.query.key || '') !== STATS_KEY) { res.status(401).json({ error: 'wrong or missing key' }); return; }
+    if (!KV_URL || !KV_TOKEN) { res.status(500).json({ error: 'storage not configured' }); return; }
+    try {
+      const n = Math.min(Math.max(parseInt(req.query.days, 10) || 14, 1), 180), dates = [], now = Date.now() + 5.5 * 3600 * 1000;
+      for (let i = n - 1; i >= 0; i--) dates.push(new Date(now - i * 864e5).toISOString().slice(0, 10));
+      const rows = await pipeline(dates.flatMap((d) => [['HGETALL', `f:${d}`], ['SCARD', `active:${d}`]]));
+      res.status(200).json({ days: dates.map((d, i) => ({ date: d, f: pairs(rows[2 * i]), appActive: Number(rows[2 * i + 1]) || 0 })) });
+    } catch (e) { res.status(500).json({ error: 'features failed' }); }
+    return;
+  }
   if (req.method === 'GET' && req.query && req.query.action === 'channels') {
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Robots-Tag', 'noindex');
@@ -289,6 +308,22 @@ module.exports = async (req, res) => {
   let body = req.body;
   if (typeof body === 'string') { try { body = JSON.parse(body); } catch (e) { body = {}; } }
   body = body || {};
+
+  // Feature use counts (mobile.js use()): { uses: [[feature, first], ...], pf: 'ios' | 'android' | 'web' }. No ID: "first" is
+  // the device's own flag for its first use of that feature that day, so u|<feature>|<pf> counts people, <feature>|<pf> uses.
+  //   f:<YYYY-MM-DD>  HASH  <feature>|<pf> uses   u|<feature>|<pf> people     (kept 400 days; growth.html › Features)
+  if (Array.isArray(body.uses)) {
+    const pf = ['ios', 'android', 'web'].includes(body.pf) ? body.pf : 'web';
+    const f = `f:${istToday()}`, cmds = [];
+    for (const u of body.uses.slice(0, 40)) {
+      if (!Array.isArray(u) || !FEATURES.has(u[0])) continue;
+      cmds.push(['HINCRBY', f, `${u[0]}|${pf}`, '1']);
+      if (u[1] === 1) cmds.push(['HINCRBY', f, `u|${u[0]}|${pf}`, '1']);
+    }
+    if (cmds.length && KV_URL && KV_TOKEN) { cmds.push(['EXPIRE', f, String(400 * 86400)]); await pipeline(cmds); }
+    res.status(200).json({ ok: true });
+    return;
+  }
 
   const deviceId = (body.deviceId || '').toString().trim().slice(0, 100) || null;
   const platform = (body.platform || '').toString().trim();

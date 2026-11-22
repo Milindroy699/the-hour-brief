@@ -448,6 +448,7 @@
     finish();
   }
   function finish() {
+    if (S.state !== 'done' && window.HBUse) window.HBUse('audio_done');
     clearTimers();
     if (S.src === 'rec' && audio) audio.pause();
     S.state = 'done';
@@ -492,6 +493,7 @@
   // feature (quiz, votes, leagues) already had one. deviceId is only present in the apps
   // (capacitor-bridge.js); web plays still count toward the daily total, just not uniquely.
   function trackListenPlay() {
+    if (window.HBUse) window.HBUse('audio_play');
     var deviceId = null;
     try { deviceId = localStorage.getItem('hb-device-id-v1'); } catch (e) {}
     try {
