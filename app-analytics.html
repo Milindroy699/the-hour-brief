@@ -159,7 +159,7 @@
   <div class="filters" id="filters" hidden>
     <span class="fgroup"><span class="flabel">Period</span>
     <div class="seg" role="group" aria-label="Period" id="f-days">
-      <button type="button" data-v="7">7 days</button><button type="button" data-v="14">14 days</button><button type="button" data-v="30">30 days</button>
+      <button type="button" data-v="1">Today</button><button type="button" data-v="7">7 days</button><button type="button" data-v="14">14 days</button><button type="button" data-v="30">30 days</button>
     </div></span>
     <span class="fgroup"><span class="flabel">Platform</span>
     <div class="seg" role="group" aria-label="Platform" id="f-pf">
@@ -181,7 +181,7 @@
   if (m) { key = decodeURIComponent(m[1]); try { localStorage.setItem(KEY_STORE, key); } catch (e) {} history.replaceState(null, '', location.pathname); }
   if (!key) { try { key = localStorage.getItem(KEY_STORE) || ''; } catch (e) {} }
   var S = { days: 7, pf: 'all' };
-  try { var sv = JSON.parse(localStorage.getItem('hb-appstats-view') || '{}'); if ([7, 14, 30].indexOf(sv.days) >= 0) S.days = sv.days; if (/^(all|ios|android|web)$/.test(sv.pf)) S.pf = sv.pf; } catch (e) {}
+  try { var sv = JSON.parse(localStorage.getItem('hb-appstats-view') || '{}'); if ([1, 7, 14, 30].indexOf(sv.days) >= 0) S.days = sv.days; if (/^(all|ios|android|web)$/.test(sv.pf)) S.pf = sv.pf; } catch (e) {}
 
   var PF = [{ id: 'ios', name: 'iPhone', c: 'var(--s1)' }, { id: 'android', name: 'Android', c: 'var(--s2)' }, { id: 'web', name: 'Web', c: 'var(--s3)' }];
   var PFN = { ios: 'iPhone', android: 'Android', web: 'Web' };
@@ -246,7 +246,12 @@
   function people(days, feat, list) { var t = 0; (list || pfs()).forEach(function (p) { t += sum(days, 'u|' + feat + '|' + p); }); return t; }
   function uses(days, feat, list) { var t = 0; (list || pfs()).forEach(function (p) { t += sum(days, feat + '|' + p); }); return t; }
   function reach(days, feat, list) { var a = people(days, 'open', list); return a ? people(days, feat, list) / a : null; }
-  function periods() { var all = data.days, n = S.days; return { cur: all.slice(-n), prev: all.slice(-2 * n, -n) }; }
+  // cur: the period; prev: the same length just before (Today: yesterday); ctx: what the trend charts show (Today: the last 14
+  // days, ending on today so far, since a one-day line says nothing).
+  function periods() { var all = data.days, n = S.days; return { cur: all.slice(-n), prev: all.slice(-2 * n, -n), ctx: n === 1 ? all.slice(-14) : all.slice(-n) }; }
+  var TODAY = function () { return S.days === 1; };
+  function per() { return TODAY() ? 'today so far' : 'last ' + S.days + ' days'; }
+  function before() { return TODAY() ? 'yesterday' : 'the ' + S.days + ' days before'; }
   function seriesColor() { return S.pf === 'all' ? 'var(--all)' : PF.filter(function (p) { return p.id === S.pf; })[0].c; }
 
   // ---------- charts ----------
@@ -311,31 +316,38 @@
     if (curBase < MIN || prevBase < MIN || cur == null || prev == null) return h('span', { class: 'muted', text: 'not enough data to compare yet' });
     var d = cur - prev, flat = kind === 'pts' ? Math.abs(d) < 0.005 : Math.abs(d) < 0.05 * Math.max(prev, 1e-9);
     var txt = kind === 'pts' ? (Math.abs(d) * 100).toFixed(1) + ' pts' : Math.round(Math.abs(d) / (prev || 1) * 100) + '%';
-    return h('span', { class: flat ? 'muted' : d > 0 ? 'up' : 'down', text: (flat ? '→ about the same' : (d > 0 ? '▲ ' : '▼ ') + txt) + ' vs the ' + S.days + ' days before' });
+    return h('span', { class: flat ? 'muted' : d > 0 ? 'up' : 'down', text: (flat ? '→ about the same' : (d > 0 ? '▲ ' : '▼ ') + txt) + ' vs ' + before() });
   }
 
   // ---------- sections ----------
   function card(title, question) { return h('section', { class: 'card' }, [h('h2', { text: title }), h('p', { class: 'q', text: question })]); }
 
   function growth(P) {
-    var c = card('Is it growing?', 'People who opened the app or the website each day, and how many phones installed the app.');
-    var list = pfs(), dates = P.cur.map(function (d) { return d.date; });
+    var c = card('Is it growing?', TODAY() ? 'Today so far, next to yesterday’s full day. The chart shows the last 14 days, ending on today so far.' : 'People who opened the app or the website each day, and how many phones installed the app.');
+    var list = pfs(), dates = P.ctx.map(function (d) { return d.date; });
     var activeCur = people(P.cur, 'open'), activePrev = people(P.prev, 'open');
     var avg = activeCur / S.days, avgPrev = activePrev / S.days;
     var appsOnly = S.pf === 'web';
     var inst = function (days) { var t = 0; days.forEach(function (d) { list.forEach(function (p) { if (d.installs[p] != null) t += d.installs[p]; }); }); return t; };
     var depthCur = 0; F.forEach(function (f) { if (f[0] !== 'today') depthCur += people(P.cur, f[0]); });
     var depthPrev = 0; F.forEach(function (f) { if (f[0] !== 'today') depthPrev += people(P.prev, f[0]); });
-    var daily = P.cur.map(function (d) { return people([d], 'open'); });
-    var k = h('div', { class: 'kpis' }, [
+    var daily = P.ctx.map(function (d) { return people([d], 'open'); });
+    var instLine = appsOnly ? null : sparkline(P.ctx.map(function (d) { var t = 0; list.forEach(function (p) { t += d.installs[p] || 0; }); return t; }), seriesColor());
+    // Today is not over: counts sit next to yesterday's total instead of a % change that would always read as a drop.
+    var k = h('div', { class: 'kpis' }, TODAY() ? [
+      kpi('People today', fmt(activeCur), '', h('span', { text: 'so far · yesterday: ' + fmt(activePrev) }), sparkline(daily, seriesColor())),
+      kpi('Average a day, last 7 days', dec(people(data.days.slice(-8, -1), 'open') / 7), '', h('span', { text: 'full days, for comparison' })),
+      kpi('App installs today', appsOnly ? '–' : fmt(inst(P.cur)), '', appsOnly ? h('span', { text: 'apps only' }) : h('span', { text: 'so far · yesterday: ' + fmt(inst(P.prev)) }), instLine),
+      kpi('Features used per person', activeCur ? dec(depthCur / activeCur) : '–', '', delta(activeCur ? depthCur / activeCur : null, activePrev ? depthPrev / activePrev : null, activeCur, activePrev, 'rel'))
+    ] : [
       kpi('People a day', dec(avg), '', delta(avg, avgPrev, activeCur, activePrev, 'rel'), sparkline(daily, seriesColor())),
       kpi('People-days in ' + S.days + ' days', fmt(activeCur), '', h('span', { text: 'each person counted once a day' })),
-      kpi('App installs', appsOnly ? '–' : fmt(inst(P.cur)), '', appsOnly ? h('span', { text: 'apps only' }) : h('span', { text: 'before: ' + fmt(inst(P.prev)) }), appsOnly ? null : sparkline(P.cur.map(function (d) { var t = 0; list.forEach(function (p) { t += d.installs[p] || 0; }); return t; }), seriesColor())),
+      kpi('App installs', appsOnly ? '–' : fmt(inst(P.cur)), '', appsOnly ? h('span', { text: 'apps only' }) : h('span', { text: 'before: ' + fmt(inst(P.prev)) }), instLine),
       kpi('Features used per person a day', activeCur ? dec(depthCur / activeCur) : '–', '', delta(activeCur ? depthCur / activeCur : null, activePrev ? depthPrev / activePrev : null, activeCur, activePrev, 'rel'))
     ]);
     c.appendChild(k);
     var series = (S.pf === 'all' ? PF : PF.filter(function (p) { return p.id === S.pf; })).map(function (p) {
-      return { name: p.name, color: p.c, vals: P.cur.map(function (d) { return d.f['u|open|' + p.id] || 0; }) };
+      return { name: p.name, color: p.c, vals: P.ctx.map(function (d) { return d.f['u|open|' + p.id] || 0; }) };
     });
     if (series.length > 1) c.appendChild(legend(series));
     c.appendChild(lineChart(dates, series, { endLabels: true, area: series.length === 1, label: 'People a day by platform' }));
@@ -375,8 +387,8 @@
     if (active < 1) { c.appendChild(empty()); return c; }
     var qs = people(P.cur, 'quiz_start'), qd = people(P.cur, 'quiz_done'), ap = people(P.cur, 'audio_play'), ad = people(P.cur, 'audio_done');
     var lines = [];
-    if (qs >= 5) lines.push(pct(qd / qs) + ' of people who start the quiz finish it');
-    if (ap >= 5) lines.push(pct(ad / ap) + ' of people who press play listen to the end');
+    if (qs >= 5) lines.push(pct(Math.min(1, qd / qs)) + ' of people who start the quiz finish it');
+    if (ap >= 5) lines.push(pct(Math.min(1, ad / ap)) + ' of people who press play listen to the end');
     if (lines.length) c.appendChild(h('p', { class: 'verdict', text: lines.join(' · ') + '.' }));
     var grid = h('div', { class: 'funnels' });
     var main = h('div');
@@ -404,7 +416,7 @@
     var used = rows.filter(function (r) { return r.n > 0; }), unused = rows.filter(function (r) { return r.n === 0; });
     used.forEach(function (r) { ul.appendChild(rankRow(r, maxR, color, P, active, activePrev)); });
     if (unused.length) {
-      ul.appendChild(h('li', { class: 'split', text: 'Not used in these ' + S.days + ' days (' + unused.length + ')' }));
+      ul.appendChild(h('li', { class: 'split', text: 'Not used ' + (TODAY() ? 'today so far' : 'in these ' + S.days + ' days') + ' (' + unused.length + ')' }));
       ul.appendChild(h('li', { class: 'row', style: 'cursor:default', tabindex: -1 }, [h('span', { class: 'nm muted', style: 'white-space:normal;grid-column:1/-1', text: unused.map(function (r) { return r.name; }).join(' · ') })]));
     }
     c.appendChild(ul);
@@ -430,10 +442,10 @@
     li.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
     if (openFeat === r.id) {
       var det = h('li', { class: 'detail' });
-      det.appendChild(h('p', { text: r.name + ': reach each day' + (S.pf === 'all' ? ', by platform' : '') + '. ' + (r.n ? dec(r.u / r.n) + ' uses per person on a day they use it.' : '') }));
-      var dates = P.cur.map(function (d) { return d.date; });
+      det.appendChild(h('p', { text: r.name + ': reach each day' + (TODAY() ? ' for the last 14 days' : '') + (S.pf === 'all' ? ', by platform' : '') + '. ' + (r.n ? dec(r.u / r.n) + ' uses per person on a day they use it.' : '') }));
+      var dates = P.ctx.map(function (d) { return d.date; });
       var series = (S.pf === 'all' ? PF : PF.filter(function (p) { return p.id === S.pf; })).map(function (p) {
-        return { name: p.name, color: p.c, fmt: pct, vals: P.cur.map(function (d) { var a = d.f['u|open|' + p.id] || 0; return a ? Math.min(1, (d.f['u|' + r.id + '|' + p.id] || 0) / a) : null; }) };
+        return { name: p.name, color: p.c, fmt: pct, vals: P.ctx.map(function (d) { var a = d.f['u|open|' + p.id] || 0; return a ? Math.min(1, (d.f['u|' + r.id + '|' + p.id] || 0) / a) : null; }) };
       });
       if (series.length > 1) det.appendChild(legend(series));
       det.appendChild(lineChart(dates, series, { h: 170, pct: true, max: Math.min(1, Math.max.apply(null, series.map(function (s2) { return Math.max.apply(null, s2.vals.map(function (v) { return v || 0; })); })) || 0.1), label: r.name + ' reach by day' }));
@@ -444,7 +456,7 @@
 
   // The core features with a dot per platform: where iPhone, Android and the web differ.
   function platforms(P) {
-    var c = card('Where do the platforms differ?', 'Reach of the core features on each platform, last ' + S.days + ' days. Always all three, whatever the platform filter. A platform with fewer than ' + MIN + ' people-days is left out.');
+    var c = card('Where do the platforms differ?', 'Reach of the core features on each platform, ' + per() + '. Always all three, whatever the platform filter. A platform with fewer than ' + MIN + ' people-days is left out.');
     var ok = PF.filter(function (p) { return people(P.cur, 'open', [p.id]) >= MIN; });
     if (ok.length < 2) { c.appendChild(h('p', { class: 'empty', text: 'Needs at least two platforms with ' + MIN + ' people-days in the period. With more readers this fills in.' })); return c; }
     c.appendChild(legend(ok.map(function (p) { return { name: p.name, color: p.c }; }), true));
@@ -482,7 +494,8 @@
     var all = data.days;
     var tot = { n: 0, d1n: 0, d1: 0, d7n: 0, d7: 0 };
     var rows = [];
-    P.cur.forEach(function (d) {
+    if (TODAY()) c.appendChild(h('p', { class: 'q', style: 'margin-top:-8px', text: 'A return rate needs a day to pass, so with Today picked this shows the last 7 days. Yesterday’s new phones count as back if they opened the app today.' }));
+    (TODAY() ? data.days.slice(-7) : P.cur).forEach(function (d) {
       var r = { date: d.date, n: 0, d1: 0, d1n: 0, d7: 0, d7n: 0, d1ok: true, d7ok: true };
       list.forEach(function (p) {
         var co = d.cohort[p];
@@ -494,7 +507,7 @@
       rows.push(r);
     });
     c.appendChild(h('div', { class: 'ret' }, [
-      kpi('New phones', fmt(tot.n), '', h('span', { text: 'first opened the app in the period' })),
+      kpi('New phones', fmt(tot.n), '', h('span', { text: TODAY() ? 'first opened the app, last 7 days' : 'first opened the app in the period' })),
       kpi('Back the next day', tot.d1n ? pct(tot.d1 / tot.d1n) : '–', '', h('span', { text: tot.d1n ? fmt(tot.d1) + ' of ' + fmt(tot.d1n) : 'no complete day yet' })),
       kpi('Back within 7 days', tot.d7n ? pct(tot.d7 / tot.d7n) : '–', '', h('span', { text: tot.d7n ? fmt(tot.d7) + ' of ' + fmt(tot.d7n) + ' (installs at least 7 days old)' : 'needs installs at least 7 days old' }))
     ]));
@@ -519,7 +532,7 @@
 
   // Every number in one table (the accessible twin of the charts above).
   function numbers(P) {
-    var c = card('All the numbers', 'Reach and uses for every feature on each platform, last ' + S.days + ' days. Reach = people who used it that day ÷ people active that day, added up over the days.');
+    var c = card('All the numbers', 'Reach and uses for every feature on each platform, ' + per() + '. Reach = people who used it that day ÷ people active that day, added up over the days.');
     var d = h('details', { class: 'tv' }, [h('summary', { text: 'Show the table' })]);
     var t = h('table');
     var hr = h('tr', {}, [h('th', { text: 'Feature' })]);
@@ -577,7 +590,7 @@
     if (!key) { askKey(); return; }
     document.getElementById('filters').hidden = false;
     app.classList.add('loading');
-    fetch('/api/track?action=app&days=' + (S.days * 2) + '&key=' + encodeURIComponent(key), { cache: 'no-store' })
+    fetch('/api/track?action=app&days=' + Math.max(S.days * 2, 14) + '&key=' + encodeURIComponent(key), { cache: 'no-store' })
       .then(function (r) { if (r.status === 401) throw new Error('key'); if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
       .then(function (d) { data = d; app.classList.remove('loading'); render(); })
       .catch(function (e) {
