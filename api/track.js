@@ -214,12 +214,14 @@ async function channels(days) {
   const now = Date.now() + 5.5 * 3600 * 1000, dates = [];
   for (let i = days - 1; i >= 0; i--) dates.push(new Date(now - i * 864e5).toISOString().slice(0, 10));
   const cmds = [];
-  for (const d of dates) cmds.push(['HGETALL', `chan:${d}`], ['HGETALL', `pod:dl:${d}`], ['HGETALL', `pod:app:${d}`], ['HGETALL', `plan:${d}`]);
+  for (const d of dates) cmds.push(['HGETALL', `chan:${d}`], ['HGETALL', `pod:dl:${d}`], ['HGETALL', `pod:app:${d}`], ['HGETALL', `plan:${d}`], ['HGETALL', `g:${d}`]);
   cmds.push(['GET', 'yt:stats']);
   const [out, live] = await Promise.all([pipeline(cmds), channelStats().catch((e) => ({ error: e.message }))]);
   const obj = (r) => { const o = {}; for (let i = 0; r && i + 1 < r.length; i += 2) o[r[i]] = r[i + 1]; return o; };
-  const rows = dates.map((d, i) => ({ date: d, chan: obj(out[i * 4]), dl: obj(out[i * 4 + 1]), apps: obj(out[i * 4 + 2]), plan: obj(out[i * 4 + 3]) }));
-  let yt = null; try { yt = JSON.parse(out[dates.length * 4] || 'null'); } catch (e) { yt = null; }
+  // visits and "Get the app" taps that came from Substack posts (links tagged ?src=substack)
+  const fromSubstack = (g) => { let v = 0, c = 0; for (const [k, n] of Object.entries(g)) { const p = k.split('|'); if (p[0] === 'v' && p[2] === 'substack') v += +n; else if (p[0] === 'c' && p[2] === 'substack') c += +n; } return { visits: v, taps: c }; };
+  const rows = dates.map((d, i) => ({ date: d, chan: obj(out[i * 5]), dl: obj(out[i * 5 + 1]), apps: obj(out[i * 5 + 2]), plan: obj(out[i * 5 + 3]), ss: fromSubstack(obj(out[i * 5 + 4])) }));
+  let yt = null; try { yt = JSON.parse(out[dates.length * 5] || 'null'); } catch (e) { yt = null; }
   return { generated: new Date().toISOString(), live, youtube: yt, days: rows };
 }
 
@@ -314,7 +316,7 @@ module.exports = async (req, res) => {
       let b = req.body;
       if (typeof b === 'string') { try { b = JSON.parse(b); } catch (e) { b = {}; } }
       b = b || {};
-      const CHECKS = ['x', 'thread', 'p1', 'p2', 'poll', 'status', 'reddit', 'quote', 'review', 'wachannel'], NUMS = ['replies', 'followers', 'impressions', 'visits', 'wafollowers', 'spotify', 'apple'];
+      const CHECKS = ['x', 'thread', 'p1', 'p2', 'poll', 'status', 'reddit', 'quote', 'review', 'wachannel', 'substack'], NUMS = ['replies', 'followers', 'impressions', 'visits', 'wafollowers', 'spotify', 'apple', 'substack_subs'];
       const date = String(b.date || ''), field = String(b.field || ''), value = String(b.value == null ? '' : b.value).trim();
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { res.status(400).json({ error: 'bad date' }); return; }
       let v;

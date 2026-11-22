@@ -41,6 +41,10 @@
   .preview h2 { font-size: 1.3rem; margin: 1.2em 0 .4em; } .preview h3 { font-size: 1.08rem; margin: 1.1em 0 .3em; } .preview a { color: #5e43f3; }
   .preview hr { border: 0; border-top: 1px solid #ddd; margin: 1.4em 0; }
   .muted { color: var(--faint); font-size: 0.88rem; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 0 0 12px; }
+  .tags span.l { font-size: 0.78rem; color: var(--faint); margin-right: 2px; }
+  .tags button { border: 1px solid var(--line); background: var(--page); color: var(--ink); border-radius: 999px; padding: 4px 11px; font: inherit; font-size: 0.8rem; cursor: pointer; }
+  .tags button.done { border-color: var(--ok); color: var(--ok); }
   h2.group { margin: 28px 0 10px; font-size: 1.05rem; }
   canvas { display: none; }
 </style>
@@ -59,6 +63,7 @@
     <li><b>Copy title</b> → paste in the title, <b>Copy subtitle</b> → paste in the subtitle.</li>
     <li><b>Copy post</b> → click into the body and paste: headings, links and lists come along.</li>
     <li><b>Cover image</b> → download it and add it in the post’s settings as the social preview image.</li>
+    <li><b>Tags</b> → in the post’s settings, add each tag (tap a tag here to copy it, paste, press Enter).</li>
     <li>Publish, send to email, and share it to Notes. One post a day at most; Sunday’s recap is the one to never miss.</li>
   </ol>
   <h2 class="group">Weekly recap</h2>
@@ -77,6 +82,10 @@
   var SPOTIFY = 'https://open.spotify.com/show/1FjOE5ABaOEzUTxwJeaoYr', APPLE = 'https://podcasts.apple.com/us/podcast/the-hour-brief/id6837406304';
   var LANE = { ai: 'AI & Tech', biz: 'Product & Business', mkt: 'Stock Market' };
   var CAT = { 'tech-ai': 'Tech & AI', product: 'Product', business: 'Business', finance: 'Finance', principles: 'Principles' };
+  // Substack tags (post settings › Tags): a fixed core so every post is findable as The Hour Brief, plus the topics it covers.
+  var LANE_TAGS = { ai: ['AI', 'Technology'], biz: ['Business', 'Startups'], mkt: ['Stock Market', 'Investing', 'India'] };
+  var CAT_TAGS = { 'tech-ai': ['AI', 'Technology'], product: ['Product Management', 'Startups'], business: ['Business', 'Strategy'], finance: ['Finance', 'Investing'], principles: ['Mental Models', 'Leadership'] };
+  function tagsFor(base, lanes) { var out = []; base.concat(lanes).forEach(function (t) { if (out.indexOf(t) < 0) out.push(t); }); return out.slice(0, 8); }
   var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   var esc = function (t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
   var dt = function (d) { return new Date(d + 'T00:00:00Z'); };
@@ -153,6 +162,13 @@
     var pub = (document.getElementById('pub').value || '').trim().replace(/\/+$/, '');
     if (/^https:\/\/[\w.-]+$/.test(pub)) { var o = el('a', '', 'Open Substack editor ↗'); o.href = pub + '/publish/post?type=newsletter'; o.target = '_blank'; o.rel = 'noopener'; a.appendChild(o); }
     s.appendChild(a);
+    if (p.tags && p.tags.length) {
+      var tg = el('div', 'tags');
+      tg.appendChild(el('span', 'l', 'Tags'));
+      p.tags.forEach(function (t) { var b = el('button', '', t); b.type = 'button'; b.title = 'Copy this tag'; b.onclick = function () { copyText(t, b); }; tg.appendChild(b); });
+      var all = el('button', '', 'Copy all tags'); all.type = 'button'; all.onclick = function () { copyText(p.tags.join(', '), all); }; tg.appendChild(all);
+      s.appendChild(tg);
+    }
     var d = el('details'); d.appendChild(el('summary', '', 'Preview the post'));
     var pv = el('div', 'preview'); pv.innerHTML = p.html; d.appendChild(pv);
     s.appendChild(d);
@@ -177,7 +193,8 @@
           '<p>' + esc(it.why || '') + '</p>' + (link ? '<p><a href="' + link + '">Read the full story →</a></p>' : '');
       });
       html += footer('<p>The full recap is also <a href="' + SITE + '/week.html?d=' + date + '&src=substack">on the site</a>.</p>');
-      card(box, { kind: 'Weekly recap · ' + range, title: (w.title || 'What actually mattered this week') + ' (' + range + ')', subtitle: w.intro || 'The five stories from this week that will still matter next month.', html: html, cover: ['This week · ' + range, w.title || 'What actually mattered this week'], file: 'hour-brief-week-' + date });
+      card(box, { kind: 'Weekly recap · ' + range, title: (w.title || 'What actually mattered this week') + ' (' + range + ')', subtitle: w.intro || 'The five stories from this week that will still matter next month.', html: html, cover: ['This week · ' + range, w.title || 'What actually mattered this week'], file: 'hour-brief-week-' + date,
+        tags: tagsFor(['The Hour Brief', 'Weekly Recap'], w.items.reduce(function (a, it) { return a.concat(LANE_TAGS[it.lane] || []); }, [])) });
     }).catch(function () { box.textContent = 'Could not load the recap.'; });
   }
 
@@ -202,7 +219,8 @@
           html += '<h3>Sources</h3><ul>' + src.map(function (x) { var t = esc((x.creator ? x.creator + ': ' : '') + (x.title || '')); return '<li>' + (x.url ? '<a href="' + esc(x.url) + '">' + t + '</a>' : t) + '</li>'; }).join('') + '</ul>';
         }
         html += footer('<p>Voices reads what the best minds in tech, product, business and finance said this week and distils it into one long read per pillar. <a href="' + SITE + '/leaders.html?src=substack#a=' + encodeURIComponent(b.id) + '">Read it in the app or on the site</a>.</p>');
-        card(box, { kind: 'Voices · ' + cat + (essay ? ' · essay' : ''), title: b.title, subtitle: sub, html: html, cover: ['Voices · ' + cat, b.title], file: 'hour-brief-voices-' + b.id });
+        card(box, { kind: 'Voices · ' + cat + (essay ? ' · essay' : ''), title: b.title, subtitle: sub, html: html, cover: ['Voices · ' + cat, b.title], file: 'hour-brief-voices-' + b.id,
+          tags: tagsFor(['The Hour Brief', 'Voices', essay ? 'Essay' : 'Long Read'], CAT_TAGS[b.category] || []) });
       });
     }).catch(function () { box.textContent = 'Could not load Voices.'; });
   }
@@ -239,7 +257,8 @@
       });
       html += footer('<p>Every summary links back to its original source. Nothing here is investment advice.</p>');
       var title = 'The Hour Brief · ' + nice(date, true) + (ed ? ' · Edition ' + ed[1] : '');
-      card(box, { kind: 'Daily edition · ' + nice(date, true), title: title, subtitle: heads.slice(0, 3).join(' · '), html: html, cover: ['Edition ' + (ed ? ed[1] : '') + ' · ' + nice(date, true), heads[0] || 'Today’s brief'], file: 'hour-brief-' + date });
+      card(box, { kind: 'Daily edition · ' + nice(date, true), title: title, subtitle: heads.slice(0, 3).join(' · '), html: html, cover: ['Edition ' + (ed ? ed[1] : '') + ' · ' + nice(date, true), heads[0] || 'Today’s brief'], file: 'hour-brief-' + date,
+        tags: tagsFor(['The Hour Brief', 'Daily Brief', 'News'], ['AI', 'Business', 'Stock Market', 'India']) });
     }).catch(function () { box.textContent = 'Could not load that edition.'; });
   }
 

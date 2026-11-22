@@ -392,7 +392,7 @@ https://the-hour-brief.vercel.app/app?src=x-pinned</pre>
   function istDate(back) { return new Date(Date.now() + 5.5 * 3600 * 1000 - back * 864e5).toISOString().slice(0, 10); }
   var TASKS = [['x', 'Morning X post', '9:30'], ['thread', 'X thread', '10:00'], ['p1', 'Afternoon X post', '15:00'], ['p2', 'Evening X post', '18:00'],
     ['poll', 'Quiz poll on X', '18:00'], ['quote', 'One quote post', 'any time'], ['status', 'WhatsApp status', 'morning'], ['wachannel', 'WhatsApp channel post', 'morning'],
-    ['review', 'Reviewed the Stock Market section', 'after 9:00'], ['reddit', 'Reddit recap', 'Sundays']];
+    ['review', 'Reviewed the Stock Market section', 'after 9:00'], ['reddit', 'Reddit recap', 'Sundays'], ['substack', 'Substack posts (recap + Voices)', 'Sundays']];
   var planBox = document.getElementById('plan'), planDay = 0, planData = null, xTally = null;
   function xOf(t) { var v = 0, c = 0; for (var f in t || {}) { var p = f.split('|'); if (/^x(-|$)/.test(p[2] || '')) { if (p[0] === 'v') v += t[f]; else if (p[0] === 'c') c += t[f]; } } return { v: v, c: c }; }
   function savePlan(date, field, value, msgEl) {
@@ -497,7 +497,7 @@ https://the-hour-brief.vercel.app/app?src=x-pinned</pre>
     ['Done by you', [
       ['plan.review', 'Reviewed the Stock Market section', '10:30', 'you'], ['plan.status', 'WhatsApp status', '12:00', 'you'], ['plan.wachannel', 'WhatsApp channel post', '12:00', 'you'],
       ['plan.x', 'X: morning post', '11:00', 'you', 'x'], ['plan.thread', 'X: thread', '12:00', 'you', 'x'], ['plan.replies', 'X: replies (vs target)', '21:00', 'you', 'x'],
-      ['plan.p1', 'X: afternoon post', '16:00', 'you', 'x'], ['plan.p2', 'X: evening post', '19:00', 'you', 'x'], ['plan.poll', 'X: quiz poll', '19:00', 'you', 'x'], ['plan.reddit', 'Reddit recap', '21:00', 'you', 'sun'],
+      ['plan.p1', 'X: afternoon post', '16:00', 'you', 'x'], ['plan.p2', 'X: evening post', '19:00', 'you', 'x'], ['plan.poll', 'X: quiz poll', '19:00', 'you', 'x'], ['plan.reddit', 'Reddit recap', '21:00', 'you', 'sun'], ['plan.substack', 'Substack posts', '21:00', 'you', 'sun'],
     ]],
   ];
   // Podcast apps: kept by hand here (the site's own list is PODCASTS in mobile.js).
@@ -505,7 +505,7 @@ https://the-hour-brief.vercel.app/app?src=x-pinned</pre>
   // When each job started: earlier days show "·", not a miss. Jobs tracked by a once-a-day key were only kept 3 days until
   // 22 Nov 2026, so a missing key before then reads "no record" (?), not "missed".
   var SINCE = { kit: '2026-11-17', linkedinProfile: '2026-11-18', ownerKit: '2026-11-17', ownerLinkedin: '2026-11-17', short: '2026-11-20', youtube: '2026-11-20', instagram: '2026-11-20',
-    ownerShort: '2026-11-20', telegramChannel: '2026-11-21', pushOpens: '2026-11-22', pushStreak: '2026-11-22', review: '2026-11-22', xMorning: '2026-11-22', weekly: '2026-11-22', pushWeekly: '2026-11-22', 'plan.review': '2026-11-21', 'plan.status': '2026-11-21', 'plan.wachannel': '2026-11-21' };
+    ownerShort: '2026-11-20', telegramChannel: '2026-11-21', pushOpens: '2026-11-22', pushStreak: '2026-11-22', review: '2026-11-22', xMorning: '2026-11-22', weekly: '2026-11-22', pushWeekly: '2026-11-22', 'plan.review': '2026-11-21', 'plan.substack': '2026-11-22', 'plan.status': '2026-11-21', 'plan.wachannel': '2026-11-21' };
   var FILE_BASED = /^(edition|audio|podcast|kit|xpack|short|weekly)$/, KEYS_KEPT_FROM = '2026-11-22';
   var opsBox = document.getElementById('ops'), opsData = null;
   function nowIst() { var d = new Date(Date.now() + 5.5 * 3600 * 1000); return d.toISOString().slice(11, 16); }
@@ -633,6 +633,7 @@ https://the-hour-brief.vercel.app/app?src=x-pinned</pre>
     var podTotal = D.reduce(function (n, d) { return n + dl(d); }, 0);
     var wa = lastVal(D, function (d) { return d.plan.wafollowers; }), sp = lastVal(D, function (d) { return d.plan.spotify; }), ap = lastVal(D, function (d) { return d.plan.apple; });
     var ytViews = Y ? Y.videos.reduce(function (n, v) { return n + v.views; }, 0) : null;
+    var ss = L.substack || {}, ssSubs = lastVal(D, function (d) { return d.plan.substack_subs; });
     chBox.textContent = '';
     chBox.appendChild(h('div', { class: 'tiles' }, [
       tile('YouTube subscribers', Y ? fmt(Y.subs) : '–', Y ? fmt(ytViews) + ' views on ' + Y.videos.length + ' Shorts' : 'first numbers tonight (20:15)'),
@@ -641,6 +642,7 @@ https://the-hour-brief.vercel.app/app?src=x-pinned</pre>
       tile('WhatsApp channel', wa ? fmt(wa.v) : '–', wa ? 'followers, logged ' + short(wa.date) : 'log it below'),
       tile('Podcast downloads', fmt(podTotal), 'last ' + D.length + ' days, all apps'),
       tile('Spotify followers', sp ? fmt(sp.v) : '–', sp ? 'logged ' + short(sp.date) : 'log it below'),
+      tile('Substack subscribers', ssSubs ? fmt(ssSubs.v) : '–', (ss.followers != null ? fmt(ss.followers) + ' followers · ' : '') + (ssSubs ? 'logged ' + short(ssSubs.date) : 'log it below')),
     ]));
     // log by hand
     var msg = h('div', { class: 'saved', role: 'status' }), today = D[D.length - 1];
@@ -658,7 +660,16 @@ https://the-hour-brief.vercel.app/app?src=x-pinned</pre>
       field('wafollowers', 'WhatsApp channel followers', 'WhatsApp › the channel › its name › Followers'),
       field('spotify', 'Spotify followers', 'creators.spotify.com › Analytics'),
       field('apple', 'Apple Podcasts listeners', 'Podcasts Connect › Analytics'),
+      field('substack_subs', 'Substack subscribers', 'thehourbrief.substack.com/publish › Subscribers'),
     ]), msg])));
+    // Substack: the posts (public numbers, read live) and what they send back to the site
+    var ssVisits = D.reduce(function (n, d) { return n + ((d.ss || {}).visits || 0); }, 0), ssTaps = D.reduce(function (n, d) { return n + ((d.ss || {}).taps || 0); }, 0);
+    var ssBody = ss.error ? h('p', { class: 'err', text: 'Substack: ' + ss.error }) : h('div', {}, [
+      (ss.items || []).length ? table(['Post', 'Likes', 'Comments', 'Restacks'], ss.items.map(function (r) { return [short(r.date) + ' · ' + (r.title.length > 48 ? r.title.slice(0, 46) + '…' : r.title), r.likes, r.comments, r.restacks]; }), 1) : h('p', { class: 'muted', text: 'No posts yet.' }),
+      h('p', { class: 'note', style: 'margin-top:10px', text: 'From Substack to the site, last ' + D.length + ' days: ' + fmt(ssVisits) + ' visits and ' + fmt(ssTaps) + ' “Get the app” taps (links tagged src=substack). Opens and email numbers are only in Substack’s dashboard.' }),
+      h('p', { class: 'note' }, [h('a', { href: '/substack.html', text: 'Substack drafts →' }), document.createTextNode(' '), ss.url ? h('a', { href: ss.url, target: '_blank', rel: 'noopener', text: ss.url.replace('https://', '') }) : null]),
+    ]);
+    chBox.appendChild(card('Substack', 'Per post, newest first: likes, comments and restacks are public and read live.', ssBody));
     // YouTube
     var ytBody;
     if (!Y) ytBody = h('p', { class: 'muted', text: 'Saved every night at 20:15 by GitHub (stats.yml); the first numbers arrive tonight.' });
@@ -686,10 +697,10 @@ https://the-hour-brief.vercel.app/app?src=x-pinned</pre>
       ])),
     ]));
     // trend
-    var rows = D.slice().reverse().filter(function (d) { return Object.keys(d.chan).length || dl(d) || d.plan.wafollowers || d.plan.spotify; }).map(function (d) {
-      var c = d.chan; return [short(d.date), num(c.yt_subs), num(c.yt_views), num(c.ig_followers), num(c.ig_views), num(c.ig_reach), num(c.tg), num(d.plan.wafollowers), num(d.plan.spotify), dl(d) || '–'];
+    var rows = D.slice().reverse().filter(function (d) { return Object.keys(d.chan).length || dl(d) || d.plan.wafollowers || d.plan.spotify || d.plan.substack_subs; }).map(function (d) {
+      var c = d.chan; return [short(d.date), num(c.yt_subs), num(c.yt_views), num(c.ig_followers), num(c.ig_views), num(c.ig_reach), num(c.tg), num(d.plan.wafollowers), num(d.plan.spotify), num(d.plan.substack_subs), dl(d) || '–'];
     });
-    chBox.appendChild(card('Day by day', 'Saved each evening (Telegram and Instagram at 19:00, YouTube at 20:15). Blank days: not saved yet.', h('div', { class: 'scroll' }, [table(['Day', 'YT subs', 'YT views', 'IG followers', 'IG views', 'IG reach', 'Telegram', 'WhatsApp', 'Spotify', 'Podcast dl'], rows, 9)])));
+    chBox.appendChild(card('Day by day', 'Saved each evening (Telegram and Instagram at 19:00, YouTube at 20:15). Blank days: not saved yet.', h('div', { class: 'scroll' }, [table(['Day', 'YT subs', 'YT views', 'IG followers', 'IG views', 'IG reach', 'Telegram', 'WhatsApp', 'Spotify', 'Substack', 'Podcast dl'], rows, 10)])));
     // setup
     var st = function (ok, txt) { return h('span', { class: 's ' + (ok ? 'ok' : 'wait'), text: txt }); };
     var li2 = function (name, ok, txt, how) { return h('li', {}, [h('span', {}, [document.createTextNode(name), how ? h('div', { class: 'hint', text: how }) : null]), st(ok, txt)]); };

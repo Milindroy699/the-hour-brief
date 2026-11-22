@@ -366,6 +366,24 @@ async function channelStats() {
       out.instagram = { account: acct.username, followers: acct.followers_count, posts: acct.media_count, insights, reels };
     } catch (e) { out.instagram = { error: e.message }; }
   }
+  // Substack (2026-11-22): no official API, but every publication's post list (likes, comments, restacks per post) and the
+  // profile's follower count are public, read-only JSON. Subscribers are not public: the owner logs them (plan:<date> substack).
+  try {
+    const pub = String(process.env.SUBSTACK_URL || 'https://thehourbrief.substack.com').replace(/\/+$/, '');
+    const handle = process.env.SUBSTACK_HANDLE || 'thehourbrief';
+    const ua = { 'User-Agent': 'Mozilla/5.0 (compatible; TheHourBrief-stats/1.0)' };
+    const [arch, prof] = await Promise.all([
+      fetch(`${pub}/api/v1/archive?sort=new&limit=12`, { headers: ua, signal: AbortSignal.timeout(8000) }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+      fetch(`https://substack.com/api/v1/user/${encodeURIComponent(handle)}/public_profile`, { headers: ua, signal: AbortSignal.timeout(8000) }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+    ]);
+    const list = arch && (Array.isArray(arch) ? arch : arch.posts);
+    if (list) {
+      out.substack = {
+        url: pub, followers: prof && prof.followerCount != null ? prof.followerCount : null,
+        items: list.map((p) => ({ date: String(p.post_date || '').slice(0, 10), title: p.title, url: p.canonical_url, likes: p.reaction_count || 0, comments: (p.comment_count || 0), restacks: p.restacks || 0, words: p.wordcount || 0 })),
+      };
+    } else out.substack = { url: pub, error: 'could not read the publication' };
+  } catch (e) { out.substack = { error: e.message }; }
   return out;
 }
 // Once a day (the 19:00 slot): keep the day's numbers for the trend lines.
@@ -379,6 +397,12 @@ async function snapshotChannels(date = istToday()) {
     const sum = (k) => (ig.reels || []).reduce((n, r) => n + (Number(r[k]) || 0), 0);
     f.push('ig_likes', String(sum('likes')), 'ig_comments', String(sum('comments')));
     if (ig.insights === 'ok') f.push('ig_views', String(sum('views')), 'ig_reach', String(sum('reach')));
+  }
+  const ss = st.substack;
+  if (ss && ss.items) {
+    const sum = (k) => ss.items.reduce((n, r) => n + (Number(r[k]) || 0), 0);
+    f.push('ss_posts', String(ss.items.length), 'ss_likes', String(sum('likes')), 'ss_comments', String(sum('comments')), 'ss_restacks', String(sum('restacks')));
+    if (ss.followers != null) f.push('ss_followers', String(ss.followers));
   }
   if (f.length) { await kv(['HSET', `chan:${date}`, ...f]); await kv(['EXPIRE', `chan:${date}`, String(400 * 86400)]); }
   return { ok: true, saved: f.length / 2, telegram: st.telegram, instagram: ig && { followers: ig.followers, insights: ig.insights, error: ig.error } };
