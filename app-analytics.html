@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>App analytics · The Hour Brief</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png">
+<!-- Owner-only. How people use The Hour Brief on iPhone, Android and the web: is it growing, is the daily habit working,
+     which features land, where the platforms differ, and do new app users come back. Data: GET /api/track?action=app
+     (api/track.js), with the same STATS_KEY as growth.html (kept in this browser after /growth.html#key=...).
+     Counts come from mobile.js use() (f:<date>), the apps' launch pings (active:<date>) and installs (g:<date> i|<pf>). -->
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f6f5fb; --surface: #ffffff; --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+    --grid: #ecebf2; --axis: #c3c2b7; --border: rgba(11, 11, 11, 0.09); --accent: #5e43f3; --accent-soft: #efecfe;
+    --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --all: #5e43f3; --deemph: #c9c7d6;
+    --good: #006300; --bad: #d03b3b;
+    --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --page: #0f1017; --surface: #191a24; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+      --grid: #262734; --axis: #3a3b48; --border: rgba(255, 255, 255, 0.09); --accent: #8f7cff; --accent-soft: #25213f;
+      --s1: #3987e5; --s2: #d95926; --s3: #199e70; --all: #8f7cff; --deemph: #3d3e4c;
+      --good: #0ca30c; --bad: #e66767;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0f1017; --surface: #191a24; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+    --grid: #262734; --axis: #3a3b48; --border: rgba(255, 255, 255, 0.09); --accent: #8f7cff; --accent-soft: #25213f;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --all: #8f7cff; --deemph: #3d3e4c;
+    --good: #0ca30c; --bad: #e66767;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink); font: 15px/1.5 var(--font); }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 24px 16px 64px; }
+  a { color: var(--accent); }
+  header.top { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+  h1 { margin: 0; font-size: 1.6rem; letter-spacing: -0.02em; }
+  .sub { margin: 2px 0 0; color: var(--ink-2); font-size: 0.9rem; }
+  .back { font-size: 0.88rem; text-decoration: none; }
+
+  /* One filter row, above everything it scopes */
+  .filters { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; padding: 10px 0; margin-bottom: 8px; background: var(--page); }
+  .seg { display: inline-flex; padding: 3px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); }
+  .seg button { border: 0; background: none; color: var(--ink-2); font: inherit; font-size: 0.86rem; padding: 6px 12px; border-radius: 9px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--page); }
+  .seg button:focus-visible, .row:focus-visible, .dot:focus-visible, svg:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .key { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+  .flabel { font-size: 0.78rem; color: var(--muted); }
+  .fgroup { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+
+  #app { transition: opacity .15s; }
+  #app.loading { opacity: .45; }
+  section.card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 20px; margin-bottom: 14px; }
+  section.card > h2 { margin: 0; font-size: 1.12rem; letter-spacing: -0.01em; }
+  section.card > .q { margin: 2px 0 16px; color: var(--ink-2); font-size: 0.88rem; }
+  .verdict { display: inline-block; margin: 0 0 14px; padding: 8px 12px; border-radius: 10px; background: var(--accent-soft); font-size: 0.92rem; }
+
+  .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+  .kpi { border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; min-width: 0; }
+  .kpi .l { font-size: 0.8rem; color: var(--ink-2); }
+  .kpi .v { font-size: 2rem; font-weight: 650; letter-spacing: -0.02em; line-height: 1.15; margin-top: 2px; }
+  .kpi .v small { font-size: 0.9rem; font-weight: 500; color: var(--ink-2); margin-left: 2px; }
+  .kpi .d { font-size: 0.8rem; margin-top: 2px; color: var(--muted); }
+  .kpi svg { display: block; margin-top: 8px; width: 100%; height: 28px; }
+  .up { color: var(--good); } .down { color: var(--bad); }
+  @media (max-width: 760px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .kpi .v { font-size: 1.6rem; } }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0 0 8px; font-size: 0.82rem; color: var(--ink-2); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { display: inline-block; width: 14px; height: 2px; border-radius: 1px; }
+  .legend i.dotk { width: 10px; height: 10px; border-radius: 50%; }
+  .chart { position: relative; }
+  .chart svg { display: block; width: 100%; overflow: visible; }
+  .ax { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+  .gl { stroke: var(--grid); stroke-width: 1; }
+  .base { stroke: var(--axis); stroke-width: 1; }
+  .tip { position: absolute; z-index: 4; pointer-events: none; min-width: 120px; padding: 8px 10px; border-radius: 10px; background: var(--ink); color: var(--page); font-size: 0.8rem; line-height: 1.45; opacity: 0; transition: opacity .08s; white-space: nowrap; }
+  .tip.on { opacity: 1; }
+  .tip .t { color: var(--muted); font-size: 0.74rem; margin-bottom: 2px; }
+  .tip .r { display: flex; align-items: center; gap: 8px; }
+  .tip .r i { display: inline-block; width: 12px; height: 2px; border-radius: 1px; }
+  .tip .r b { font-weight: 650; }
+
+  /* Funnels */
+  .funnels { display: grid; grid-template-columns: 1.4fr 1fr; gap: 18px 28px; }
+  @media (max-width: 760px) { .funnels { grid-template-columns: 1fr; } }
+  .fn h3 { margin: 0 0 10px; font-size: 0.92rem; }
+  .step { display: grid; grid-template-columns: minmax(0, 1fr); gap: 3px; margin-bottom: 12px; }
+  .step .n { display: flex; justify-content: space-between; gap: 10px; font-size: 0.86rem; }
+  .step .n span:last-child { color: var(--muted); font-size: 0.78rem; white-space: nowrap; }
+  .track { position: relative; height: 18px; }
+  .bar { position: absolute; left: 0; top: 0; height: 18px; border-radius: 0 4px 4px 0; min-width: 2px; }
+  .bar + b { position: absolute; top: 0; font-size: 0.8rem; font-weight: 650; line-height: 18px; padding-left: 6px; font-variant-numeric: tabular-nums; }
+  .drop { font-size: 0.76rem; color: var(--muted); margin: -6px 0 8px; padding-left: 2px; }
+
+  /* Ranked reach */
+  .rank { margin: 0; padding: 0; list-style: none; }
+  .row { display: grid; grid-template-columns: minmax(130px, 34%) 1fr 92px; gap: 12px; align-items: center; padding: 7px 4px; border-radius: 8px; cursor: pointer; }
+  .row:hover { background: var(--accent-soft); }
+  .row .nm { font-size: 0.88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row .nm small { color: var(--muted); font-size: 0.74rem; margin-left: 6px; }
+  .row .track { height: 14px; }
+  .row .bar { height: 14px; }
+  .row .bar + b { line-height: 14px; font-size: 0.78rem; }
+  .row .ch { text-align: right; font-size: 0.78rem; white-space: nowrap; color: var(--muted); }
+  .rank li.split { list-style: none; margin: 10px 4px 6px; font-size: 0.74rem; font-weight: 650; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+  .detail { margin: 2px 4px 12px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; }
+  .detail p { margin: 0 0 6px; font-size: 0.84rem; color: var(--ink-2); }
+  @media (max-width: 560px) { .row { grid-template-columns: 1fr 72px; } .row .track { grid-column: 1 / -1; grid-row: 2; } }
+
+  /* Dot plot */
+  .dp { position: relative; }
+  .dprow { display: grid; grid-template-columns: minmax(120px, 30%) 1fr; gap: 12px; align-items: center; height: 34px; }
+  .dprow .nm { font-size: 0.86rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dptrack { position: relative; height: 34px; }
+  .dptrack::before { content: ""; position: absolute; left: 0; right: 0; top: 16px; height: 1px; background: var(--grid); }
+  .dpspan { position: absolute; top: 15px; height: 3px; border-radius: 2px; background: var(--deemph); }
+  .dot { position: absolute; top: 9px; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; border: 2px solid var(--surface); cursor: default; }
+  .dot::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; }
+  .dpaxis { display: grid; grid-template-columns: minmax(120px, 30%) 1fr; gap: 12px; }
+  .dpaxis > div + div { position: relative; height: 18px; border-top: 1px solid var(--axis); }
+  .dpaxis > div > span { position: absolute; top: 2px; transform: translateX(-50%); }
+
+  /* Retention */
+  .ret { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+  @media (max-width: 760px) { .ret { grid-template-columns: 1fr 1fr; } }
+  table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+  th { text-align: right; font-weight: 600; color: var(--ink-2); font-size: 0.76rem; padding: 6px 8px; border-bottom: 1px solid var(--axis); }
+  td { text-align: right; padding: 7px 8px; border-bottom: 1px solid var(--grid); font-variant-numeric: tabular-nums; }
+  th:first-child, td:first-child { text-align: left; }
+  .meter { display: inline-block; width: 64px; height: 6px; margin-left: 8px; vertical-align: middle; border-radius: 3px; background: var(--grid); overflow: hidden; }
+  .meter i { display: block; height: 100%; background: var(--all); }
+  .scroll { overflow-x: auto; }
+  details.tv { margin-top: 14px; }
+  details.tv summary { cursor: pointer; font-size: 0.86rem; color: var(--accent); }
+  .muted { color: var(--muted); }
+  .empty { padding: 18px; border: 1px dashed var(--axis); border-radius: 12px; color: var(--ink-2); font-size: 0.9rem; }
+  .gate { max-width: 440px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+  .gate input { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--page); color: var(--ink); font: inherit; margin: 10px 0; }
+  .gate button { padding: 9px 16px; border-radius: 10px; border: 0; background: var(--accent); color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+  .notes { font-size: 0.8rem; color: var(--ink-2); line-height: 1.6; padding-left: 18px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>App analytics</h1>
+      <p class="sub">How people use The Hour Brief on iPhone, Android and the website.</p>
+    </div>
+    <a class="back" href="/growth.html">← Growth report</a>
+  </header>
+  <div class="filters" id="filters" hidden>
+    <span class="fgroup"><span class="flabel">Period</span>
+    <div class="seg" role="group" aria-label="Period" id="f-days">
+      <button type="button" data-v="7">7 days</button><button type="button" data-v="14">14 days</button><button type="button" data-v="30">30 days</button>
+    </div></span>
+    <span class="fgroup"><span class="flabel">Platform</span>
+    <div class="seg" role="group" aria-label="Platform" id="f-pf">
+      <button type="button" data-v="all">All</button>
+      <button type="button" data-v="ios"><i class="key" style="background:var(--s1)"></i>iPhone</button>
+      <button type="button" data-v="android"><i class="key" style="background:var(--s2)"></i>Android</button>
+      <button type="button" data-v="web"><i class="key" style="background:var(--s3)"></i>Web</button>
+    </div></span>
+  </div>
+  <div id="app"><p class="muted">Loading…</p></div>
+</div>
+<div class="tip" id="tip" role="status" aria-live="polite"></div>
+<script>
+(function () {
+  'use strict';
+  // ---------- setup ----------
+  var KEY_STORE = 'hb-stats-key', key = '';
+  var m = /[#&]key=([^&]+)/.exec(location.hash);
+  if (m) { key = decodeURIComponent(m[1]); try { localStorage.setItem(KEY_STORE, key); } catch (e) {} history.replaceState(null, '', location.pathname); }
+  if (!key) { try { key = localStorage.getItem(KEY_STORE) || ''; } catch (e) {} }
+  var S = { days: 7, pf: 'all' };
+  try { var sv = JSON.parse(localStorage.getItem('hb-appstats-view') || '{}'); if ([7, 14, 30].indexOf(sv.days) >= 0) S.days = sv.days; if (/^(all|ios|android|web)$/.test(sv.pf)) S.pf = sv.pf; } catch (e) {}
+
+  var PF = [{ id: 'ios', name: 'iPhone', c: 'var(--s1)' }, { id: 'android', name: 'Android', c: 'var(--s2)' }, { id: 'web', name: 'Web', c: 'var(--s3)' }];
+  var PFN = { ios: 'iPhone', android: 'Android', web: 'Web' };
+  // Keep in step with FEATURES in api/track.js (and mobile.js / quiz.js / listen.js, which count them).
+  var F = [
+    ['today', 'Read today’s edition', 'Reading', 1], ['cards_view', 'Cards view', 'Reading', 1], ['story_save', 'Save a story', 'Reading', 1],
+    ['saved_list', 'Open saved stories', 'Reading'], ['story_share', 'Share a story', 'Reading', 1], ['story_vote', 'Vote on a story', 'Reading'],
+    ['source_out', 'Open a story’s source', 'Reading'], ['edition_share', 'Share the edition', 'Reading'], ['past_editions', 'Past editions', 'Reading'],
+    ['past_edition_read', 'Read a past edition', 'Reading'], ['weekly', 'Weekly recap', 'Reading', 1], ['weekly_card', 'Sunday recap card', 'Reading'], ['weekly_menu', 'Recap from the Menu', 'Reading'],
+    ['audio_open', 'Audio screen', 'Listen', 1], ['audio_play', 'Play the audio', 'Listen', 1], ['audio_done', 'Listen to the end', 'Listen'],
+    ['voices', 'Voices', 'Voices', 1], ['voices_article', 'Read a Voices article', 'Voices', 1],
+    ['challenge_open', 'Challenge screen', 'Challenge', 1], ['quiz_start', 'Start the quiz', 'Challenge', 1], ['quiz_done', 'Finish the quiz', 'Challenge', 1],
+    ['quiz_retake_start', 'Practice retake', 'Challenge'], ['quiz_share', 'Share a quiz score', 'Challenge'], ['league_create', 'Start a league', 'Challenge', 1],
+    ['league_join', 'Join a league', 'Challenge', 1], ['league_invite', 'Send a league invite', 'Challenge'], ['badges_view', 'Badges tab', 'Challenge'],
+    ['menu', 'Open the Menu', 'Settings'], ['sections', 'Sections', 'Settings'], ['text_size', 'Text size', 'Settings'], ['reminder', 'Daily reminder', 'Settings', 1],
+    ['channel_out', 'Follow WhatsApp / Telegram', 'Follow'], ['podcast_out', 'Open a podcast app', 'Follow']
+  ];
+  var FN = {}; F.forEach(function (f) { FN[f[0]] = f[1]; });
+  var MIN = 20;            // people-days a period needs before its percentages and changes are shown
+
+  var app = document.getElementById('app'), tip = document.getElementById('tip'), data = null;
+  function h(tag, attrs, kids) {
+    var e = document.createElement(tag);
+    for (var k in attrs || {}) { if (k === 'text') e.textContent = attrs[k]; else if (k === 'style') e.setAttribute('style', attrs[k]); else if (k.indexOf('on') === 0) e.addEventListener(k.slice(2), attrs[k]); else e.setAttribute(k, attrs[k]); }
+    (kids || []).forEach(function (c) { if (c != null) e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
+    return e;
+  }
+  var SVGNS = 'http://www.w3.org/2000/svg';
+  function s(tag, attrs, parent) { var e = document.createElementNS(SVGNS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+  var fmt = function (n) { return n == null ? '–' : (Math.round(n) || 0).toLocaleString('en-IN'); };
+  var dec = function (n) { return n == null ? '–' : n < 10 ? (Math.round(n * 10) / 10).toString() : fmt(n); };
+  var pct = function (r) { return r == null ? '–' : (r > 0 && r < 0.1 ? (r * 100).toFixed(1) : Math.round(r * 100)) + '%'; };
+  var short = function (d) { var p = d.split('-'); return +p[2] + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+p[1] - 1]; };
+
+  // ---------- tooltip ----------
+  function showTip(x, y, title, rows) {
+    tip.textContent = '';
+    if (title) tip.appendChild(h('div', { class: 't', text: title }));
+    rows.forEach(function (r) {
+      var row = h('div', { class: 'r' });
+      if (r.c) row.appendChild(h('i', { style: 'background:' + r.c }));
+      row.appendChild(h('b', { text: r.v }));
+      row.appendChild(h('span', { text: r.l }));
+      tip.appendChild(row);
+    });
+    tip.classList.add('on');
+    var w = tip.offsetWidth, hh = tip.offsetHeight;
+    var left = Math.min(Math.max(8, x - w / 2), document.documentElement.clientWidth - w - 8);
+    tip.style.left = left + window.scrollX + 'px';
+    tip.style.top = (y - hh - 12 + window.scrollY) + 'px';
+  }
+  function hideTip() { tip.classList.remove('on'); }
+  function tipFor(el, title, rows) {
+    var on = function () { var r = el.getBoundingClientRect(); showTip(r.left + r.width / 2, r.top, title, typeof rows === 'function' ? rows() : rows); };
+    el.addEventListener('pointerenter', on); el.addEventListener('focus', on);
+    el.addEventListener('pointerleave', hideTip); el.addEventListener('blur', hideTip);
+  }
+
+  // ---------- numbers ----------
+  function pfs() { return S.pf === 'all' ? ['ios', 'android', 'web'] : [S.pf]; }
+  function sum(days, field) { var t = 0; days.forEach(function (d) { t += d.f[field] || 0; }); return t; }
+  function people(days, feat, list) { var t = 0; (list || pfs()).forEach(function (p) { t += sum(days, 'u|' + feat + '|' + p); }); return t; }
+  function uses(days, feat, list) { var t = 0; (list || pfs()).forEach(function (p) { t += sum(days, feat + '|' + p); }); return t; }
+  function reach(days, feat, list) { var a = people(days, 'open', list); return a ? people(days, feat, list) / a : null; }
+  function periods() { var all = data.days, n = S.days; return { cur: all.slice(-n), prev: all.slice(-2 * n, -n) }; }
+  function seriesColor() { return S.pf === 'all' ? 'var(--all)' : PF.filter(function (p) { return p.id === S.pf; })[0].c; }
+
+  // ---------- charts ----------
+  function sparkline(vals, color) {
+    var w = 200, hgt = 28, svg = s('svg', { viewBox: '0 0 ' + w + ' ' + hgt, preserveAspectRatio: 'none', 'aria-hidden': 'true' });
+    var max = Math.max.apply(null, vals.concat([1]));
+    var pts = vals.map(function (v, i) { return [vals.length > 1 ? i * w / (vals.length - 1) : w, hgt - 3 - (v / max) * (hgt - 6)]; });
+    s('polyline', { points: pts.map(function (p) { return p.join(','); }).join(' '), fill: 'none', stroke: 'var(--deemph)', 'stroke-width': 2, 'vector-effect': 'non-scaling-stroke', 'stroke-linejoin': 'round' }, svg);
+    var last = pts[pts.length - 1];
+    if (last) s('circle', { cx: last[0], cy: last[1], r: 3, fill: color, 'vector-effect': 'non-scaling-stroke' }, svg);
+    return svg;
+  }
+  // Lines over days, one per series, crosshair + one tooltip with every series. series: [{name, color, vals, fmt}]
+  function lineChart(dates, series, opts) {
+    opts = opts || {};
+    var box = h('div', { class: 'chart' });
+    var W = Math.max(280, app.clientWidth - 40), H = opts.h || 220, L = 40, R = opts.endLabels ? 70 : 12, T = 10, B = 26;
+    var svg = s('svg', { viewBox: '0 0 ' + W + ' ' + H, height: H, tabindex: 0, role: 'img', 'aria-label': opts.label || 'Line chart' });
+    var max = 0;
+    series.forEach(function (sr) { sr.vals.forEach(function (v) { if (v != null && v > max) max = v; }); });
+    if (opts.max) max = opts.max;
+    var step = niceStep(max || 1), top = Math.max(step, Math.ceil((max || 1) / step) * step);
+    var x = function (i) { return L + (dates.length > 1 ? i * (W - L - R) / (dates.length - 1) : (W - L - R) / 2); };
+    var y = function (v) { return T + (1 - v / top) * (H - T - B); };
+    for (var t = 0; t <= top + 1e-9; t += step) {
+      s('line', { x1: L, x2: W - R, y1: y(t), y2: y(t), class: t ? 'gl' : 'base' }, svg);
+      s('text', { x: L - 8, y: y(t) + 4, 'text-anchor': 'end', class: 'ax' }, svg).textContent = opts.pct ? Math.round(t * 100) + '%' : fmt(t);
+    }
+    var every = Math.ceil(dates.length / Math.max(2, Math.min(7, Math.floor((W - L - R) / 56))));
+    dates.forEach(function (d, i) { if ((i % every === 0 && dates.length - 1 - i >= every * 0.7) || i === dates.length - 1) s('text', { x: x(i), y: H - 6, 'text-anchor': 'middle', class: 'ax' }, svg).textContent = short(d); });
+    series.forEach(function (sr) {
+      var path = '', open = false;
+      sr.vals.forEach(function (v, i) { if (v == null) { open = false; return; } path += (open ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1); open = true; });
+      if (opts.area && series.length === 1 && path) s('path', { d: path + 'L' + x(sr.vals.length - 1) + ' ' + y(0) + 'L' + x(0) + ' ' + y(0) + 'Z', fill: sr.color, opacity: 0.1 }, svg);
+      s('path', { d: path, fill: 'none', stroke: sr.color, 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }, svg);
+      var li = sr.vals.length - 1;
+      while (li >= 0 && sr.vals[li] == null) li--;
+      if (li >= 0) {
+        s('circle', { cx: x(li), cy: y(sr.vals[li]), r: 4, fill: sr.color, stroke: 'var(--surface)', 'stroke-width': 2 }, svg);
+        if (opts.endLabels) s('text', { x: x(li) + 9, y: y(sr.vals[li]) + 4, class: 'ax', style: 'fill:var(--ink-2)' }, svg).textContent = sr.name + ' ' + (sr.fmt || dec)(sr.vals[li]);
+      }
+    });
+    var cross = s('line', { y1: T, y2: H - B, class: 'base', visibility: 'hidden' }, svg);
+    var hit = s('rect', { x: L, y: T, width: W - L - R, height: H - T - B, fill: 'transparent' }, svg);
+    var cur = -1;
+    function at(i) {
+      cur = Math.max(0, Math.min(dates.length - 1, i));
+      cross.setAttribute('x1', x(cur)); cross.setAttribute('x2', x(cur)); cross.setAttribute('visibility', 'visible');
+      var r = svg.getBoundingClientRect(), sx = r.width / W;
+      showTip(r.left + x(cur) * sx, r.top + T, short(dates[cur]), series.map(function (sr) { return { c: sr.color, v: (sr.fmt || dec)(sr.vals[cur]), l: sr.name }; }));
+    }
+    hit.addEventListener('pointermove', function (e) { var r = svg.getBoundingClientRect(); var px = (e.clientX - r.left) * W / r.width; at(Math.round((px - L) / ((W - L - R) / Math.max(1, dates.length - 1)))); });
+    hit.addEventListener('pointerleave', function () { cross.setAttribute('visibility', 'hidden'); hideTip(); });
+    svg.addEventListener('keydown', function (e) { if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); at((cur < 0 ? dates.length - 1 : cur) + (e.key === 'ArrowRight' ? 1 : -1)); } });
+    svg.addEventListener('focus', function () { at(dates.length - 1); });
+    svg.addEventListener('blur', function () { cross.setAttribute('visibility', 'hidden'); hideTip(); });
+    box.appendChild(svg);
+    return box;
+  }
+  function niceStep(max) { var raw = max / 4, p = Math.pow(10, Math.floor(Math.log10(raw))), n = raw / p; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * p; }
+  function delta(cur, prev, curBase, prevBase, kind) {
+    if (curBase < MIN || prevBase < MIN || cur == null || prev == null) return h('span', { class: 'muted', text: 'not enough data to compare yet' });
+    var d = cur - prev, flat = kind === 'pts' ? Math.abs(d) < 0.005 : Math.abs(d) < 0.05 * Math.max(prev, 1e-9);
+    var txt = kind === 'pts' ? (Math.abs(d) * 100).toFixed(1) + ' pts' : Math.round(Math.abs(d) / (prev || 1) * 100) + '%';
+    return h('span', { class: flat ? 'muted' : d > 0 ? 'up' : 'down', text: (flat ? '→ about the same' : (d > 0 ? '▲ ' : '▼ ') + txt) + ' vs the ' + S.days + ' days before' });
+  }
+
+  // ---------- sections ----------
+  function card(title, question) { return h('section', { class: 'card' }, [h('h2', { text: title }), h('p', { class: 'q', text: question })]); }
+
+  function growth(P) {
+    var c = card('Is it growing?', 'People who opened the app or the website each day, and how many phones installed the app.');
+    var list = pfs(), dates = P.cur.map(function (d) { return d.date; });
+    var activeCur = people(P.cur, 'open'), activePrev = people(P.prev, 'open');
+    var avg = activeCur / S.days, avgPrev = activePrev / S.days;
+    var appsOnly = S.pf === 'web';
+    var inst = function (days) { var t = 0; days.forEach(function (d) { list.forEach(function (p) { if (d.installs[p] != null) t += d.installs[p]; }); }); return t; };
+    var depthCur = 0; F.forEach(function (f) { if (f[0] !== 'today') depthCur += people(P.cur, f[0]); });
+    var depthPrev = 0; F.forEach(function (f) { if (f[0] !== 'today') depthPrev += people(P.prev, f[0]); });
+    var daily = P.cur.map(function (d) { return people([d], 'open'); });
+    var k = h('div', { class: 'kpis' }, [
+      kpi('People a day', dec(avg), '', delta(avg, avgPrev, activeCur, activePrev, 'rel'), sparkline(daily, seriesColor())),
+      kpi('People-days in ' + S.days + ' days', fmt(activeCur), '', h('span', { text: 'each person counted once a day' })),
+      kpi('App installs', appsOnly ? '–' : fmt(inst(P.cur)), '', appsOnly ? h('span', { text: 'apps only' }) : h('span', { text: 'before: ' + fmt(inst(P.prev)) }), appsOnly ? null : sparkline(P.cur.map(function (d) { var t = 0; list.forEach(function (p) { t += d.installs[p] || 0; }); return t; }), seriesColor())),
+      kpi('Features used per person a day', activeCur ? dec(depthCur / activeCur) : '–', '', delta(activeCur ? depthCur / activeCur : null, activePrev ? depthPrev / activePrev : null, activeCur, activePrev, 'rel'))
+    ]);
+    c.appendChild(k);
+    var series = (S.pf === 'all' ? PF : PF.filter(function (p) { return p.id === S.pf; })).map(function (p) {
+      return { name: p.name, color: p.c, vals: P.cur.map(function (d) { return d.f['u|open|' + p.id] || 0; }) };
+    });
+    if (series.length > 1) c.appendChild(legend(series));
+    c.appendChild(lineChart(dates, series, { endLabels: true, area: series.length === 1, label: 'People a day by platform' }));
+    return c;
+  }
+  function kpi(label, value, unit, d, chart) {
+    return h('div', { class: 'kpi' }, [h('div', { class: 'l', text: label }), h('div', { class: 'v' }, [value, unit ? h('small', { text: unit }) : null]), h('div', { class: 'd' }, [d]), chart]);
+  }
+  function legend(series, dots) {
+    return h('div', { class: 'legend' }, series.map(function (sr) { return h('span', {}, [h('i', { class: dots ? 'dotk' : '', style: 'background:' + sr.color }), sr.name]); }));
+  }
+
+  // The daily loop as a funnel: each step's share of the people who opened, and how many of the step before made it.
+  function funnel(title, steps, P, base) {
+    var box = h('div', { class: 'fn' }, [h('h3', { text: title })]);
+    var color = seriesColor(), prevN = null;
+    var baseN = base != null ? base : people(P.cur, steps[0][0]);
+    steps.forEach(function (st, i) {
+      var n = people(P.cur, st[0]), share = baseN ? n / baseN : 0;
+      if (i > 0 && prevN != null) {
+        var conv = prevN ? n / prevN : null;
+        box.appendChild(h('div', { class: 'drop', text: conv == null ? '' : '↓ ' + pct(Math.min(conv, 1)) + ' of the step above' }));
+      }
+      var bar = h('i', { class: 'bar', style: 'width:' + Math.max(0.5, Math.min(1, share) * 82) + '%;background:' + color });
+      var lab = h('b', { text: pct(baseN ? share : null), style: 'left:' + Math.max(0.5, Math.min(1, share) * 82) + '%' });
+      var trk = h('div', { class: 'track', tabindex: 0, 'aria-label': st[1] + ': ' + fmt(n) + ' people-days, ' + pct(share) });
+      trk.appendChild(bar); trk.appendChild(lab);
+      tipFor(trk, st[1], function () { return [{ c: color, v: fmt(n), l: 'people-days' }, { v: fmt(uses(P.cur, st[0])), l: 'uses' }, { v: pct(share), l: 'of ' + (i ? 'everyone at the first step' : 'active people') }]; });
+      box.appendChild(h('div', { class: 'step' }, [h('div', { class: 'n' }, [h('span', { text: st[1] }), h('span', { text: fmt(n) + ' people-days' })]), trk]));
+      prevN = n;
+    });
+    return box;
+  }
+  function habit(P) {
+    var c = card('Is the daily habit working?', 'The loop the brief is built on: open, read, play the quiz, bring a friend. Bars are the share of active people; the small line under each step is how many made it from the step above.');
+    var active = people(P.cur, 'open');
+    if (active < 1) { c.appendChild(empty()); return c; }
+    var qs = people(P.cur, 'quiz_start'), qd = people(P.cur, 'quiz_done'), ap = people(P.cur, 'audio_play'), ad = people(P.cur, 'audio_done');
+    var lines = [];
+    if (qs >= 5) lines.push(pct(qd / qs) + ' of people who start the quiz finish it');
+    if (ap >= 5) lines.push(pct(ad / ap) + ' of people who press play listen to the end');
+    if (lines.length) c.appendChild(h('p', { class: 'verdict', text: lines.join(' · ') + '.' }));
+    var grid = h('div', { class: 'funnels' });
+    var main = h('div');
+    main.appendChild(funnel('Daily loop', [['open', 'Opened the app or site'], ['today', 'Read today’s edition'], ['challenge_open', 'Opened Challenge'], ['quiz_start', 'Started the quiz'], ['quiz_done', 'Finished the quiz'], ['quiz_share', 'Shared a score']], P, active));
+    grid.appendChild(main);
+    var side = h('div');
+    side.appendChild(funnel('Listening', [['audio_open', 'Opened Audio'], ['audio_play', 'Pressed play'], ['audio_done', 'Listened to the end']], P, active));
+    side.appendChild(funnel('Voices', [['voices', 'Opened Voices'], ['voices_article', 'Read an article']], P, active));
+    grid.appendChild(side);
+    c.appendChild(grid);
+    return c;
+  }
+
+  // Every feature ranked by reach; click a row for its daily trend.
+  var openFeat = null;
+  function landing(P) {
+    var c = card('Which features land?', 'Every feature, ranked by reach: the share of active people who used it at least once that day. Tap a row for its trend.');
+    var active = people(P.cur, 'open'), activePrev = people(P.prev, 'open');
+    if (active < 1) { c.appendChild(empty()); return c; }
+    var rows = F.map(function (f) {
+      return { id: f[0], name: f[1], area: f[2], core: !!f[3], r: people(P.cur, f[0]) / active, rp: activePrev ? people(P.prev, f[0]) / activePrev : null, n: people(P.cur, f[0]), u: uses(P.cur, f[0]) };
+    }).sort(function (a, b) { return b.r - a.r; });
+    var maxR = Math.max(0.01, rows[0].r), color = seriesColor();
+    var ul = h('ul', { class: 'rank' });
+    var used = rows.filter(function (r) { return r.n > 0; }), unused = rows.filter(function (r) { return r.n === 0; });
+    used.forEach(function (r) { ul.appendChild(rankRow(r, maxR, color, P, active, activePrev)); });
+    if (unused.length) {
+      ul.appendChild(h('li', { class: 'split', text: 'Not used in these ' + S.days + ' days (' + unused.length + ')' }));
+      ul.appendChild(h('li', { class: 'row', style: 'cursor:default', tabindex: -1 }, [h('span', { class: 'nm muted', style: 'white-space:normal;grid-column:1/-1', text: unused.map(function (r) { return r.name; }).join(' · ') })]));
+    }
+    c.appendChild(ul);
+    return c;
+  }
+  function rankRow(r, maxR, color, P, active, activePrev) {
+    var w = Math.max(0.5, r.r / maxR * 86);
+    var trk = h('div', { class: 'track' }, [h('i', { class: 'bar', style: 'width:' + w + '%;background:' + color }), h('b', { text: pct(r.r), style: 'left:' + w + '%' })]);
+    var ch = h('span', { class: 'ch' });
+    if (active >= MIN && activePrev >= MIN && r.rp != null) {
+      var d = r.r - r.rp;
+      ch.className = 'ch ' + (Math.abs(d) < 0.005 ? '' : d > 0 ? 'up' : 'down');
+      ch.textContent = Math.abs(d) < 0.005 ? '→ same' : (d > 0 ? '▲ ' : '▼ ') + (Math.abs(d) * 100).toFixed(1) + ' pts';
+    } else ch.textContent = '–';
+    var li = h('li', { class: 'row', tabindex: 0, role: 'button', 'aria-expanded': String(openFeat === r.id), 'aria-label': r.name + ', reach ' + pct(r.r) + ', ' + fmt(r.u) + ' uses' }, [
+      h('span', { class: 'nm' }, [r.name, h('small', { text: r.area })]), trk, ch
+    ]);
+    tipFor(trk, r.name, [{ c: color, v: pct(r.r), l: 'reach' }, { v: fmt(r.n), l: 'people-days' }, { v: fmt(r.u), l: 'uses' }, { v: r.n ? dec(r.u / r.n) : '–', l: 'uses per person a day' }]);
+    var frag = document.createDocumentFragment();
+    frag.appendChild(li);
+    var toggle = function () { openFeat = openFeat === r.id ? null : r.id; render(); };
+    li.addEventListener('click', toggle);
+    li.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+    if (openFeat === r.id) {
+      var det = h('li', { class: 'detail' });
+      det.appendChild(h('p', { text: r.name + ': reach each day' + (S.pf === 'all' ? ', by platform' : '') + '. ' + (r.n ? dec(r.u / r.n) + ' uses per person on a day they use it.' : '') }));
+      var dates = P.cur.map(function (d) { return d.date; });
+      var series = (S.pf === 'all' ? PF : PF.filter(function (p) { return p.id === S.pf; })).map(function (p) {
+        return { name: p.name, color: p.c, fmt: pct, vals: P.cur.map(function (d) { var a = d.f['u|open|' + p.id] || 0; return a ? Math.min(1, (d.f['u|' + r.id + '|' + p.id] || 0) / a) : null; }) };
+      });
+      if (series.length > 1) det.appendChild(legend(series));
+      det.appendChild(lineChart(dates, series, { h: 170, pct: true, max: Math.min(1, Math.max.apply(null, series.map(function (s2) { return Math.max.apply(null, s2.vals.map(function (v) { return v || 0; })); })) || 0.1), label: r.name + ' reach by day' }));
+      frag.appendChild(det);
+    }
+    return frag;
+  }
+
+  // The core features with a dot per platform: where iPhone, Android and the web differ.
+  function platforms(P) {
+    var c = card('Where do the platforms differ?', 'Reach of the core features on each platform, last ' + S.days + ' days. Always all three, whatever the platform filter. A platform with fewer than ' + MIN + ' people-days is left out.');
+    var ok = PF.filter(function (p) { return people(P.cur, 'open', [p.id]) >= MIN; });
+    if (ok.length < 2) { c.appendChild(h('p', { class: 'empty', text: 'Needs at least two platforms with ' + MIN + ' people-days in the period. With more readers this fills in.' })); return c; }
+    c.appendChild(legend(ok.map(function (p) { return { name: p.name, color: p.c }; }), true));
+    var core = F.filter(function (f) { return f[3]; });
+    var rows = core.map(function (f) { var v = {}; ok.forEach(function (p) { v[p.id] = reach(P.cur, f[0], [p.id]) || 0; }); return { id: f[0], name: f[1], v: v }; });
+    var max = Math.max(0.1, Math.max.apply(null, rows.map(function (r) { return Math.max.apply(null, ok.map(function (p) { return r.v[p.id]; })); })));
+    var top = Math.min(1, Math.ceil(max * 4) / 4);
+    var box = h('div', { class: 'dp' });
+    rows.forEach(function (r) {
+      var vals = ok.map(function (p) { return r.v[p.id]; });
+      var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+      var t = h('div', { class: 'dptrack' }, [h('i', { class: 'dpspan', style: 'left:' + (lo / top * 100) + '%;width:' + ((hi - lo) / top * 100) + '%' })]);
+      ok.forEach(function (p) {
+        var d = h('span', { class: 'dot', tabindex: 0, style: 'left:' + (r.v[p.id] / top * 100) + '%;background:' + p.c, 'aria-label': r.name + ', ' + p.name + ': ' + pct(r.v[p.id]) });
+        tipFor(d, r.name, function () { return ok.map(function (q) { return { c: q.c, v: pct(r.v[q.id]), l: q.name }; }); });
+        t.appendChild(d);
+      });
+      box.appendChild(h('div', { class: 'dprow' }, [h('span', { class: 'nm', text: r.name }), t]));
+    });
+    var axis = h('div');
+    [0, 0.25, 0.5, 0.75, 1].forEach(function (q) { axis.appendChild(h('span', { class: 'ax', style: 'left:' + q * 100 + '%;font-size:11px;color:var(--muted)', text: Math.round(q * top * 100) + '%' })); });
+    box.appendChild(h('div', { class: 'dpaxis' }, [h('div'), axis]));
+    c.appendChild(box);
+    var gaps = rows.map(function (r) { var v = ok.map(function (p) { return { p: p, v: r.v[p.id] }; }).sort(function (a, b) { return b.v - a.v; }); return { r: r, hi: v[0], lo: v[v.length - 1], g: v[0].v - v[v.length - 1].v }; })
+      .filter(function (x) { return x.g >= 0.1; }).sort(function (a, b) { return b.g - a.g; }).slice(0, 3);
+    if (gaps.length) c.appendChild(h('p', { class: 'q', style: 'margin:12px 0 0', text: 'Biggest gaps: ' + gaps.map(function (x) { return x.r.name + ' (' + x.hi.p.name + ' ' + pct(x.hi.v) + ', ' + x.lo.p.name + ' ' + pct(x.lo.v) + ')'; }).join(' · ') + '.' }));
+    return c;
+  }
+
+  // App install cohorts: of the phones that installed on a day, how many opened the app again the next day and within a week.
+  function comeBack(P) {
+    var c = card('Do new app users come back?', 'Of the phones that opened the app for the first time on a day, how many opened it again the next day, and at least once in the 7 days after. Apps only: the website keeps no ID to follow a browser.');
+    if (S.pf === 'web') { c.appendChild(h('p', { class: 'empty', text: 'Apps only. Pick All, iPhone or Android.' })); return c; }
+    var list = pfs().filter(function (p) { return p !== 'web'; });
+    var all = data.days;
+    var tot = { n: 0, d1n: 0, d1: 0, d7n: 0, d7: 0 };
+    var rows = [];
+    P.cur.forEach(function (d) {
+      var r = { date: d.date, n: 0, d1: 0, d1n: 0, d7: 0, d7n: 0, d1ok: true, d7ok: true };
+      list.forEach(function (p) {
+        var co = d.cohort[p];
+        r.n += co.n;
+        if (co.d1 == null) r.d1ok = false; else { r.d1 += co.d1; r.d1n += co.n; }
+        if (co.d7 == null) r.d7ok = false; else { r.d7 += co.d7; r.d7n += co.n; }
+      });
+      tot.n += r.n; tot.d1 += r.d1; tot.d1n += r.d1n; tot.d7 += r.d7; tot.d7n += r.d7n;
+      rows.push(r);
+    });
+    c.appendChild(h('div', { class: 'ret' }, [
+      kpi('New phones', fmt(tot.n), '', h('span', { text: 'first opened the app in the period' })),
+      kpi('Back the next day', tot.d1n ? pct(tot.d1 / tot.d1n) : '–', '', h('span', { text: tot.d1n ? fmt(tot.d1) + ' of ' + fmt(tot.d1n) : 'no complete day yet' })),
+      kpi('Back within 7 days', tot.d7n ? pct(tot.d7 / tot.d7n) : '–', '', h('span', { text: tot.d7n ? fmt(tot.d7) + ' of ' + fmt(tot.d7n) + ' (installs at least 7 days old)' : 'needs installs at least 7 days old' }))
+    ]));
+    var t = h('table', {}, [h('thead', {}, [h('tr', {}, ['Installed', 'New phones', 'Back next day', 'Back within 7 days'].map(function (x) { return h('th', { text: x }); }))])]);
+    var tb = h('tbody');
+    rows.slice().reverse().forEach(function (r) {
+      if (!r.n) return;
+      var cell = function (got, n, ok) {
+        var td = h('td');
+        if (!ok) { td.textContent = 'too soon'; td.className = 'muted'; return td; }
+        td.appendChild(document.createTextNode(fmt(got) + ' · ' + pct(n ? got / n : null)));
+        td.appendChild(h('span', { class: 'meter' }, [h('i', { style: 'width:' + (n ? got / n * 100 : 0) + '%' })]));
+        return td;
+      };
+      tb.appendChild(h('tr', {}, [h('td', { text: short(r.date) }), h('td', { text: fmt(r.n) }), cell(r.d1, r.n, r.d1ok), cell(r.d7, r.n, r.d7ok)]));
+    });
+    if (!tb.children.length) tb.appendChild(h('tr', {}, [h('td', { colspan: 4, class: 'muted', text: 'No new phones in these days.' })]));
+    t.appendChild(tb);
+    c.appendChild(h('div', { class: 'scroll' }, [t]));
+    return c;
+  }
+
+  // Every number in one table (the accessible twin of the charts above).
+  function numbers(P) {
+    var c = card('All the numbers', 'Reach and uses for every feature on each platform, last ' + S.days + ' days. Reach = people who used it that day ÷ people active that day, added up over the days.');
+    var d = h('details', { class: 'tv' }, [h('summary', { text: 'Show the table' })]);
+    var t = h('table');
+    var hr = h('tr', {}, [h('th', { text: 'Feature' })]);
+    PF.forEach(function (p) { hr.appendChild(h('th', { text: p.name + ' reach' })); hr.appendChild(h('th', { text: 'uses' })); });
+    t.appendChild(h('thead', {}, [hr]));
+    var tb = h('tbody');
+    [['open', 'Active (opened)']].concat(F).forEach(function (f) {
+      var tr = h('tr', {}, [h('td', { text: f[1] })]);
+      PF.forEach(function (p) {
+        tr.appendChild(h('td', { text: f[0] === 'open' ? fmt(people(P.cur, 'open', [p.id])) + ' people-days' : pct(reach(P.cur, f[0], [p.id])) }));
+        tr.appendChild(h('td', { text: fmt(uses(P.cur, f[0], [p.id])) }));
+      });
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb);
+    d.appendChild(h('div', { class: 'scroll' }, [t]));
+    c.appendChild(d);
+    c.appendChild(h('ul', { class: 'notes' }, [
+      h('li', { text: 'People-days: each phone or browser counts once a day per feature (it remembers that itself; no ID is sent). Uses count every time.' }),
+      h('li', { text: 'Changes compare with the same number of days just before, and only show once both periods have at least ' + MIN + ' people-days.' }),
+      h('li', { text: 'Feature counting started on 22 Nov 2026; the Badges tab and the Sunday recap card count from their release. App installs and return rates come from the apps’ own launch reports.' })
+    ]));
+    return c;
+  }
+  function empty() { return h('p', { class: 'empty', text: 'No counts in these days yet. Feature counting started on 22 Nov 2026: give it a day of readers.' }); }
+
+  // ---------- render, filters, load ----------
+  function render() {
+    if (!data) return;
+    var P = periods();
+    var y = window.scrollY;
+    app.textContent = '';
+    [growth, habit, landing, platforms, comeBack, numbers].forEach(function (fn) { app.appendChild(fn(P)); });
+    window.scrollTo(0, y);
+  }
+  function syncFilters() {
+    document.querySelectorAll('#f-days button').forEach(function (b) { b.setAttribute('aria-pressed', String(+b.dataset.v === S.days)); });
+    document.querySelectorAll('#f-pf button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.v === S.pf)); });
+    try { localStorage.setItem('hb-appstats-view', JSON.stringify(S)); } catch (e) {}
+  }
+  document.querySelectorAll('#f-days button').forEach(function (b) { b.addEventListener('click', function () { S.days = +b.dataset.v; syncFilters(); load(); }); });
+  document.querySelectorAll('#f-pf button').forEach(function (b) { b.addEventListener('click', function () { S.pf = b.dataset.v; syncFilters(); render(); }); });
+  var rT = 0, lastW = window.innerWidth;
+  window.addEventListener('resize', function () { if (window.innerWidth === lastW) return; lastW = window.innerWidth; clearTimeout(rT); rT = setTimeout(render, 150); });
+  function askKey(msg) {
+    app.textContent = '';
+    document.getElementById('filters').hidden = true;
+    var inp = h('input', { type: 'password', placeholder: 'Stats key', 'aria-label': 'Stats key' });
+    var go = h('button', { type: 'button', text: 'Show the analytics' });
+    go.addEventListener('click', function () { key = inp.value.trim(); try { localStorage.setItem(KEY_STORE, key); } catch (e) {} load(); });
+    inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') go.click(); });
+    app.appendChild(h('div', { class: 'gate' }, [h('b', { text: 'Owner only' }), h('p', { class: 'sub', text: msg || 'Enter the stats key (the same one the growth report uses).' }), inp, go]));
+  }
+  function load() {
+    if (!key) { askKey(); return; }
+    document.getElementById('filters').hidden = false;
+    app.classList.add('loading');
+    fetch('/api/track?action=app&days=' + (S.days * 2) + '&key=' + encodeURIComponent(key), { cache: 'no-store' })
+      .then(function (r) { if (r.status === 401) throw new Error('key'); if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
+      .then(function (d) { data = d; app.classList.remove('loading'); render(); })
+      .catch(function (e) {
+        app.classList.remove('loading');
+        if (e.message === 'key') { try { localStorage.removeItem(KEY_STORE); } catch (x) {} askKey('That key did not work.'); }
+        else if (!data) app.innerHTML = '<p class="empty">Could not load the analytics (' + e.message + '). Try again in a minute.</p>';
+      });
+  }
+  syncFilters();
+  load();
+})();
+</script>
+</body>
+</html>

@@ -50,17 +50,6 @@
   th:first-child, td:first-child { text-align: left; }
   td .bar { display: inline-block; height: 6px; border-radius: 3px; background: var(--bar); vertical-align: middle; margin-left: 8px; opacity: .85; }
   .muted { color: var(--faint); }
-  table.ftab { width: 100%; border-collapse: collapse; font-size: 0.86rem; font-variant-numeric: tabular-nums; }
-  table.ftab td:first-child, table.ftab th:first-child { text-align: left; white-space: nowrap; position: sticky; left: 0; background: var(--card); padding-right: 12px; }
-  table.ftab tr.grp td { text-align: left; font-size: 0.74rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--faint); padding-top: 14px; border-bottom: 0; }
-  table.ftab td { white-space: nowrap; vertical-align: top; }
-  table.ftab .fr { font-weight: 600; }
-  table.ftab .fbar { display: block; height: 5px; margin: 4px 0 2px auto; border-radius: 3px; background: var(--bar); opacity: .8; }
-  table.ftab small { display: block; color: var(--faint); font-size: 0.72rem; }
-  table.ftab td.down { color: var(--warn); }
-  .flist { margin: 0; padding: 0; list-style: none; }
-  .flist li { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--grid); font-size: 0.9rem; }
-  .flist li b { font-variant-numeric: tabular-nums; }
   .key { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; max-width: 460px; }
   .key input { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; margin: 10px 0; }
   .key button, .btn { padding: 9px 16px; border-radius: 10px; border: 0; background: var(--bar); color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
@@ -133,6 +122,7 @@
     <div>
       <h1>Growth</h1>
       <p class="sub">The Hour Brief: what ran today, the X plan, the numbers, and how to run it all.</p>
+      <p class="sub"><a href="/app-analytics.html">App analytics →</a> how people use the app and the site, feature by feature, on iPhone, Android and web.</p>
     </div>
   </header>
   <div id="gate"></div>
@@ -141,7 +131,6 @@
     <button type="button" role="tab" id="t-plan" aria-controls="p-plan" data-tab="plan">X plan</button>
     <button type="button" role="tab" id="t-channels" aria-controls="p-channels" data-tab="channels">Channels</button>
     <button type="button" role="tab" id="t-analytics" aria-controls="p-analytics" data-tab="analytics">Analytics</button>
-    <button type="button" role="tab" id="t-features" aria-controls="p-features" data-tab="features">Features</button>
     <button type="button" role="tab" id="t-runbook" aria-controls="p-runbook" data-tab="runbook">Runbook</button>
   </nav>
   <div class="panel" role="tabpanel" id="p-ops" aria-labelledby="t-ops" hidden><section class="plan" id="ops" hidden></section><p class="muted" id="ops-wait">Loading…</p></div>
@@ -164,21 +153,6 @@
     <li>Installs can't be tied to one visit here. For installs by campaign: Google Play Console › Grow users › Acquisition (from the utm tags), and App Store Connect › App Analytics › Acquisition › Campaigns (once the provider token is set in app.html).</li>
     <li>Sources and places are recorded from 21 Nov 2026; earlier days show totals only.</li>
   </ul>
-  </div>
-  <div class="panel" role="tabpanel" id="p-features" aria-labelledby="t-features" hidden>
-    <div class="panel-head">
-      <p class="sub">Which features people use in the iPhone app, the Android app and on the website, and which are growing.</p>
-      <div class="range" role="group" aria-label="Feature date range" id="f-range">
-        <button type="button" data-fdays="7" aria-pressed="true">7 days</button>
-        <button type="button" data-fdays="30">30 days</button>
-      </div>
-    </div>
-    <div id="features"><p class="muted">Loading…</p></div>
-    <ul class="foot">
-      <li><b>Active</b>: people (phones or browsers) who opened the app or site that day, added up over the days. <b>Reach</b>: of those, the share who used the feature that day. A person counts once a day per feature; <b>uses</b> counts every time.</li>
-      <li><b>Change</b>: reach now against the same number of days before, in percentage points. Shown once both periods have at least 20 active people-days on that platform.</li>
-      <li>No ID is sent: each phone or browser remembers on its own that it has already counted itself today. Counting started on 22 Nov 2026 (the Badges tab and the Sunday recap card count from their release).</li>
-    </ul>
   </div>
   <div class="panel" role="tabpanel" id="p-runbook" aria-labelledby="t-runbook" hidden>
     <section class="plan rb">
@@ -613,7 +587,7 @@ https://the-hour-brief.vercel.app/app?src=x-pinned</pre>
   }
 
   // ---- Tabs: Daily run · X plan · Analytics · Runbook (the URL hash picks one: #ops, #plan, #analytics, #runbook) ----
-  var TABS = ['ops', 'plan', 'channels', 'analytics', 'features', 'runbook'];
+  var TABS = ['ops', 'plan', 'channels', 'analytics', 'runbook'];
   function showTab(name, focus) {
     if (TABS.indexOf(name) < 0) name = 'ops';
     TABS.forEach(function (t) {
@@ -624,7 +598,6 @@ https://the-hour-brief.vercel.app/app?src=x-pinned</pre>
     });
     try { localStorage.setItem('hb-growth-tab', name); } catch (e) {}
     if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
-    if (name === 'features' && !fData && key) loadFeatures();
   }
   document.querySelectorAll('.tabs button').forEach(function (b) {
     b.addEventListener('click', function () { showTab(b.dataset.tab); });
@@ -633,126 +606,15 @@ https://the-hour-brief.vercel.app/app?src=x-pinned</pre>
       if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); showTab(TABS[(i + (e.key === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length], true); }
     });
   });
-  var firstTab = (location.hash.match(/^#(ops|plan|channels|analytics|features|runbook)$/) || [])[1];
+  if (location.hash === '#features') { location.replace('/app-analytics.html'); return; }
+  var firstTab = (location.hash.match(/^#(ops|plan|channels|analytics|runbook)$/) || [])[1];
   // a link to another tab (#plan from the Telegram scorecard) while the page is already open, or a new #key=
   window.addEventListener('hashchange', function () {
-    var t = (location.hash.match(/^#(ops|plan|channels|analytics|features|runbook)$/) || [])[1];
+    var t = (location.hash.match(/^#(ops|plan|channels|analytics|runbook)$/) || [])[1];
     if (t && key) showTab(t);
     else if (/[#&]key=/.test(location.hash)) location.reload();
   });
   if (!firstTab) { try { firstTab = localStorage.getItem('hb-growth-tab'); } catch (e) {} }
-
-  // ---- Features: which features people use, by platform (api/track.js?action=features, f:<date> written by mobile.js use()) ----
-  var fBox = document.getElementById('features'), fData = null, fDays = 7;
-  try { fDays = +localStorage.getItem('hb-stats-fdays') || 7; } catch (e) {}
-  // Keep in step with FEATURES in api/track.js. The third item marks the features the brief is built around: they make up
-  // the "needs attention" list when their reach is low.
-  var FGROUPS = [
-    ['Reading', [['today', 'Today’s edition', 1], ['cards_view', 'Cards view', 1], ['story_save', 'Save a story', 1], ['saved_list', 'Open saved stories'], ['story_share', 'Share a story', 1],
-      ['story_vote', 'Vote on a story'], ['source_out', 'Open a story’s source'], ['edition_share', 'Share the edition'], ['past_editions', 'Past editions list'],
-      ['past_edition_read', 'Read a past edition'], ['weekly', 'Weekly recap', 1], ['weekly_card', 'Tap the Sunday recap card'], ['weekly_menu', 'Recap from the Menu']]],
-    ['Listen', [['audio_open', 'Audio screen', 1], ['audio_play', 'Play the audio', 1], ['audio_done', 'Listen to the end']]],
-    ['Voices', [['voices', 'Voices', 1], ['voices_article', 'Read a Voices article', 1]]],
-    ['Challenge', [['challenge_open', 'Challenge screen', 1], ['quiz_start', 'Start the quiz', 1], ['quiz_done', 'Finish the quiz', 1], ['quiz_retake_start', 'Start a practice retake'],
-      ['quiz_share', 'Share a quiz score'], ['league_create', 'Start a league', 1], ['league_join', 'Join a league', 1], ['league_invite', 'Send a league invite'], ['badges_view', 'Badges tab']]],
-    ['Settings and follow', [['menu', 'Open the Menu'], ['sections', 'Sections'], ['text_size', 'Text size'], ['reminder', 'Daily reminder button', 1],
-      ['channel_out', 'Follow on WhatsApp / Telegram'], ['podcast_out', 'Open a podcast app']]]
-  ];
-  var FPF = [['ios', 'iPhone'], ['android', 'Android'], ['web', 'Web']];
-  function loadFeatures() {
-    fBox.innerHTML = '<p class="muted">Loading…</p>';
-    fetch('/api/track?action=features&days=' + (fDays * 2) + '&key=' + encodeURIComponent(key), { cache: 'no-store' })
-      .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
-      .then(function (d) { fData = d; renderFeatures(); })
-      .catch(function (e) { fBox.innerHTML = '<p class="err">Could not load the feature counts (' + e + '). Try again in a minute.</p>'; });
-  }
-  document.querySelectorAll('#f-range button').forEach(function (b) {
-    b.setAttribute('aria-pressed', String(+b.dataset.fdays === fDays));
-    b.addEventListener('click', function () {
-      fDays = +b.dataset.fdays;
-      try { localStorage.setItem('hb-stats-fdays', String(fDays)); } catch (e) {}
-      document.querySelectorAll('#f-range button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
-      fData = null; loadFeatures();
-    });
-  });
-  function fSum(days, field) { return days.reduce(function (a, d) { return a + (d.f[field] || 0); }, 0); }
-  function fStats(days, id, pfs) {          // people-days, uses and active people-days for a feature over some platforms
-    var o = { people: 0, uses: 0, active: 0 };
-    pfs.forEach(function (p) { o.people += fSum(days, 'u|' + id + '|' + p); o.uses += fSum(days, id + '|' + p); o.active += fSum(days, 'u|open|' + p); });
-    o.reach = o.active ? o.people / o.active : null;
-    return o;
-  }
-  function reachTxt(r) { return r == null ? '–' : (r * 100 < 10 && r > 0 ? (r * 100).toFixed(1) : Math.round(r * 100)) + '%'; }
-  function renderFeatures() {
-    var all = fData.days, cur = all.slice(-fDays), prev = all.slice(0, all.length - fDays);
-    var allPf = FPF.map(function (p) { return p[0]; });
-    fBox.textContent = '';
-    var activeAll = fStats(cur, 'open', allPf).active;
-    // Active a day, by platform
-    var tiles = h('div', { class: 'tiles' });
-    FPF.forEach(function (p) {
-      var a = fSum(cur, 'u|open|' + p[0]), pa = fSum(prev, 'u|open|' + p[0]);
-      tiles.appendChild(h('div', { class: 'tile' }, [h('div', { class: 'k', text: p[1] + ' · active a day' }), h('div', { class: 'v', text: (a / fDays).toFixed(a / fDays < 10 ? 1 : 0) }),
-        h('div', { class: 'd', text: fmt(a) + ' people-days in ' + fDays + ' days' + (pa ? ' · before: ' + fmt(pa) : '') })]));
-    });
-    var appActive = cur.reduce(function (a, d) { return a + (d.appActive || 0); }, 0);
-    tiles.appendChild(h('div', { class: 'tile' }, [h('div', { class: 'k', text: 'Apps · active a day (launch pings)' }), h('div', { class: 'v', text: (appActive / fDays).toFixed(appActive / fDays < 10 ? 1 : 0) }),
-      h('div', { class: 'd', text: 'iPhone + Android, from the app itself; a check on the two left' })]));
-    fBox.appendChild(tiles);
-    if (!activeAll) {
-      fBox.appendChild(h('p', { class: 'card muted', text: 'No feature counts in these ' + fDays + ' days yet. Counting started on 22 Nov 2026: give it a day of readers.' }));
-    }
-    // Doing well / needs attention / moving
-    var rows = [];
-    FGROUPS.forEach(function (g) { g[1].forEach(function (f) { var c = fStats(cur, f[0], allPf), p = fStats(prev, f[0], allPf); rows.push({ id: f[0], name: f[1], core: !!f[2], c: c, p: p, d: c.reach != null && p.reach != null && p.active >= 20 && c.active >= 20 ? c.reach - p.reach : null }); }); });
-    var withData = rows.filter(function (r) { return r.c.active > 0 && r.id !== 'today'; });
-    if (withData.length) {
-      var top = withData.slice().sort(function (a, b) { return b.c.reach - a.c.reach; }).slice(0, 5);
-      var low = withData.filter(function (r) { return r.core; }).sort(function (a, b) { return a.c.reach - b.c.reach; }).slice(0, 5);
-      var moving = rows.filter(function (r) { return r.d != null && Math.abs(r.d) >= 0.02; }).sort(function (a, b) { return Math.abs(b.d) - Math.abs(a.d); }).slice(0, 6);
-      var list = function (title, note, items, val) {
-        var ol = h('ol', { class: 'flist' });
-        items.forEach(function (r) { ol.appendChild(h('li', {}, [h('span', { text: r.name }), h('b', { text: val(r) })])); });
-        if (!items.length) ol.appendChild(h('li', { class: 'muted', text: 'Not enough days to compare yet.' }));
-        return h('div', { class: 'card' }, [h('h2', { text: title }), h('p', { class: 'note', text: note }), ol]);
-      };
-      fBox.appendChild(h('div', { class: 'grid2' }, [
-        list('Doing well', 'Highest reach: the share of active people who used it, last ' + fDays + ' days.', top, function (r) { return reachTxt(r.c.reach); }),
-        list('Needs attention', 'Core features with the lowest reach.', low, function (r) { return reachTxt(r.c.reach); }),
-        list('Moving', 'Biggest change in reach against the ' + fDays + ' days before.', moving, function (r) { return (r.d > 0 ? '▲ ' : '▼ ') + Math.abs(r.d * 100).toFixed(1) + ' pts'; })
-      ]));
-    }
-    // The full table: reach by platform, uses, change
-    var card = h('div', { class: 'card' }, [h('h2', { text: 'Every feature, by platform' }), h('p', { class: 'note', text: 'Reach (people who used it ÷ active people), with the number of uses under it. Last ' + fDays + ' days.' })]);
-    var tb = h('table', { class: 'ftab' });
-    var hr = h('tr', {}, [h('th', { text: 'Feature' })]);
-    FPF.forEach(function (p) { hr.appendChild(h('th', { text: p[1] })); });
-    hr.appendChild(h('th', { text: 'All' })); hr.appendChild(h('th', { text: 'Change' }));
-    tb.appendChild(h('thead', {}, [hr]));
-    var body = h('tbody');
-    var byId = {}; rows.forEach(function (r) { byId[r.id] = r; });
-    FGROUPS.forEach(function (g) {
-      body.appendChild(h('tr', { class: 'grp' }, [h('td', { colspan: '6', text: g[0] })]));
-      g[1].forEach(function (f) {
-        var r = byId[f[0]], tr = h('tr', {}, [h('td', { text: f[1] })]);
-        var cell = function (st) {
-          var td = h('td');
-          td.appendChild(h('span', { class: 'fr', text: reachTxt(st.reach) }));
-          if (st.reach) td.appendChild(h('i', { class: 'fbar', style: 'width:' + Math.max(2, Math.round(Math.min(1, st.reach) * 56)) + 'px' }));
-          td.appendChild(h('small', { text: st.uses ? fmt(st.uses) + ' uses' : '' }));
-          td.title = fmt(st.people) + ' people-days of ' + fmt(st.active) + ' active, ' + fmt(st.uses) + ' uses';
-          return td;
-        };
-        FPF.forEach(function (p) { tr.appendChild(cell(fStats(cur, f[0], [p[0]]))); });
-        tr.appendChild(cell(r.c));
-        tr.appendChild(h('td', { class: r.d == null ? 'muted' : r.d > 0.005 ? 'ok' : r.d < -0.005 ? 'down' : '', text: r.d == null ? '–' : (r.d > 0.005 ? '▲ ' : r.d < -0.005 ? '▼ ' : '') + Math.abs(r.d * 100).toFixed(1) + ' pts' }));
-        body.appendChild(tr);
-      });
-    });
-    tb.appendChild(body);
-    card.appendChild(h('div', { class: 'scroll' }, [tb]));
-    fBox.appendChild(card);
-  }
 
   // ---- Channels: YouTube, Instagram, Telegram, WhatsApp channel, podcast (api/track.js?action=channels) ----
   var chBox = document.getElementById('channels'), chData = null;
