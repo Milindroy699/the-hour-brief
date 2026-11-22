@@ -29,6 +29,10 @@
   .range { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--card); }
   .range button { border: 0; background: none; color: var(--soft); padding: 7px 14px; font: inherit; font-size: 0.86rem; cursor: pointer; }
   .range button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+  .refresh { display: flex; align-items: center; gap: 10px; }
+  .upd { font-size: 0.8rem; color: var(--faint); }
+  .btn-ghost { padding: 8px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: inherit; font-size: 0.86rem; font-weight: 600; cursor: pointer; }
+  .btn-ghost:disabled { opacity: .55; cursor: default; }
   .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 14px; }
   .tile { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
   .tile .k { font-size: 0.78rem; color: var(--soft); }
@@ -124,6 +128,7 @@
       <p class="sub">The Hour Brief: what ran today, the X plan, the numbers, and how to run it all.</p>
       <p class="sub"><a href="/app-analytics.html">App analytics →</a> how people use the app and the site, feature by feature, on iPhone, Android and web.</p>
     </div>
+    <div class="refresh"><span class="upd" id="upd"></span><button type="button" id="refresh" class="btn-ghost">↻ Refresh</button></div>
   </header>
   <div id="gate"></div>
   <nav class="tabs" role="tablist" aria-label="Sections" id="tabs">
@@ -701,6 +706,25 @@ https://the-hour-brief.vercel.app/app?src=x-pinned</pre>
       .catch(function () { chBox.innerHTML = '<p class="err">Could not load the channel numbers. Try again in a minute.</p>'; });
   }
 
+  // Refresh: every tab's numbers again, from the server (owner, 2026-11-22). Also on its own when the page comes back into
+  // view after five minutes or more, so a tab left open overnight isn't showing yesterday.
+  var refreshBtn = document.getElementById('refresh'), updEl = document.getElementById('upd'), hiddenAt = 0;
+  function stamp() {
+    refreshBtn.disabled = false; refreshBtn.textContent = '↻ Refresh';
+    var d = new Date();
+    updEl.textContent = 'Updated ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+  }
+  function refreshAll() {
+    if (!key) return;
+    refreshBtn.disabled = true; refreshBtn.textContent = 'Refreshing…';
+    opsData = null; planData = null; chData = null;
+    load();
+  }
+  refreshBtn.addEventListener('click', refreshAll);
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden') hiddenAt = Date.now();
+    else if (hiddenAt && Date.now() - hiddenAt > 5 * 60 * 1000) refreshAll();
+  });
   function load() {
     if (!key) { askKey(); return; }
     if (!chData) loadChannels();
@@ -713,8 +737,8 @@ https://the-hour-brief.vercel.app/app?src=x-pinned</pre>
     main.innerHTML = '<p class="muted">Loading…</p>';
     fetch('/api/track?action=report&days=' + days + '&key=' + encodeURIComponent(key), { cache: 'no-store' })
       .then(function (res) { if (res.status === 401) throw new Error('key'); if (!res.ok) throw new Error('http ' + res.status); return res.json(); })
-      .then(render)
-      .catch(function (e) { if (e.message === 'key') { try { localStorage.removeItem(KEY_STORE); } catch (x) {} askKey('That key did not work.'); } else main.innerHTML = '<p class="err">Could not load the report (' + e.message + '). Try again in a minute.</p>'; });
+      .then(function (d) { render(d); stamp(); })
+      .catch(function (e) { refreshBtn.disabled = false; refreshBtn.textContent = '↻ Refresh'; if (e.message === 'key') { try { localStorage.removeItem(KEY_STORE); } catch (x) {} askKey('That key did not work.'); } else main.innerHTML = '<p class="err">Could not load the report (' + e.message + '). Try again in a minute.</p>'; });
   }
   document.querySelectorAll('.range button').forEach(function (b) {
     b.setAttribute('aria-pressed', String(+b.dataset.days === days));

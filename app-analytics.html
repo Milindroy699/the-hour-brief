@@ -53,6 +53,8 @@
   .key { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
   .flabel { font-size: 0.78rem; color: var(--muted); }
   .fgroup { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+  .refresh { border: 1px solid var(--border); background: var(--surface); color: var(--ink); font: inherit; font-size: 0.86rem; font-weight: 600; padding: 7px 12px; border-radius: 10px; cursor: pointer; }
+  .refresh:disabled { opacity: .55; cursor: default; }
 
   #app { transition: opacity .15s; }
   #app.loading { opacity: .45; }
@@ -168,6 +170,7 @@
       <button type="button" data-v="android"><i class="key" style="background:var(--s2)"></i>Android</button>
       <button type="button" data-v="web"><i class="key" style="background:var(--s3)"></i>Web</button>
     </div></span>
+    <span class="fgroup"><button type="button" class="refresh" id="refresh">↻ Refresh</button><span class="flabel" id="upd"></span></span>
   </div>
   <div id="app"><p class="muted">Loading…</p></div>
 </div>
@@ -592,13 +595,25 @@
     app.classList.add('loading');
     fetch('/api/track?action=app&days=' + Math.max(S.days * 2, 14) + '&key=' + encodeURIComponent(key), { cache: 'no-store' })
       .then(function (r) { if (r.status === 401) throw new Error('key'); if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
-      .then(function (d) { data = d; app.classList.remove('loading'); render(); })
+      .then(function (d) { data = d; app.classList.remove('loading'); render(); stamp(); })
       .catch(function (e) {
+        refreshBtn.disabled = false; refreshBtn.textContent = '↻ Refresh';
         app.classList.remove('loading');
         if (e.message === 'key') { try { localStorage.removeItem(KEY_STORE); } catch (x) {} askKey('That key did not work.'); }
         else if (!data) app.innerHTML = '<p class="empty">Could not load the analytics (' + e.message + '). Try again in a minute.</p>';
       });
   }
+  var refreshBtn = document.getElementById('refresh'), updEl = document.getElementById('upd'), hiddenAt = 0;
+  function stamp() {
+    refreshBtn.disabled = false; refreshBtn.textContent = '↻ Refresh';
+    var d = new Date();
+    updEl.textContent = 'Updated ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+  }
+  refreshBtn.addEventListener('click', function () { refreshBtn.disabled = true; refreshBtn.textContent = 'Refreshing…'; load(); });
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden') hiddenAt = Date.now();
+    else if (hiddenAt && Date.now() - hiddenAt > 5 * 60 * 1000 && key) load();
+  });
   syncFilters();
   load();
 })();

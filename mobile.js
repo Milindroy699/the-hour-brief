@@ -1295,23 +1295,6 @@
     else if (navigator.clipboard) p = navigator.clipboard.writeText(payload.url).then(function () { toast('Link copied'); });
     if (p && p.catch) p.catch(function () {});
   }
-  var REFRESH_SVG = '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>';
-  // A fresh copy of this page from the server, past any cached one: cached copies of shared data are dropped (the Voices
-  // list, the section list; they refill on their own), the reader's own things stay (saved stories, quiz results and
-  // streak, badges, leagues, settings), then the page reloads with a one-off query so nothing in between can serve the old one.
-  function forceRefresh() {
-    try { ['hb-voices-v1', 'hb-lanes-v1'].forEach(function (k) { localStorage.removeItem(k); }); } catch (e) { /* nothing cached */ }
-    var done = function () {
-      var u = new URL(location.href);
-      u.searchParams.set('fresh', Date.now().toString(36));
-      showLeaving(null);
-      setTimeout(function () { location.replace(u.pathname + u.search + u.hash); }, 120);
-    };
-    if (window.caches && caches.keys) caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); }).then(done, done);
-    else done();
-  }
-  // ?fresh= has done its job once the page is up: take it out of the address so a later share or refresh doesn't carry it
-  if (/[?&]fresh=/.test(location.search)) { try { var fu = new URL(location.href); fu.searchParams.delete('fresh'); history.replaceState(history.state, '', fu.pathname + fu.search + fu.hash); } catch (e) { /* keep it */ } }
   function openPodcasts(returnTo) {
     openSheet('Podcast apps', function (body) {
       body.appendChild(mk('p', 'rd-sheet-note', 'The same daily brief as Audio, as an episode every morning. Follow it in your podcast app.'));
@@ -1375,8 +1358,6 @@
       // The daily episode in podcast apps (owner, 2026-11-22: it was only in the website's footer, which the app doesn't show).
       var pods = PODCASTS.filter(function (p) { return p[2]; });
       if (pods.length) item('podcasts', ICON.audio, 'Listen in a podcast app', pods.map(function (p) { return p[1]; }).join(' · '), function () { openPodcasts(returnTo); });
-      // The apps have no reload button (owner, 2026-11-22: "give a force refresh option in the app")
-      if (NATIVE) item('refresh', REFRESH_SVG, 'Refresh', 'Load the latest edition and app updates', function () { closeSheet(); forceRefresh(); });
       body.appendChild(ul);
       var foot = mk('div', 'rd-menu-foot');
       [['Contact us', '/contact.html'], ['About', '/about.html'], ['Privacy', '/privacy.html']].forEach(function (l, i) {
