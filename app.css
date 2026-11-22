@@ -223,6 +223,11 @@ html .item { scroll-margin-top: calc(var(--hb-head-h, 0px) + 72px); }
 }
 .ab-btn:active { background: var(--hb-stone); transform: scale(0.96); }
 .ab-btn svg { width: 24px; height: 24px; fill: none; }
+/* The back arrow takes exactly the logo's place (34px), so "The Hour Brief" sits in the same spot on every screen; it was
+   44px like the other header buttons and pushed the name 10px right on Past editions, About and the rest (owner,
+   2026-11-22). Its touch area stays 44px through ::after. */
+.ab-btn.ab-back { width: 34px; height: 34px; }
+.ab-btn.ab-back::after { content: ""; position: absolute; inset: -5px; }
 .ab-btn:focus-visible { outline: 2px solid var(--hb-primary); outline-offset: 1px; }
 .ab-btn .rd-count { position: absolute; top: 4px; right: 3px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: var(--hb-primary); color: #fff; font-size: 0.66rem; font-weight: 700; line-height: 16px; text-align: center; }
 .ab-btn .rd-count:empty { display: none; }
