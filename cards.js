@@ -174,6 +174,20 @@
     // 2026-11-18). The cover opens on the edition line, then the tagline.
     var tgSrc = document.querySelector('.tagline');
     if (tgSrc) b.scroll.appendChild(mk('p', 'dk-tagline', plain(tgSrc)));
+    // Sundays: the week's recap, under the tagline (mobile.js getWeekly; nothing on other days)
+    if (window.HBWeekly) {
+      var wk = mk('div', 'dk-week-slot');
+      b.scroll.appendChild(wk);
+      window.HBWeekly().then(function (w) {
+        if (!w) { wk.remove(); return; }
+        var a = mk('a', 'hb-week hb-week-sm');
+        a.href = w.url + '&src=app-cards';
+        a.appendChild(mk('span', 'hb-week-k', 'This week · ' + w.range));
+        a.appendChild(mk('b', 'hb-week-t', w.title));
+        a.appendChild(mk('span', 'hb-week-go', 'Read all ' + w.items.length + ' stories'));
+        wk.appendChild(a);
+      });
+    }
     var qt = document.querySelector('.pause-text');
     if (qt) {
       var fig = mk('figure', 'dk-quote');

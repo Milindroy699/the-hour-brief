@@ -281,6 +281,46 @@
     });
   }
 
+  // ---- The Sunday recap in the app (preview, owner 2026-11-22) ----
+  // "What actually mattered this week" is written every Sunday into social/<date>.json (weekly) and lives at /week.html.
+  // On a Sunday edition, Today opens with a card for it (the deck's cover gets a smaller one, cards.js); the Menu always
+  // has "This week's recap".
+  var weeklyP = null;
+  function getWeekly() {
+    if (weeklyP) return weeklyP;
+    var d = editionDate();
+    if (!d || new Date(d + 'T00:00:00Z').getUTCDay() !== 0) return (weeklyP = Promise.resolve(null));
+    weeklyP = fetch('/social/' + d + '.json').then(function (r) { return r.ok ? r.json() : null; }).then(function (s) {
+      var w = s && s.weekly;
+      if (!w || !w.items || !w.items.length) return null;
+      var fmt = function (x, y) { return new Date(x + 'T00:00:00Z').toLocaleDateString('en-IN', y ? { day: 'numeric', month: 'short', timeZone: 'UTC' } : { day: 'numeric', timeZone: 'UTC' }); };
+      var range = w.from ? (w.from.slice(5, 7) === d.slice(5, 7) ? fmt(w.from) : fmt(w.from, 1)) + '–' + fmt(d, 1) : fmt(d, 1);
+      return { date: d, range: range, title: w.title || 'What actually mattered this week', intro: w.intro || '', items: w.items, url: '/week.html?d=' + d };
+    }).catch(function () { return null; });
+    return weeklyP;
+  }
+  window.HBWeekly = getWeekly;
+  function openWeekly(url, src) { var u = url + (url.indexOf('?') < 0 ? '?' : '&') + 'src=' + src; if (typeof leaveTo === 'function') leaveTo(u); else location.href = u; }
+  function weeklyCard() {
+    if (!reader() || !isFeed() || document.querySelector('.hb-week')) return;
+    var anchor = document.querySelector('.pause-band');
+    if (!anchor) return;
+    getWeekly().then(function (w) {
+      if (!w || document.querySelector('.hb-week')) return;
+      var a = mk('a', 'hb-week');
+      a.href = w.url + '&src=app-today';
+      a.addEventListener('click', function (e) { e.preventDefault(); openWeekly(w.url, 'app-today'); });
+      a.appendChild(mk('span', 'hb-week-k', 'This week · ' + w.range));
+      a.appendChild(mk('b', 'hb-week-t', w.title));
+      if (w.intro) a.appendChild(mk('p', 'hb-week-i', w.intro));
+      var ol = mk('ol', 'hb-week-list');
+      w.items.slice(0, 3).forEach(function (it) { ol.appendChild(mk('li', '', it.headline || '')); });
+      a.appendChild(ol);
+      a.appendChild(mk('span', 'hb-week-go', 'Read all ' + w.items.length + ' stories'));
+      anchor.parentNode.insertBefore(a, anchor);
+    });
+  }
+
   function laneToggles() {
     document.querySelectorAll('.lane-head').forEach(function (head) {
       var h2 = head.querySelector('h2');
@@ -1058,6 +1098,7 @@
 
   // ---- App chrome: app bar (logo, wordmark, screen name; text size, saved, menu), tab bar, section chips ----
   var ICON = {
+    week: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M12 12.2l1.1 2.2 2.4.35-1.75 1.7.42 2.4L12 17.7l-2.17 1.15.42-2.4-1.75-1.7 2.4-.35z"/></svg>',
     aa: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8V6h9v2"/><path d="M7.5 6v12"/><path d="M5.5 18h4"/><path d="M13.5 12v-1.5H21V12"/><path d="M17.25 10.5V18"/><path d="M15.5 18h3.5"/></svg>',
     back: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>',
     bell: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>',
@@ -1209,6 +1250,7 @@
       // The same items, in the same order, on every screen (owner, 2026-11-19: on Past editions the menu used to lose
       // half its items). "Swipe cards" went (the List | Cards switch does that) and so did "Get it by email" (no
       // daily email is actually sent).
+      item('week', ICON.week, 'This week’s recap', 'What actually mattered, every Sunday', function () { closeSheet(); openWeekly('/week.html', 'app-menu'); });
       item('archive', ICON.archive, 'Past editions', 'Every edition, newest first', function () {
         closeSheet();
         if (screenName() === 'Archive') window.scrollTo({ top: 0, behavior: 'smooth' }); else leaveTo('/archive/');
@@ -1247,7 +1289,7 @@
   // bar itself has no room for a fourth icon next to the wordmark.
   var TABS = [['today', 'Today'], ['audio', 'Audio'], ['leaders', 'Voices'], ['quiz', 'Challenge']];
   function isFeed() { return !!document.querySelector('section.lane'); }          // an edition page (today's or an archived one)
-  var INFO_TITLES = { '/about.html': 'About', '/privacy.html': 'Privacy', '/contact.html': 'Contact us' };
+  var INFO_TITLES = { '/about.html': 'About', '/privacy.html': 'Privacy', '/contact.html': 'Contact us', '/week.html': 'This week' };
   function screenName() {
     var p = location.pathname;
     if (INFO_TITLES[p]) return INFO_TITLES[p];
@@ -1623,6 +1665,7 @@
     applyPrefs();
     collapsibleStories();
     storyArt();
+    weeklyCard();
     laneToggles();
     laneDigests();
     readTimes();

@@ -1070,3 +1070,24 @@ img { transition: opacity 0.3s ease; }
 @media (max-width: 640px) and (prefers-reduced-motion: reduce) {
   .tab-bar, .tab, .tab-ic, .tab-lb, .tab-switch { transition: none; }
 }
+
+/* ---- The Sunday recap card (mobile.js weeklyCard, cards.js cover) ---- */
+.hb-week { position: relative; display: block; margin: 14px 16px 4px; padding: 18px 18px 16px; border-radius: 24px; overflow: hidden; text-decoration: none; color: #fff;
+  background: radial-gradient(120% 90% at 100% 0%, rgba(232, 176, 75, 0.28), transparent 55%), linear-gradient(150deg, #2a1f78 0%, #14122b 70%);
+  box-shadow: 0 12px 28px rgba(20, 18, 43, 0.28); }
+.hb-week::after { content: ""; position: absolute; right: 16px; top: 14px; width: 14px; height: 14px; background: #e8b04b;
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); opacity: .9; }
+.hb-week-k { display: block; font-family: var(--hb-label); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #e8b04b; }
+.hb-week-t { display: block; margin: 6px 0 6px; font-family: var(--hb-serif); font-size: 1.45rem; font-weight: 500; line-height: 1.2; letter-spacing: -0.01em; }
+.hb-week-i { margin: 0 0 12px; font-size: 0.9rem; line-height: 1.5; color: rgba(255, 255, 255, 0.78); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.hb-week-list { margin: 0 0 14px; padding: 0; list-style: none; counter-reset: wk; }
+.hb-week-list li { counter-increment: wk; position: relative; padding: 8px 0 8px 32px; border-top: 1px solid rgba(255, 255, 255, 0.12); font-size: 0.9rem; font-weight: 600; line-height: 1.35;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hb-week-list li::before { content: counter(wk); position: absolute; left: 0; top: 7px; width: 22px; height: 22px; border-radius: 50%; background: rgba(232, 176, 75, 0.18); color: #e8b04b;
+  font-family: var(--hb-label); font-size: 0.72rem; font-weight: 700; line-height: 22px; text-align: center; }
+.hb-week-go { display: inline-flex; align-items: center; min-height: 40px; padding: 0 18px; border-radius: 999px; background: #fff; color: #2a1f78; font-family: var(--hb-label);
+  font-size: 0.76rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.hb-week-go::after { content: "\2192"; margin-left: 8px; }
+.hb-week-sm { margin: 4px 0 16px; padding: 14px 16px 14px; border-radius: 20px; }
+.hb-week-sm .hb-week-t { font-size: 1.15rem; margin: 4px 0 10px; }
+.hb-week-sm .hb-week-go { min-height: 34px; padding: 0 14px; font-size: 0.7rem; }
