@@ -986,7 +986,7 @@
     // Taps, by what was tapped (one listener for the whole page, so nothing else has to know about counting)
     var TAPS = [['.story-save', 'story_save'], ['.story-share', 'story_share'], ['.vote-btn', 'story_vote'], ['.src a, .dk-src a', 'source_out'],
       ['#cap-share', 'edition_share'], ['#cap-remind', 'reminder'], ['.ab-menu', 'menu'], ['.rd-item[data-act="sections"]', 'sections'],
-      ['.rd-item[data-act="textsize"]', 'text_size'], ['.reader-saved', 'saved_list']];
+      ['.rd-item[data-act="textsize"]', 'text_size'], ['.reader-saved', 'saved_list'], ['.hb-week', 'weekly_card'], ['.rd-item[data-act="week"]', 'weekly_menu']];
     document.addEventListener('click', function (e) {
       var t = e.target && e.target.closest ? e.target : null;
       if (!t) return;

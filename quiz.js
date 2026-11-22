@@ -1569,7 +1569,7 @@
     });
     if (headTitle && TAB_TITLES[name]) headTitle.textContent = TAB_TITLES[name];
     if (!quiet) { try { sessionStorage.setItem('hb-qz-tab', name); } catch (e) { /* ignore */ } }
-    if (name === 'badges') renderTrophy();
+    if (name === 'badges') { renderTrophy(); if (!quiet && window.HBUse) window.HBUse('badges_view'); }
     if (scroll) bringIntoView(section.querySelector('.qz-seg'), 'top', true);
   }
 
