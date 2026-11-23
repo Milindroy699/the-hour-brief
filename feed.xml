@@ -5,7 +5,14 @@
   <link href="https://the-hour-brief.vercel.app/feed.xml" rel="self"/>
   <link href="https://the-hour-brief.vercel.app/"/>
   <id>https://the-hour-brief.vercel.app/</id>
-  <updated>2026-11-22T02:55:00Z</updated>
+  <updated>2026-11-23T02:55:00Z</updated>
+  <entry>
+    <title>Edition 097 — 23 November 2026</title>
+    <link href="https://the-hour-brief.vercel.app/archive/2026-11-23.html"/>
+    <id>https://the-hour-brief.vercel.app/archive/2026-11-23.html</id>
+    <updated>2026-11-23T02:55:00Z</updated>
+    <summary type="text">AI &amp; Tech: Bill Ackman accuses Nvidia's board of breaching its duty of care over Jensen Huang's ouster as the SEC opens a civil probe into the company's disclosures and the Financial Times reports its board approached Arm CEO Rene Haas as a possible successor, even as Sam Altman concedes GPT-6.2 Astra's rollout was &quot;messy,&quot; Microsoft Ignite ships Agent 365 to govern AI agents, and London chip designer Fractile raises $720 million at a $7 billion valuation. Product &amp; Business: Qualcomm confirms &quot;performance-focused&quot; layoffs already cutting about 1,000 jobs across its India offices as HDFC Bank's Anup Bagchi takes over as CEO and PhonePe's FY26 loss widens to ₹2,792 crore despite an 11% revenue rise, even as Adani's Kutch Copper signs a supply pact with Chile's Codelco, Zepto works to fix its unit economics after pausing its IPO, Bain forecasts US holiday sales topping $1 trillion for the first time, and India's finance ministry pegs Q2 growth at 7.35% ahead of month-end data. Stock Market: Indian markets reopen Monday with Dalmia Bharat's board due to rule on a share buyback as Nvidia's stock absorbs a fresh SEC probe and Bill Ackman's attack on its board, even as Bitcoin extends its slide to a sixth straight weekly decline and HDFC Bank's formal handover to CEO Anup Bagchi removes one lingering overhang for Nifty Bank.</summary>
+  </entry>
   <entry>
     <title>Edition 096 — 22 November 2026</title>
     <link href="https://the-hour-brief.vercel.app/archive/2026-11-22.html"/>
@@ -208,13 +215,6 @@
     <id>https://the-hour-brief.vercel.app/archive/2026-10-25.html</id>
     <updated>2026-10-25T02:55:00Z</updated>
     <summary type="text">AI &amp; Tech: OpenAI says it will stop training frontier models on the live internet as a decade-old PHP flaw triggers a global government patching scramble, even as Nvidia unveils an OpenShell architecture to contain AI agents at its Berlin keynote, DeepSeek reportedly raises $15 billion days after new US restrictions, Anthropic races toward a mid-November IPO, and Nvidia itself posts a third straight losing week as its neocloud customers’ stocks plunge. Product &amp; Business: Netflix’s Q3 operating margin jumps six points to 34.6% as Microsoft, Alphabet and Intel all head into results this week, even as Apple’s foldable iPhone Duo shortage fuels a grey market in India charging up to ₹50,000 over list price, while Nutanix and ThoughtSpot co-founder Ajeet Singh’s new startup Different raises a $48 million seed round, and Google Labs’ Josh Woodward tells Lenny’s Podcast that an organization’s ‘unlearning rate’ now matters more than how fast it learns. Stock Market: Sensex and Nifty close out a fourth straight losing session as India’s volatility index jumps 6.5% to 16.77, even as the US Energy Department raises its own Q4 oil forecast by $14 a barrel on persistent Middle East supply risk, while ICICI Securities pegs Jio Platforms’ value at $148 billion by 2027 ahead of Monday’s allotment, and the NSE schedules a rare Sunday trading session for Diwali Muhurat on November 8.</summary>
-  </entry>
-  <entry>
-    <title>Edition 067 — 24 October 2026</title>
-    <link href="https://the-hour-brief.vercel.app/archive/2026-10-24.html"/>
-    <id>https://the-hour-brief.vercel.app/archive/2026-10-24.html</id>
-    <updated>2026-10-24T02:55:00Z</updated>
-    <summary type="text">AI &amp; Tech: Nvidia unveils a modular AI-factory design that cuts deployment from six months to 14 days as Greenpeace protesters confront Jensen Huang at his Berlin keynote over chips found in Russian weapons, even as Micron's Taiwan union stages the island's first-ever chip-industry strike over AI profit-sharing, Anthropic launches a proactive Claude Duet agent, AI-agent cloud startup Daytona hits a $1 billion valuation, Sam Altman reportedly lays out three possible endgames for the AI race to OpenAI staff, and Arista patches a third actively-exploited VeloCloud Orchestrator zero-day in four months. Product &amp; Business: Infosys cuts its own full-year revenue guidance even as Q2 profit rises 6%, as Jio Platforms' record IPO closes with a historic 22.19-times subscription and over 1 crore applications, HDFC Bank's incoming CEO Anup Bagchi prepares to take over Monday, IndiGo moves to end its London Heathrow service as it retires its leased Boeing 787s, enterprise-AI startup AuxoAI raises $20.7 million, and Ather Energy extends its lead as Ola Electric's September e-scooter market share slips to 6.5%. Stock Market: Sensex and Nifty fall for a fourth straight session as Brent crude surges toward $114 a barrel and India's volatility index jumps 6%, even as Wall Street closes out a volatile week lower despite the Dow staying in the green, while Zetwerk and Tonbo Imaging both make strong stock-market debuts and Jio Platforms' IPO closes with a record 22.19-times subscription ahead of its October 28 listing.</summary>
   </entry>
 
 </feed>
