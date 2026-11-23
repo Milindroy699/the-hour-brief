@@ -80,7 +80,7 @@
       'The phone screen glows softly but nothing on it is readable. No other text, no logos, no watermarks. Real Indian setting, people natural and unposed.',
     ].join('\n');
     var simple = prompt.replace(/Seconds 6 to 8:[^\n]*\n/, '').replace('8 seconds', '8 seconds').replace(/ then a soft, uplifting music sting on the end card\./, ' and a soft, uplifting music sting at the end.');
-    var caption = sc.hook + '. The Hour Brief gives you the AI, business and Indian market news that mattered, in 7 minutes, with a daily quiz. Free on iPhone & Android 👉 ' + APP + '\n\n#news #AI #stockmarket #india #startups';
+    var caption = sc.hook + (/[.?!]$/.test(sc.hook) ? ' ' : '. ') + 'The Hour Brief gives you the AI, business and Indian market news that mattered, in 7 minutes, with a daily quiz. Free on iPhone & Android 👉 ' + APP + '\n\n#news #AI #stockmarket #india #startups';
     return { scene: sc, look: look, cam: cam, prompt: prompt, simple: simple, vo: vo, caption: caption, shot: featureShot(sc.feature) };
   }
   function featureShot(f) {
@@ -89,7 +89,7 @@
 
   var CSS = '.pk-block{margin:18px 0 0}.pk-block h3{margin:0 0 6px;font-size:1rem}.pk-tag{display:inline-block;padding:3px 10px;border-radius:999px;background:var(--paper);border:1px solid var(--line);font-size:.8rem;color:var(--soft);margin:0 6px 6px 0}' +
     '.pk-assets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:8px}.pk-assets a{display:flex;flex-direction:column;gap:4px;text-decoration:none;color:var(--ink);font-size:.78rem}' +
-    '.pk-assets img{width:100%;border-radius:10px;border:1px solid var(--line);background:#14122b}.pk-steps li{margin:6px 0}';
+    '.pk-assets img{width:100%;border-radius:10px;border:1px solid var(--line);background:#14122b}.pk-steps li{margin:6px 0}.pk-steps a{color:inherit;font-weight:600;text-decoration:underline;text-underline-offset:2px}';
 
   function mount(root, s, copy) {
     if (!s) { root.innerHTML = '<p class="meta">Loading today’s post kit…</p>'; return; }
