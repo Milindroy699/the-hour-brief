@@ -5,7 +5,7 @@
 //                         owner's own phone opening /share-kit.html (one-tap LinkedIn / WhatsApp status). The day's
 //                         Notion row is written by the "Daily post writer" routine itself, through the owner's Claude
 //                         Notion connector, so there is no Notion token here.
-//   sendInsightPush()  -> every app user: a second daily push carrying the insight, later in the day
+//   sendInsightPush()  -> 18:00 quiz push, worded per phone (never played / fell off), skipping phones that played today or yesterday
 // Each channel is dedupe-keyed on its own, so one failing (or not being set up yet) never blocks the others, and the
 // several cron slots that call these can't double-send.
 // Env (each optional; a channel without its env is reported as "not set up" and skipped):
@@ -472,7 +472,15 @@ async function sendReviewReminder({ force = false, dry = false } = {}) {
 
 // ---- The second daily push, to every app user ----
 // The morning push (9:30, retried 10:00): the post kit's hook, opening its story. Without a kit yet, the AI lane's line.
+// One-off news for app users, sent as that day's morning push instead of the usual headline (owner, 2026-11-22: "send a
+// PN that a new version of the app is live"). The new features are in the app already: it loads the site, so nobody
+// has to update from the store to see them.
+const ANNOUNCE = {
+  '2026-11-24': { title: 'A new version of The Hour Brief is here ✨', body: 'Badges and a streak flame that grows, leagues for your office or college, a Sunday recap and a cleaner app. Today’s brief is ready too.' },
+};
 async function morningPushPayload(d) {
+  const a = ANNOUNCE[d.date];
+  if (a) return { title: a.title, body: a.body, url: d.editionUrl };
   const s = await loadSocial(d.date);
   if (s && s.push && s.push.title && s.push.body) return { title: s.push.title.slice(0, 65), body: s.push.body.slice(0, 180), url: links(s).story };
   const line = String((d.lanes && (d.lanes.mkt || d.lanes.ai)) || '').replace(/^Today’s \w+ story is /, '');
@@ -495,16 +503,49 @@ async function sendInsightPush({ date = istToday(), force = false, dry = false }
   } catch (e) { payload = null; }
   if (!payload && s && s.push && s.push.title && s.push.body) payload = { title: s.push.title.slice(0, 65), body: s.push.body.slice(0, 180), url: links(s).story };
   if (!payload) return { ok: false, date, skipped: 'no quiz or post kit for this date yet' };
-  if (dry) return { ok: true, dry: true, date, payload };
+  // Who gets what (owner, 2026-11-22: "push notifications for users to try the quiz on a daily basis"). From the app's own
+  // reports (quiz:last = each phone's last played edition and streak, quiz:done:<date> = phones that played today):
+  //   played today ................ nothing
+  //   played yesterday ............ nothing now: the 21:00 "keep your streak" push is theirs
+  //   played before, not yesterday  "Pick your streak back up"
+  //   no play reported ............ "Start your streak today" (plays were reported from 21 Nov 2026, so some may have played before)
+  //   a phone we can't match ...... today's quiz, as before (tokens registered before the app sent its device id)
+  const yesterday = new Date(Date.parse(date + 'T00:00:00Z') - 864e5).toISOString().slice(0, 10);
+  const pairsOf = (r) => { const a = (r && r.result) || [], o = {}; for (let i = 0; i + 1 < a.length; i += 2) o[a[i]] = a[i + 1]; return o; };
+  const [tokens, last, devTok, done] = await Promise.all([allTokens(), kv(['HGETALL', 'quiz:last']), kv(['HGETALL', 'push:device-token']), kv(['SMEMBERS', `quiz:done:${date}`])]);
+  const L = pairsOf(last), T = pairsOf(devTok), D = new Set((done && done.result) || []);
+  const devOf = {};
+  for (const [dev, tok] of Object.entries(T)) devOf[tok] = dev;
+  const q1 = /^Today’s quiz/.test(payload.title) ? payload.body : '';     // the first question, when today has a quiz
+  const groups = {
+    lapsed: { payload: { title: 'Pick your streak back up 🔥', body: (q1 ? `Today’s quiz takes a minute. First question: ${q1}` : 'Today’s quiz takes a minute: five questions on the morning’s news.').slice(0, 180), url: payload.url }, tokens: [] },
+    fresh: { payload: { title: 'Start your streak today 🔥', body: (q1 ? `One minute, five questions on today’s news, and your first badge. First question: ${q1}` : 'One minute, five questions on today’s news, and your first badge.').slice(0, 180), url: payload.url }, tokens: [] },
+    other: { payload, tokens: [] },
+  };
+  let skippedPlayed = 0, skippedStreak = 0;
+  for (const tok of tokens) {
+    const dev = devOf[tok];
+    if (!dev) { groups.other.tokens.push(tok); continue; }
+    if (D.has(dev)) { skippedPlayed++; continue; }
+    const lastDate = String(L[dev] || '').split('|')[0];
+    if (lastDate === yesterday) { skippedStreak++; continue; }
+    (lastDate ? groups.lapsed : groups.fresh).tokens.push(tok);
+  }
+  const plan = Object.entries(groups).map(([k, g]) => ({ group: k, phones: g.tokens.length, title: g.payload.title, body: g.payload.body }));
+  if (dry) return { ok: true, dry: true, date, payload, plan, skippedPlayed, skippedStreak };
   if (!process.env.FIREBASE_PROJECT_ID) return { ok: false, skipped: 'firebase not configured' };
-  const tokens = await allTokens();
   if (!tokens.length) return { ok: true, skipped: 'no registered devices' };
   const key = `push:insight-sent:${date}`;
   if (!(await claim(key, force))) return { ok: true, skipped: 'already pushed', date };
   try {
-    const out = { ok: true, date, ...(await sendToTokens(tokens, payload)) };
+    let successCount = 0, failureCount = 0;
+    for (const g of Object.values(groups)) {
+      if (!g.tokens.length) continue;
+      const r = await sendToTokens(g.tokens, g.payload);
+      successCount += r.successCount || 0; failureCount += r.failureCount || 0;
+    }
     if (force) await kv(['SET', key, '1', 'EX', DEDUPE_TTL]).catch(() => {});
-    return out;
+    return { ok: true, date, successCount, failureCount, plan, skippedPlayed, skippedStreak };
   } catch (e) {
     if (!force) await release(key);
     return { ok: false, error: 'push send failed', detail: e.message };
