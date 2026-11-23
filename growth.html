@@ -174,6 +174,7 @@
           <tr><td>11:00</td><td><b>Reply round 1</b> (15–20 min): open the 🔎 searches, reply to fresh posts from bigger accounts with one fact each. No links. Or say “start the X session” to Claude.</td><td>You</td></tr>
           <tr><td>15:00</td><td>X afternoon post → tap, check, Post</td><td>You</td></tr>
           <tr><td>18:00</td><td>X evening post, the <b>quiz poll</b> (make it in X), <b>reply round 2</b>; the evening insight push goes to app users</td><td>Auto + you</td></tr>
+          <tr><td>any time</td><td><b>Promo video</b>: post kit › Promo video has a new AI-video prompt every day, the voiceover and on-screen text, and the app screenshots and QR end card to finish it in CapCut (about 15 min). Post as a Reel, a Short and your WhatsApp status.</td><td>You</td></tr>
           <tr><td>19:00</td><td>Scorecard on Telegram → open X plan, tick what you did, log <b>replies, followers, impressions, profile visits</b></td><td>You</td></tr>
         </tbody>
       </table>
@@ -392,7 +393,7 @@ https://the-hour-brief.vercel.app/app?src=x-pinned</pre>
   function istDate(back) { return new Date(Date.now() + 5.5 * 3600 * 1000 - back * 864e5).toISOString().slice(0, 10); }
   var TASKS = [['x', 'Morning X post', '9:30'], ['thread', 'X thread', '10:00'], ['p1', 'Afternoon X post', '15:00'], ['p2', 'Evening X post', '18:00'],
     ['poll', 'Quiz poll on X', '18:00'], ['quote', 'One quote post', 'any time'], ['status', 'WhatsApp status', 'morning'], ['wachannel', 'WhatsApp channel post', 'morning'],
-    ['review', 'Reviewed the Stock Market section', 'after 9:00'], ['reddit', 'Reddit recap', 'Sundays'], ['substack', 'Substack posts (recap + Voices)', 'Sundays']];
+    ['review', 'Reviewed the Stock Market section', 'after 9:00'], ['reddit', 'Reddit recap', 'Sundays'], ['substack', 'Substack posts (recap + Voices)', 'Sundays'], ['promo', 'Promo video (post kit › Promo video)', 'any time']];
   var planBox = document.getElementById('plan'), planDay = 0, planData = null, xTally = null;
   function xOf(t) { var v = 0, c = 0; for (var f in t || {}) { var p = f.split('|'); if (/^x(-|$)/.test(p[2] || '')) { if (p[0] === 'v') v += t[f]; else if (p[0] === 'c') c += t[f]; } } return { v: v, c: c }; }
   function savePlan(date, field, value, msgEl) {
@@ -497,7 +498,7 @@ https://the-hour-brief.vercel.app/app?src=x-pinned</pre>
     ['Done by you', [
       ['plan.review', 'Reviewed the Stock Market section', '10:30', 'you'], ['plan.status', 'WhatsApp status', '12:00', 'you'], ['plan.wachannel', 'WhatsApp channel post', '12:00', 'you'],
       ['plan.x', 'X: morning post', '11:00', 'you', 'x'], ['plan.thread', 'X: thread', '12:00', 'you', 'x'], ['plan.replies', 'X: replies (vs target)', '21:00', 'you', 'x'],
-      ['plan.p1', 'X: afternoon post', '16:00', 'you', 'x'], ['plan.p2', 'X: evening post', '19:00', 'you', 'x'], ['plan.poll', 'X: quiz poll', '19:00', 'you', 'x'], ['plan.reddit', 'Reddit recap', '21:00', 'you', 'sun'], ['plan.substack', 'Substack posts', '21:00', 'you', 'sun'],
+      ['plan.p1', 'X: afternoon post', '16:00', 'you', 'x'], ['plan.p2', 'X: evening post', '19:00', 'you', 'x'], ['plan.poll', 'X: quiz poll', '19:00', 'you', 'x'], ['plan.reddit', 'Reddit recap', '21:00', 'you', 'sun'], ['plan.substack', 'Substack posts', '21:00', 'you', 'sun'], ['plan.promo', 'Promo video', '23:00', 'you'],
     ]],
   ];
   // Podcast apps: kept by hand here (the site's own list is PODCASTS in mobile.js).
@@ -505,7 +506,7 @@ https://the-hour-brief.vercel.app/app?src=x-pinned</pre>
   // When each job started: earlier days show "·", not a miss. Jobs tracked by a once-a-day key were only kept 3 days until
   // 22 Nov 2026, so a missing key before then reads "no record" (?), not "missed".
   var SINCE = { kit: '2026-11-17', linkedinProfile: '2026-11-18', ownerKit: '2026-11-17', ownerLinkedin: '2026-11-17', short: '2026-11-20', youtube: '2026-11-20', instagram: '2026-11-20',
-    ownerShort: '2026-11-20', telegramChannel: '2026-11-21', pushOpens: '2026-11-22', pushStreak: '2026-11-22', review: '2026-11-22', xMorning: '2026-11-22', weekly: '2026-11-22', pushWeekly: '2026-11-22', 'plan.review': '2026-11-21', 'plan.substack': '2026-11-22', 'plan.status': '2026-11-21', 'plan.wachannel': '2026-11-21' };
+    ownerShort: '2026-11-20', telegramChannel: '2026-11-21', pushOpens: '2026-11-22', pushStreak: '2026-11-22', review: '2026-11-22', xMorning: '2026-11-22', weekly: '2026-11-22', pushWeekly: '2026-11-22', 'plan.review': '2026-11-21', 'plan.substack': '2026-11-22', 'plan.promo': '2026-11-24', 'plan.status': '2026-11-21', 'plan.wachannel': '2026-11-21' };
   var FILE_BASED = /^(edition|audio|podcast|kit|xpack|short|weekly)$/, KEYS_KEPT_FROM = '2026-11-22';
   var opsBox = document.getElementById('ops'), opsData = null;
   function nowIst() { var d = new Date(Date.now() + 5.5 * 3600 * 1000); return d.toISOString().slice(11, 16); }

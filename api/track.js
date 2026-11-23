@@ -316,7 +316,7 @@ module.exports = async (req, res) => {
       let b = req.body;
       if (typeof b === 'string') { try { b = JSON.parse(b); } catch (e) { b = {}; } }
       b = b || {};
-      const CHECKS = ['x', 'thread', 'p1', 'p2', 'poll', 'status', 'reddit', 'quote', 'review', 'wachannel', 'substack'], NUMS = ['replies', 'followers', 'impressions', 'visits', 'wafollowers', 'spotify', 'apple', 'substack_subs'];
+      const CHECKS = ['x', 'thread', 'p1', 'p2', 'poll', 'status', 'reddit', 'quote', 'review', 'wachannel', 'substack', 'promo'], NUMS = ['replies', 'followers', 'impressions', 'visits', 'wafollowers', 'spotify', 'apple', 'substack_subs'];
       const date = String(b.date || ''), field = String(b.field || ''), value = String(b.value == null ? '' : b.value).trim();
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { res.status(400).json({ error: 'bad date' }); return; }
       let v;

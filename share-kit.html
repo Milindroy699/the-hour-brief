@@ -52,6 +52,7 @@
     <button type="button" role="tab" data-tab="reddit">Reddit</button>
     <button type="button" role="tab" data-tab="substack">Substack</button>
     <button type="button" role="tab" data-tab="telegram">Telegram</button>
+    <button type="button" role="tab" data-tab="promo">Promo video</button>
   </nav>
   <p class="ok" id="status" role="status" aria-live="polite"></p>
 
@@ -166,6 +167,10 @@
     <div id="substack-kit"><p class="meta">Loading…</p></div>
   </section>
 
+  <section class="kpane" id="p-promo" role="tabpanel" hidden>
+    <div id="promo-kit"><p class="meta">Loading…</p></div>
+  </section>
+
   <section class="kpane" id="p-telegram" role="tabpanel" hidden>
     <h2>Telegram</h2>
     <p class="hint" style="margin-top:0">The channel post goes out on its own around 11:00. This is the same text, for posting by hand if it ever doesn’t.</p>
@@ -184,12 +189,14 @@
   </section>
 </main>
 <script src="/kit-substack.js"></script>
+<script src="/kit-promo.js"></script>
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
   var status = $('status'), timer;
   // ---- Channel tabs ----
-  var TABS = ['whatsapp', 'linkedin', 'x', 'shorts', 'reddit', 'substack', 'telegram'];
+  var TABS = ['whatsapp', 'linkedin', 'x', 'shorts', 'reddit', 'substack', 'telegram', 'promo'];
+  var kitSocial = null;
   function showTab(name, focus) {
     if (TABS.indexOf(name) < 0) name = 'whatsapp';
     TABS.forEach(function (t) {
@@ -199,6 +206,7 @@
       if (on && focus) b.focus();
     });
     if (name === 'substack' && window.HBSubstack) window.HBSubstack.mount($('substack-kit'));
+    if (name === 'promo' && window.HBPromo) window.HBPromo.mount($('promo-kit'), kitSocial, copy);
     try { localStorage.setItem('hb-kit-tab', name); } catch (e) {}
     if (location.hash !== '#' + name) history.replaceState(null, '', location.pathname + location.search + '#' + name);
   }
@@ -286,6 +294,8 @@
       .replace(/https:\/\/the-hour-brief\.vercel\.app\/s\/\d{4}-\d{2}-\d{2}\/[a-z]{1,8}-\d{1,3}(\?[^\s#]*)?/g, function (m) { return tag(m); });
   }
   loadSocial(0).catch(function () { return loadSocial(1); }).then(function (s) {
+    kitSocial = { date: s.date, insight: s.insight };
+    if (!$('p-promo').hidden && window.HBPromo) window.HBPromo.mount($('promo-kit'), kitSocial, copy);
     s.linkedin = withApp(deepLinks(s.linkedin, s, 'linkedin'), 'linkedin');
     s.status = withWhatsApp(deepLinks(s.status, s, 'whatsapp-status'), 'whatsapp-status');
     loadShort(s.date);

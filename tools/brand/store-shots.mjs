@@ -59,7 +59,8 @@ const SCENES = [
   ['04-quiz', 'Beat your friends at the daily quiz', 'Keep your streak, and play leagues with friends or your office', false, async () => {
     await c.goto(B + '/?quiz=1', 2500);
     await c.sleep(800);
-    await c.ev(`(() => { const r = document.querySelector('.qz-leagues .qz-league'); window.scrollTo(0, r.getBoundingClientRect().top + scrollY - 130); })(); 'ok'`); await c.sleep(1200); }],
+    // leagues sit behind the Leagues tab since 2026-11-22; open it first
+    await c.ev(`(() => { document.getElementById('qz-tab-leagues').click(); const r = document.querySelector('.qz-leagues .qz-league'); const sc = document.querySelector('.hb-quizpage .hub-scroll'); if (sc && r) sc.scrollTop = r.getBoundingClientRect().top + sc.scrollTop - 130; else if (r) window.scrollTo(0, r.getBoundingClientRect().top + scrollY - 130); })(); 'ok'`); await c.sleep(1200); }],
   ['05-voices', 'The best minds, every week', 'Long reads on tech, business, product and finance', false, async () => {
     await c.goto(B + '/leaders.html', 2800); }],
   ['06-dark', 'Read it your way', 'Swipe cards or the full list, light or dark', true, async () => {
