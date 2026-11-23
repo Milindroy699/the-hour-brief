@@ -67,21 +67,21 @@
   function build(s) {
     var date = s.date, d = dayIndex(date);
     var sc = SCENES[d % SCENES.length], look = LOOKS[Math.floor(d / SCENES.length) % LOOKS.length], cam = CAMERAS[d % CAMERAS.length];
-    var alt = SCENES[(d + 5) % SCENES.length];
-    var headline = trimHeadline(s.insight || s.headline || '', 110);
-    var rules = 'The phone screen glows softly but nothing on it is readable. No text, captions, subtitles, logos or watermarks anywhere in the frame. Real Indian setting, people look natural and unposed.';
-    var prompt = 'Vertical 9:16 video, 8 seconds, photorealistic. ' + sc.scene + ' Camera: ' + cam + '. Look: ' + look + '. ' + rules + ' Sound: ' + sc.sound + '; no music, no spoken words.';
-    var insert = 'Vertical 9:16 video, 5 seconds, photorealistic macro close-up. ' + 'A hand holds a phone; a thumb swipes and taps; the screen gives off a soft violet glow, reflected on the fingers; a small golden sparkle of light flickers once, like a reward. ' + 'Camera: slow push-in. Look: ' + look + '. ' + rules + ' Sound: a soft tap, a gentle chime.';
-    var vo = sc.hook + '. The Hour Brief: the AI, business and market news that actually mattered, in seven minutes. Free on iPhone and Android.';
-    var overlays = [
-      '0–2 s:  ' + sc.hook,
-      '2–5 s:  7-minute brief · audio · daily quiz',
-      '5–8 s:  Today: ' + trimHeadline(headline, 70),
-      '8–10 s: an app screenshot (' + featureShot(sc.feature) + ')',
-      '10–13 s: end card with the QR (endcard-9x16.png)',
+    // About 20 words: what a voice says comfortably in 8 seconds.
+    var hook = /[.?!]$/.test(sc.hook) ? sc.hook : sc.hook + '.';
+    var vo = hook + ' The Hour Brief: the news that actually mattered, every morning. Free on iPhone and Android.';
+    var prompt = [
+      'Vertical 9:16 video, 8 seconds, photorealistic, ' + look + '.',
+      'Seconds 0 to 6: ' + sc.scene + ' Camera: ' + cam + '.',
+      'For the first two seconds, short white on-screen text in a clean sans-serif reads: ' + sc.hook,
+      'Seconds 6 to 8: the shot moves smoothly into the final frame provided (the app\u2019s end card with a QR code) and holds on it, unchanged.',
+      'Narration, a warm, confident Indian English voice, unhurried: "' + vo + '"',
+      'Sound: ' + sc.sound + ' under the narration, then a soft, uplifting music sting on the end card.',
+      'The phone screen glows softly but nothing on it is readable. No other text, no logos, no watermarks. Real Indian setting, people natural and unposed.',
     ].join('\n');
+    var simple = prompt.replace(/Seconds 6 to 8:[^\n]*\n/, '').replace('8 seconds', '8 seconds').replace(/ then a soft, uplifting music sting on the end card\./, ' and a soft, uplifting music sting at the end.');
     var caption = sc.hook + '. The Hour Brief gives you the AI, business and Indian market news that mattered, in 7 minutes, with a daily quiz. Free on iPhone & Android 👉 ' + APP + '\n\n#news #AI #stockmarket #india #startups';
-    return { scene: sc, look: look, cam: cam, alt: alt, prompt: prompt, insert: insert, vo: vo, overlays: overlays, caption: caption };
+    return { scene: sc, look: look, cam: cam, prompt: prompt, simple: simple, vo: vo, caption: caption, shot: featureShot(sc.feature) };
   }
   function featureShot(f) {
     return /quiz/.test(f) ? 'screens/02-quiz.png' : /streak|badge|league/.test(f) ? 'screens/03-badges.png' : /audio/.test(f) ? 'screens/04-listen.png' : /Voices/.test(f) ? 'screens/05-voices.png' : 'screens/01-cards.png';
@@ -105,27 +105,38 @@
       return h('div', { class: 'pk-block' }, [h('h3', { text: title }), ta, h('div', { class: 'row' }, [b])]);
     };
     root.appendChild(h('h2', { text: 'Promo video · ' + p.scene.name }));
-    root.appendChild(h('p', { class: 'meta', text: 'A new scene every day. Today it shows ' + p.scene.feature + '. About 15 minutes from prompt to post.' }));
-    root.appendChild(h('div', {}, [h('span', { class: 'pk-tag', text: 'Look: ' + p.look.split(',')[0] }), h('span', { class: 'pk-tag', text: 'Camera: ' + p.cam })]));
-    root.appendChild(box('1. Video prompt (8 seconds)', p.prompt, 9, 'Copy prompt'));
-    root.appendChild(box('2. Close-up insert (optional, 5 seconds)', p.insert, 6, 'Copy insert prompt'));
+    root.appendChild(h('p', { class: 'meta', text: 'One Veo 3 prompt makes the whole video: the scene, the voiceover, the sound and a title, ending on your QR end card. A new scene every day (today: ' + p.scene.feature + ').' }));
     var steps = h('ol', { class: 'pk-steps' });
-    ['Paste the prompt into Veo (Gemini app or labs.google/flow), Kling, Hailuo, Sora or Runway. Make 2–3 versions, keep the best. Vertical 9:16.',
-      'Open CapCut (or InShot): a 9:16 project. Put in the clip, the close-up if you made one, then one app screenshot for 2 seconds and the end card for 3 seconds (below).',
-      'Add the on-screen text and the voiceover (CapCut’s text to speech, or your own voice). Quiet music under it.',
-      'Export 1080p. Post as an Instagram Reel, a YouTube Short and your WhatsApp status, with the caption below.'].forEach(function (t) { steps.appendChild(h('li', { text: t })); });
-    root.appendChild(h('div', { class: 'pk-block' }, [h('h3', { text: '3. Put it together' }), steps]));
-    root.appendChild(box('4. Voiceover', p.vo, 4, 'Copy voiceover'));
-    root.appendChild(box('5. On-screen text (add in the editor)', p.overlays, 7, 'Copy text'));
+    [['Download the end card below.', null],
+      ['Open ', 'https://labs.google/fx/tools/flow', 'Google Flow', ', choose Veo 3, Frames to Video, portrait 9:16, and add the end card as the last frame.'],
+      ['Paste the prompt and generate. Make two or three, keep the best, download it.', null],
+      ['Post it as a Reel, a Short and your WhatsApp status with the caption.', null]].forEach(function (t) {
+      var li = h('li');
+      li.appendChild(document.createTextNode(t[0]));
+      if (t[1]) { var a = h('a', { href: t[1], target: '_blank', rel: 'noopener', text: t[2] }); li.appendChild(a); li.appendChild(document.createTextNode(t[3])); }
+      steps.appendChild(li);
+    });
+    root.appendChild(h('div', { class: 'pk-block' }, [steps]));
+    root.appendChild(box('Veo 3 prompt', p.prompt, 13, 'Copy prompt'));
+    var ec = '/brand/promo/endcard-9x16.png';
+    root.appendChild(h('div', { class: 'pk-block' }, [h('h3', { text: 'Last frame: the end card' }),
+      h('a', { href: ec, download: 'hour-brief-endcard-9x16.png', style: 'display:inline-block;max-width:160px' }, [h('img', { src: ec, alt: 'End card with the QR code', style: 'width:100%;border-radius:10px;border:1px solid var(--line)' })]),
+      h('div', { class: 'row' }, [h('a', { class: 'btn primary', href: ec, download: 'hour-brief-endcard-9x16.png', text: 'Download end card' })])]));
+    root.appendChild(box('Caption', p.caption, 6, 'Copy caption'));
+    // Everything else, for when Frames to Video isn't available (e.g. the Gemini app) or for a longer edit
+    var more = h('details', { class: 'pk-block' }, [h('summary', { text: 'More: without Flow, other sizes, app screenshots' })]);
+    more.appendChild(box('Prompt without the end-card frame (Gemini app, Kling, Sora)', p.simple, 10, 'Copy'));
+    more.appendChild(h('p', { class: 'hint', text: 'Then add the end card as the last 3 seconds in CapCut or InShot.' }));
     var assets = h('div', { class: 'pk-assets' });
-    [['endcard-9x16.png', 'End card 9:16 (Reels, Shorts)'], ['endcard-1x1.png', 'End card 1:1'], ['endcard-16x9.png', 'End card 16:9 (YouTube)'],
+    [['endcard-1x1.png', 'End card 1:1'], ['endcard-16x9.png', 'End card 16:9'], ['qr.png', 'QR alone'],
       ['screens/01-cards.png', 'Cards'], ['screens/02-quiz.png', 'Daily quiz'], ['screens/03-badges.png', 'Badges and streaks'],
-      ['screens/04-listen.png', 'Audio'], ['screens/05-voices.png', 'Voices'], ['screens/06-list.png', 'Every story, with its source'], ['qr.png', 'QR alone (to /app?src=promo-video)']].forEach(function (a) {
+      ['screens/04-listen.png', 'Audio'], ['screens/05-voices.png', 'Voices'], ['screens/06-list.png', 'Every story, with its source']].forEach(function (a) {
       var url = '/brand/promo/' + a[0];
       assets.appendChild(h('a', { href: url, download: 'hour-brief-' + a[0].replace(/\//g, '-') }, [h('img', { src: url, alt: '', loading: 'lazy' }), document.createTextNode(a[1] + ' ↓')]));
     });
-    root.appendChild(h('div', { class: 'pk-block' }, [h('h3', { text: '6. App screenshots and end cards (the same every day)' }), h('p', { class: 'hint', style: 'margin:0 0 6px', text: 'Tap to download. The QR opens the store page for the phone that scans it, and counts installs from your videos as “promo-video” in the growth report.' }), assets]));
-    root.appendChild(box('7. Caption for posting', p.caption, 6, 'Copy caption'));
+    more.appendChild(assets);
+    more.appendChild(h('p', { class: 'hint', text: 'The QR opens the right store for whoever scans it and counts installs from your videos as “promo-video”.' }));
+    root.appendChild(more);
   }
   window.HBPromo = { mount: mount, build: build };
 })();
