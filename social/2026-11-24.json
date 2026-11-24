@@ -1,0 +1,72 @@
+{
+  "date": "2026-11-24",
+  "edition": 98,
+  "lane": "ai",
+  "storyId": "ai-2",
+  "storyTitle": "Nvidia's stock has its best day in over two decades, igniting a $1 trillion Wall Street rally",
+  "insight": "One reinstated CEO added nearly $1 trillion in a day and erased two indexes' corrections: this market's AI bet is that concentrated.",
+  "linkedin": "One CEO reversal added nearly $1 trillion in a single day.\n\nNvidia closed up 31.48% on Monday after its board reinstated Jensen Huang, eleven days after forcing him out.\n\nThat one move pulled the S&P 500 up 4.73% and the Nasdaq up 6.51%, both out of correction.\n\nWhen one stock decides the mood of two indexes, the market's AI bet is far more concentrated than it looks.\n\nToday's full brief 👉 https://the-hour-brief.vercel.app/e/2026-11-24\n\n#AI #Markets #Nvidia",
+  "status": "One stock, one day: Nvidia's 31% jump added nearly $1 trillion and pulled the S&P 500 and Nasdaq out of correction. https://the-hour-brief.vercel.app/e/2026-11-24",
+  "push": {
+    "title": "One stock just added $1 trillion in a day",
+    "body": "Nvidia's 31% jump erased two indexes' corrections. That's how concentrated the AI bet has become."
+  },
+  "page": "Today's Hour Brief opens with Nvidia: its board reinstated Jensen Huang as CEO eleven days after forcing him out, and the stock closed up 31.48%, adding close to $1 trillion in value and lifting the S&P 500 and Nasdaq out of correction territory.\n\nAI & Tech: Amazon reportedly nears a $7.5 billion deal for AI video startup Decart, and Microsoft's AI chief is preparing staff to lean less on OpenAI's models.\n\nBusiness: Tata Sons heads into Thursday's board meeting with a listing restructuring and Shapoorji Pallonji's ₹25,000 crore funding request still unresolved.\n\nMarkets: the Sensex fell 1,483.72 points on Monday, hours before Wall Street's rally began.\n\n#AI #Markets #India",
+  "x": "One CEO reversal added nearly $1 trillion in a day.\n\nNvidia closed up 31.48% and pulled two indexes out of correction.\n\nhttps://the-hour-brief.vercel.app/e/2026-11-24",
+  "xpack": {
+    "thread": [
+      "Nvidia's stock jumped 31% on Monday. It added close to $1 trillion in one day and lifted Wall Street out of correction. Here's what mattered 👇",
+      "Nvidia's board reinstated Jensen Huang as CEO, eleven days after forcing him out. It said it got input from senior levels of the US government. A public U-turn this fast says a lot about how split the board was.",
+      "The stock closed up 31.48% at $165.05. The S&P 500 rose 4.73% and the Nasdaq 6.51%, their best days since April 2025. One stock moved two indexes. That's how concentrated this market is.",
+      "Trump said he was represented in the board meeting. Nvidia hasn't confirmed that. The probe into Huang's conduct goes on, with closed-door congressional questions on December 1-2.",
+      "Amazon is reportedly close to paying up to $7.5 billion for AI video startup Decart. Its May valuation was $4 billion. Amazon already supplies Decart with chips, so this is about owning the whole stack.",
+      "Back home, the Sensex fell 1,483.72 points on Monday, with Bank Nifty down about 3%. India closed hours before Wall Street's rally, so Monday's drop says little about Tuesday's open.",
+      "Today in one line: a single CEO decision moved a trillion dollars and showed how much the market leans on one stock. Full brief, free: https://the-hour-brief.vercel.app/e/2026-11-24"
+    ],
+    "posts": [
+      {
+        "time": "15:00",
+        "text": "Microsoft is quietly getting ready to need OpenAI less. Its AI chief has reportedly told staff they may lose preferential access, even though the license runs through 2032.\n\nhttps://the-hour-brief.vercel.app/s/2026-11-24/ai-5"
+      },
+      {
+        "time": "18:00",
+        "text": "Tata Sons has two fights on the table for Thursday. Noel Tata wants a listing restructuring and Shapoorji Pallonji wants ₹25,000 crore in funding. The RBI says Tata Sons must follow listing rules.\n\nhttps://the-hour-brief.vercel.app/s/2026-11-24/biz-1"
+      }
+    ],
+    "poll": {
+      "question": "By what percentage did Nvidia's stock close up the day its board reinstated Jensen Huang?",
+      "options": [
+        "15%",
+        "22%",
+        "31%",
+        "45%"
+      ],
+      "answer": "The answer: 31%. Nvidia closed up 31.48% at $165.05 after the board reinstated Huang as CEO.\n\nhttps://the-hour-brief.vercel.app/s/2026-11-24/ai-2"
+    },
+    "replies": {
+      "facts": [
+        "Nvidia closed up 31.48% at $165.05 on Monday, adding close to $1 trillion in market value.",
+        "The S&P 500 rose 4.73% to 7,237.17 and the Nasdaq 6.51%, both their best days since April 2025.",
+        "Nvidia's board said it had input from senior levels of the US government before reinstating Huang.",
+        "Colette Kress, who was interim CEO at Nvidia, goes back to her role as CFO.",
+        "Amazon is reportedly near a deal of up to $7.5 billion for Decart, valued at $4 billion in May.",
+        "Microsoft's license to OpenAI's tech runs through 2032 under a non-exclusive deal revised in April.",
+        "The Sensex fell 1,483.72 points to 82,435.99 on Monday, while the Nifty IT index gained about 2%.",
+        "Target's sales rose 7.1% to about $27.1 billion, and Walmart's US e-commerce sales jumped 28%."
+      ],
+      "searches": [
+        "Nvidia Jensen Huang",
+        "Nifty today",
+        "Amazon Decart",
+        "Tata Sons board"
+      ]
+    }
+  },
+  "leaders": {
+    "id": "tech-ai-2026-11-23",
+    "category": "tech-ai",
+    "title": "Anthropic's IPO Starts the Bubble Test, While Cheaper Models Steal the Week",
+    "post": "Anthropic's record IPO isn't the story. The lockup schedule is.\n\nMatt Wolfe says employees could sell 10% on day one, with more unlocking from mid-December.\n\nUp to 1.6 billion insider shares can eventually trade, more than the IPO itself.\n\nIf those who know the company best hold, it signals it's still early; heavy selling could be the first crack.\n\nRead the full breakdown 👉 https://the-hour-brief.vercel.app/leaders.html#a=tech-ai-2026-11-23\n\n#AI #IPO #Anthropic"
+  },
+  "generatedAt": "2026-11-24T03:38:52.000Z"
+}
