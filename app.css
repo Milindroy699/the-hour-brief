@@ -1343,3 +1343,21 @@ html.hb-you-open, html.hb-you-open body { overflow: hidden; }
 .you-th-bar i { display: block; height: 100%; background: linear-gradient(90deg, #e8b04b, #ff7a45); }
 .you-list { padding: 2px 14px; background: var(--paper); border: 1px solid var(--line); border-radius: 18px; }
 .you-foot { justify-content: center; margin-top: 24px; }
+
+/* ---- The audio player as a sheet (listen.js, with Home): expands from the bottom over the screen you were on ---- */
+.hb-hub.hb-hub-sheet { top: calc(env(safe-area-inset-top, 0px) + 44px); bottom: 0; z-index: 9989; border-radius: 28px 28px 0 0; overflow: hidden;
+  box-shadow: 0 -18px 50px rgba(7, 6, 15, 0.35); animation: hub-up 0.34s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.hb-hub.hb-hub-sheet.hb-fade-in { opacity: 1; }
+@keyframes hub-up { from { transform: translateY(100%); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .hb-hub.hb-hub-sheet { animation: none; } }
+.hub-scrim { position: fixed; inset: 0; z-index: 9988; background: rgba(7, 6, 15, 0.45); }
+.hub-scrim[hidden] { display: none; }
+.hub-sheet-head { position: relative; flex: none; display: flex; align-items: center; gap: 8px; padding: 18px 10px 6px 20px; }
+.hub-grab { position: absolute; top: 8px; left: 50%; width: 40px; height: 5px; margin-left: -20px; border-radius: 3px; background: var(--line); }
+:root[data-theme="dark"] .hub-grab { background: rgba(255, 255, 255, 0.28); }
+.hub-sheet-t { flex: 1; font-family: var(--hb-label); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
+.hub-min { flex: none; width: 44px; height: 44px; border: 0; border-radius: 50%; background: var(--paper-2); color: var(--ink); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.hb-hub-sheet .hub-scroll { padding-top: 6px; padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px)); }
+.hm-tile-wide { grid-column: 1 / -1; }
+.hm-t-listen .hm-tile-ic { background: rgba(94, 67, 243, 0.14); color: #5e43f3; }
+:root[data-theme="dark"] .hm-t-listen .hm-tile-ic { color: #b9acff; }

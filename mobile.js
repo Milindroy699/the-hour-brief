@@ -1533,6 +1533,12 @@
       ['week', ICON.week, 'This week’s recap', 'What actually mattered, every Sunday', function () { closeYou(); openWeekly('/week.html', 'app-you'); }],
       ['archive', ICON.archive, 'Past editions', 'Every edition, newest first', function () { closeYou(); leaveTo('/archive/'); }]
     ];
+    lib.unshift(['episodes', ICON.audio, 'Audio episodes', 'Today’s and every past episode', function () {
+      closeYou();
+      if (isFeed() && window.HBListen && window.HBListen.openHub) { window.HBListen.openHub({ episodes: true }); return; }
+      try { sessionStorage.setItem('hb-open-eps', '1'); } catch (e) { /* the player opens at the top */ }
+      leaveTo('/?audio=1');
+    }]);
     if (pods.length) lib.push(['podcasts', ICON.audio, 'Listen in a podcast app', pods.map(function (p) { return p[1]; }).join(' · '), function (b) { openPodcasts(b); }]);
     group('Library', lib);
     var share = [['share', SHARE_SVG, 'Share The Hour Brief', isFeed() ? 'Send today’s edition to a friend' : 'Send this page to a friend', function () { shareEdition(); }]];
@@ -1569,7 +1575,7 @@
   function homeMode() { return reader() && (NATIVE || mq.matches) && !window.HB_NO_HOME; }
   function homeHere() { return homeMode() && isFeed() && !pastEdition(); }
   function homeOpen() { return !!(window.HBHome && window.HBHome.isOpen()); }
-  function homeTarget() { return homeHere() && !location.hash && !/[?&]((audio|quiz|brief)=1|join=|beat=)/.test(location.search); }
+  function homeTarget() { return homeHere() && !location.hash && !/[?&]((quiz|brief)=1|join=|beat=)/.test(location.search); }   // ?audio=1: Home, the player over it
   var homeQueue = [], homeLoad = 0;
   function withHome(fn, fail) {
     if (window.HBHome) { fn(window.HBHome); return; }
@@ -1749,7 +1755,7 @@
   };
   // listen.js builds the same header row (see buildHub() there) — it is a separate file/closure, so the actions it
   // needs are handed across here rather than duplicated.
-  window.HBChrome = { textSize: openTextSize, saved: openSaved, menu: menuOrYou, refreshSaved: refreshSaved, back: backTarget, you: openYou, closeYou: closeYou, tab: function (n) { tabGo(n); }, leave: function (u) { leaveTo(u); }, openCards: function (o) { openCards(o); }, use: function (f) { use(f); }, cardsOk: function () { return cardsOk(); }, view: function () { return getView(); }, laneName: function (el) { return laneName(el); }, icons: { aa: ICON.aa, star: STAR_SVG, sliders: SLIDERS_SVG, back: ICON.back, you: YOU_SVG, flame: FLAME_SVG } };
+  window.HBChrome = { homeMode: function () { return homeMode(); }, textSize: openTextSize, saved: openSaved, menu: menuOrYou, refreshSaved: refreshSaved, back: backTarget, you: openYou, closeYou: closeYou, tab: function (n) { tabGo(n); }, leave: function (u) { leaveTo(u); }, openCards: function (o) { openCards(o); }, use: function (f) { use(f); }, cardsOk: function () { return cardsOk(); }, view: function () { return getView(); }, laneName: function (el) { return laneName(el); }, icons: { aa: ICON.aa, star: STAR_SVG, sliders: SLIDERS_SVG, back: ICON.back, you: YOU_SVG, flame: FLAME_SVG } };
   // The List | Cards switch: a floating pill, appended straight to body (see below) — centred just above the tab
   // bar in List, top-right of the deck in Cards. An earlier version nested it inside .tab-bar itself instead,
   // specifically to remove a recurring real-device bug (list content bleeding through a seam between two
@@ -1934,7 +1940,8 @@
     var quizPage = !!(window.HBQuizPage && window.HBQuizPage.isOpen && window.HBQuizPage.isOpen());
     var r = qOk && !quizPage ? q.getBoundingClientRect() : null;    // scrolled to the inline quiz chip's target in the normal list, not the dedicated page
     var home = homeOpen();
-    var cur = bootScreen() || (hub ? (home ? 'home' : 'audio') : quizPage ? 'quiz' : home ? 'home' : deckOpen() ? 'today' : (r && r.top < window.innerHeight * 0.5 && r.bottom > headH + 90) ? 'quiz' : 'today');
+    // With Home the player is a sheet over the screen you were on (that tab stays lit); without, Audio is its own tab
+    var cur = bootScreen() || (hub && !homeMode() ? 'audio' : quizPage ? 'quiz' : home ? 'home' : deckOpen() ? 'today' : (r && r.top < window.innerHeight * 0.5 && r.bottom > headH + 90) ? 'quiz' : 'today');
     var past = pastEdition();                                  // a past edition is a page of Past editions: no tab is lit
     bar.querySelectorAll('.tab').forEach(function (t) {
       var n = t.getAttribute('data-tab');
@@ -2177,7 +2184,7 @@
   function bootScreen() {                             // the tab to light while hidden, so the bar doesn't flick across
     var cl = document.documentElement.classList;
     if (!cl.contains('hb-boot') || cl.contains('hb-reveal')) return '';
-    return /[?&]audio=1(&|$)/.test(location.search) ? 'audio' : /[?&]quiz=1(&|$)/.test(location.search) ? 'quiz' : homeTarget() ? 'home' : '';
+    return homeTarget() ? 'home' : /[?&]audio=1(&|$)/.test(location.search) && !homeMode() ? 'audio' : /[?&]quiz=1(&|$)/.test(location.search) ? 'quiz' : '';
   }
   // /?quiz=1 from another page's Challenge tab (Archive, About, Privacy, Contact — all non-feed pages, where the tab
   // is a plain link instead of tabGo()). Used to be a plain #quiz anchor, which the browser's own hash-scroll just

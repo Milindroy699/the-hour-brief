@@ -859,7 +859,31 @@
       var ap = G.appPrompt && G.appPrompt('audio', 'Listen in the app', 'Plays with your screen off, offline, every morning');
       if (ap) sc.appendChild(ap);
     }
-    hub.appendChild(top);
+    // With Home (phones and the apps, owner 2026-11-25) the player is not a screen of its own: it expands from the bottom over
+    // whatever you were on, with a Minimise button (and swipe down, or scroll/tap outside it), and minimises to the bar above
+    // the tabs (.hb-player). Past episodes are its last section ("Past episodes"), also reached from Home and from You.
+    var HCm = window.HBChrome;
+    if (HCm && HCm.homeMode && HCm.homeMode()) {
+      hub.classList.add('hb-hub-sheet');
+      hub.setAttribute('aria-label', 'Audio player');
+      var head = mk('div', 'hub-sheet-head');
+      head.appendChild(mk('span', 'hub-grab'));
+      head.appendChild(mk('span', 'hub-sheet-t', 'Now playing'));
+      var min = btn('hub-min', 'Minimise the player', '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>');
+      min.addEventListener('click', closeHub);
+      head.appendChild(min);
+      var y0 = null;
+      head.addEventListener('touchstart', function (e) { y0 = e.touches[0].clientY; }, { passive: true });
+      head.addEventListener('touchend', function (e) { if (y0 !== null && e.changedTouches[0].clientY - y0 > 50) closeHub(); y0 = null; }, { passive: true });
+      sc.addEventListener('touchstart', function (e) { y0 = sc.scrollTop <= 0 ? e.touches[0].clientY : null; }, { passive: true });
+      sc.addEventListener('touchend', function (e) { if (y0 !== null && sc.scrollTop <= 0 && e.changedTouches[0].clientY - y0 > 90) closeHub(); y0 = null; }, { passive: true });
+      scrim = mk('div', 'hub-scrim');
+      scrim.hidden = true;
+      ['click', 'wheel', 'touchmove'].forEach(function (ev) { scrim.addEventListener(ev, function () { closeHub(); }, { passive: true }); });
+      document.body.appendChild(scrim);
+      hubEl.eph.querySelector('h3').textContent = 'Past episodes';
+      hub.appendChild(head);
+    } else hub.appendChild(top);
     hub.appendChild(sc);
     document.body.appendChild(hub);
     // Only now is the saved button actually in the document — calling this earlier, while top/acts was still a
@@ -1012,10 +1036,19 @@
     }
   }
 
-  function openHub() {
+  var scrim = null;
+  function showEpisodes() {                           // "Audio episodes" (Home's Listen tile, You): the player, at its past episodes
+    var go = function () { var t = hubEl.eph && !hubEl.eph.hidden ? hubEl.eph : null; if (t && hub) hub.querySelector('.hub-scroll').scrollTop = t.offsetTop - 12; };
+    go(); setTimeout(go, 700); setTimeout(go, 1800);   // the list arrives from the network
+  }
+  function openHub(opts) {
     buildHub();
     loadEpisodes();
+    var eps = !!(opts && opts.episodes);
+    try { if (sessionStorage.getItem('hb-open-eps')) { sessionStorage.removeItem('hb-open-eps'); eps = true; } } catch (e) { /* ignore */ }
+    if (eps) setTimeout(showEpisodes, 0);
     if (hubShown) return;
+    if (scrim) scrim.hidden = false;
     hubPrev = document.activeElement;
     buildChapters();
     hub.hidden = false;
@@ -1030,6 +1063,7 @@
   function closeHub() {
     if (!hub || !hubShown) return;
     hub.hidden = true;
+    if (scrim) scrim.hidden = true;
     hubShown = false;
     document.documentElement.classList.remove('hb-hub-open');
     document.dispatchEvent(new CustomEvent('hb:hub'));

@@ -1,0 +1,30 @@
+name: Story art samples
+
+# Test pictures from the open image model on Cloudflare Workers AI (tools/social/art.mjs), to choose the house style for the
+# Instagram series and the Illustrated card style. Makes a handful of images and keeps them as a run artifact; posts nothing.
+on:
+  push:
+    branches: [preview/home]
+    paths: ['tools/social/**', '.github/workflows/art-samples.yml']
+  workflow_dispatch:
+
+jobs:
+  samples:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Make the sample pictures
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+        run: node tools/social/art.mjs --samples art-samples
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: art-samples
+          path: art-samples
+          retention-days: 14

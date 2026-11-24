@@ -84,11 +84,16 @@
     setTimeout(function () { l.scrollIntoView({ block: 'start' }); }, 60);
   }
   function go(url) { tap(); if (HC.leave) HC.leave(url); else location.href = url; }
+  // Play: the full-screen quiz opens over Home (quiz.js HBQuizPlay); Challenge if it can't (or today's is done)
+  function playQuiz() { tap(); if (window.HBQuizPlay && window.HBQuizPlay()) return; if (HC.tab) HC.tab('quiz'); }
   function tab(name) { tap(); if (HC.tab) HC.tab(name); }
-  function listen() {
+  // Listen: today's episode starts and the player expands from the bottom (listen.js); it minimises to the bar above the tabs
+  function listen(opts) {
     tap();
     var L = window.HBListen;
-    if (L && L.openHub) L.openHub(); else if (HC.tab) HC.tab('audio');
+    if (!L || !L.openHub) { if (HC.tab) HC.tab('audio'); return; }
+    if (!(opts && opts.episodes) && L.state && L.state() === 'idle' && L.start) L.start('quick');
+    L.openHub(opts);
   }
 
   // ---- pieces ----
@@ -163,7 +168,7 @@
     if (play) box.appendChild(mk('span', 'hm-ach-go', 'Play'));
     box.addEventListener('click', function () {
       if (cls) { tap(); try { sessionStorage.setItem('hb-qz-tab', 'badges'); } catch (e) { /* ignore */ } if (HC.tab) HC.tab('quiz'); if (window.HBQuizTab) window.HBQuizTab('badges'); }
-      else tab('quiz');
+      else playQuiz();
     });
     return box;
   }
@@ -179,7 +184,7 @@
     b.appendChild(mk('span', 'hm-qz-go', done ? 'See the league' : 'Play'));
     b.addEventListener('click', function () {
       if (done) { try { sessionStorage.setItem('hb-qz-tab', 'leagues'); } catch (e) { /* ignore */ } tab('quiz'); if (window.HBQuizTab) window.HBQuizTab('leagues'); }
-      else tab('quiz');
+      else playQuiz();
     });
     return b;
   }
@@ -292,10 +297,10 @@
     }
     if (all.length) nudge(IC.cards, 'Swipe today’s ' + all.length + ' cards', function () { openStory(all[0].dataset.storyId); });
     if (quizHere()) {
-      if (!info.played) nudge(IC.quiz, 'Your quiz is waiting', function () { tab('quiz'); }, true);
+      if (!info.played) nudge(IC.quiz, 'Your quiz is waiting', playQuiz, true);
       else nudge(IC.league, 'See your league', function () { try { sessionStorage.setItem('hb-qz-tab', 'leagues'); } catch (e) { /* ignore */ } tab('quiz'); if (window.HBQuizTab) window.HBQuizTab('leagues'); });
     }
-    nudge(IC.listen, 'Listen to today’s brief', listen);
+    nudge(IC.listen, 'Listen to today’s brief', function () { listen(); });
     nudge(IC.week, 'This week in one read', function () { go('/week.html?src=app-home'); });
     scroller.appendChild(nud);
 
@@ -322,6 +327,7 @@
     tile('hm-t-voices', IC.voices, 'Voices', 'The week’s best thinking', function () { go('/leaders.html'); });
     tile('hm-t-week', IC.week, 'This week', 'The Sunday recap', function () { go('/week.html?src=app-home'); });
     tile('hm-t-past', IC.archive, 'Past editions', 'Every edition so far', function () { go('/archive/'); });
+    tile('hm-t-listen hm-tile-wide', IC.listen, 'Listen', 'Today’s episode and every past one', function () { listen({ episodes: true }); });
     exS.appendChild(grid);
     scroller.appendChild(exS);
 
@@ -388,7 +394,7 @@
     listenBtn = mk('button', 'hm-listen');
     listenBtn.type = 'button';
     listenBtn.innerHTML = '<span class="hm-listen-p">' + IC.play + '</span><span class="hm-listen-t">Today’s brief<small>Listen to the whole edition</small></span><span class="hm-listen-k">Listen</span>';
-    listenBtn.addEventListener('click', listen);
+    listenBtn.addEventListener('click', function () { listen(); });
     el.appendChild(listenBtn);
     document.body.appendChild(el);
     document.addEventListener('hb:quiz', function () { if (shown) { chipSync(); draw(true); } });

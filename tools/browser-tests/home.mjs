@@ -79,7 +79,7 @@ t = await J(`(() => { const s = document.querySelector('.hm-scroll'); return { g
 check('greeting by the hour, with the real story count', t.greet.indexOf('Good morning.') === 0 && t.greet.indexOf(STORIES + ' stories') > 0, t.greet);
 check('the edition line reads "Edition N · day"', /^Edition \d+ · \w{3}, \d+ \w{3} \d{4}$/.test(t.kick), t.kick);
 check('Today\'s mix: the lead story, the newest Voices piece, the quiz', t.mix.join(',') === 'hm-lead,hm-voice,hm-qz-sm', t.mix.join(','));
-check('Explore: each section, then Voices, This week, Past editions', t.tiles.slice(-3).join('|') === 'Voices|This week|Past editions' && t.tiles.length >= 5, t.tiles.join('|'));
+check('Explore: each section, then Voices, This week, Past editions, Listen', t.tiles.slice(-4).join('|') === 'Voices|This week|Past editions|Listen' && t.tiles.length >= 6, t.tiles.join('|'));
 check('Top stories, Most read in Voices, the quiz card and the Listen bar are there', t.tops >= 3 && t.voices >= 3 && t.quizBig && t.listen && t.labels.indexOf('Most read in Voices') >= 0, JSON.stringify(t));
 check('story pictures are the edition\'s own story art', t.arts);
 await c.sleep(600);
@@ -209,6 +209,67 @@ check('no streak, nothing played: no streak strip', !(await c.ev(`!!document.que
 await open({ width: 1280, height: 900, wait: 2000 });
 t = await J(`({ home: !!window.HBHome, skin: document.documentElement.dataset.skin || '', tabs: [...document.querySelectorAll('.tab-bar:not([data-early]) .tab')].map((x) => x.dataset.tab).join('|'), menu: !!document.querySelector('.ab-menu:not(.ab-you)') })`);
 check('desktop: no Home, no themes, the old tabs and the Menu', !t.home && !t.skin && t.tabs === 'today|audio|leaders|quiz' && t.menu, JSON.stringify(t));
+
+// ---------- 7b. the audio player is a sheet over Home, not a screen ----------
+await open({ store: { 'hb-quiz-v1': played2 } });
+await waitFor(`window.HBListen && HBListen.openHub`, 4000);
+await c.ev(`document.querySelector('.hm-listen').click()`); await c.sleep(700);
+t = await J(`(() => { const h = document.querySelector('.hb-hub-sheet'); const r = h && h.getBoundingClientRect(); return { sheet: !!h && !h.hidden, top: r && Math.round(r.top), scrim: !!document.querySelector('.hub-scrim:not([hidden])'), min: !!document.querySelector('.hub-min'), state: HBListen.state(), lit: (document.querySelector('.tab-bar:not([data-early]) .tab[aria-current=page]') || {}).dataset?.tab, home: HBHome.isOpen() }; })()`);
+check('Listen on Home starts today\'s episode and expands the player from the bottom', t.sheet && t.top > 20 && t.top < 140 && t.scrim && t.min && t.state !== 'idle', JSON.stringify(t));
+check('the player is not a screen: Home stays open and lit beneath', t.home && t.lit === 'home', JSON.stringify(t));
+await c.shot(`${OUT}/06-player-sheet.png`);
+await c.ev(`document.querySelector('.hub-min').click()`); await c.sleep(300);
+check('Minimise closes it back to the bar', !(await c.ev(`HBListen.hubOpen()`)) && (await c.ev(`!!document.querySelector('.hub-scrim[hidden]')`)));
+await c.ev(`HBListen.openHub()`); await c.sleep(300);
+await c.ev(`document.querySelector('.hub-scrim').dispatchEvent(new Event('touchmove'))`); await c.sleep(300);
+check('scrolling outside the player minimises it', !(await c.ev(`HBListen.hubOpen()`)));
+await c.ev(`HBListen.stop()`); await c.sleep(200);
+await c.ev(`[...document.querySelectorAll('.hm-tile')].find((b) => /Listen/.test(b.textContent)).click()`); await c.sleep(500);
+t = await J(`({ open: HBListen.hubOpen(), state: HBListen.state(), eph: document.querySelector('.hub-eph h3').textContent })`);
+check('Explore › Listen opens the player at its past episodes without starting playback', t.open && t.state === 'idle' && t.eph === 'Past episodes', JSON.stringify(t));
+await c.ev(`HBListen.closeHub()`);
+await c.ev(`document.querySelector('.hm-top .ab-you').click()`); await c.sleep(300);
+check('You › Library lists Audio episodes', await c.ev(`!!document.querySelector('.hb-you [data-act=episodes]')`));
+await c.ev(`document.querySelector('.hb-you [data-act=episodes]').click()`); await c.sleep(400);
+check('and it opens the player (You closes)', (await c.ev(`HBListen.hubOpen()`)) && !(await state()).you);
+await c.ev(`HBListen.closeHub()`);
+
+// ---------- 7c. the full-screen quiz ----------
+const QZ = JSON.parse((HTML.match(/<script type="application\/json" id="quiz-data">([\s\S]*?)<\/script>/) || [])[1]).questions;
+await open({ store: { 'hb-quiz-v1': played2 } });
+const y0 = await c.ev(`scrollY`);
+await c.ev(`document.querySelector('.hm-qz').click()`); await c.sleep(500);
+t = await J(`(() => { const p = document.querySelector('.qz-play'); return { open: !!p && !p.hidden, q: (p.querySelector('.quiz-q') || {}).textContent, opts: p.querySelectorAll('.quiz-opt').length, tabs: getComputedStyle(document.querySelector('.tab-bar:not([data-early])')).visibility, home: HBHome.isOpen() }; })()`);
+check('Play on Home opens the quiz full screen, question 1, the tabs out of the way', t.open && t.q === QZ[0].q && t.opts === QZ[0].options.length && t.tabs === 'hidden' && t.home, JSON.stringify(t));
+await c.shot(`${OUT}/07-quiz-question.png`);
+const wrong = (QZ[0].answer + 1) % QZ[0].options.length;
+await c.ev(`document.querySelectorAll('.qz-play .quiz-opt')[${wrong}].click()`); await c.sleep(1000);
+t = await J(`(() => { const a = document.querySelector('.qz-play .qz-ans'); return a ? { v: a.querySelector('.qz-ans-v').textContent, ans: a.querySelector('.qz-ans-a b').textContent, mine: (a.querySelector('.qz-ans-mine') || {}).textContent, why: (a.querySelector('.qz-ans-why p') || {}).textContent, story: !!a.querySelector('.qz-ans-story'), next: a.querySelector('.qz-ans-next').textContent, focus: document.activeElement.className } : null; })()`);
+check('a wrong pick: its own answer card (Not quite, the answer, your pick, why, the story)', t && /Not quite/.test(t.v) && t.ans === QZ[0].options[QZ[0].answer] && /You picked/.test(t.mine) && t.why === QZ[0].why && t.story && t.next === 'Next question' && /qz-ans-v/.test(t.focus), JSON.stringify(t));
+await c.shot(`${OUT}/08-quiz-answer.png`);
+await c.ev(`document.querySelector('.qz-ans-next').click()`); await c.sleep(400);
+check('Next shows question 2 on its own screen', (await c.ev(`(document.querySelector('.qz-play .quiz-q') || {}).textContent`)) === QZ[1].q);
+await c.ev(`document.querySelector('.qz-play-x').click()`); await c.sleep(300);
+await tab('quiz'); await c.sleep(400);
+t = await J(`({ player: !!document.querySelector('.qz-play:not([hidden])'), intro: (document.querySelector('#quiz .qz-intro') || {}).textContent || '' })`);
+check('closing mid-quiz: Challenge shows Continue (1 of N answered)', !t.player && /answered 1 of/.test(t.intro) && /Continue/.test(t.intro), JSON.stringify(t));
+await c.ev(`document.querySelector('#quiz .qz-intro-go').click()`); await c.sleep(400);
+check('Continue picks up at question 2', (await c.ev(`(document.querySelector('.qz-play .quiz-q') || {}).textContent`)) === QZ[1].q);
+for (let k = 1; k < QZ.length; k++) {
+  await c.ev(`document.querySelectorAll('.qz-play .quiz-opt')[${QZ[k].answer}].click()`); await c.sleep(800);
+  if (k === 1) check('a right pick: Correct', /Correct/.test(await c.ev(`document.querySelector('.qz-ans-v').textContent`)));
+  await c.ev(`document.querySelector('.qz-ans-next').click()`); await c.sleep(450);
+}
+await c.sleep(1200);
+t = await J(`(() => { const p = document.querySelector('.qz-play'); return { result: !!p.querySelector('.quiz-result'), score: (p.querySelector('.quiz-score') || {}).textContent, done: !!p.querySelector('.qz-play-done'), saved: (JSON.parse(localStorage.getItem('hb-quiz-v1')).r['${DATE}'] || {}).s }; })()`);
+check('the score comes up in the player, saved, with Done', t.result && t.saved === QZ.length - 1 && t.done, JSON.stringify(t));
+await c.shot(`${OUT}/09-quiz-score.png`);
+await c.ev(`for (const x of document.querySelectorAll('.qz-cele')) x.remove(); 'ok'`);
+await c.ev(`document.querySelector('.qz-play-done').click()`); await c.sleep(500);
+t = await J(`({ player: !!document.querySelector('.qz-play:not([hidden])'), y: scrollY, inline: !!document.querySelector('#quiz .quiz-result'), quiz: document.documentElement.classList.contains('hb-quiz-page') })`);
+check('Done closes the player; the page never scrolled under it', !t.player && t.y === y0 && t.inline, JSON.stringify(t));
+await tab('home'); await c.sleep(400);
+check('Home now shows today\'s score on the quiz card', /You scored \d of \d/.test(await c.ev(`document.querySelector('.hm-qzbig').textContent`)));
 
 // ---------- 8. in the app, a dark-mode phone, the Sunday recap, past editions ----------
 await open({ store: { 'hb-quiz-v1': played2 }, native: true });
