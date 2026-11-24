@@ -44,7 +44,7 @@ const APP = `(() => {
 await c.preload(APP);
 await c.viewport(390, 844, true);
 await c.goto(B + '/about.html', 300);
-await c.ev(`localStorage.clear(); localStorage.setItem('hb-view-v1', 'list'); localStorage.setItem('hb-swipe-hint-v1', '1'); 'ok'`);
+await c.ev(`localStorage.clear(); sessionStorage.setItem('hb-view-v1', 'list'); localStorage.setItem('hb-swipe-hint-v1', '1'); 'ok'`);
 // Hand a link to the app the way iOS / Android do (from the home page), then read where it went.
 async function tap(url) {
   await c.goto(B + '/', 1600);

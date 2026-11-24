@@ -53,7 +53,7 @@ async function open({ native = true, width = 390, height = 844, dark = false, pr
   await c.viewport(width, height, width < 700, dark);
   await c.goto(B + '/about.html', 200);
   // nudge: 'done' skips the first-run swipe nudge (2026-11-18), which slides the card sideways on a fresh device.
-  await c.ev(`localStorage.clear(); ${nudge ? `localStorage.setItem('hb-deck-nudge-v1', '${nudge}');` : ''} ${prefs ? `localStorage.setItem('hb-prefs-v1', ${JSON.stringify(JSON.stringify(prefs))});` : ''} ${tip ? `localStorage.setItem('hb-tip-v1', ${JSON.stringify(JSON.stringify(tip))});` : ''} ${view !== 'default' ? `localStorage.setItem('hb-view-v1', '${view}');` : ''} ${size != null ? `localStorage.setItem('hb-textsize', '${size}');` : ''} ${hint ? `localStorage.setItem('hb-swipe-hint-v1', '1');` : ''} 'ok'`);
+  await c.ev(`localStorage.clear(); sessionStorage.clear(); ${nudge ? `localStorage.setItem('hb-deck-nudge-v1', '${nudge}');` : ''} ${prefs ? `localStorage.setItem('hb-prefs-v1', ${JSON.stringify(JSON.stringify(prefs))});` : ''} ${tip ? `localStorage.setItem('hb-tip-v1', ${JSON.stringify(JSON.stringify(tip))});` : ''} ${view !== 'default' ? `sessionStorage.setItem('hb-view-v1', '${view}');` : ''} ${size != null ? `localStorage.setItem('hb-textsize', '${size}');` : ''} ${hint ? `localStorage.setItem('hb-swipe-hint-v1', '1');` : ''} 'ok'`);
   await c.goto(B + '/' + query + hash, wait);
 }
 const cardsBtn = `document.querySelectorAll('.tab-switch button')[1]`;
@@ -72,7 +72,7 @@ const feedIds = (lanes) => J(`${JSON.stringify(lanes)}.flatMap((l) => [...docume
 const secOrder = () => J(`[...document.querySelectorAll('.dk-intro .dk-title')].map((h) => h.textContent)`);
 const hasTip = (which) => c.ev(`!!document.querySelector('.hb-tip${which ? `[data-tip="${which}"]` : ''}')`);
 const tipState = () => J(`JSON.parse(localStorage.getItem('hb-tip-v1') || 'null')`);
-const view = () => c.ev(`localStorage.getItem('hb-view-v1')`);
+const view = () => c.ev(`sessionStorage.getItem('hb-view-v1')`);
 
 // ---------- 1. the switch, and where cards exist ----------
 await open();
@@ -385,7 +385,7 @@ check('and switching back to Cards resumes on that same story — not back at th
 await open();
 await openDeck();
 await c.ev(`HBCards.goTo(HBCards.count() - 1, false)`); await c.sleep(600);
-t = await J(`(() => { document.querySelector('.dk-quizt').click(); const k = document.querySelector('#quiz .quiz-card').getBoundingClientRect(); return { deck: HBCards.isOpen(), cardTop: Math.round(k.top), scrollYNow: Math.round(scrollY), view: localStorage.getItem('hb-view-v1') }; })()`);
+t = await J(`(() => { document.querySelector('.dk-quizt').click(); const k = document.querySelector('#quiz .quiz-card').getBoundingClientRect(); return { deck: HBCards.isOpen(), cardTop: Math.round(k.top), scrollYNow: Math.round(scrollY), view: sessionStorage.getItem('hb-view-v1') }; })()`);
 check('"Play the quiz" is one instant change of screen: the deck is gone and the first question is already in place (in the very same moment, nothing scrolls past)', !t.deck && t.cardTop >= 60 && t.cardTop <= 110 && t.scrollYNow > 5000 && t.view === 'cards', JSON.stringify(t));
 await c.sleep(1500);
 t = await J(`({ cardTop: Math.round(document.querySelector('#quiz .quiz-card').getBoundingClientRect().top), opts: document.querySelectorAll('#quiz .quiz-opt').length })`);
@@ -398,7 +398,7 @@ await openDeck();
 // `html { scroll-behavior: smooth }` globally, so even this "auto" scroll animates for a few hundred ms rather than
 // landing instantly — give it a moment to settle before reading the result, same as every other transition here.
 await c.ev(`document.querySelector('.tab[data-tab=quiz]').click()`); await c.sleep(900);
-t = await J(`(() => { const ov = document.querySelector('.hb-quizpage'); return { deck: HBCards.isOpen(), quizPage: document.documentElement.classList.contains('hb-quiz-page'), overlayShown: !!ov && !ov.hidden, quizInOverlay: !!ov && ov.contains(document.getElementById('quiz')), view: localStorage.getItem('hb-view-v1') }; })()`);
+t = await J(`(() => { const ov = document.querySelector('.hb-quizpage'); return { deck: HBCards.isOpen(), quizPage: document.documentElement.classList.contains('hb-quiz-page'), overlayShown: !!ov && !ov.hidden, quizInOverlay: !!ov && ov.contains(document.getElementById('quiz')), view: sessionStorage.getItem('hb-view-v1') }; })()`);
 check('the Challenge tab closes the deck straight into the dedicated quiz page (a real overlay, #quiz moved inside it), Cards still your choice for next time', !t.deck && t.quizPage && t.overlayShown && t.quizInOverlay && t.view === 'cards', JSON.stringify(t));
 await c.ev(`document.querySelector('.tab[data-tab=today]').click()`); await c.sleep(600);
 check('and the Today tab leaves the dedicated quiz page again, same as it would from the list', (await c.ev(`!document.documentElement.classList.contains('hb-quiz-page')`)) === true);
@@ -432,7 +432,7 @@ check('and going back to the list lands on the story you were reading in one ste
 
 // ---------- 8. Cards is the default view ----------
 await open({ view: 'default', wait: 2600 });
-t = await J(`({ deck: !!window.HBCards && HBCards.isOpen(), first: document.querySelector('.dk-card:not([inert])') && document.querySelector('.dk-card:not([inert])').className, visible: document.body.style.visibility, view: localStorage.getItem('hb-view-v1'), tab: (document.querySelector('.tab[aria-current=page]') || {}).dataset.tab })`);
+t = await J(`({ deck: !!window.HBCards && HBCards.isOpen(), first: document.querySelector('.dk-card:not([inert])') && document.querySelector('.dk-card:not([inert])').className, visible: document.body.style.visibility, view: sessionStorage.getItem('hb-view-v1'), tab: (document.querySelector('.tab[aria-current=page]') || {}).dataset.tab })`);
 check('with nothing stored (a new install, or anyone who has not chosen), the app opens on the swipe cards, starting with the cover card', t.deck && /dk-cover/.test(t.first) && t.view === 'cards' && t.tab === 'today', JSON.stringify(t));
 check('the page is shown again once the deck is up (nothing left hidden)', t.visible === '');
 await open({ view: 'default', native: false, wait: 2600 });
@@ -445,6 +445,12 @@ await c.ev(`(location.reload(), 'ok')`); await c.sleep(2400);
 check('choosing List is remembered: the next open is the list', !(await c.ev(`window.HBCards && HBCards.isOpen()`)) && (await view()) === 'list');
 await c.ev(`${cardsBtn}.click()`); await c.sleep(1200);
 check('and choosing Cards again is remembered too', (await view()) === 'cards');
+// The choice lasts for the visit only (2026-11-25): a fresh open (new session) starts on the cards, even on a phone that
+// still holds the old lasting "list" choice in localStorage.
+await c.ev(`document.querySelectorAll('.tab-switch button')[0].click()`); await c.sleep(400);
+await c.ev(`sessionStorage.clear(); localStorage.setItem('hb-view-v1', 'list'); 'ok'`);
+await c.goto(B + '/', 2600);
+check('a fresh open starts on the cards even after List was chosen last time', (await c.ev(`!!window.HBCards && HBCards.isOpen() && localStorage.getItem('hb-view-v1') === null`)) === true);
 
 // links that point into the list open the list
 await open({ view: 'default', hash: '#quiz', wait: 2600 });
@@ -568,7 +574,7 @@ await c.ev(`document.querySelector('.dk-listen .dk-tile-go').click()`); await wa
 t = await J(`({ st: HBListen.state(), tile: document.querySelector('.dk-listen').classList.contains('playing'), btn: document.querySelector('.dk-listen .dk-tile-go').getAttribute('aria-label') })`);
 check('the Listen tile\'s button starts the brief, and turns into Pause', t.st === 'playing' && t.tile && /Pause/.test(t.btn), JSON.stringify(t));
 await c.ev(`HBListen.stop()`);
-t = await J(`(() => { document.querySelector('.dk-quizt').click(); const k = document.querySelector('#quiz .quiz-card').getBoundingClientRect(); return { deck: HBCards.isOpen(), cardTop: Math.round(k.top), view: localStorage.getItem('hb-view-v1') }; })()`);
+t = await J(`(() => { document.querySelector('.dk-quizt').click(); const k = document.querySelector('#quiz .quiz-card').getBoundingClientRect(); return { deck: HBCards.isOpen(), cardTop: Math.round(k.top), view: sessionStorage.getItem('hb-view-v1') }; })()`);
 check('the quiz tile takes you straight to the first question (one step), and Cards stays your choice', !t.deck && t.cardTop >= 60 && t.cardTop <= 110 && t.view === 'cards', JSON.stringify(t));
 await open();
 await openDeck();

@@ -46,7 +46,7 @@ async function open({ store = {}, query = '?quiz=1', width = 390, height = 844, 
   await c.viewport(width, height, true, dark);
   await c.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: dark ? 'dark' : 'light' }, { name: 'prefers-reduced-motion', value: reduced ? 'reduce' : 'no-preference' }] });
   await c.goto(B + '/about.html', 200);
-  await c.ev(`localStorage.clear(); sessionStorage.clear(); localStorage.setItem('hb-view-v1', 'list'); localStorage.setItem('hb-swipe-hint-v1', '1'); ${Object.entries(store).map(([k, v]) => `localStorage.setItem(${JSON.stringify(k)}, ${JSON.stringify(typeof v === 'string' ? v : JSON.stringify(v))});`).join(' ')} 'ok'`);
+  await c.ev(`localStorage.clear(); sessionStorage.clear(); sessionStorage.setItem('hb-view-v1', 'list'); localStorage.setItem('hb-swipe-hint-v1', '1'); ${Object.entries(store).map(([k, v]) => `localStorage.setItem(${JSON.stringify(k)}, ${JSON.stringify(typeof v === 'string' ? v : JSON.stringify(v))});`).join(' ')} 'ok'`);
   await c.goto(B + '/' + query, wait);
 }
 // Play today's quiz, getting `right` of the questions right (the first ones)

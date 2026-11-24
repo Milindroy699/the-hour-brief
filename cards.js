@@ -38,7 +38,8 @@
     if (label) b.setAttribute('aria-label', label);
     return b;
   }
-  function setView(v) { try { localStorage.setItem(VIEW_KEY, v); } catch (e) { /* not remembered */ } }
+  // List or Cards lasts for this visit only (sessionStorage): every fresh open starts on the cards (owner, 2026-11-25).
+  function setView(v) { try { sessionStorage.setItem(VIEW_KEY, v); } catch (e) { /* not remembered */ } }
   // A light tick as the scrubber crosses into a new card — the native plugin in the app, the Vibration API on the
   // phone web (Android only; iOS Safari has no equivalent, so it is simply silent there).
   function haptic() {

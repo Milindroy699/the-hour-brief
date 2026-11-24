@@ -16,7 +16,7 @@
     var app = !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform());
     if (!app && !(window.matchMedia && matchMedia('(max-width: 640px)').matches)) return;
     var q = location.search, cards = true;
-    try { cards = localStorage.getItem('hb-view-v1') !== 'list'; } catch (e) {}
+    try { cards = sessionStorage.getItem('hb-view-v1') !== 'list'; } catch (e) {}
     var screen = /[?&](audio|quiz)=1(&|$)/.test(q) || (cards && !location.hash && !/[?&](join|beat)=/.test(q));
     if (!screen) return;
     var h = document.documentElement;

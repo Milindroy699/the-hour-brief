@@ -884,7 +884,8 @@
   // ---- Swipe cards: a second way to read the same stories (cards.js, loaded on demand) ----
   var VIEW_KEY = 'hb-view-v1', cardsLoad = 0, cardsQueue = [];
   function cardsOk() { return reader() && (NATIVE || mq.matches) && isFeed(); }
-  function getView() { try { return localStorage.getItem(VIEW_KEY) === 'list' ? 'list' : 'cards'; } catch (e) { return 'cards'; } }   // Cards unless the reader chose List
+  function getView() { try { return sessionStorage.getItem(VIEW_KEY) === 'list' ? 'list' : 'cards'; } catch (e) { return 'cards'; } }   // Cards unless the reader chose List this visit (every fresh open starts on the cards, 2026-11-25)
+  try { localStorage.removeItem(VIEW_KEY); } catch (e) { /* the old lasting choice */ }
   function deckOpen() { return !!(window.HBCards && window.HBCards.isOpen()); }
   function withCards(fn, fail) {
     if (window.HBCards) { fn(window.HBCards); return; }
