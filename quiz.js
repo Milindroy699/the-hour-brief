@@ -898,6 +898,7 @@
     tile.appendChild(el('span', 'qz-drill-score', mine ? mine.s + '/' + mine.t : N + ' questions'));
     streakBox.appendChild(tile);
     renderPast();
+    document.dispatchEvent(new CustomEvent('hb:quiz'));       // Home (home.js) redraws its streak strip and quiz card
   }
   function renderPast() {
     var results = load().r;
@@ -1645,6 +1646,21 @@
     if (n) { var b = BADGES.filter(function (x) { return x.id === 'streak' + n[1]; })[0] || null; setTimeout(function () { showMilestone(+n[1], b, null); }, 800); }
     else if (v === 'badge') setTimeout(function () { showBadge(BADGES[1], null); }, 800);
   }
+
+  // ---------- for Home (home.js): the streak, today's result and the badges, read-only ----------
+  // played: today's result or null; streak: the current run (still alive if today isn't played yet); badges: id -> date earned.
+  window.HBQuizInfo = function () {
+    var o = load(), results = o.r, mine = results[DATE] || null;
+    var latest = lastDates.length ? lastDates[lastDates.length - 1] : DATE;
+    var streak = mine ? streakEndingAt(lastDates, results, DATE)
+      : (latest === DATE ? streakEndingAt(lastDates, results, lastDates.length > 1 ? lastDates[lastDates.length - 2] : prevDay(DATE)) : 0);
+    var st = computeStats(lastDates);
+    var next = null;                                          // the next streak badge, for "one more day for Week warrior"
+    BADGES.forEach(function (b) { if (!next && /^streak/.test(b.id) && !(o.b && o.b[b.id]) && st.best < b.goal) next = { id: b.id, name: b.name, goal: b.goal }; });
+    return { date: DATE, n: N, played: mine, streak: streak, best: st.best, stage: stageOf(Math.max(1, streak))[1], badges: o.b || {}, badgeCount: Object.keys(o.b || {}).length, badgeTotal: BADGES.length, next: next, flame: ART + 'flames/' + stageOf(Math.max(1, streak))[0] + '.webp' };
+  };
+
+  window.HBQuizTab = function (name) { setTab(name, false); };   // You's badge count opens the Badges tab
 
   // ---------- start ----------
   root.insertAdjacentElement('afterend', pastBox);            // between the quiz and the leagues
