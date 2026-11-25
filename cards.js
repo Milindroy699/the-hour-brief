@@ -419,12 +419,11 @@
     paint();
     announce();
   }
-  // In one section the header's left button goes back to Home (where the Explore tiles are); otherwise it is the logo.
+  // In one section the header gets a back arrow to Home (where the Explore tiles are), before the logo.
   function syncBack() {
     if (!ui.head) return;
     var on = !!laneOnly;
-    if (ui.homeBack) ui.homeBack.hidden = !on;
-    if (ui.logo) ui.logo.hidden = on;
+    if (ui.homeBack) ui.homeBack.hidden = !on;          // the logo stays: the arrow comes before it
   }
 
   function buildEnd(c) {
@@ -500,11 +499,11 @@
     acts.appendChild(menu);
     // A past edition: a back arrow (to Past editions) where the logo sits, as on the list (mobile.js HBChrome.back).
     var back = HC && HC.back && HC.back();
-    if (back) {
-      var bb = btn('ab-btn ab-back', '', back.label);
-      bb.innerHTML = HC.icons.back;
-      bb.addEventListener('click', back.go);
-      logo = bb;
+    var pastBack = null;
+    if (back) {                                        // a past edition: the back arrow, then the logo (as on every header)
+      pastBack = btn('ab-btn ab-back', '', back.label);
+      pastBack.innerHTML = HC.icons.back;
+      pastBack.addEventListener('click', back.go);
     }
     ui.logo = logo;
     var hb = ui.homeBack = btn('ab-btn ab-back dk-home-back', '', 'Back to Home');
@@ -512,6 +511,7 @@
     hb.hidden = true;
     hb.addEventListener('click', backHome);
     head.appendChild(hb);
+    if (pastBack) head.appendChild(pastBack);
     head.appendChild(logo);
     head.appendChild(brand);
     head.appendChild(acts);

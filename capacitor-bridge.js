@@ -63,6 +63,14 @@
     }).catch(function () {});
   })();
 
+  // ---- No zooming in the apps (owner, 2026-11-26): a double tap on the header zoomed the page. WKWebView and Android's
+  // WebView honour user-scalable=no (Safari ignores it, which is fine: the website keeps pinch zoom). ----
+  (function noZoom() {
+    var m = document.querySelector('meta[name=viewport]');
+    if (!m) { m = document.createElement('meta'); m.name = 'viewport'; document.head.appendChild(m); }
+    m.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
+  })();
+
   // ---- Shared injected stylesheet for the bits this script builds ----
   (function injectStyle() {
     var css =

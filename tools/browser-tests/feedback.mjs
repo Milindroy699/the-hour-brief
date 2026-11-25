@@ -65,7 +65,7 @@ t = await J(`(() => { const cards = [...document.querySelectorAll('.dk-track > .
   back: !document.querySelector('.dk-home-back').hidden, logo: document.querySelector('.dk-head .ab-logo').hidden, tiles: [...document.querySelectorAll('.dk-more-tile strong')].map((e) => e.textContent) }; })()`);
 check('an Explore tile opens only that section: its intro, its stories, then the "more" card', t.first === tileName && /dk-more/.test(t.last) && t.n >= 3, JSON.stringify(t));
 check('the closing card offers the other sections and the whole brief, not this one', t.tiles.indexOf(tileName) < 0 && t.tiles.indexOf('The whole brief') >= 0 && t.tiles.length >= 2, JSON.stringify(t.tiles));
-check('in one section the header shows a back arrow to Home instead of the logo', t.back && t.logo, JSON.stringify(t));
+check('in one section the header shows a back arrow to Home, before the logo', t.back && !t.logo, JSON.stringify(t));
 await c.shot(`${OUT}/01-section.png`);
 await c.ev(`HBCards.goTo(HBCards.count() - 1, false)`); await c.sleep(400);
 await c.shot(`${OUT}/02-section-end.png`);
@@ -78,7 +78,7 @@ await c.ev(`document.querySelector('.dk-more .dk-cta').click()`); await waitFor(
 check('"Back to Home" on the closing card goes Home', await J(`HBHome.isOpen() && !HBCards.isOpen()`));
 await c.ev(`document.querySelector('.tab-bar:not([data-early]) .tab[data-tab=today]').click()`); await waitFor(`HBCards.isOpen()`); await c.sleep(300);
 t = await J(`({ first: document.querySelector('.dk-track > .dk-card').getAttribute('aria-label'), back: !document.querySelector('.dk-home-back').hidden })`);
-check('the Brief tab afterwards is the whole brief again (cover first, logo back)', !t.back && !/Product|Stock|AI/.test(t.first), JSON.stringify(t));
+check('the Brief tab afterwards is the whole brief again (cover first, no back arrow)', !t.back && !/Product|Stock|AI/.test(t.first), JSON.stringify(t));
 
 // ---------- 4. the card you were on survives a reload ----------
 await c.ev(`HBCards.goTo(4, false)`); await c.sleep(400);
