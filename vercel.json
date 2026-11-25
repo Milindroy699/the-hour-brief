@@ -125,6 +125,15 @@
           "value": "no-store, max-age=0"
         }
       ]
+    },
+    {
+      "source": "/:file(sw\\.js|app-manifest\\.json)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, max-age=0"
+        }
+      ]
     }
   ],
   "crons": [

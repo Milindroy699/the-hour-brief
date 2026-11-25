@@ -14,7 +14,8 @@
   },
   "ios": {
     "contentInset": "always",
-    "backgroundColor": "#0c0d15"
+    "backgroundColor": "#0c0d15",
+    "limitsNavigationsToAppBoundDomains": true
   },
   "android": {
     "backgroundColor": "#0c0d15"
@@ -39,7 +40,11 @@
       "iconColor": "#7c5cf0"
     },
     "PushNotifications": {
-      "presentationOptions": ["badge", "sound", "alert"]
+      "presentationOptions": [
+        "badge",
+        "sound",
+        "alert"
+      ]
     }
   }
 }

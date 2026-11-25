@@ -3,7 +3,7 @@
   "private": true,
   "description": "Static site plus Vercel functions.",
   "scripts": {
-    "vercel-build": "node tools/seo/build.mjs",
+    "vercel-build": "node tools/seo/build.mjs && node tools/app/manifest.mjs",
     "test:seo": "node --test tools/seo/test/*.test.mjs"
   },
   "dependencies": {
