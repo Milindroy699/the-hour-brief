@@ -4,9 +4,12 @@ import fs from 'node:fs';
 // opts.home: the phone layout with Home and the themes (2026-11-25). Without it every page gets window.HB_NO_HOME, the
 // layout the older suites were written for (Today · Audio · Voices · Challenge, the Menu, no themes).
 export async function launch(port = 9333, opts = {}) {
+  // a throwaway profile, deleted when the browser closes (they were left behind: 9.6 GB by 2026-11-25)
+  const PROFILE = '/tmp/hb-chrome-' + Date.now() + '-' + port;
+  process.once('exit', () => { try { fs.rmSync(PROFILE, { recursive: true, force: true }); } catch (e) { /* best effort */ } });
   const chrome = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
     ['--headless=new', '--disable-gpu', '--hide-scrollbars', '--autoplay-policy=no-user-gesture-required', `--remote-debugging-port=${port}`,
-     '--user-data-dir=/tmp/hb-chrome-' + Date.now(), '--no-first-run', 'about:blank'], { stdio: 'ignore' });
+     '--user-data-dir=' + PROFILE, '--no-first-run', 'about:blank'], { stdio: 'ignore' });
   let targets;
   for (let i = 0; i < 50; i++) {
     try { targets = await (await fetch(`http://127.0.0.1:${port}/json`)).json(); if (targets.find(t => t.type === 'page')) break; } catch (e) {}
@@ -49,7 +52,7 @@ export async function launch(port = 9333, opts = {}) {
     },
     async shot(file) { const r = await send('Page.captureScreenshot', { format: 'png' }); fs.writeFileSync(file, Buffer.from(r.result.data, 'base64')); },
     sleep: ms => new Promise(r => setTimeout(r, ms)),
-    close() { try { ws.close(); } catch (e) {} chrome.kill(); },
+    close() { try { ws.close(); } catch (e) {} chrome.kill(); setTimeout(() => { try { fs.rmSync(PROFILE, { recursive: true, force: true }); } catch (e) { /* best effort */ } }, 300); },
   };
   return api;
 }

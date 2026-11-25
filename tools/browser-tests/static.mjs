@@ -4,14 +4,16 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const ROOT = path.resolve(import.meta.dirname, '../..');
+const SITE = path.resolve(import.meta.dirname, '../..');
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.xml': 'application/xml', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.mp3': 'audio/mpeg' };
 
-export function start({ port = 8788, audioDir }) {
+export function start({ port = 8788, audioDir, root }) {
+  const ROOT = root ? path.resolve(root) : SITE;      // root: serve a copy of the site instead (appcopy.mjs changes files in it)
   const ctl = { manifest: 'ok', audio: 'ok' };
   const server = http.createServer((req, res) => {
     const u = new URL(req.url, 'http://x');
     const send = (code, body, type = 'text/plain') => { res.writeHead(code, { 'Content-Type': type, 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store' }); res.end(body); };
+    if (u.pathname === '/app-manifest.json') return import('../app/manifest.mjs').then((m) => send(200, JSON.stringify(m.buildManifest(ROOT)), 'application/json'));   // the deploy writes it (sw.js)
     if (u.pathname === '/__ctl') { Object.assign(ctl, Object.fromEntries(u.searchParams)); return send(200, JSON.stringify(ctl)); }
     if (u.pathname.startsWith('/__audio/')) {
       const rel = u.pathname.slice('/__audio/'.length);

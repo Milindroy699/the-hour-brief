@@ -490,6 +490,42 @@
     }
   })();
 
+  // ---- The app's copy of itself (sw.js; owner, 2026-11-25: "bundle the app code inside the app") ----
+  // The pages, code and fonts live on the phone, so screens open with no network wait and work offline; new versions download
+  // in the background. New code is switched to the next time the app comes back to the front while on Home (never in the
+  // middle of a story, the quiz or audio); a new edition is handled by newEditionWatch below, which asks for it first.
+  var appCopy = (function () {
+    var sw = navigator.serviceWorker, pending = false, waiters = [];
+    if (!sw || window.HB_NO_SW) return { ready: function (cb) { cb(); } };
+    sw.register('/sw.js').catch(function () { /* the network as before */ });
+    sw.addEventListener('message', function (e) {
+      var d = e.data || {};
+      if (d.type === 'hb-off') { location.reload(); return; }
+      if (d.type !== 'hb-updated' && d.type !== 'hb-checked') return;
+      if (d.type === 'hb-updated' && !d.first) pending = true;
+      var w = waiters; waiters = []; w.forEach(function (f) { f(); });
+    });
+    function idle() {
+      var cl = document.documentElement.classList, L = window.HBListen, st = L && L.state && L.state();
+      return cl.contains('hb-home-open') && !cl.contains('qz-playing') && !cl.contains('hb-you-open') && st !== 'playing' && st !== 'paused';
+    }
+    if (P.App) P.App.addListener('appStateChange', function (s) {
+      if (!s || !s.isActive) return;
+      if (sw.controller) sw.controller.postMessage({ type: 'hb-check' });
+      if (pending && idle()) location.reload();
+    });
+    return {
+      // cb once the phone's copy has caught up with the server (or after 5 s, whichever is first)
+      ready: function (cb) {
+        if (!sw.controller) { cb(); return; }
+        var done = false, go = function () { if (!done) { done = true; cb(); } };
+        waiters.push(go);
+        setTimeout(go, 5000);
+        sw.controller.postMessage({ type: 'hb-check' });
+      }
+    };
+  })();
+
   // ---- New edition: opened automatically, but never mid-something ----
   // The app checks for a newer edition on resume and every 10 minutes. The moment it is safe to do so without pulling
   // the reader away from what they are doing, it switches to it on its own — no tap needed. "Safe" means: at rest near
@@ -530,7 +566,7 @@
       applying = true;
       clearTimeout(retryTimer);
       if (banner) { banner.remove(); banner = null; }
-      location.href = '/';
+      appCopy.ready(function () { location.href = '/'; });     // the phone's copy fetches the new edition first
     }
 
     function attempt() {
