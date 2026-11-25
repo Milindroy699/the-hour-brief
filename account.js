@@ -479,42 +479,125 @@
     show(0);
   }
 
-  // ---- quiet reminders for anonymous readers ----
-  function nudgeState() { return json(NUDGE, { n: 0, at: 0 }); }
-  function playedDays() { var q = json('hb-quiz-v1', {}); return q && q.r ? Object.keys(q.r).length : 0; }
-  // Home: a small card, at most three times, a week apart, once there is something worth keeping (two quizzes or a saved story)
+  // ---- Reminders to sign in, for anonymous readers (owner, 2026-11-26: "at regular intervals; should not look spam but does
+  // the job of getting signups") ----
+  // The rules every reminder follows: someone anonymous in the app, past the welcome and their first day, with something to
+  // lose (a quiz played or a story saved); at most ONE reminder a day across the app; never mid-quiz. Where:
+  //   Home card   on a widening schedule: after day 1, then 3, 7, 14, 30 days, then monthly; each "Not now" stretches the
+  //               next gap by half; after three, "Don't remind me" stops it for good
+  //   the score   after a quiz, on streak days that matter (2, 3, 5, 7, 10, 14, 21, 30, 50, 100) or 5+ days since the last
+  //   saving      a small bar with Sign in, at most every two weeks
+  //   the avatar  a dot on your picture until you open You, at most once a week (no count against the daily limit)
+  // The words use what the reader has: their streak, saved stories, badges.
+  var NUDGE2 = 'hb-nudge-v2', DAY = 864e5, HOME_GAPS = [1, 3, 7, 14, 30];
+  function nst() {
+    var s = json(NUDGE2, null);
+    if (!s) { var old = json(NUDGE, { n: 0, at: 0 }); s = { first: Date.now(), last: 0, home: { n: old.n || 0, at: old.at || 0, no: 0, stop: false }, score: 0, save: 0, dot: 0 }; set(NUDGE2, JSON.stringify(s)); }
+    return s;
+  }
+  function nsave(s) { set(NUDGE2, JSON.stringify(s)); }
+  function stash() {
+    var q = json('hb-quiz-v1', {}), saved = json('hb-saved-v1', []), info = null;
+    try { info = window.HBQuizInfoAny ? window.HBQuizInfoAny() : null; } catch (e) { /* none */ }
+    return { played: q && q.r ? Object.keys(q.r).length : 0, saved: Array.isArray(saved) ? saved.length : 0,
+      badges: q && q.b ? Object.keys(q.b).length : 0, streak: (info && info.streak) || 0 };
+  }
+  function eligible(s) {
+    if (signedIn() || !NATIVE || !get(ONB) || (window.HB_COUNT_TEST && !window.HB_ONB_TEST)) return false;
+    if (Date.now() - s.first < DAY) return false;                                  // not on the first day
+    var st = stash();
+    return st.played > 0 || st.saved > 0;
+  }
+  function dailyFree(s) { return Date.now() - (s.last || 0) >= 20 * 3600 * 1000; }
+  function shown(s, kind) { s.last = Date.now(); nsave(s); use('nudge_' + kind); }
+  // "Your 6-day streak and 4 saved stories live on this phone only"
+  function haveLine() {
+    var st = stash(), parts = [];
+    if (st.streak >= 2) parts.push('your ' + st.streak + '-day streak');
+    if (st.saved) parts.push(st.saved + ' saved ' + (st.saved === 1 ? 'story' : 'stories'));
+    if (!parts.length && st.badges) parts.push(st.badges + ' ' + (st.badges === 1 ? 'badge' : 'badges'));
+    if (!parts.length && st.played) parts.push('your quiz history');
+    var t = parts.join(' and ');
+    return t ? t.charAt(0).toUpperCase() + t.slice(1) + (parts.length > 1 || /stories|badges|history/.test(t) ? ' live' : ' lives') + ' on this phone only' : 'Your progress lives on this phone only';
+  }
+  var X_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+
+  // Home: the card, on its schedule (home.js asks once per visit)
   function homeNudge(container) {
-    if (signedIn() || !NATIVE || !get(ONB)) return null;
-    var st = nudgeState(), saved = json('hb-saved-v1', []);
-    if (st.n >= 3 || Date.now() - st.at < 7 * 864e5) return null;
-    if (playedDays() < 2 && !(Array.isArray(saved) && saved.length)) return null;
+    var s = nst(), h = s.home;
+    if (!eligible(s) || h.stop || !dailyFree(s)) return null;
+    var gap = (HOME_GAPS[Math.min(h.n, HOME_GAPS.length - 1)] || 30) * Math.pow(1.5, h.no || 0);
+    if (h.n > 0 && Date.now() - h.at < gap * DAY) return null;
     var card = mk('div', 'acc-nudge');
     var t = mk('button', 'acc-nudge-go');
     t.type = 'button';
-    t.appendChild(mk('b', '', 'Your progress lives on this phone only'));
-    t.appendChild(mk('span', '', 'Sign in to keep your streak and saved stories, whatever happens to this phone.'));
+    t.appendChild(mk('b', '', haveLine()));
+    t.appendChild(mk('span', '', 'Sign in to keep it, whatever happens to this phone. It takes a minute.'));
     t.addEventListener('click', function () { use('nudge_home_tap'); openSignIn('home'); });
     var x = btn('acc-nudge-x', '');
     x.setAttribute('aria-label', 'Not now');
-    x.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
-    x.addEventListener('click', function () { card.remove(); });
+    x.innerHTML = X_SVG;
+    x.addEventListener('click', function () {
+      var s2 = nst(); s2.home.no = (s2.home.no || 0) + 1; nsave(s2); use('nudge_home_no');
+      if (s2.home.no >= 3) {                                              // the third "Not now": offer to stop
+        card.textContent = '';
+        var row = mk('div', 'acc-nudge-stop');
+        row.appendChild(mk('span', '', 'Got it. Sign in any time from You.'));
+        var stop = btn('acc-link acc-nudge-off', 'Don’t remind me');
+        stop.addEventListener('click', function () { var s3 = nst(); s3.home.stop = true; nsave(s3); use('nudge_home_stop'); card.remove(); });
+        row.appendChild(stop);
+        card.appendChild(row);
+        setTimeout(function () { if (card.parentNode) card.remove(); }, 6000);
+      } else card.remove();
+    });
     card.appendChild(t); card.appendChild(x);
-    set(NUDGE, JSON.stringify({ n: st.n + 1, at: Date.now() }));
-    use('nudge_home');
+    h.n++; h.at = Date.now();
+    shown(s, 'home');
     if (container) container.appendChild(card);
     return card;
   }
-  // The score: one line under it once a streak of 2+ days is at stake
+  // The score: a line under it on the streak days that matter
+  var STREAK_DAYS = [2, 3, 5, 7, 10, 14, 21, 30, 50, 100];
   function scoreNudge(container, streak) {
-    if (signedIn() || !NATIVE || !(streak >= 2) || !container) return null;
+    var s = nst();
+    if (!container || !(streak >= 2) || !eligible(s) || !dailyFree(s)) return null;
+    if (STREAK_DAYS.indexOf(streak) < 0 && Date.now() - (s.score || 0) < 5 * DAY) return null;
     var b = mk('button', 'acc-score-nudge');
     b.type = 'button';
     b.appendChild(mk('span', '', 'Keep your ' + streak + '-day streak safe'));
     b.appendChild(mk('b', '', 'Sign in'));
     b.addEventListener('click', function () { use('nudge_score_tap'); openSignIn('streak'); });
     container.appendChild(b);
+    s.score = Date.now();
+    shown(s, 'score');
     return b;
   }
+  // Saving a story: a small bar at the bottom, a few seconds, at most every two weeks
+  document.addEventListener('hb:saved', function () {
+    var s = nst();
+    if (!eligible(s) || !dailyFree(s) || Date.now() - (s.save || 0) < 14 * DAY) return;
+    var saved = json('hb-saved-v1', []);
+    if (!Array.isArray(saved) || !saved.length) return;                    // removing one isn't the moment
+    var bar = mk('div', 'acc-bar');
+    bar.setAttribute('role', 'status');
+    bar.appendChild(mk('span', '', 'Saved on this phone only.'));
+    var go = btn('acc-bar-go', 'Sign in to keep it');
+    go.addEventListener('click', function () { bar.remove(); use('nudge_save_tap'); openSignIn('save'); });
+    var x = btn('acc-bar-x', ''); x.setAttribute('aria-label', 'Not now'); x.innerHTML = X_SVG;
+    x.addEventListener('click', function () { bar.remove(); });
+    bar.appendChild(go); bar.appendChild(x);
+    setTimeout(function () { document.body.appendChild(bar); }, 1600);    // after the "Saved for later" toast
+    setTimeout(function () { if (bar.parentNode) bar.remove(); }, 9600);
+    s.save = Date.now();
+    shown(s, 'save');
+  });
+  // The avatar: a dot on the You button, gone once You is opened (back at most once a week)
+  function syncDot() {
+    var s = nst(), on = eligible(s) && Date.now() - (s.dot || 0) >= 7 * DAY;
+    document.documentElement.classList.toggle('hb-you-dot', !!on);
+  }
+  document.addEventListener('hb:you', function () { var s = nst(); s.dot = Date.now(); nsave(s); syncDot(); });
+  document.addEventListener('hb:account', syncDot);
 
   // ---- You: who you are, sign out, delete ----
   function youHero(hero) {
@@ -576,6 +659,7 @@
 
   // ---- start: the first run in the app, or a quiet sync ----
   function begin() {
+    syncDot();
     // ?welcome=1 shows the welcome again, on demand (to review it; owner, 2026-11-26), in the app or a phone browser
     if (/[?&]welcome=1(&|$)/.test(location.search)) {
       try { history.replaceState(history.state, '', location.pathname + location.search.replace(/([?&])welcome=1(&|$)/, '$1').replace(/[?&]$/, '') + location.hash); } catch (e) { /* ignore */ }
