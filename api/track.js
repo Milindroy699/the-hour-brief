@@ -43,7 +43,8 @@ const ALLOWED_EVENTS = new Set(['listen_play', 'app_link_ios', 'app_link_android
 const FEATURES = new Set(['open', 'today', 'cards_view', 'story_save', 'story_share', 'story_vote', 'source_out', 'edition_share', 'saved_list',
   'past_editions', 'past_edition_read', 'weekly', 'audio_open', 'audio_play', 'audio_done', 'voices', 'voices_article',
   'challenge_open', 'quiz_start', 'quiz_done', 'quiz_retake_start', 'quiz_retake', 'quiz_share', 'league_create', 'league_join', 'league_invite',
-  'badges_view', 'weekly_card', 'weekly_menu', 'menu', 'sections', 'text_size', 'reminder', 'channel_out', 'podcast_out']);
+  'badges_view', 'weekly_card', 'weekly_menu', 'menu', 'sections', 'text_size', 'reminder', 'channel_out', 'podcast_out',
+  'home', 'home_tap', 'you', 'theme_set']);
 
 const SLUG = /^[a-z0-9][a-z0-9._-]{0,39}$/;
 const slug = (v, d) => { const x = String(v || '').toLowerCase().slice(0, 40); return SLUG.test(x) ? x : d; };

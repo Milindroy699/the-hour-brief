@@ -3,6 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<script>
+// The phone themes (app and phone website): Dawn by day, Midnight from 8 PM to 6 AM; Newsprint and Markets once a streak
+// badge unlocks them (chosen in You). Set before anything paints. mobile.js applySkin() keeps the same rules and re-checks.
+(function () {
+  try {
+    var app = !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform());
+    if (window.HB_NO_HOME || (!app && !(window.matchMedia && matchMedia('(max-width: 640px)').matches))) return;
+    var s = localStorage.getItem('hb-skin-v1') || 'auto', b = (JSON.parse(localStorage.getItem('hb-quiz-v1') || '{}') || {}).b || {};
+    if ((s === 'newsprint' && !b.streak7) || (s === 'markets' && !b.streak30) || (s !== 'newsprint' && s !== 'markets')) { var h = new Date().getHours(); s = h >= 6 && h < 20 ? 'dawn' : 'midnight'; }
+    document.documentElement.setAttribute('data-skin', s);
+    document.documentElement.setAttribute('data-theme', s === 'midnight' || s === 'markets' ? 'dark' : 'light');
+  } catch (e) { /* the phone's own light/dark setting applies */ }
+})();
+</script>
+<style>html[data-skin=dawn]{background:#faf7f4}html[data-skin=midnight]{background:#0e0c20}html[data-skin=newsprint]{background:#f3ede1}html[data-skin=markets]{background:#0b1c17}</style>
 <script>if ("scrollRestoration" in history) history.scrollRestoration = "manual";</script>
 <title>The Hour Brief</title>
 <meta name="description" content="A free daily one-hour digest of AI/tech, product & business (India + global), and the Indian stock market — every item links to its original source.">

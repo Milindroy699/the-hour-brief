@@ -923,6 +923,7 @@
   function restoreView(done) {
     var t = laneBase && cardsOk() && getView() === 'cards' ? deckTarget() : null;
     function end() { pendingOff(); if (done) done(); }
+    if (homeTarget()) { lastTab = 'home'; withHome(function (H) { H.open(); end(); }, end); return; }   // a plain open lands on Home
     if (!t) { end(); return; }
     withCards(function (c) { c.open(t.id ? t : undefined); end(); }, end);
   }
@@ -1163,6 +1164,7 @@
 
   // ---- App chrome: app bar (logo, wordmark, screen name; text size, saved, menu), tab bar, section chips ----
   var ICON = {
+    home: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 10.5L12 4l8.5 6.5V19a1.5 1.5 0 0 1-1.5 1.5h-4.5v-6h-5v6H5A1.5 1.5 0 0 1 3.5 19z"/></svg>',
     week: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M12 12.2l1.1 2.2 2.4.35-1.75 1.7.42 2.4L12 17.7l-2.17 1.15.42-2.4-1.75-1.7 2.4-.35z"/></svg>',
     aa: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8V6h9v2"/><path d="M7.5 6v12"/><path d="M5.5 18h4"/><path d="M13.5 12v-1.5H21V12"/><path d="M17.25 10.5V18"/><path d="M15.5 18h3.5"/></svg>',
     back: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>',
@@ -1238,8 +1240,8 @@
       var mn = mk('button', 'ab-btn ab-menu');
       mn.type = 'button';
       mn.setAttribute('aria-label', 'Menu: past editions, sections, text size, reminder, share');
-      mn.innerHTML = SLIDERS_SVG;
-      mn.addEventListener('click', function () { openMenu(mn); });
+      mn.innerHTML = menuIcon();
+      mn.addEventListener('click', function () { menuOrYou(mn); });
       // Text size lives in the Menu only (owner's call, 2026-11-18): the top bar keeps Saved and Menu.
       bar.appendChild(sv);
       bar.appendChild(mn);
@@ -1371,11 +1373,257 @@
     }, returnTo);
   }
 
+  // ---- You (2026-11-25): on phones and in the apps the avatar in every header opens it, in place of the Menu. Your streak
+  // and badges, the theme, and what the Menu held (reading, reminder, library, podcasts, share, channels). ----
+  var YOU_SVG = '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5c1.4-3.6 4.2-5.5 7.5-5.5s6.1 1.9 7.5 5.5"/></svg>';
+  var LOCK_SVG = '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+  var FLAME_SVG = '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2c1 4 5 6 5 11a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-6 1-9.5z"/></svg>';
+  function menuOrYou(btn) { if (homeMode()) openYou(btn); else openMenu(btn); }
+  function menuIcon() { return homeMode() ? YOU_SVG : SLIDERS_SVG; }
+  function youButtons() {                              // the header buttons cards.js and listen.js build, too
+    if (!homeMode()) return;
+    document.querySelectorAll('.ab-menu:not(.ab-you)').forEach(function (b) {
+      b.classList.add('ab-you');
+      b.setAttribute('aria-label', 'You: your streak, badges, theme and settings');
+      b.innerHTML = YOU_SVG;
+    });
+  }
+  function isoDay(t) { var d = new Date(t); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  // The streak and badges: from quiz.js on an edition (it knows the published dates), else from what it saved on this phone.
+  function quizInfo() {
+    if (window.HBQuizInfo) { try { return window.HBQuizInfo(); } catch (e) { /* fall through */ } }
+    var o = quizStore(), r = o.r || {}, keys = Object.keys(r).sort(), streak = 0;
+    var today = isoDay(Date.now()), last = keys[keys.length - 1];
+    if (last === today || last === isoDay(Date.now() - 864e5)) { for (var d = last; r[d]; d = isoDay(Date.parse(d + 'T12:00:00') - 864e5)) streak++; }
+    return { played: r[today] || null, streak: streak, best: Math.max(o.bs || 0, streak), badges: o.b || {}, badgeCount: Object.keys(o.b || {}).length, badgeTotal: 10, next: null };
+  }
+  window.HBQuizInfoAny = quizInfo;
+  var youEl = null, youPrev = null;
+  function youKey(e) { if (e.key === 'Escape' && !sheetEl) closeYou(); }
+  function closeYou() {
+    if (!youEl || youEl.hidden) return;
+    youEl.hidden = true;
+    document.documentElement.classList.remove('hb-you-open');
+    document.removeEventListener('keydown', youKey);
+    if (youPrev && youPrev.focus && document.contains(youPrev)) { try { youPrev.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }
+  }
+  function openYou(returnTo) {
+    youPrev = returnTo || document.activeElement;
+    if (!youEl) {
+      youEl = mk('section', 'hb-you');
+      youEl.setAttribute('role', 'dialog');
+      youEl.setAttribute('aria-modal', 'true');
+      youEl.setAttribute('aria-label', 'You');
+      youEl.hidden = true;
+      document.body.appendChild(youEl);
+    }
+    drawYou();
+    youEl.hidden = false;
+    document.documentElement.classList.add('hb-you-open');
+    document.addEventListener('keydown', youKey);
+    var b = youEl.querySelector('.you-back');
+    if (b) { b.focus({ preventScroll: true }); if (!usedKeyboard) b.classList.add('no-ring'); }
+    use('you');
+  }
+  function openBadges() {
+    closeYou();
+    try { sessionStorage.setItem('hb-qz-tab', 'badges'); } catch (e) { /* ignore */ }
+    if (isFeed() && !pastEdition() && document.getElementById('quiz')) { tabGo('quiz'); if (window.HBQuizTab) window.HBQuizTab('badges'); }
+    else leaveTo('/?quiz=1');
+  }
+  function drawYou() {
+    var q = quizInfo(), sc = youEl.querySelector('.you-scroll'), keep = sc ? sc.scrollTop : 0;
+    youEl.textContent = '';
+    var top = mk('header', 'hub-top you-top');
+    var back = mk('button', 'ab-btn ab-back you-back');
+    back.type = 'button';
+    back.setAttribute('aria-label', 'Close You');
+    back.innerHTML = ICON.back;
+    back.addEventListener('click', closeYou);
+    top.appendChild(back);
+    top.appendChild(mk('h1', 'you-title', 'You'));
+    youEl.appendChild(top);
+    sc = mk('div', 'you-scroll');
+    youEl.appendChild(sc);
+
+    var pro = mk('div', 'you-pro');
+    var av = mk('span', 'you-av');
+    av.innerHTML = YOU_SVG;
+    var pt = mk('div');
+    pt.appendChild(mk('b', '', 'Your reading'));
+    pt.appendChild(mk('span', '', 'Kept on this phone. Sign-in is coming, to carry it to your other devices.'));
+    pro.appendChild(av);
+    pro.appendChild(pt);
+    sc.appendChild(pro);
+
+    var st = mk('div', 'you-stats');
+    function stat(cls, num, label, icon, go) {
+      var b = mk('button', 'you-stat ' + cls);
+      b.type = 'button';
+      if (icon) { var ic = mk('span', 'you-stat-ic'); ic.innerHTML = icon; b.appendChild(ic); }
+      b.appendChild(mk('b', '', String(num)));
+      b.appendChild(mk('span', '', label));
+      b.addEventListener('click', go);
+      st.appendChild(b);
+    }
+    stat('you-stat-flame', q.streak || 0, 'day streak', FLAME_SVG, openBadges);
+    stat('', q.best || 0, 'best streak', null, openBadges);
+    stat('', (q.badgeCount || 0) + '/' + (q.badgeTotal || 10), 'badges', null, openBadges);
+    sc.appendChild(st);
+
+    sc.appendChild(mk('h2', 'you-h', 'Theme'));
+    var th = mk('div', 'you-themes');
+    var cur = skinChoice(), best = q.best || 0;
+    SKINS.forEach(function (sk) {
+      var open = skinUnlocked(sk), on = cur === sk.id;
+      var b = mk('button', 'you-theme' + (on ? ' on' : '') + (open ? '' : ' locked'));
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(on));
+      var sw = mk('span', 'you-sw you-sw-' + sk.id);
+      if (!open) sw.innerHTML = LOCK_SVG;
+      b.appendChild(sw);
+      var tx = mk('span', 'you-th-t');
+      tx.appendChild(mk('b', '', sk.name));
+      tx.appendChild(mk('small', '', open ? sk.sub : 'Unlocks with ' + sk.badgeName + ': ' + Math.min(best, sk.goal) + ' of ' + sk.goal + ' days in a row'));
+      if (!open) {
+        var bar = mk('span', 'you-th-bar'), fill = mk('i');
+        fill.style.width = Math.round(Math.min(1, best / sk.goal) * 100) + '%';
+        bar.appendChild(fill);
+        tx.appendChild(bar);
+        b.setAttribute('aria-label', sk.name + ', locked. ' + tx.querySelector('small').textContent);
+      }
+      b.appendChild(tx);
+      b.addEventListener('click', function () {
+        if (!open) { toast('Play ' + sk.goal + ' days in a row to unlock ' + sk.name + '.'); return; }
+        setSkin(sk.id);
+        use('theme_set');
+        drawYou();
+      });
+      th.appendChild(b);
+    });
+    sc.appendChild(th);
+
+    function group(title, items) {
+      if (!items.length) return;
+      sc.appendChild(mk('h2', 'you-h', title));
+      var ul = mk('ul', 'rd-menu you-list');
+      items.forEach(function (it) {
+        var li = mk('li');
+        var b = mk('button', 'rd-item');
+        b.type = 'button';
+        b.setAttribute('data-act', it[0]);
+        b.innerHTML = it[1];
+        var t = mk('span', '', it[2]);
+        if (it[3]) t.appendChild(mk('small', '', it[3]));
+        b.appendChild(t);
+        b.addEventListener('click', function () { it[4](b); });
+        li.appendChild(b);
+        ul.appendChild(li);
+      });
+      sc.appendChild(ul);
+    }
+    var reading = [['textsize', ICON.aa, 'Text size', SIZE_NAMES[getSize()], function (b) { openTextSize(b); }]];
+    if (laneList().length) reading.push(['sections', SLIDERS_SVG, 'Sections', 'Show or hide sections', function (b) { openPrefs(b); }]);
+    reading.push(['saved', STAR_SVG, 'Saved stories', 'Stories you starred', function (b) { openSaved(b); }]);
+    group('Reading', reading);
+    var bell = document.getElementById('cap-remind');
+    if (bell) group('Reminder', [['reminder', ICON.bell, 'Daily reminder', bell.getAttribute('data-summary') || 'A morning nudge on this device', function () { closeYou(); bell.click(); }]]);
+    var pods = PODCASTS.filter(function (p) { return p[2]; });
+    var lib = [
+      ['week', ICON.week, 'This week’s recap', 'What actually mattered, every Sunday', function () { closeYou(); openWeekly('/week.html', 'app-you'); }],
+      ['archive', ICON.archive, 'Past editions', 'Every edition, newest first', function () { closeYou(); leaveTo('/archive/'); }]
+    ];
+    lib.unshift(['episodes', ICON.audio, 'Audio episodes', 'Today’s and every past episode', function () {
+      closeYou();
+      if (isFeed() && window.HBListen && window.HBListen.openHub) { window.HBListen.openHub({ episodes: true }); return; }
+      try { sessionStorage.setItem('hb-open-eps', '1'); } catch (e) { /* the player opens at the top */ }
+      leaveTo('/?audio=1');
+    }]);
+    if (pods.length) lib.push(['podcasts', ICON.audio, 'Listen in a podcast app', pods.map(function (p) { return p[1]; }).join(' · '), function (b) { openPodcasts(b); }]);
+    group('Library', lib);
+    var share = [['share', SHARE_SVG, 'Share The Hour Brief', isFeed() ? 'Send today’s edition to a friend' : 'Send this page to a friend', function () { shareEdition(); }]];
+    CHANNELS.forEach(function (ch) {
+      share.push([ch[0], ch[0] === 'telegram' ? TG_SVG : WA_SVG, 'Follow on ' + ch[1], 'The brief every morning, free', function () {
+        track('channel_out', { place: ch[0] });
+        var a = mk('a');
+        a.href = ch[2]; a.target = '_blank'; a.rel = 'noopener';
+        document.body.appendChild(a); a.click(); a.remove();
+      }]);
+    });
+    group('Share and follow', share);
+    var foot = mk('div', 'rd-menu-foot you-foot');
+    [['Contact us', '/contact.html'], ['About', '/about.html'], ['Corrections', '/corrections.html'], ['Privacy', '/privacy.html']].forEach(function (l, i) {
+      if (i) foot.appendChild(document.createTextNode(' · '));
+      var a = mk('a', '', l[0]);
+      a.href = l[1];
+      foot.appendChild(a);
+    });
+    sc.appendChild(foot);
+    sc.scrollTop = keep;
+  }
+  document.addEventListener('hb:skin', function () { if (youEl && !youEl.hidden) drawYou(); });
+
   // Bottom tabs: Today (the feed), Audio (the Listen hub), Voices (leaders.html: weekly roundups + Principles essays),
   // Challenge (the quiz). The tab key stays 'leaders' (page URL and tests); only the label is Voices.
   // Archive (past editions) is the first item in the top-right Menu instead — five tabs read as cramped, and the app
   // bar itself has no room for a fourth icon next to the wordmark.
   var TABS = [['today', 'Today'], ['audio', 'Audio'], ['leaders', 'Voices'], ['quiz', 'Challenge']];
+  // Phones and the apps (2026-11-25): Home · Brief · Voices · Challenge. Home (home.js) is where the app opens; Brief is the
+  // edition (Cards or List, key 'today' as before); Audio became the Listen bar on Home; the Menu became You (the avatar).
+  // The desktop website keeps TABS above. HB_NO_HOME (tests) keeps the old layout everywhere.
+  var HOME_TABS = [['home', 'Home'], ['today', 'Brief'], ['leaders', 'Voices'], ['quiz', 'Challenge']];
+  function homeMode() { return reader() && (NATIVE || mq.matches) && !window.HB_NO_HOME; }
+  function homeHere() { return homeMode() && isFeed() && !pastEdition(); }
+  function homeOpen() { return !!(window.HBHome && window.HBHome.isOpen()); }
+  function homeTarget() { return homeHere() && !location.hash && !/[?&]((quiz|brief)=1|join=|beat=)/.test(location.search); }   // ?audio=1: Home, the player over it
+  var homeQueue = [], homeLoad = 0;
+  function withHome(fn, fail) {
+    if (window.HBHome) { fn(window.HBHome); return; }
+    homeQueue.push({ ok: fn, fail: fail });
+    if (homeLoad) return;
+    homeLoad = 1;
+    var sc = document.createElement('script');
+    sc.src = '/home.js';
+    sc.onload = function () { var q = homeQueue; homeQueue = []; q.forEach(function (e) { if (window.HBHome) e.ok(window.HBHome); else if (e.fail) e.fail(); }); };
+    sc.onerror = function () { homeLoad = 0; var q = homeQueue; homeQueue = []; q.forEach(function (e) { if (e.fail) e.fail(); }); };
+    document.head.appendChild(sc);
+  }
+  function openHome() { withHome(function (H) { H.open(); syncTabs(); }); }
+  function closeHome() { if (window.HBHome) window.HBHome.close(); }
+
+  // ---- Themes (owner, 2026-11-25): Dawn by day and Midnight from 8 PM to 6 AM, on their own; Newsprint and Markets are
+  // locked until a streak badge earns them (Week warrior, 7 days; Month master, 30), then chosen in You. index.html's and
+  // leaders.html's heads apply the same rules before the first paint; this keeps them current (dusk and dawn while open).
+  // html[data-skin] picks the backgrounds, html[data-theme] (light/dark) the colours every screen already has.
+  var SKIN_KEY = 'hb-skin-v1';
+  var SKINS = [
+    { id: 'auto', name: 'Day and night', sub: 'Dawn by day, Midnight after 8 PM' },
+    { id: 'newsprint', name: 'Newsprint', sub: 'Cream paper, ink and rules', badge: 'streak7', badgeName: 'Week warrior', goal: 7 },
+    { id: 'markets', name: 'Markets', sub: 'Deep green with a chart grid', badge: 'streak30', badgeName: 'Month master', goal: 30 }
+  ];
+  function skinsOn() { return (NATIVE || mq.matches) && !window.HB_NO_HOME; }
+  function quizStore() { try { return JSON.parse(localStorage.getItem('hb-quiz-v1') || '{}') || {}; } catch (e) { return {}; } }
+  function skinUnlocked(sk) { return !sk.badge || !!(quizStore().b || {})[sk.badge]; }
+  function skinChoice() {
+    var s = 'auto';
+    try { s = localStorage.getItem(SKIN_KEY) || 'auto'; } catch (e) { /* default */ }
+    var sk = SKINS.filter(function (x) { return x.id === s; })[0];
+    return sk && skinUnlocked(sk) ? s : 'auto';
+  }
+  function applySkin() {
+    var h = document.documentElement;
+    if (!skinsOn()) { if (h.hasAttribute('data-skin')) { h.removeAttribute('data-skin'); h.removeAttribute('data-theme'); } return; }
+    var s = skinChoice();
+    if (s === 'auto') { var hr = new Date().getHours(); s = hr >= 6 && hr < 20 ? 'dawn' : 'midnight'; }
+    var th = s === 'midnight' || s === 'markets' ? 'dark' : 'light';
+    if (h.getAttribute('data-skin') === s && h.getAttribute('data-theme') === th) return;
+    h.setAttribute('data-skin', s);
+    h.setAttribute('data-theme', th);
+    try { if (window.HBStatusBar) window.HBStatusBar(); } catch (e) { /* no status bar */ }
+    document.dispatchEvent(new CustomEvent('hb:skin'));
+  }
+  function setSkin(id) { try { localStorage.setItem(SKIN_KEY, id); } catch (e) { /* this visit only */ } applySkin(); }
+  window.HBSkin = { list: SKINS, unlocked: skinUnlocked, choice: skinChoice, set: setSkin, apply: applySkin };
   function isFeed() { return !!document.querySelector('section.lane'); }          // an edition page (today's or an archived one)
   var INFO_TITLES = { '/about.html': 'About', '/privacy.html': 'Privacy', '/contact.html': 'Contact us', '/week.html': 'This week' };
   function screenName() {
@@ -1386,9 +1634,22 @@
     return 'Feed';
   }
   // On pages that are not editions the tabs are plain links back to the right place.
-  var TAB_HREF = { today: '/', audio: '/?audio=1', quiz: '/?quiz=1', leaders: '/leaders.html' };
+  var TAB_HREF = { today: '/', audio: '/?audio=1', quiz: '/?quiz=1', leaders: '/leaders.html', home: '/' };
+  function tabHref(name) { return name === 'today' && homeMode() ? '/?brief=1' : TAB_HREF[name]; }
+  var lastTab = 'today';
   function tabGo(name) {
     var L = window.HBListen;
+    if (name === 'home') {
+      closeQuizPage();
+      if (L && L.closeHub) L.closeHub();
+      if (deckOpen()) window.HBCards.close({ keep: true });
+      lastTab = 'home';
+      openHome();
+      setTimeout(syncTabs, 60);
+      return;
+    }
+    if (name !== 'audio') closeHome();
+    if (name === 'today' || name === 'quiz') lastTab = name;
     // Tapping the tab you are already on reopens/stays on it — it does not toggle closed (tried that after removing
     // the X close button; tapping Challenge twice closing back to the list read as a bug, not a feature). Today
     // remains the one way back to the list, same as any other tab bar.
@@ -1443,8 +1704,8 @@
     var mn = mk('button', 'ab-btn ab-menu');
     mn.type = 'button';
     mn.setAttribute('aria-label', 'Menu: past editions, sections, text size, reminder, share');
-    mn.innerHTML = SLIDERS_SVG;
-    mn.addEventListener('click', function () { openMenu(mn); });
+    mn.innerHTML = menuIcon();
+    mn.addEventListener('click', function () { menuOrYou(mn); });
     acts.appendChild(sv);
     acts.appendChild(mn);
     top.appendChild(logo);
@@ -1487,13 +1748,14 @@
   // card (it used to land on the first card: closing Challenge put the deck back at the start); in List, the caller scrolls.
   window.HBOpenStory = function (id) {
     closeQuizPage();
+    closeHome();
     if (!(cardsOk() && (deckOpen() || getView() === 'cards'))) return false;
     openCards({ id: id });
     return true;
   };
   // listen.js builds the same header row (see buildHub() there) — it is a separate file/closure, so the actions it
   // needs are handed across here rather than duplicated.
-  window.HBChrome = { textSize: openTextSize, saved: openSaved, menu: openMenu, refreshSaved: refreshSaved, back: backTarget, icons: { aa: ICON.aa, star: STAR_SVG, sliders: SLIDERS_SVG, back: ICON.back } };
+  window.HBChrome = { homeMode: function () { return homeMode(); }, textSize: openTextSize, saved: openSaved, menu: menuOrYou, refreshSaved: refreshSaved, back: backTarget, you: openYou, closeYou: closeYou, tab: function (n) { tabGo(n); }, leave: function (u) { leaveTo(u); }, openCards: function (o) { openCards(o); }, use: function (f) { use(f); }, cardsOk: function () { return cardsOk(); }, view: function () { return getView(); }, laneName: function (el) { return laneName(el); }, icons: { aa: ICON.aa, star: STAR_SVG, sliders: SLIDERS_SVG, back: ICON.back, you: YOU_SVG, flame: FLAME_SVG } };
   // The List | Cards switch: a floating pill, appended straight to body (see below) — centred just above the tab
   // bar in List, top-right of the deck in Cards. An earlier version nested it inside .tab-bar itself instead,
   // specifically to remove a recurring real-device bug (list content bleeding through a seam between two
@@ -1521,12 +1783,12 @@
       // desktop/iPad tab bar's own centring transform.
       document.body.appendChild(sw);
       var row = mk('div', 'tab-row');
-      TABS.forEach(function (t) {
+      (homeMode() ? HOME_TABS : TABS).forEach(function (t) {
         var link = t[0] === 'leaders' || !feed || pastEdition();     // a past edition's Today/Audio/Challenge are today's
         var el = link ? mk('a', 'tab') : mk('button', 'tab');
         el.setAttribute('data-tab', t[0]);
         el.innerHTML = '<span class="tab-ic">' + ICON[t[0]] + '</span><span class="tab-lb">' + t[1] + '</span>';
-        if (link) { el.href = TAB_HREF[t[0]]; el.addEventListener('click', showLeaving); }
+        if (link) { el.href = tabHref(t[0]); el.addEventListener('click', showLeaving); }
         else { el.type = 'button'; el.addEventListener('click', function () { tabGo(t[0]); }); }
         row.appendChild(el);
       });
@@ -1662,6 +1924,7 @@
     });
   })();
   function syncTabs() {
+    youButtons();
     var bar = document.querySelector('.tab-bar');
     if (!bar || bar.hidden) return;
     if (!isFeed()) {                                           // About, Privacy, Contact, the archive list (no tab lit)
@@ -1676,7 +1939,9 @@
     var L = window.HBListen, hub = !!(L && L.hubOpen && L.hubOpen());
     var quizPage = !!(window.HBQuizPage && window.HBQuizPage.isOpen && window.HBQuizPage.isOpen());
     var r = qOk && !quizPage ? q.getBoundingClientRect() : null;    // scrolled to the inline quiz chip's target in the normal list, not the dedicated page
-    var cur = bootScreen() || (hub ? 'audio' : quizPage ? 'quiz' : deckOpen() ? 'today' : (r && r.top < window.innerHeight * 0.5 && r.bottom > headH + 90) ? 'quiz' : 'today');
+    var home = homeOpen();
+    // With Home the player is a sheet over the screen you were on (that tab stays lit); without, Audio is its own tab
+    var cur = bootScreen() || (hub && !homeMode() ? 'audio' : quizPage ? 'quiz' : home ? 'home' : deckOpen() ? 'today' : (r && r.top < window.innerHeight * 0.5 && r.bottom > headH + 90) ? 'quiz' : 'today');
     var past = pastEdition();                                  // a past edition is a page of Past editions: no tab is lit
     bar.querySelectorAll('.tab').forEach(function (t) {
       var n = t.getAttribute('data-tab');
@@ -1919,7 +2184,7 @@
   function bootScreen() {                             // the tab to light while hidden, so the bar doesn't flick across
     var cl = document.documentElement.classList;
     if (!cl.contains('hb-boot') || cl.contains('hb-reveal')) return '';
-    return /[?&]audio=1(&|$)/.test(location.search) ? 'audio' : /[?&]quiz=1(&|$)/.test(location.search) ? 'quiz' : '';
+    return homeTarget() ? 'home' : /[?&]audio=1(&|$)/.test(location.search) && !homeMode() ? 'audio' : /[?&]quiz=1(&|$)/.test(location.search) ? 'quiz' : '';
   }
   // /?quiz=1 from another page's Challenge tab (Archive, About, Privacy, Contact — all non-feed pages, where the tab
   // is a plain link instead of tabGo()). Used to be a plain #quiz anchor, which the browser's own hash-scroll just
@@ -1938,17 +2203,22 @@
   function syncScreenUrl() {
     if (!reader() || !window.history || !history.replaceState) return;
     var cls = document.documentElement.classList;
-    var want = cls.contains('hb-hub-open') ? 'audio' : cls.contains('hb-quiz-page') ? 'quiz' : '';
+    // With Home, the edition itself is the Brief tab: ?brief=1, so a refresh (or the app coming back) stays on it.
+    var want = cls.contains('hb-hub-open') ? 'audio' : cls.contains('hb-quiz-page') ? 'quiz' : cls.contains('hb-home-open') ? '' : homeHere() ? 'brief' : '';
     var params = new URLSearchParams(location.search);
-    var had = params.get('audio') === '1' ? 'audio' : params.get('quiz') === '1' ? 'quiz' : '';
+    var had = params.get('audio') === '1' ? 'audio' : params.get('quiz') === '1' ? 'quiz' : params.get('brief') === '1' ? 'brief' : '';
     if (want === had) return;
-    params.delete('audio'); params.delete('quiz');
+    params.delete('audio'); params.delete('quiz'); params.delete('brief');
     if (want) params.set(want, '1');
     var qs = params.toString();
     try { history.replaceState(history.state, '', location.pathname + (qs ? '?' + qs : '') + location.hash); } catch (e) { /* ignore */ }
   }
   function start() {
-    if (cardsOk() && getView() === 'cards' && deckTarget()) pendingOn();
+    applySkin();
+    setInterval(applySkin, 60000);                    // dusk and dawn arrive while the app is open
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) applySkin(); });
+    document.addEventListener('hb:quiz', applySkin);  // a streak badge may have just unlocked a theme
+    if ((cardsOk() && getView() === 'cards' && deckTarget()) || homeTarget()) pendingOn();
     setTimeout(bootDone, 3000);                       // never leave the page hidden for long, whatever goes wrong below
     apply(); openFromHash(); loadListen();
     restoreView(function () {

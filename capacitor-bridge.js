@@ -99,9 +99,12 @@
   })();
 
   // ---- Status bar: track the (theme-aware) app bar ----
-  (function statusBar() {
+  // The app's theme (html[data-theme], set by the day/night themes: index.html's head, mobile.js applySkin) wins over the
+  // phone's own setting; mobile.js calls window.HBStatusBar again when the theme changes (dusk, dawn, a theme picked in You).
+  (window.HBStatusBar = function statusBar() {
     if (!P.StatusBar) return;
-    var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var th = document.documentElement.getAttribute('data-theme');
+    var prefersDark = th ? th === 'dark' : !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
     try {
       // The app bar is white in light mode and near-black in dark mode: match it (DARK = light icons, LIGHT = dark icons).
       P.StatusBar.setStyle({ style: prefersDark ? 'DARK' : 'LIGHT' });

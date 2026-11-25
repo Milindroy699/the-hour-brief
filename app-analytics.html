@@ -190,6 +190,7 @@
   var PFN = { ios: 'iPhone', android: 'Android', web: 'Web' };
   // Keep in step with FEATURES in api/track.js (and mobile.js / quiz.js / listen.js, which count them).
   var F = [
+    ['home', 'Home screen', 'Home', 1], ['home_tap', 'Tap something on Home', 'Home', 1],
     ['today', 'Read today’s edition', 'Reading', 1], ['cards_view', 'Cards view', 'Reading', 1], ['story_save', 'Save a story', 'Reading', 1],
     ['saved_list', 'Open saved stories', 'Reading'], ['story_share', 'Share a story', 'Reading', 1], ['story_vote', 'Vote on a story', 'Reading'],
     ['source_out', 'Open a story’s source', 'Reading'], ['edition_share', 'Share the edition', 'Reading'], ['past_editions', 'Past editions', 'Reading'],
@@ -199,7 +200,7 @@
     ['challenge_open', 'Challenge screen', 'Challenge', 1], ['quiz_start', 'Start the quiz', 'Challenge', 1], ['quiz_done', 'Finish the quiz', 'Challenge', 1],
     ['quiz_retake_start', 'Practice retake', 'Challenge'], ['quiz_share', 'Share a quiz score', 'Challenge'], ['league_create', 'Start a league', 'Challenge', 1],
     ['league_join', 'Join a league', 'Challenge', 1], ['league_invite', 'Send a league invite', 'Challenge'], ['badges_view', 'Badges tab', 'Challenge'],
-    ['menu', 'Open the Menu', 'Settings'], ['sections', 'Sections', 'Settings'], ['text_size', 'Text size', 'Settings'], ['reminder', 'Daily reminder', 'Settings', 1],
+    ['menu', 'Open the Menu', 'Settings'], ['you', 'Open You', 'Settings', 1], ['theme_set', 'Pick a theme', 'Settings'], ['sections', 'Sections', 'Settings'], ['text_size', 'Text size', 'Settings'], ['reminder', 'Daily reminder', 'Settings', 1],
     ['channel_out', 'Follow WhatsApp / Telegram', 'Follow'], ['podcast_out', 'Open a podcast app', 'Follow']
   ];
   var FN = {}; F.forEach(function (f) { FN[f[0]] = f[1]; });

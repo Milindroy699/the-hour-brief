@@ -80,9 +80,34 @@
     var h = it && it.querySelector('h3');
     return h ? h.textContent.trim() : '';
   }
-  function jumpToStory(id) {
+  // ret: where "Back to the quiz" returns to, when a story is opened from the quiz in player mode (owner, 2026-11-25:
+  // "if I go to a card to revise from the quiz results, there should be an option to go back to the quiz").
+  // { kind: 'answer', i } = that answer card, mid-quiz; { kind: 'result' } = the score.
+  var backBtn = null;
+  function hideBack() { if (backBtn) { backBtn.remove(); backBtn = null; } document.removeEventListener('hb:hub', backWatch); }
+  function backWatch() {                               // gone once the reader is back on Challenge or Home by themselves
+    var cl = document.documentElement.classList;
+    if (cl.contains('hb-quiz-page') || cl.contains('hb-home-open')) hideBack();   // (the audio player is only a sheet over the story: it stays)
+  }
+  function showBack(ret) {
+    hideBack();
+    backBtn = el('button', 'qz-back');
+    backBtn.type = 'button';
+    backBtn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>';
+    backBtn.appendChild(document.createTextNode(ret.kind === 'answer' ? 'Back to the quiz' : 'Back to your score'));
+    backBtn.addEventListener('click', function () {
+      hideBack();
+      if (ret.kind === 'challenge') { if (window.HBChrome && window.HBChrome.tab) window.HBChrome.tab('quiz'); return; }   // the score on Challenge
+      openPlayer(ret.kind === 'answer' ? { answer: ret.i } : 'result');
+    });
+    document.body.appendChild(backBtn);
+    setTimeout(function () { document.addEventListener('hb:hub', backWatch); }, 0);
+  }
+  function jumpToStory(id, ret) {
     var it = document.querySelector('.item[data-story-id="' + id + '"]');
     if (!it) return;
+    if (ret && playerMode()) showBack(playOn ? ret : { kind: 'challenge' });   // from the score on Challenge (player closed): back to Challenge
+    if (playOn) closePlayer();
     if (window.HBQuizPage && window.HBQuizPage.isOpen && window.HBQuizPage.isOpen()) window.HBQuizPage.close();   // the story lives in the normal page, which the dedicated quiz page (mobile.js) replaces while it's open
     if (window.HBOpenStory && window.HBOpenStory(id)) return;      // reading in Cards: the deck opens on this story's card
 
@@ -294,6 +319,104 @@
   var picks = [];
   var practice = false;
 
+  // ---------- the full-screen quiz (phones and the apps, with Home; owner 2026-11-25) ----------
+  // One question per screen, then its own answer card (right or wrong, the answer, why, the story), then the score with the
+  // streak and badges: the page never scrolls under you. The same functions draw it; only where they draw (root) changes:
+  // the player's stage while it is open, the Challenge pane (#quiz-root) otherwise, which then shows a start card.
+  // HB_NO_HOME (tests, and the desktop website) keeps the quiz inline as before.
+  var homeRoot = root, play = null, playStage = null, playOn = false, playPrev = null;
+  function playerMode() {
+    if (window.HB_NO_HOME) return false;
+    var Cap = window.Capacitor, app = !!(Cap && typeof Cap.isNativePlatform === 'function' && Cap.isNativePlatform());
+    return app || !!(window.matchMedia && window.matchMedia('(max-width: 640px)').matches);
+  }
+  function buildPlayer() {
+    if (play) return;
+    play = el('section', 'qz-play');
+    play.hidden = true;
+    play.setAttribute('role', 'dialog');
+    play.setAttribute('aria-modal', 'true');
+    play.setAttribute('aria-label', 'Today’s quiz');
+    var top = el('div', 'qz-play-top');
+    var x = el('button', 'qz-play-x');
+    x.type = 'button';
+    x.setAttribute('aria-label', 'Close the quiz');
+    x.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+    x.addEventListener('click', closePlayer);
+    top.appendChild(x);
+    top.appendChild(el('span', 'qz-play-t', 'Today’s challenge'));
+    playStage = el('div', 'qz-play-stage');
+    play.appendChild(top);
+    play.appendChild(playStage);
+    document.body.appendChild(play);
+    // Swipe up on an answer card for the next question (as in the stories apps); taps still work everywhere.
+    var y0 = null;
+    playStage.addEventListener('touchstart', function (e) { y0 = e.touches[0].clientY; }, { passive: true });
+    playStage.addEventListener('touchend', function (e) {
+      if (y0 === null) return;
+      var dy = e.changedTouches[0].clientY - y0;
+      y0 = null;
+      var nx = playStage.querySelector('.qz-ans-next');
+      if (nx && dy < -70 && playStage.scrollTop + playStage.clientHeight >= playStage.scrollHeight - 4) nx.click();
+    }, { passive: true });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && playOn && !document.querySelector('.qz-cele, .qz-sheet-bg')) closePlayer(); });
+  }
+  function openPlayer(at) {
+    hideBack();
+    buildPlayer();
+    if (!playOn) {
+      playPrev = document.activeElement;
+      play.hidden = false;
+      playOn = true;
+      root = playStage;
+      document.documentElement.classList.add('qz-playing');
+    }
+    if (at === 'result') showResult(saved, true, false, true);
+    else if (at && typeof at === 'object' && at.answer >= 0 && picks.length > at.answer) showAnswer(at.answer, picks[at.answer], picks[at.answer] === questions[at.answer].answer);
+    else showQuestion(typeof at === 'number' ? at : 0, true);
+  }
+  function closePlayer() {
+    if (!playOn) return;
+    play.hidden = true;
+    playOn = false;
+    root = homeRoot;
+    document.documentElement.classList.remove('qz-playing');
+    if (saved) { practice = false; showResult(saved, true); } else showIntro();   // a practice retake left midway goes back to the score
+    if (playPrev && playPrev.focus && document.contains(playPrev)) { try { playPrev.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }
+  }
+  // The Challenge pane's start card (in player mode): what's ahead, and Start (or Continue, mid-quiz).
+  function showIntro() {
+    root.textContent = '';
+    var card = el('div', 'quiz-card qz-intro');
+    if (friendBeat !== null && !practice) card.appendChild(el('p', 'quiz-friend', 'A friend scored ' + friendBeat + '/' + N + ' on this quiz. Can you beat it?'));
+    card.appendChild(el('span', 'qz-intro-k', 'Today’s challenge'));
+    card.appendChild(el('p', 'qz-intro-t', N + ' questions on today’s edition'));
+    var mid = picks.length > 0 && picks.length < N;
+    card.appendChild(el('p', 'qz-intro-s', mid ? 'You’ve answered ' + picks.length + ' of ' + N + '. Pick up where you left off.' : 'One question at a time, then why the answer is right. About a minute.'));
+    var go = el('button', 'quiz-btn primary qz-intro-go', mid ? 'Continue' : 'Start the quiz');
+    go.type = 'button';
+    go.addEventListener('click', function () { openPlayer(mid ? picks.length : 0); });
+    card.appendChild(go);
+    root.appendChild(card);
+  }
+  // An unfinished quiz survives a page change (reading a story, then Voices, then back): today's picks in sessionStorage,
+  // restored on the next load in player mode, so Challenge offers Continue instead of starting over.
+  var PICKS_KEY = 'hb-qz-picks-' + DATE;
+  function keepPicks() { try { if (practice || saved) sessionStorage.removeItem(PICKS_KEY); else sessionStorage.setItem(PICKS_KEY, JSON.stringify(picks)); } catch (e) { /* this visit only */ } }
+  function restorePicks() {
+    try {
+      var a = JSON.parse(sessionStorage.getItem(PICKS_KEY) || 'null');
+      if (Array.isArray(a) && a.length < N && a.every(function (x, k) { return typeof x === 'number' && x >= 0 && x < questions[k].options.length; })) picks = a;
+    } catch (e) { /* start fresh */ }
+  }
+  // Home's Play: straight into the player (or the score, if today's is done).
+  window.HBQuizPlay = function () {
+    if (saved && !practice) { if (window.HBQuizTab) window.HBQuizTab('quiz'); return false; }
+    if (!playerMode()) return false;
+    openPlayer(picks.length < N ? picks.length : 0);
+    return true;
+  };
+
   // The section a question's story belongs to ("AI & Tech"), for the small badge above the question
   function topicOf(q) {
     var it = q && q.story && document.querySelector('.item[data-story-id="' + q.story + '"]');
@@ -387,6 +510,7 @@
     live.setAttribute('aria-live', 'polite');
     card.appendChild(live);
     root.appendChild(card);
+    if (playOn) { card.classList.add('qz-in'); playStage.scrollTop = 0; if (focus) qEl.focus({ preventScroll: true }); return; }
     if (focus) {
       // A new question renders much shorter than the answered one it replaced, so the page doesn't scroll on its
       // own: without this the reader is left looking at whatever used to be below the old card.
@@ -406,6 +530,7 @@
     var q = questions[i];
     var ok = idx === q.answer;
     picks.push(idx);
+    keepPicks();
     haptic(ok);
     btns.forEach(function (b, k) {
       b.setAttribute('aria-disabled', 'true');
@@ -414,6 +539,7 @@
     });
     var dots = card.querySelectorAll('.quiz-dot');
     if (dots[i]) dots[i].className = 'quiz-dot ' + (ok ? 'ok' : 'no');
+    if (playOn) { setTimeout(function () { if (playOn && picks.length === i + 1) showAnswer(i, idx, ok); }, 650); refreshStreak(); return; }
 
     var live = card.querySelector('.quiz-feedback');
     var why = el('div', 'quiz-why');
@@ -442,6 +568,48 @@
     refreshStreak();
   }
 
+  // The answer card (player): its own screen after each pick.
+  function showAnswer(i, idx, ok) {
+    var q = questions[i], last = i + 1 >= N;
+    root.textContent = '';
+    var card = el('div', 'quiz-card qz-ans qz-in ' + (ok ? 'ok' : 'no'));
+    card.appendChild(progress(i, false));
+    var v = el('div', 'qz-ans-v');
+    v.tabIndex = -1;
+    v.appendChild(el('span', 'qz-ans-ic', ok ? '✓' : '✗'));
+    v.appendChild(el('b', '', ok ? 'Correct' : 'Not quite'));
+    card.appendChild(v);
+    card.appendChild(el('p', 'qz-ans-q', q.q));
+    var a = el('div', 'qz-ans-a');
+    a.appendChild(el('small', '', 'The answer'));
+    a.appendChild(el('b', '', q.options[q.answer]));
+    if (!ok) a.appendChild(el('span', 'qz-ans-mine', 'You picked: ' + q.options[idx]));
+    card.appendChild(a);
+    if (q.why) {
+      var w = el('div', 'qz-ans-why');
+      w.appendChild(el('small', '', 'Why'));
+      w.appendChild(el('p', '', q.why));
+      card.appendChild(w);
+    }
+    var head = storyHeadline(q.story);
+    if (head) {
+      var from = el('button', 'qz-ans-story');
+      from.type = 'button';
+      from.appendChild(el('small', '', 'Read the story'));
+      from.appendChild(el('span', '', head));
+      from.addEventListener('click', function () { jumpToStory(q.story, { kind: 'answer', i: i }); });
+      card.appendChild(from);
+    }
+    var next = el('button', 'quiz-btn primary qz-ans-next', last ? 'See my score' : 'Next question');
+    next.type = 'button';
+    next.addEventListener('click', function () { if (last) finish(); else showQuestion(i + 1, true); });
+    card.appendChild(next);
+    if (!last) card.appendChild(el('span', 'qz-ans-hint', 'or swipe up'));
+    root.appendChild(card);
+    playStage.scrollTop = 0;
+    v.focus({ preventScroll: true });
+  }
+
   function finish() {
     if (window.HBUse) window.HBUse(practice ? 'quiz_retake' : 'quiz_done');
     var score = picks.reduce(function (s, p, k) { return s + (p === questions[k].answer ? 1 : 0); }, 0);
@@ -452,6 +620,7 @@
       all.r[DATE] = res;
       save(all);
       saved = res;
+      keepPicks();                                 // finished: nothing to resume
     }
     showResult(practice ? res : saved, !practice, !practice, true);
     if (!practice) syncScores();
@@ -627,7 +796,7 @@
         if (q.story && document.getElementById(q.story)) {
           var go = el('button', 'qz-miss-go', 'Read the story');
           go.type = 'button';
-          go.addEventListener('click', function () { jumpToStory(q.story); });
+          go.addEventListener('click', function () { jumpToStory(q.story, { kind: 'result' }); });
           ans.appendChild(go);
         }
         row.appendChild(ans);
@@ -661,11 +830,11 @@
     actions.appendChild(reviewBtn);
     var badgesBtn = el('button', 'quiz-btn', 'Badges');
     badgesBtn.type = 'button';
-    badgesBtn.addEventListener('click', function () { setTab('badges', true); });
+    badgesBtn.addEventListener('click', function () { closePlayer(); setTab('badges', true); });
     actions.appendChild(badgesBtn);
     var again = el('button', 'quiz-btn', 'Retake for practice');
     again.type = 'button';
-    again.addEventListener('click', function () { practice = true; picks = []; showQuestion(0, true); });
+    again.addEventListener('click', function () { practice = true; picks = []; if (playerMode()) openPlayer(0); else showQuestion(0, true); });
     actions.appendChild(again);
     // Straight under the score, above the other buttons: right after the quiz is when a challenge lands (owner, 2026-11-21).
     if (official) card.appendChild(inviteNudge(mine));
@@ -688,8 +857,16 @@
       reviewBtn.setAttribute('aria-expanded', String(!review.hidden));
       reviewBtn.textContent = review.hidden ? 'Review answers' : 'Hide answers';
     });
+    if (playOn) {                                  // the player: Done, back to wherever the quiz was opened from
+      var done = el('button', 'quiz-btn primary qz-play-done', 'Done');
+      done.type = 'button';
+      done.addEventListener('click', closePlayer);
+      card.appendChild(done);
+      card.classList.add('qz-in');
+    }
     root.appendChild(card);
-    if (focus) bringIntoView(card, 'top', true);   // same reason as showQuestion: the score card is shorter than the question it replaced
+    if (playOn) playStage.scrollTop = 0;
+    else if (focus) bringIntoView(card, 'top', true);   // same reason as showQuestion: the score card is shorter than the question it replaced
 
     cardAssets();                                   // warm the share card's fonts and logo
     getEditions().then(function (dates) {
@@ -898,6 +1075,7 @@
     tile.appendChild(el('span', 'qz-drill-score', mine ? mine.s + '/' + mine.t : N + ' questions'));
     streakBox.appendChild(tile);
     renderPast();
+    document.dispatchEvent(new CustomEvent('hb:quiz'));       // Home (home.js) redraws its streak strip and quiz card
   }
   function renderPast() {
     var results = load().r;
@@ -1646,10 +1824,26 @@
     else if (v === 'badge') setTimeout(function () { showBadge(BADGES[1], null); }, 800);
   }
 
+  // ---------- for Home (home.js): the streak, today's result and the badges, read-only ----------
+  // played: today's result or null; streak: the current run (still alive if today isn't played yet); badges: id -> date earned.
+  window.HBQuizInfo = function () {
+    var o = load(), results = o.r, mine = results[DATE] || null;
+    var latest = lastDates.length ? lastDates[lastDates.length - 1] : DATE;
+    var streak = mine ? streakEndingAt(lastDates, results, DATE)
+      : (latest === DATE ? streakEndingAt(lastDates, results, lastDates.length > 1 ? lastDates[lastDates.length - 2] : prevDay(DATE)) : 0);
+    var st = computeStats(lastDates);
+    var next = null;                                          // the next streak badge, for "one more day for Week warrior"
+    BADGES.forEach(function (b) { if (!next && /^streak/.test(b.id) && !(o.b && o.b[b.id]) && st.best < b.goal) next = { id: b.id, name: b.name, goal: b.goal }; });
+    return { date: DATE, n: N, played: mine, streak: streak, best: st.best, stage: stageOf(Math.max(1, streak))[1], badges: o.b || {}, badgeCount: Object.keys(o.b || {}).length, badgeTotal: BADGES.length, next: next, flame: ART + 'flames/' + stageOf(Math.max(1, streak))[0] + '.webp' };
+  };
+
+  window.HBQuizTab = function (name) { setTab(name, false); };   // You's badge count opens the Badges tab
+
   // ---------- start ----------
   root.insertAdjacentElement('afterend', pastBox);            // between the quiz and the leagues
   buildTabs();
   if (saved && Array.isArray(saved.a)) showResult(saved, true);
+  else if (playerMode()) { restorePicks(); showIntro(); }
   else showQuestion(0, false);
   refreshStreak([]);
   updateChip([]);

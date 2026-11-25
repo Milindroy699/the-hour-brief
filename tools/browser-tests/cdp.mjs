@@ -1,7 +1,9 @@
 // Minimal headless-Chrome driver over the DevTools protocol (macOS Chrome path). Used by the browser tests here.
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
-export async function launch(port = 9333) {
+// opts.home: the phone layout with Home and the themes (2026-11-25). Without it every page gets window.HB_NO_HOME, the
+// layout the older suites were written for (Today · Audio · Voices · Challenge, the Menu, no themes).
+export async function launch(port = 9333, opts = {}) {
   const chrome = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
     ['--headless=new', '--disable-gpu', '--hide-scrollbars', '--autoplay-policy=no-user-gesture-required', `--remote-debugging-port=${port}`,
      '--user-data-dir=/tmp/hb-chrome-' + Date.now(), '--no-first-run', 'about:blank'], { stdio: 'ignore' });
@@ -18,11 +20,12 @@ export async function launch(port = 9333) {
   const send = (method, params = {}) => new Promise(res => { const i = ++id; pending.set(i, res); ws.send(JSON.stringify({ id: i, method, params })); });
   const errors = [];
   listeners.push(d => {
-    if (d.method === 'Runtime.exceptionThrown') errors.push('EXC ' + (d.params.exceptionDetails.exception?.description || d.params.exceptionDetails.text));
+    if (d.method === 'Runtime.exceptionThrown') { const x = d.params.exceptionDetails, f = x.stackTrace?.callFrames?.[0]; errors.push('EXC ' + (x.exception?.description || x.text) + ' @ ' + (f ? f.url + ':' + (f.lineNumber + 1) : (x.url || '?') + ':' + (x.lineNumber + 1))); }
     if (d.method === 'Runtime.consoleAPICalled' && d.params.type === 'error') errors.push('console.error ' + d.params.args.map(a => a.value || a.description).join(' '));
     if (d.method === 'Log.entryAdded' && d.params.entry.level === 'error' && !/favicon|404/.test(d.params.entry.text + d.params.entry.url)) errors.push('log ' + d.params.entry.text + ' ' + (d.params.entry.url || ''));
   });
   await send('Runtime.enable'); await send('Log.enable'); await send('Page.enable');
+  if (!opts.home) await send('Page.addScriptToEvaluateOnNewDocument', { source: 'window.HB_NO_HOME = true;' });
   const api = {
     errors, send,
     async viewport(w, h, mobile = true, dark = false) {
