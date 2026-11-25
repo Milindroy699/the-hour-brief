@@ -68,17 +68,20 @@
   }
 
   // ---- going places ----
+  // In Cards the deck opens over Home and Home closes in the same frame (mobile.js HBOpenStory), so nothing flashes between
+  // them (owner, 2026-11-25: the list showed for a moment on Android).
   function openStory(id) {
     tap();
-    close();
     if (window.HBOpenStory && window.HBOpenStory(id)) return;
+    close();
     // List: closing Home is enough to be on Brief (mobile.js relights the tab on hb:hub); its tab action would scroll to the top
     var it = document.querySelector('.item[data-story-id="' + id + '"]');
     if (it) setTimeout(function () { it.scrollIntoView({ block: 'start' }); it.classList.add('deeplinked'); }, 60);
   }
+  // An Explore tile: that section on its own in Cards (owner, 2026-11-25: "it should not show the other sections"), ending on
+  // a card with the other sections and the way back to Home. Without Cards (wide screens), the list at that section.
   function openLane(l) {
-    var first = storiesOf(l)[0];
-    if (HC.cardsOk && HC.cardsOk() && HC.view && HC.view() === 'cards' && first) { openStory(first.dataset.storyId); return; }
+    if (HC.openLane && HC.openLane(l.id)) { tap(); return; }
     tap();
     close();
     setTimeout(function () { l.scrollIntoView({ block: 'start' }); }, 60);
@@ -249,7 +252,17 @@
     var hour = new Date().getHours(), info = q(), L = lanes(), all = [];
     L.forEach(function (l) { all = all.concat(storiesOf(l)); });
     scroller.textContent = '';
-    scroller.appendChild(mk('div', 'hm-deco'));
+    var deco = mk('div', 'hm-deco');
+    deco.appendChild(mk('span', 'hm-shoot'));
+    for (var k = 1; k <= 6; k++) deco.appendChild(mk('span', 'hm-star hm-star-' + k));   // Midnight: stars that twinkle one by one
+    var sun = mk('span', 'hm-sun');                  // Dawn's smiling sun (app.css): rays, a face that blinks
+    sun.setAttribute('aria-hidden', 'true');
+    sun.appendChild(mk('i', 'hm-sun-rays'));
+    var face = mk('i', 'hm-sun-face');
+    face.appendChild(mk('b'));
+    sun.appendChild(face);
+    deco.appendChild(sun);
+    scroller.appendChild(deco);
 
     var hello = mk('section', 'hm-hello');
     var ed = editionLine();
@@ -393,7 +406,8 @@
     el.appendChild(scroller);
     listenBtn = mk('button', 'hm-listen');
     listenBtn.type = 'button';
-    listenBtn.innerHTML = '<span class="hm-listen-p">' + IC.play + '</span><span class="hm-listen-t">Today’s brief<small>Listen to the whole edition</small></span><span class="hm-listen-k">Listen</span>';
+    listenBtn.setAttribute('aria-label', 'Listen to today’s brief');
+    listenBtn.innerHTML = '<span class="hm-listen-p">' + IC.play + '</span><span class="hm-listen-k">Listen</span>';
     listenBtn.addEventListener('click', function () { listen(); });
     el.appendChild(listenBtn);
     document.body.appendChild(el);
@@ -422,6 +436,7 @@
       document.dispatchEvent(new CustomEvent('hb:hub'));
     } else scroller.scrollTo({ top: 0, behavior: 'smooth' });
     refreshVoices();
+    if (first && HC.warmCards) setTimeout(HC.warmCards, 900);   // cards.js parsed while Home is read, so a story card opens at once
     if (window.HBWeekly && !(window.HBWeeklyNow && window.HBWeeklyNow())) window.HBWeekly().then(function (w) { if (w && shown) draw(true); });
   }
   function close() {

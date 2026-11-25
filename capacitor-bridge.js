@@ -437,8 +437,22 @@
     var startY = 0, tracking = false, armed = false;
     var THRESH = 64, DAMP = 0.5, MAX = 96;
 
+    // Only when what is under the finger is really at its top. Home, Cards, Challenge, You and the player are layers over
+    // the page, whose own scroll stays at 0 underneath them: without this, dragging down to scroll back up on Home reloaded
+    // the whole app (owner, 2026-11-25, Android: "a transient screen, then Home or the wrong page").
+    var NO_PULL = /(^|\s)(hb-deck-open|qz-playing|hb-you-open|hb-hub-open)(\s|$)/;
+    function canPull(t) {
+      if (window.scrollY > 0 || NO_PULL.test(document.documentElement.className)) return false;
+      if (document.querySelector('.qz-sheet-bg, .rd-sheet-bg, .hb-sheet:not([hidden])')) return false;
+      for (var n = t && t.nodeType === 1 ? t : t && t.parentElement; n && n !== document.body; n = n.parentElement) {
+        if (n.scrollTop > 0) return false;
+        var oy = getComputedStyle(n).overflowY;
+        if ((oy === 'auto' || oy === 'scroll') && n.scrollHeight > n.clientHeight + 1) return n.scrollTop <= 0;
+      }
+      return true;
+    }
     window.addEventListener('touchstart', function (e) {
-      if (e.touches.length !== 1 || window.scrollY > 0) { tracking = false; return; }
+      if (e.touches.length !== 1 || !canPull(e.target)) { tracking = false; return; }
       startY = e.touches[0].clientY;
       tracking = true;
       armed = false;
@@ -447,7 +461,7 @@
     window.addEventListener('touchmove', function (e) {
       if (!tracking) return;
       var dy = e.touches[0].clientY - startY;
-      if (dy <= 0 || window.scrollY > 0) { reset(); return; }
+      if (dy <= 0 || !canPull(e.target)) { reset(); return; }
       var pull = Math.min(dy * DAMP, MAX);
       el.style.opacity = String(Math.min(pull / THRESH, 1));
       el.style.transform = 'translateY(' + (pull - 44) + 'px)';

@@ -94,7 +94,7 @@ for (const [right, tier, label] of TIERS) {
   await closeCele();
   t = await J(`(() => { const m = document.querySelector('.qz-medal'); return { cls: document.querySelector('.qz-hero').className, label: document.querySelector('.qz-tier').textContent, medal: m && m.getAttribute('src'), loaded: !!m && m.complete && m.naturalWidth > 0, score: document.querySelector('.quiz-score').textContent, msg: document.querySelector('.qz-hero .quiz-msg').textContent, missed: document.querySelectorAll('.qz-miss').length, head: (document.querySelector('.qz-missed-head') || {}).textContent || '' }; })()`);
   check(`${right}/${N}: the ${label} medal and label`, t.cls.includes('qz-tier-' + tier) && t.label === label && t.medal === '/brand/rewards/medals/' + tier + '.webp' && t.loaded, JSON.stringify(t));
-  check(`${right}/${N}: "${right} of ${N}", kind wording, and the ${N - right} missed question(s) listed with their answers`, t.score === right + 'of ' + N && t.msg.length > 20 && t.missed === N - right && (N - right === 0 ? !t.head : t.head === 'Review missed (' + (N - right) + ')'), JSON.stringify(t));
+  check(`${right}/${N}: "${right} of ${N}", kind wording, and the ${N - right} missed question(s) under "Review answers" with their answers`, t.score === right + 'of ' + N && t.msg.length > 20 && t.missed === N - right && t.head === 'Review answers' + (N - right === 0 ? 'all right' : (N - right) + ' missed'), JSON.stringify(t));
 }
 t = await J(`[...document.querySelectorAll('.qz-miss-a')].every((a) => /^Answer: /.test(a.textContent))`);
 check('every missed row shows "Answer: …"', t === true, t);
@@ -206,7 +206,7 @@ await play(3);
 await closeCele();
 await c.shot(OUT + '/dark-result.png');
 t = await J(`(() => { const m = document.querySelector('.qz-miss-q'); return m ? getComputedStyle(m).color : null; })()`);
-check('dark mode: the missed-question text is light on its dark rose card (readable)', t && parseInt(t.match(/\d+/)[0], 10) > 150, t);
+check('dark mode: the review text is light on its dark card (readable)', t && parseInt(t.match(/\d+/)[0], 10) > 150, t);
 
 const errs = c.errors.filter((e) => !/r2\.dev|__audio|net::ERR|Failed to load resource|CORS|ViewTransition/.test(e));
 check('no script errors anywhere in the run', errs.length === 0, errs.join(' | '));

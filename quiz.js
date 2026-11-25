@@ -95,11 +95,22 @@
     backBtn.type = 'button';
     backBtn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>';
     backBtn.appendChild(document.createTextNode(ret.kind === 'answer' ? 'Back to the quiz' : 'Back to your score'));
-    backBtn.addEventListener('click', function () {
+    function goBack() {
+      if (!backBtn) return;
       hideBack();
       if (ret.kind === 'challenge') { if (window.HBChrome && window.HBChrome.tab) window.HBChrome.tab('quiz'); return; }   // the score on Challenge
       openPlayer(ret.kind === 'answer' ? { answer: ret.i } : 'result');
+    }
+    // On the finger lifting, not on "click": Android's WebView drops the click of a tap that lands while the deck below is
+    // still settling, so it took two or three taps (owner, 2026-11-25). A drag that starts on the pill doesn't count.
+    var t0 = null;
+    backBtn.addEventListener('touchstart', function (e) { var p = e.touches[0]; t0 = { x: p.clientX, y: p.clientY }; }, { passive: true });
+    backBtn.addEventListener('touchend', function (e) {
+      var p = e.changedTouches[0];
+      if (t0 && Math.abs(p.clientX - t0.x) < 12 && Math.abs(p.clientY - t0.y) < 12) { e.preventDefault(); goBack(); }
+      t0 = null;
     });
+    backBtn.addEventListener('click', goBack);
     document.body.appendChild(backBtn);
     setTimeout(function () { document.addEventListener('hb:hub', backWatch); }, 0);
   }
@@ -214,73 +225,101 @@
     }
     return cardP;
   }
-  function drawCard(res, streak, logo) {
-    var W = 1080, H = 1080;
+  // The picture that gets shared (2026-11-25): the same card as on screen, portrait 4:5 so it fills a story or a WhatsApp
+  // preview: brand and date, the medal and tier, the big score, a bar per question, the line, the streak, the challenge.
+  function wrapLines(g, text, maxW) {
+    var words = String(text).split(' '), lines = [], cur = '';
+    words.forEach(function (w) { var t = cur ? cur + ' ' + w : w; if (g.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; } else cur = t; });
+    if (cur) lines.push(cur);
+    return lines;
+  }
+  function drawCard(res, streak, logo, medal) {
+    var W = 1080, H = 1350, PAD = 84;
     var c = document.createElement('canvas');
     c.width = W; c.height = H;
     var g = c.getContext('2d');
     var SANS = 'Inter, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
     var LABEL = '"Space Grotesk", Inter, -apple-system, "Segoe UI", Roboto, sans-serif';
     var SERIF = 'Newsreader, Georgia, "Times New Roman", serif';
-    g.fillStyle = '#0c0d15'; g.fillRect(0, 0, W, H);
-    var glow = g.createRadialGradient(140, 0, 0, 140, 0, 780);
-    glow.addColorStop(0, 'rgba(94,67,243,0.34)'); glow.addColorStop(1, 'rgba(12,13,21,0)');
+    var bg = g.createLinearGradient(0, 0, W * 0.6, H);
+    bg.addColorStop(0, '#2a1f78'); bg.addColorStop(0.72, '#14122b'); bg.addColorStop(1, '#0e0c20');
+    g.fillStyle = bg; g.fillRect(0, 0, W, H);
+    var glow = g.createRadialGradient(W, 0, 0, W, 0, 760);
+    glow.addColorStop(0, 'rgba(232,176,75,0.30)'); glow.addColorStop(1, 'rgba(232,176,75,0)');
     g.fillStyle = glow; g.fillRect(0, 0, W, H);
-    g.fillStyle = '#5e43f3'; g.fillRect(0, H - 18, W, 18);
+    var glow2 = g.createRadialGradient(0, H, 0, 0, H, 900);
+    glow2.addColorStop(0, 'rgba(108,83,245,0.55)'); glow2.addColorStop(1, 'rgba(108,83,245,0)');
+    g.fillStyle = glow2; g.fillRect(0, 0, W, H);
     g.textBaseline = 'alphabetic';
+    // brand row
+    var x0 = PAD;
+    if (logo) { g.save(); roundRect(g, PAD, 80, 72, 72, 18); g.clip(); g.drawImage(logo, PAD, 80, 72, 72); g.restore(); x0 = PAD + 96; }
     g.textAlign = 'left';
-    var x0 = 72;
-    if (logo) {
-      g.save();
-      roundRect(g, 72, 62, 96, 96, 24);
-      g.clip();
-      g.drawImage(logo, 72, 62, 96, 96);
-      g.restore();
-      x0 = 192;
-    }
-    g.font = '700 58px ' + LABEL;
-    g.fillStyle = '#ffffff'; g.fillText('THE HOUR', x0, 132);
+    g.font = '700 40px ' + LABEL; g.fillStyle = '#ffffff'; g.fillText('THE HOUR', x0, 132);
     var w = g.measureText('THE HOUR ').width;
-    g.fillStyle = '#8b6cf6'; g.fillText('BRIEF', x0 + w, 132);
+    g.fillStyle = '#b9acff'; g.fillText('BRIEF', x0 + w, 132);
     g.textAlign = 'right';
-    g.font = '600 32px ' + SANS; g.fillStyle = '#a6a8c4';
-    g.fillText(prettyDate(DATE).toUpperCase(), W - 72, 128);
-    g.textAlign = 'center';
-    g.font = '700 38px ' + LABEL; g.fillStyle = '#b9acff';
-    g.fillText('DAILY QUIZ', W / 2, 300);
-    g.font = '500 300px ' + SERIF; g.fillStyle = '#ffffff';
-    g.fillText(res.s + '/' + res.t, W / 2, 545);
+    g.font = '700 30px ' + LABEL; g.fillStyle = '#ffd88a';
+    g.fillText(prettyDate(DATE).toUpperCase(), W - PAD, 128);
+    // medal + tier + score
+    g.textAlign = 'left';
+    var y = 300;
+    if (medal) g.drawImage(medal, PAD - 6, y - 40, 230, 230);
+    var sx = medal ? PAD + 250 : PAD;
+    var tier = TIERS[tierOf(res)].toUpperCase();
+    g.font = '700 30px ' + LABEL;
+    var tw = g.measureText(tier).width + 44;
+    g.fillStyle = 'rgba(255,216,138,0.18)'; roundRect(g, sx, y - 6, tw, 56, 28); g.fill();
+    g.fillStyle = '#ffd88a'; g.fillText(tier, sx + 22, y + 32);
+    g.font = '500 210px ' + SERIF; g.fillStyle = '#ffffff';
+    g.fillText(String(res.s), sx - 6, y + 230);
+    var sw = g.measureText(String(res.s)).width;
+    g.font = '500 92px ' + SERIF; g.fillStyle = 'rgba(255,255,255,0.7)';
+    g.fillText('of ' + res.t, sx + sw + 14, y + 230);
+    // a bar per question
     if (res.a) {
-      var n = res.t, size = Math.min(110, Math.floor((W - 144 - (n - 1) * 20) / n)), gap = 20;
-      var xs = (W - (n * size + (n - 1) * gap)) / 2;
+      var n = res.t, gap = 18, bw = (W - 2 * PAD - (n - 1) * gap) / n;
       questions.forEach(function (q, i) {
-        g.fillStyle = res.a[i] === q.answer ? '#3fbf95' : '#e5645f';
-        roundRect(g, xs + i * (size + gap), 660, size, size, 22);
-        g.fill();
+        g.fillStyle = res.a[i] === q.answer ? '#3fbf95' : 'rgba(255,255,255,0.22)';
+        roundRect(g, PAD + i * (bw + gap), 640, bw, 22, 11); g.fill();
       });
     }
-    g.font = '500 60px ' + SERIF; g.fillStyle = '#ffffff';
-    g.fillText(cardMessage(res), W / 2, 880);
+    // the line
+    g.font = '500 64px ' + SERIF; g.fillStyle = '#ffffff';
+    var lines = wrapLines(g, cardMessage(res), W - 2 * PAD).slice(0, 2);
+    lines.forEach(function (l, i) { g.fillText(l, PAD, 780 + i * 78); });
+    var yy = 780 + lines.length * 78 + 20;
     if (streak >= 2) {
-      g.font = '600 44px ' + SANS; g.fillStyle = '#ffb961';
-      g.fillText('🔥 ' + streak + '-day streak', W / 2, 942);
+      g.font = '700 44px ' + SANS; g.fillStyle = '#ffd88a';
+      g.fillText('🔥 ' + streak + '-day streak', PAD, yy + 30);
     }
-    g.font = '700 46px ' + SANS; g.fillStyle = '#ffffff';
-    g.fillText('Think you can beat me?', W / 2, 1002);
-    g.font = '600 36px ' + SANS; g.fillStyle = '#b9acff';
-    g.fillText('the-hour-brief.vercel.app', W / 2, 1046);
+    // the challenge
+    g.fillStyle = 'rgba(255,255,255,0.1)'; roundRect(g, PAD, H - 250, W - 2 * PAD, 150, 36); g.fill();
+    g.font = '700 50px ' + SANS; g.fillStyle = '#ffffff';
+    g.fillText('Think you can beat me?', PAD + 44, H - 168);
+    g.font = '600 34px ' + SANS; g.fillStyle = '#c9c4e4';
+    g.fillText('Today’s 5 questions · the-hour-brief.vercel.app', PAD + 44, H - 118);
     return c;
+  }
+  function medalImg(tier) {
+    return new Promise(function (resolve) {
+      var img = new Image();
+      img.onload = function () { resolve(img); };
+      img.onerror = function () { resolve(null); };
+      img.src = ART + 'medals/' + tier + '.webp';
+      setTimeout(function () { resolve(null); }, 1500);
+    });
   }
   function shareScore(res, streak) {
     if (window.HBUse) window.HBUse('quiz_share');
     var text = shareText(res, streak), url = shareUrl(res);
-    cardAssets().then(function (logo) { shareCard(res, streak, text, url, logo); });
+    Promise.all([cardAssets(), medalImg(tierOf(res))]).then(function (a) { shareCard(res, streak, text, url, a[0], a[1]); });
   }
-  function shareCard(res, streak, text, url, logo) {
+  function shareCard(res, streak, text, url, logo, medal) {
     var Cap = window.Capacitor, P = (Cap && Cap.Plugins) || {};
     var native = Cap && typeof Cap.isNativePlatform === 'function' && Cap.isNativePlatform();
     var canvas = null;
-    try { canvas = drawCard(res, streak, logo); } catch (e) { /* fall back to text */ }
+    try { canvas = drawCard(res, streak, logo, medal); } catch (e) { /* fall back to text */ }
     if (!canvas) return share(text, url);
     var full = text + '\n' + url;
     if (native && P.Filesystem && P.Share) {
@@ -600,11 +639,14 @@
       from.addEventListener('click', function () { jumpToStory(q.story, { kind: 'answer', i: i }); });
       card.appendChild(from);
     }
+    // Next and its hint stay pinned to the bottom of the screen, however long the answer runs (owner, 2026-11-25)
+    var foot = el('div', 'qz-ans-foot');
     var next = el('button', 'quiz-btn primary qz-ans-next', last ? 'See my score' : 'Next question');
     next.type = 'button';
     next.addEventListener('click', function () { if (last) finish(); else showQuestion(i + 1, true); });
-    card.appendChild(next);
-    if (!last) card.appendChild(el('span', 'qz-ans-hint', 'or swipe up'));
+    foot.appendChild(next);
+    if (!last) foot.appendChild(el('span', 'qz-ans-hint', 'or swipe up'));
+    card.appendChild(foot);
     root.appendChild(card);
     playStage.scrollTop = 0;
     v.focus({ preventScroll: true });
@@ -748,29 +790,53 @@
     var miss = res.t - res.s, t = tierOf(res);
     if (t === 'perfect') return 'Every answer right. You read this morning closely.';
     if (t === 'sharp') return 'Sharp reading. ' + (miss === 1 ? 'Just one slipped by.' : miss + ' slipped by.');
-    if (t === 'solid') return 'Good morning’s work. The ' + (miss === 1 ? 'one' : miss) + ' you missed ' + (miss === 1 ? 'is' : 'are') + ' below, with the answer' + (miss === 1 ? '' : 's') + '.';
-    return 'Tough set today. Every answer is below, and tomorrow is a fresh ' + (res.t === 5 ? 'five' : res.t) + '.';
+    if (t === 'solid') return 'Good morning’s work. The ' + (miss === 1 ? 'one' : miss) + ' you missed ' + (miss === 1 ? 'is' : 'are') + ' in Review answers.';
+    return 'Tough set today. Tomorrow is a fresh ' + (res.t === 5 ? 'five' : res.t) + '.';
   }
 
+  // The score (owner, 2026-11-25, after a Stitch review): the score card first, drawn like the picture that gets shared, with
+  // Share right under it, above the fold; then how others did; the answers folded away (open on a tap, calm colours); retake
+  // and badges as quiet links. The same layout in the player and on Challenge later, where it used to feel crowded.
+  var SHARE_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>';
   function showResult(res, official, fresh, focus) {
     root.textContent = '';
-    var card = el('div', 'quiz-card quiz-result');
+    var card = el('div', 'quiz-card quiz-result qz-res');
     picks = res.a ? res.a.slice() : [];
-    card.appendChild(progress(N, true));
 
     var tier = tierOf(res);
     var hero = el('div', 'qz-hero qz-tier-' + tier);
+    var top = el('div', 'qz-sc-top');
+    var lg = el('img', 'qz-sc-logo');
+    lg.src = '/brand/logo-128.png';
+    lg.alt = '';
+    top.appendChild(lg);
+    top.appendChild(el('span', 'qz-sc-brand', 'The Hour Brief · Daily quiz'));
+    top.appendChild(el('span', 'qz-sc-date', prettyDate(DATE)));
+    hero.appendChild(top);
+    var mid = el('div', 'qz-sc-mid');
     var medal = el('img', 'qz-medal');
     medal.src = ART + 'medals/' + tier + '.webp';
     medal.alt = '';
-    hero.appendChild(medal);
-    hero.appendChild(el('span', 'qz-tier', TIERS[tier]));
+    mid.appendChild(medal);
+    var sc = el('div', 'qz-sc-score');
+    sc.appendChild(el('span', 'qz-tier', TIERS[tier]));
     var score = el('p', 'quiz-score');
     score.setAttribute('aria-label', res.s + ' of ' + res.t + ' correct');
     score.appendChild(el('b', '', String(res.s)));
     score.appendChild(el('span', '', 'of ' + res.t));
-    hero.appendChild(score);
+    sc.appendChild(score);
+    mid.appendChild(sc);
+    hero.appendChild(mid);
+    if (res.a) {
+      var sq = el('div', 'qz-sc-sq');
+      sq.setAttribute('aria-hidden', 'true');
+      questions.forEach(function (q, i) { sq.appendChild(el('i', res.a[i] === q.answer ? 'ok' : 'no')); });
+      hero.appendChild(sq);
+    }
     hero.appendChild(el('p', 'quiz-msg', message(res)));
+    var streakEl = el('div', 'quiz-streak qz-res-streak');
+    streakEl.hidden = true;
+    hero.appendChild(streakEl);
     card.appendChild(hero);
 
     var mine = load().r[DATE] || res;
@@ -780,36 +846,24 @@
         : 'Your friend scored ' + friendBeat + '/' + N + '. Retake for practice?';
       card.appendChild(el('p', 'quiz-versus', vs));
     }
-    var streakEl = el('div', 'quiz-streak qz-res-streak');
-    streakEl.hidden = true;
-    card.appendChild(streakEl);
-    // The ones you missed, right under the score: the question, the answer, and the story it came from
-    var missed = questions.map(function (q, i) { return i; }).filter(function (i) { return res.a && res.a[i] !== questions[i].answer; });
-    if (missed.length && res.a) {
-      var mbox = el('div', 'qz-missed');
-      mbox.appendChild(el('p', 'qz-missed-head', 'Review missed (' + missed.length + ')'));
-      missed.forEach(function (i) {
-        var q = questions[i], row = el('div', 'qz-miss');
-        row.appendChild(el('p', 'qz-miss-q', q.q));
-        var ans = el('p', 'qz-miss-a');
-        ans.appendChild(el('span', '', 'Answer: ' + q.options[q.answer]));
-        if (q.story && document.getElementById(q.story)) {
-          var go = el('button', 'qz-miss-go', 'Read the story');
-          go.type = 'button';
-          go.addEventListener('click', function () { jumpToStory(q.story, { kind: 'result' }); });
-          ans.appendChild(go);
-        }
-        row.appendChild(ans);
-        mbox.appendChild(row);
-      });
-      card.appendChild(mbox);
-    }
+
+    var actions = el('div', 'quiz-actions qz-res-acts');
+    var shareBtn = el('button', 'quiz-btn primary qz-share');
+    shareBtn.type = 'button';
+    shareBtn.innerHTML = SHARE_SVG;
+    shareBtn.appendChild(document.createTextNode('Share my score'));
+    var streakN = 0;
+    shareBtn.addEventListener('click', function () { shareScore(mine, streakN); });
+    actions.appendChild(shareBtn);
+    if (official) actions.appendChild(challengeButton(mine));
+    card.appendChild(actions);
+
+    var compare = el('div', 'quiz-compare');
+    card.appendChild(compare);
     var freshBox = el('div', 'quiz-fresh');
     freshBox.hidden = true;
     freshBox.setAttribute('role', 'status');
     card.appendChild(freshBox);
-    var compare = el('div', 'quiz-compare');
-    card.appendChild(compare);
 
     // Website only, on a fresh official result: the streak is the hook, and the app is what keeps it going.
     var G = window.HBGrowth;
@@ -818,47 +872,58 @@
       if (ap) card.appendChild(ap);
     }
 
-    var actions = el('div', 'quiz-actions');
-    var shareBtn = el('button', 'quiz-btn primary', 'Share my score');
-    shareBtn.type = 'button';
-    var streakN = 0;
-    shareBtn.addEventListener('click', function () { shareScore(mine, streakN); });
-    actions.appendChild(shareBtn);
-    var reviewBtn = el('button', 'quiz-btn', 'Review answers');
-    reviewBtn.type = 'button';
-    reviewBtn.setAttribute('aria-expanded', 'false');
-    actions.appendChild(reviewBtn);
-    var badgesBtn = el('button', 'quiz-btn', 'Badges');
-    badgesBtn.type = 'button';
-    badgesBtn.addEventListener('click', function () { closePlayer(); setTab('badges', true); });
-    actions.appendChild(badgesBtn);
-    var again = el('button', 'quiz-btn', 'Retake for practice');
+    // Every answer, folded away: the missed ones first, each with its story
+    if (res.a) {
+      var missed = questions.map(function (q, i) { return i; }).filter(function (i) { return res.a[i] !== questions[i].answer; });
+      var mbox = el('div', 'qz-missed');
+      var head = el('button', 'qz-missed-head');
+      head.type = 'button';
+      head.setAttribute('aria-expanded', 'false');
+      head.appendChild(el('span', '', 'Review answers'));
+      head.appendChild(el('small', '', missed.length ? missed.length + ' missed' : 'all right'));
+      mbox.appendChild(head);
+      var list = el('div', 'qz-rv-list');
+      list.hidden = true;
+      var order = missed.concat(questions.map(function (q, i) { return i; }).filter(function (i) { return missed.indexOf(i) < 0; }));
+      order.forEach(function (i) {
+        var q = questions[i], right = res.a[i] === q.answer, row = el('div', 'qz-rv' + (right ? ' ok' : ' qz-miss'));
+        row.appendChild(el('span', 'qz-rv-ic', right ? '✓' : '✗'));
+        var tx = el('div', 'qz-rv-tx');
+        tx.appendChild(el('p', 'qz-miss-q', q.q));
+        tx.appendChild(el('p', 'qz-miss-a', 'Answer: ' + q.options[q.answer]));
+        if (!right && q.options[res.a[i]] != null) tx.appendChild(el('p', 'qz-rv-mine', 'You picked: ' + q.options[res.a[i]]));
+        if (q.why) tx.appendChild(el('p', 'qz-rv-why', q.why));
+        if (q.story && document.getElementById(q.story)) {
+          var go = el('button', 'qz-miss-go', 'Read the story');
+          go.type = 'button';
+          go.addEventListener('click', function () { jumpToStory(q.story, { kind: 'result' }); });
+          tx.appendChild(go);
+        }
+        row.appendChild(tx);
+        list.appendChild(row);
+      });
+      mbox.appendChild(list);
+      head.addEventListener('click', function () {
+        list.hidden = !list.hidden;
+        head.setAttribute('aria-expanded', String(!list.hidden));
+        if (!list.hidden && window.HBUse) window.HBUse('quiz_review');
+      });
+      card.appendChild(mbox);
+    }
+
+    var links = el('div', 'qz-res-links');
+    var again = el('button', 'qz-link', 'Retake for practice');
     again.type = 'button';
     again.addEventListener('click', function () { practice = true; picks = []; if (playerMode()) openPlayer(0); else showQuestion(0, true); });
-    actions.appendChild(again);
-    // Straight under the score, above the other buttons: right after the quiz is when a challenge lands (owner, 2026-11-21).
-    if (official) card.appendChild(inviteNudge(mine));
-    card.appendChild(actions);
-
-    var review = el('ol', 'quiz-review');
-    review.hidden = true;
-    questions.forEach(function (q, i) {
-      var li = el('li');
-      var right = res.a && res.a[i] === q.answer;
-      li.appendChild(el('span', right ? 'yes' : 'no', right ? '✓ ' : '✗ '));
-      li.appendChild(el('b', '', q.q));
-      li.appendChild(document.createElement('br'));
-      li.appendChild(document.createTextNode('Answer: ' + q.options[q.answer] + '. ' + (q.why || '')));
-      review.appendChild(li);
-    });
-    card.appendChild(review);
-    reviewBtn.addEventListener('click', function () {
-      review.hidden = !review.hidden;
-      reviewBtn.setAttribute('aria-expanded', String(!review.hidden));
-      reviewBtn.textContent = review.hidden ? 'Review answers' : 'Hide answers';
-    });
+    var badgesBtn = el('button', 'qz-link', 'Badges');
+    badgesBtn.type = 'button';
+    badgesBtn.addEventListener('click', function () { closePlayer(); setTab('badges', true); });
+    links.appendChild(again);
+    links.appendChild(el('span', 'qz-dot', '·'));
+    links.appendChild(badgesBtn);
+    card.appendChild(links);
     if (playOn) {                                  // the player: Done, back to wherever the quiz was opened from
-      var done = el('button', 'quiz-btn primary qz-play-done', 'Done');
+      var done = el('button', 'quiz-btn qz-play-done', 'Done');
       done.type = 'button';
       done.addEventListener('click', closePlayer);
       card.appendChild(done);
@@ -876,8 +941,8 @@
         streakEl.textContent = '';
         streakEl.appendChild(flameImg(streakN));
         var stx = el('span', 'qz-res-st-tx');
-        stx.appendChild(el('b', '', 'Day ' + streakN));
-        stx.appendChild(document.createTextNode(streakN === 1 ? ' · come back tomorrow to start a streak' : (tier === 'keepgoing' ? ' · your streak is safe, you played' : ' · keep it going tomorrow')));
+        stx.appendChild(el('b', '', streakN === 1 ? 'Day 1' : String(streakN)));
+        stx.appendChild(document.createTextNode(streakN === 1 ? ' · come back tomorrow for day 2' : '-day streak'));
         streakEl.appendChild(stx);
         streakEl.hidden = false;
       }
@@ -1256,40 +1321,24 @@
   // ---------- the invite nudge on the score screen (owner, 2026-11-21) ----------
   // Right after the quiz, when the score is fresh: one tap gives the reader a friends league (made for them if they have
   // none) and its 6-character code, and opens the share sheet with "I got 3/5, can you beat me? code ABC123".
-  function inviteNudge(res) {
-    var box = el('div', 'qz-nudge');
-    box.appendChild(el('p', 'qz-nudge-title', 'Challenge your friends'));
-    var line = el('p', 'qz-nudge-text', 'Get a league code to share. Your friends play today’s quiz and you see who wins, every day.');
-    box.appendChild(line);
-    var btn = el('button', 'quiz-btn primary', 'Invite friends');
-    btn.type = 'button';
-    var codeEl = el('p', 'qz-nudge-code');
-    codeEl.hidden = true;
-    box.appendChild(codeEl);
-    box.appendChild(btn);
+  // "Challenge a friend" under Share: a league code for friends (started the first time), then the share sheet
+  function challengeButton(res) {
+    var b = el('button', 'quiz-btn qz-challenge', 'Challenge a friend');
+    b.type = 'button';
     var native = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
-    function ready(lg, shareNow) {
-      codeEl.textContent = '';
-      codeEl.appendChild(document.createTextNode('Your league code '));
-      codeEl.appendChild(el('b', '', lg.code));
-      codeEl.hidden = false;
-      line.textContent = 'Friends join with the link, or by entering the code under Challenge › Leagues, where your league’s board is.';
-      btn.textContent = 'Share the invite';
-      btn.disabled = false;
-      btn.onclick = function () { inviteScore(lg, res); };
-      if (shareNow) inviteScore(lg, res);
-    }
-    btn.onclick = function () {
+    b.addEventListener('click', function () {
       var have = lgLoad().leagues.filter(function (l) { return !l.kind || l.kind === 'friends'; })[0];
-      if (have) { ready(have, true); return; }
-      btn.disabled = true; btn.textContent = 'Getting your code…';
+      if (have) { inviteScore(have, res); return; }
+      if (b.disabled) return;
+      b.disabled = true; b.textContent = 'Getting your league code…';
       startLeague().then(function (lg) {
-        if (!lg) { btn.disabled = false; btn.textContent = 'Invite friends'; line.textContent = lgMsg || 'Could not start a league just now. Please try again.'; return; }
-        // In the app the share sheet can open straight away; a browser only allows it from a fresh tap.
-        ready(lg, native);
+        b.disabled = false;
+        if (!lg) { b.textContent = 'Challenge a friend'; toast(lgMsg || 'Could not start a league just now. Please try again.'); return; }
+        b.textContent = 'Share the invite';
+        if (native) inviteScore(lg, res);           // a browser only opens the share sheet from a fresh tap
       });
-    };
-    return box;
+    });
+    return b;
   }
   function inviteScore(lg, res) {
     if (window.HBUse) window.HBUse('league_invite');

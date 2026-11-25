@@ -98,7 +98,20 @@
     return c.textContent.replace(/\s+/g, ' ').trim();
   }
 
+  // One section only (owner, 2026-11-25: an Explore tile on Home "should not show the other sections"): its intro and
+  // stories, then a closing card that offers the other sections as tiles, the whole brief, and the way back to Home.
+  var laneOnly = null;
   function collect() {
+    if (laneOnly && laneShown(laneOnly)) {
+      var li = Array.prototype.slice.call(laneOnly.querySelectorAll('.item[data-story-id]'));
+      if (li.length) {
+        var ln = laneName(laneOnly), lo = [{ kind: 'intro', lane: laneOnly, name: ln, items: li, sec: 1, secTotal: 1, only: true }];
+        li.forEach(function (it, i) { lo.push({ kind: 'story', lane: laneOnly, name: ln, item: it, n: i + 1, of: li.length }); });
+        lo.push({ kind: 'more', lane: laneOnly, name: ln });
+        return lo;
+      }
+    }
+    laneOnly = null;
     var out = [{ kind: 'cover', name: 'The Hour Brief' }], lanes = [];
     // Sundays: the week's recap is a card of its own, and the deck starts on it (owner, 2026-11-22). mobile.js fetches it;
     // if it arrives after the deck is up, weeklyArrived() below adds it.
@@ -237,7 +250,7 @@
   }
   // The recap came back after the deck was drawn: add its card, and start on it if the reader hasn't moved yet.
   function weeklyArrived() {
-    if (!shown || cards.some(function (x) { return x.kind === 'week'; }) || !(window.HBWeeklyNow && window.HBWeeklyNow())) return;
+    if (!shown || laneOnly || cards.some(function (x) { return x.kind === 'week'; }) || !(window.HBWeeklyNow && window.HBWeeklyNow())) return;
     var atStart = idx === 0;
     render();
     goTo(atStart ? 0 : idx + 1, false);
@@ -274,8 +287,8 @@
   // the next cards, one at a time; repeating all their titles here first was the same "too much detail" complaint
   // the cover already got.
   function buildIntro(c) {
-    var b = face('intro', 'Section ' + c.sec + ' of ' + c.secTotal + ': ' + c.name);
-    b.scroll.appendChild(mk('p', 'dk-kick', 'Section ' + c.sec + ' of ' + c.secTotal));
+    var b = face('intro', c.only ? c.name : 'Section ' + c.sec + ' of ' + c.secTotal + ': ' + c.name);
+    b.scroll.appendChild(mk('p', 'dk-kick', c.only ? 'Today’s ' + c.items.length + (c.items.length === 1 ? ' story' : ' stories') : 'Section ' + c.sec + ' of ' + c.secTotal));
     b.scroll.appendChild(heading('h2', 'dk-title dk-title-lg', c.name));
     var time = laneTime(c.lane);
     b.scroll.appendChild(mk('p', 'dk-metaline', (time ? time + ' · ' : '') + c.items.length + (c.items.length === 1 ? ' story' : ' stories')));
@@ -369,6 +382,51 @@
 
   // The closing card: always the last one in the deck now (see collect()), so it is where the Listen and quiz tiles
   // live, not up on the cover — the cover is just "before the news" now, this is the "now that you've read it" card.
+  function buildMore(c) {
+    var b = face('end dk-more', 'The end of ' + c.name);
+    b.scroll.appendChild(mk('p', 'dk-kick', 'That’s ' + c.name));
+    b.scroll.appendChild(heading('h2', 'dk-title dk-title-lg', 'Explore another section'));
+    var grid = mk('div', 'dk-more-grid');
+    document.querySelectorAll('section.lane[id]').forEach(function (l) {
+      if (l === c.lane || l.id === 'quiz' || !laneShown(l)) return;
+      var n = l.querySelectorAll('.item[data-story-id]').length;
+      if (!n) return;
+      var t = btn('dk-more-tile dk-more-' + (['ai', 'biz', 'mkt'].filter(function (k) { return l.classList.contains(k); })[0] || 'ai'));
+      t.appendChild(mk('strong', '', laneName(l)));
+      t.appendChild(mk('small', '', n + (n === 1 ? ' story' : ' stories')));
+      t.addEventListener('click', function () { showLane(l); });
+      grid.appendChild(t);
+    });
+    var all = btn('dk-more-tile dk-more-all');
+    all.appendChild(mk('strong', '', 'The whole brief'));
+    all.appendChild(mk('small', '', 'Every section, from the top'));
+    all.addEventListener('click', function () { showLane(null); });
+    grid.appendChild(all);
+    b.scroll.appendChild(grid);
+    var home = btn('dk-cta', 'Back to Home');
+    home.addEventListener('click', backHome);
+    b.scroll.appendChild(home);
+    return b.card;
+  }
+  function backHome() { var HC = window.HBChrome; if (HC && HC.tab) HC.tab('home'); else close({ keep: true }); }
+  // Switch the open deck to one section (or, with null, the whole brief) and start at its first card.
+  function showLane(l) {
+    laneOnly = l || null;
+    render();
+    syncBack();
+    goTo(0, false);
+    fadeAll();
+    paint();
+    announce();
+  }
+  // In one section the header's left button goes back to Home (where the Explore tiles are); otherwise it is the logo.
+  function syncBack() {
+    if (!ui.head) return;
+    var on = !!laneOnly;
+    if (ui.homeBack) ui.homeBack.hidden = !on;
+    if (ui.logo) ui.logo.hidden = on;
+  }
+
   function buildEnd(c) {
     var b = face('end', 'The end of today’s brief');
     b.scroll.appendChild(mk('p', 'dk-kick', 'That’s the brief'));
@@ -448,6 +506,12 @@
       bb.addEventListener('click', back.go);
       logo = bb;
     }
+    ui.logo = logo;
+    var hb = ui.homeBack = btn('ab-btn ab-back dk-home-back', '', 'Back to Home');
+    hb.innerHTML = HC ? HC.icons.back : '';
+    hb.hidden = true;
+    hb.addEventListener('click', backHome);
+    head.appendChild(hb);
     head.appendChild(logo);
     head.appendChild(brand);
     head.appendChild(acts);
@@ -653,7 +717,7 @@
     cards = collect();
     track.textContent = '';
     cards.forEach(function (c, i) {
-      c.el = c.kind === 'week' ? buildWeek(c) : c.kind === 'cover' ? buildCover(c) : c.kind === 'intro' ? buildIntro(c) : c.kind === 'story' ? buildStory(c) : buildEnd(c);
+      c.el = c.kind === 'week' ? buildWeek(c) : c.kind === 'cover' ? buildCover(c) : c.kind === 'intro' ? buildIntro(c) : c.kind === 'story' ? buildStory(c) : c.kind === 'more' ? buildMore(c) : buildEnd(c);
       c.el.style.zIndex = String(cards.length - i);      // stacked deck: every card sits above the ones after it (fixed, never animated)
       track.appendChild(c.el);
     });
@@ -679,6 +743,9 @@
     });
     syncFab();
     maybeShowSwipeHint();
+    // Where the reader is, for this visit: if the app reloads (Android can, after the phone is locked), the deck comes back
+    // on this card (mobile.js deckTarget) instead of the start.
+    try { sessionStorage.setItem('hb-deck-at', JSON.stringify({ id: c.kind === 'story' ? c.item.dataset.storyId : c.lane ? c.lane.id : '', lane: laneOnly ? laneOnly.id : '', d: location.pathname })); } catch (e) { /* not kept */ }
   }
 
   function announce() {
@@ -974,12 +1041,21 @@
   function open(o) {
     o = o || {};
     build();
-    if (shown) { if (o.id) { var j = indexOfStory(o.id); if (j >= 0) goTo(j, true); } return true; }
+    var wantLane = o.lane ? document.getElementById(o.lane) : null;
+    if (wantLane && !laneShown(wantLane)) wantLane = null;
+    if (shown) {
+      if (wantLane !== laneOnly) { showLane(wantLane); if (!o.id) return true; }
+      if (o.id) { var j = indexOfStory(o.id); if (j >= 0) goTo(j, true); }
+      return true;
+    }
+    laneOnly = wantLane;
+    syncBack();
     // The story being read in the list, measured BEFORE the deck opens: with hb-deck-open on the root the header stops
     // being sticky, so measuring afterwards misses it and resumes one story early.
     var readingId = listStoryId();
     render();
     if (!cards.some(function (c) { return c.kind === 'story'; })) return false;
+    if (laneOnly) readingId = null;                   // one section: always from its start
     returnFocus = document.activeElement;
     deck.hidden = false;
     shown = true;
