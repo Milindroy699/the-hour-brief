@@ -35,7 +35,19 @@
     </div>
   </div>
 <script>
-  window.addEventListener('online', function () { location.href = 'https://the-hour-brief.vercel.app/'; });
+  // A page that failed to load on a shaky connection usually loads a moment later: try again on our own (owner, 2026-11-26:
+  // "sometimes I load tabs and get that the page cannot be loaded"), up to three times a minute, before asking.
+  var HOME = 'https://the-hour-brief.vercel.app/';
+  window.addEventListener('online', function () { location.href = HOME; });
+  (function retry() {
+    var n = 0, now = Date.now();
+    try { var t = JSON.parse(sessionStorage.getItem('hb-retry') || 'null'); if (t && now - t.at < 60000) n = t.n; sessionStorage.setItem('hb-retry', JSON.stringify({ n: n + 1, at: t && now - t.at < 60000 ? t.at : now })); } catch (e) { n = 3; }
+    if (n >= 3 || navigator.onLine === false) return;
+    document.getElementById('title').textContent = 'Reconnecting…';
+    document.getElementById('msg').textContent = 'The connection dropped for a moment. Trying again.';
+    var dot = document.getElementById('dot'); dot.style.animation = ''; dot.style.opacity = '';
+    setTimeout(function () { location.href = HOME; }, 1200 + n * 1500);
+  })();
 </script>
 </body>
 </html>

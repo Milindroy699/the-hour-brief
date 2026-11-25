@@ -31,6 +31,13 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 // like being offline, still get the error page.
 class MainViewController: CAPBridgeViewController {
     private var navigationGuard: NavigationGuard?
+    private var themeHandler: ThemeHandler?
+
+    func applyPageBackground(_ color: UIColor) {
+        webView?.backgroundColor = color
+        webView?.scrollView.backgroundColor = color
+        view.backgroundColor = color
+    }
 
     override func capacitorDidLoad() {
         super.capacitorDidLoad()
@@ -45,10 +52,28 @@ class MainViewController: CAPBridgeViewController {
         }
         webView?.backgroundColor = pageBackground
         webView?.scrollView.backgroundColor = pageBackground
+        // From 1.1.5 (5): the page sends its theme's background (capacitor-bridge.js HBStatusBar, message "hbTheme"), so the
+        // strips the page doesn't draw (under the tab bar, past the end of a page) match the app's day/night theme instead of
+        // the phone's light/dark setting (a white band under Voices; owner, 2026-11-26).
+        let theme = ThemeHandler()
+        theme.controller = self
+        themeHandler = theme
+        webView?.configuration.userContentController.add(theme, name: "hbTheme")
         guard let webView = webView, let capacitorDelegate = webView.navigationDelegate else { return }
         let guardDelegate = NavigationGuard(wrapping: capacitorDelegate)
         navigationGuard = guardDelegate                  // the web view holds its navigation delegate weakly
         webView.navigationDelegate = guardDelegate
+    }
+}
+
+// The page's theme colours, from capacitor-bridge.js: { top: "#rrggbb", back: "#rrggbb" }. Held weakly both ways.
+final class ThemeHandler: NSObject, WKScriptMessageHandler {
+    weak var controller: MainViewController?
+
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        guard let body = message.body as? [String: Any], let back = body["back"] as? String,
+              let color = UIColor.capacitor.color(fromHex: back) else { return }
+        DispatchQueue.main.async { [weak self] in self?.controller?.applyPageBackground(color) }
     }
 }
 

@@ -516,7 +516,16 @@
     });
   }
 
+  // the last question with every answer right so far: fetch the 5/5 clip now, so it starts the moment the score shows
+  var perfectWarm = false;
+  function warmPerfect(i) {
+    if (perfectWarm || reduceMotion || i !== N - 1 || practice) return;
+    for (var k = 0; k < i; k++) if (picks[k] !== questions[k].answer) return;
+    perfectWarm = true;
+    try { fetch('/brand/motion/perfect.mp4').catch(function () { /* it streams instead */ }); } catch (e) { /* ignore */ }
+  }
   function showQuestion(i, focus) {
+    warmPerfect(i);
     var q = questions[i];
     root.textContent = '';
     var card = el('div', 'quiz-card');
@@ -978,7 +987,8 @@
         freshBox.hidden = false;
       }
       // Fresh from finishing today's quiz: the milestone screen (3, 7, 14, 30… days), then each new badge
-      if (fresh && official) celebrate(streakN, awarded.fresh);
+      // after a 5/5 the burst plays over the score first; the streak and badge cards follow once it has peaked
+      if (fresh && official) { if (document.querySelector('.qz-perfect')) setTimeout(function () { celebrate(streakN, awarded.fresh); }, 2200); else celebrate(streakN, awarded.fresh); }
       badgesBtn.textContent = 'Badges (' + earnedCount() + ')';
       if (fresh) maybeAskReview(awarded.stats, mine.s, streakN);
       updateChip(dates);
