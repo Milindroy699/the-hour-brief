@@ -239,7 +239,7 @@ async function make(date, outDir) {
   if (ed.quiz) await add(quizSlide(ed.quiz));
   await add(ctaSlide());
   const meta = { v: 1, date: ed.date, edition: ed.number, style, styleName: STYLE_NAMES[style], plan: plan ? plan.mode : 'rotate', slides, caption: caption(ed, five, when),
-    stories: five.map((s) => ({ id: s.id, lane: s.lane, head: s.head, subject: s.subject })), madeAt: new Date().toISOString() };
+    quizQ: ed.quiz ? ed.quiz.q : null, stories: five.map((s) => ({ id: s.id, lane: s.lane, head: s.head, subject: s.subject })), madeAt: new Date().toISOString() };
   fs.writeFileSync(path.join(dir, 'meta.json'), JSON.stringify(meta, null, 1));
   console.log(`made ${slides.length} slides for ${ed.date} in the ${STYLE_NAMES[style]} style -> ${dir}`);
   return meta;
@@ -271,6 +271,85 @@ async function post(date, { dry, force }) {
   console.log(`instagram carousel posted: ${JSON.stringify(rec)}`);
 }
 
+// ---- the evening post (owner, 2026-11-25: "one image, one video, then one image each day") ----
+// 18:30 IST, a single illustrated "Can you answer?" card: another of the day's quiz questions (not the morning slide's), with
+// the art of its story (the morning's picture if that story was in the five, else a new one in the day's style).
+function eveningCard(q, art, when) {
+  return el({ width: W, height: H, flexDirection: 'column', backgroundImage: 'linear-gradient(165deg, #4a35d8 0%, #2a1f78 55%, #14122b 100%)' }, [
+    img(art, { width: W, height: 560, objectFit: 'cover' }),
+    el({ flexDirection: 'column', flexGrow: 1, padding: '40px 64px 44px', gap: 20 }, [
+      kicker(`Tonight’s question · ${when}`, '#ffd88a'),
+      el({ fontFamily: 'Newsreader', fontWeight: 500, fontSize: Math.min(50, headSize(q.q)), lineHeight: 1.16, color: '#fff' }, clip(q.q, 170)),
+      el({ flexDirection: 'column', gap: 12 }, q.options.slice(0, 4).map((o, k) => el({ alignItems: 'center', gap: 18, padding: '14px 22px', borderRadius: 20, background: 'rgba(255,255,255,0.12)', border: '2px solid rgba(255,255,255,0.2)' }, [
+        el({ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.22)', fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 22, color: '#fff' }, String.fromCharCode(65 + k)),
+        el({ fontFamily: 'Inter', fontSize: 27, color: '#fff', flexShrink: 1 }, clip(o, 64)),
+      ]))),
+      el({ marginTop: 'auto', width: '100%' }, [brandRow('Comment A, B, C or D')]),
+    ]),
+  ]);
+}
+async function makeEvening(date, outDir) {
+  const html = fs.readFileSync(date === 'latest' ? path.join(ROOT, 'index.html') : (fs.existsSync(path.join(ROOT, `archive/${date}.html`)) ? path.join(ROOT, `archive/${date}.html`) : path.join(ROOT, 'index.html')), 'utf8');
+  const ed = readEdition(html);
+  if (date !== 'latest' && ed.date !== date) throw new Error(`no edition for ${date} (index.html is ${ed.date})`);
+  const morning = await fetch(`${PUBLIC}/social/ig/${ed.date}/meta.json`, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  let plan = null;
+  try { plan = JSON.parse((await kv(['GET', 'ig:style:plan'])) || 'null'); } catch (e) { plan = null; }
+  const style = arg('--style') || (morning && morning.style) || styleFor(ed.date, plan);
+  const qs = (Array.isArray(ed.quiz) ? ed.quiz : []).filter((q) => q && q.q && Array.isArray(q.options) && q.options.length >= 2 && (!morning || q.q !== morning.quizQ));
+  if (!qs.length) throw new Error('no quiz question left for the evening post');
+  const inFive = (q) => (morning ? morning.stories.findIndex((x) => x.id === q.story) : -1);
+  // not answered by the morning's headlines (people saw those), ideally about one of the five (its picture is ready)
+  const shown = (morning ? morning.stories.map((x) => x.head).join(' ') : topFive(ed).map((x) => `${x.head} ${x.take}`).join(' ')).toLowerCase();
+  const fresh = (x) => !shown.includes(String(x.options[x.answer] || '').toLowerCase());
+  const q = qs.find((x) => fresh(x) && inFive(x) >= 0) || qs.find(fresh) || qs[0];
+  const k = inFive(q);
+  let buf = arg('--art-dir') ? fs.readFileSync(path.join(arg('--art-dir'), 'art-1.jpg')) : null;   // testing
+  if (!buf && k >= 0) buf = await fetch(`${PUBLIC}/social/ig/${ed.date}/art-${k + 1}.jpg`).then((r) => (r.ok ? r.arrayBuffer() : null)).then((b) => (b ? Buffer.from(b) : null)).catch(() => null);
+  if (!buf) {
+    let story = null;
+    for (const l of ed.lanes) for (const x of l.stories) if (x.id === q.story) story = { ...x, lane: l.tag, key: l.key };
+    story = story || { head: q.q, take: '', lane: '', key: 'ai' };
+    const subject = await subjectFor(story, []);
+    for (let tries = 0; !buf && tries < 3; tries++) { try { buf = await generate(`${subject}. ${STYLES[style]} ${GUARD}`, 'klein'); } catch (e) { console.warn(`evening art: ${e.message}`); } }
+    if (!buf) throw new Error('no art for the evening post');
+    console.log(`evening art: ${subject}`);
+  }
+  const when = new Date(ed.date + 'T00:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+  const dir = path.join(outDir, ed.date);
+  fs.mkdirSync(dir, { recursive: true });
+  await render(eveningCard(q, `data:image/jpeg;base64,${buf.toString('base64')}`, when), path.join(dir, 'evening.jpg'));
+  const cap = ['Can you answer? 🤔', '', q.q, '', ...q.options.slice(0, 4).map((o, i) => `${String.fromCharCode(65 + i)}) ${o}`), '',
+    'Comment your answer 👇 The answer, the story behind it and today’s full quiz: link in bio.', '', 'Illustration is AI-generated.', '',
+    '#quiz #newsquiz #news #AI #business #india #stockmarket #dailybrief'].join('\n').slice(0, 2150);
+  const meta = { v: 1, kind: 'evening', date: ed.date, style, styleName: STYLE_NAMES[style], image: 'evening.jpg', question: q.q, caption: cap, madeAt: new Date().toISOString() };
+  fs.writeFileSync(path.join(dir, 'evening.json'), JSON.stringify(meta, null, 1));
+  console.log(`made the evening post for ${ed.date} (${STYLE_NAMES[style]}): ${q.q}`);
+  return meta;
+}
+async function postEvening(date, { dry, force }) {
+  const meta = await (await fetch(`${PUBLIC}/social/ig/${date}/evening.json`, { cache: 'no-store' })).json();
+  const key = `ig:evening:${date}`;
+  if (!force && !dry) { const done = await kv(['GET', key]); if (done) { console.log(`instagram evening post: already posted for ${date} (${done})`); return; } }
+  const a = await igAuth();
+  if (!a) { console.log('instagram: not connected'); return; }
+  const url = `${PUBLIC}/social/ig/${date}/${meta.image}`;
+  if (dry) { console.log(JSON.stringify({ dry: true, account: a.username, style: meta.style, url, caption: meta.caption.slice(0, 200) + '…' }, null, 1)); return; }
+  const c = await igCall('POST', `/${a.userId}/media`, { image_url: url, caption: meta.caption, access_token: a.token }, a.host);
+  for (let i = 0; i < 20; i++) {
+    const st = await igCall('GET', `/${c.id}`, { fields: 'status_code', access_token: a.token }, a.host).catch(() => ({}));
+    if (st.status_code === 'FINISHED' || !st.status_code) break;
+    if (st.status_code === 'ERROR' || st.status_code === 'EXPIRED') throw new Error(`instagram image processing: ${st.status_code}`);
+    await new Promise((r) => setTimeout(r, 4000));
+  }
+  const p = await igCall('POST', `/${a.userId}/media_publish`, { creation_id: c.id, access_token: a.token }, a.host);
+  const link = await igCall('GET', `/${p.id}`, { fields: 'permalink', access_token: a.token }, a.host).catch(() => ({}));
+  const rec = { id: p.id, url: link.permalink || '', style: meta.style, kind: 'evening', at: new Date().toISOString() };
+  await kv(['SET', key, JSON.stringify(rec), 'EX', String(120 * 86400)]);
+  await kv(['SADD', 'ig:evenings', date]);
+  console.log(`instagram evening post: ${JSON.stringify(rec)}`);
+}
+
 // ---- the style test: numbers per post, then the plan ----
 const METRICS = 'reach,likes,comments,saved,shares,total_interactions';
 export function score(m) {                       // engagement per person reached; saves and shares count most
@@ -281,13 +360,18 @@ export function decide(rows, now) {              // rows: [{date, style, score, 
   const by = {};
   for (const id of STYLE_IDS) by[id] = rows.filter((r) => r.style === id);
   const n = Math.min(...STYLE_IDS.map((id) => by[id].length));
-  const mean = (a) => a.reduce((x, r) => x + r.score, 0) / Math.max(1, a.length);
+  // a carousel and a single image engage differently: each post is scored against the average of its own kind first
+  const kindAvg = {};
+  for (const r of rows) { const k = r.kind || 'carousel'; (kindAvg[k] = kindAvg[k] || []).push(r.score); }
+  for (const k in kindAvg) kindAvg[k] = kindAvg[k].reduce((a, b) => a + b, 0) / kindAvg[k].length || 1;
+  const rel = (r) => r.score / (kindAvg[r.kind || 'carousel'] || 1);
+  const mean = (a) => a.reduce((x, r) => x + rel(r), 0) / Math.max(1, a.length);
   const avg = Object.fromEntries(STYLE_IDS.map((id) => [id, by[id].length ? mean(by[id]) : 0]));
   const order = STYLE_IDS.slice().sort((a, b) => avg[b] - avg[a]);
   const plan = { mode: 'rotate', avg, posts: Object.fromEntries(STYLE_IDS.map((id) => [id, by[id].length])), at: now };
-  if (n >= 7) {                                  // about three weeks: the leader gets most days, the others keep some
+  if (n >= 10) {                                 // about two weeks (two image posts a day): the leader gets most days, the others keep some
     const lead = order[0], gap = avg[order[1]] ? avg[lead] / avg[order[1]] : 2;
-    if (n >= 14 && gap >= 1.25) { plan.mode = 'winner'; plan.winner = lead; }
+    if (n >= 20 && gap >= 1.25) { plan.mode = 'winner'; plan.winner = lead; }
     else { plan.mode = 'weighted'; plan.weights = Object.fromEntries(STYLE_IDS.map((id) => [id, id === lead ? 0.7 : 0.15])); plan.leader = lead; }
   }
   return plan;
@@ -295,20 +379,22 @@ export function decide(rows, now) {              // rows: [{date, style, score, 
 async function stats() {
   const a = await igAuth();
   if (!a) { console.log('instagram: not connected'); return; }
-  const dates = ((await kv(['SMEMBERS', 'ig:carousels'])) || []).sort();
   const rows = [];
+  for (const [kind, set, recKey, statKey] of [['carousel', 'ig:carousels', 'ig:carousel:', 'ig:cstats:'], ['evening', 'ig:evenings', 'ig:evening:', 'ig:estats:']]) {
+  const dates = ((await kv(['SMEMBERS', set])) || []).sort();
   for (const d of dates) {
-    const rec = JSON.parse((await kv(['GET', `ig:carousel:${d}`])) || 'null');
+    const rec = JSON.parse((await kv(['GET', recKey + d])) || 'null');
     if (!rec) continue;
     try {
       const j = await igCall('GET', `/${rec.id}/insights`, { metric: METRICS, access_token: a.token }, a.host);
       const m = {};
       for (const x of j.data || []) m[x.name] = (x.values && x.values[0] && x.values[0].value) || x.total_value?.value || 0;
-      await kv(['SET', `ig:cstats:${d}`, JSON.stringify({ ...m, style: rec.style, at: Date.now() }), 'EX', String(400 * 86400)]);
+      await kv(['SET', statKey + d, JSON.stringify({ ...m, style: rec.style, at: Date.now() }), 'EX', String(400 * 86400)]);
       const age = (Date.now() - Date.parse(rec.at)) / 864e5;
-      if (age >= 2) rows.push({ date: d, style: rec.style, score: score(m), reach: m.reach || 0 });
-      console.log(`${d} ${rec.style}: ${JSON.stringify(m)} score ${score(m).toFixed(4)}`);
-    } catch (e) { console.log(`${d}: insights not available (${e.message})`); }
+      if (age >= 2) rows.push({ date: d, kind, style: rec.style, score: score(m), reach: m.reach || 0 });
+      console.log(`${d} ${kind} ${rec.style}: ${JSON.stringify(m)} score ${score(m).toFixed(4)}`);
+    } catch (e) { console.log(`${d} ${kind}: insights not available (${e.message})`); }
+  }
   }
   const plan = decide(rows, new Date().toISOString());
   await kv(['SET', 'ig:style:plan', JSON.stringify(plan)]);
@@ -332,6 +418,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   (async () => {
     if (process.argv.includes('--check')) return check();
     if (process.argv.includes('--stats')) return stats();
+    if (process.argv.includes('--make-evening')) return makeEvening(arg('--date', 'latest'), arg('--out', 'out/ig'));
+    if (process.argv.includes('--post-evening')) return postEvening(arg('--date', istToday()), { dry: process.argv.includes('--dry'), force: process.argv.includes('--force') });
     if (process.argv.includes('--make')) return make(arg('--date', 'latest'), arg('--out', 'out/ig'));
     if (process.argv.includes('--post')) return post(arg('--date', istToday()), { dry: process.argv.includes('--dry'), force: process.argv.includes('--force') });
     console.log('use --make, --post, --stats or --check');

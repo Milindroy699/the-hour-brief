@@ -4,10 +4,13 @@ name: Instagram carousel
 # on R2 (social/ig/<date>/, which the post kit shows) and posts it to Instagram, once a day, at a fixed time (09:45 IST; a second
 # try at 11:45 in case the edition was late). Posting needs the repo variable IG_CAROUSEL = on (Settings > Variables); without
 # it the slides are still made, for the post kit. Every evening the style test reads each post's numbers (--stats).
+# Each day on Instagram (owner, 2026-11-25): this carousel at 09:45, the 3-highlights Reel at ~11:30 (short.yml), and at 18:30
+# a single illustrated "Can you answer?" quiz image (the evening job below).
 on:
   schedule:
     - cron: '15 4 * * *'     # 09:45 IST
     - cron: '15 6 * * *'     # 11:45 IST, only does anything if 09:45 found no edition
+    - cron: '0 13 * * *'     # 18:30 IST: the evening quiz image
     - cron: '30 14 * * *'    # 20:00 IST: the numbers
   workflow_dispatch:
     inputs:
@@ -27,6 +30,10 @@ on:
         default: false
       check:
         description: Only check the Instagram connection and that post insights can be read
+        type: boolean
+        default: false
+      evening:
+        description: The evening quiz image instead of the morning carousel
         type: boolean
         default: false
 
@@ -56,7 +63,7 @@ jobs:
         run: node tools/social/insta.mjs --stats
 
   carousel:
-    if: (github.event_name == 'schedule' && github.event.schedule != '30 14 * * *') || (github.event_name == 'workflow_dispatch' && !inputs.check)
+    if: (github.event_name == 'schedule' && (github.event.schedule == '15 4 * * *' || github.event.schedule == '15 6 * * *')) || (github.event_name == 'workflow_dispatch' && !inputs.check && !inputs.evening)
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
@@ -121,3 +128,57 @@ jobs:
           path: out/ig
           retention-days: 7
           if-no-files-found: ignore
+
+  evening:
+    if: (github.event_name == 'schedule' && github.event.schedule == '0 13 * * *') || (github.event_name == 'workflow_dispatch' && inputs.evening)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      R2_ENDPOINT: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      KV_REST_API_URL: ${{ secrets.KV_REST_API_URL }}
+      KV_REST_API_TOKEN: ${{ secrets.KV_REST_API_TOKEN }}
+      IG_GRAPH_VERSION: ${{ vars.IG_GRAPH_VERSION }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Make sure ffmpeg is available
+        timeout-minutes: 6
+        run: |
+          command -v ffmpeg >/dev/null && exit 0
+          sudo timeout 240 apt-get update -qq && sudo timeout 240 apt-get install -y -qq ffmpeg
+      - run: (cd tools/video && npm ci --silent) && (cd tools/audio && npm ci --silent)
+      - name: Which edition, and is it done already
+        id: which
+        env:
+          DATE: ${{ inputs.date }}
+          FORCE: ${{ inputs.force }}
+        run: |
+          d="${DATE:-latest}"
+          if [ "$d" = "latest" ]; then d=$(node -e "import('./tools/social/insta.mjs').then(m=>console.log(m.readEdition(require('fs').readFileSync('index.html','utf8')).date))"); fi
+          echo "date=$d" >> "$GITHUB_OUTPUT"
+          if [ "$FORCE" != "true" ] && curl -fsS "$R2_PUBLIC_URL/social/ig/$d/evening.json" -o /dev/null; then echo "evening post for $d already made"; echo "made=1" >> "$GITHUB_OUTPUT"; fi
+      - name: Make the evening image
+        if: steps.which.outputs.made != '1'
+        run: node tools/social/insta.mjs --make-evening --date "${{ steps.which.outputs.date }}" --out out/ig ${{ inputs.style && format('--style {0}', inputs.style) || '' }}
+      - name: Put it on R2
+        if: steps.which.outputs.made != '1'
+        run: |
+          d="${{ steps.which.outputs.date }}"
+          aws s3 cp "out/ig/$d/evening.jpg" "s3://$R2_BUCKET/social/ig/$d/evening.jpg" --endpoint-url "$R2_ENDPOINT" --content-type image/jpeg --cache-control "public, max-age=86400"
+          aws s3 cp "out/ig/$d/evening.json" "s3://$R2_BUCKET/social/ig/$d/evening.json" --endpoint-url "$R2_ENDPOINT" --content-type application/json --cache-control "public, max-age=120"
+      - name: Post to Instagram (once per date)
+        if: (github.event_name == 'schedule' && vars.IG_CAROUSEL == 'on') || (github.event_name == 'workflow_dispatch' && inputs.post)
+        run: node tools/social/insta.mjs --post-evening --date "${{ steps.which.outputs.date }}" ${{ inputs.force && '--force' || '' }}
