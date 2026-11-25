@@ -1,0 +1,72 @@
+{
+  "date": "2026-11-25",
+  "edition": 99,
+  "lane": "mkt",
+  "storyId": "mkt-4",
+  "storyTitle": "Fed funds futures now price a December hike, not a cut",
+  "insight": "Markets now give a December Fed hike about 90% odds and any cut just 2%: not cutting is already a form of tightening.",
+  "linkedin": "Markets now price a Fed hike at 90%, and a cut at 2%.\n\nFed funds futures see a quarter-point hike at the December 9 meeting, after Chair Kevin Warsh's recent inflation warnings.\n\nWhen a cut stops being the base case, financial conditions tighten before the Fed does anything.\n\nThat is the backdrop to this week's chip sell-off, with Nvidia down 5.86% on Tuesday.\n\nToday's full brief 👉 https://the-hour-brief.vercel.app/e/2026-11-25\n\n#Markets #Fed #Investing",
+  "status": "Fed futures now price a December rate HIKE at about 90% and a cut at just 2%. The tightening has started before the Fed moves. https://the-hour-brief.vercel.app/e/2026-11-25",
+  "push": {
+    "title": "Markets now bet on a Fed hike, not a cut",
+    "body": "Futures give a December hike about 90% odds and a cut only 2%. Tightening before the Fed even acts."
+  },
+  "page": "Today's Hour Brief opens with the comedown. Nvidia closed down 5.86% on Tuesday, giving back much of Monday's 31% rally, and Anthropic's shares slipped below their $83 IPO price just six trading days after the largest IPO on record. Behind the move, fed funds futures now price roughly a 90% chance of a December hike.\n\nAI & Tech: the broader chip index fell about 7.9%, with Jensen Huang's December 1-3 testimony still ahead.\n\nBusiness: Tata Sons faces Thursday's board meeting with the RBI listing plan and a ₹25,000 crore funding request unresolved.\n\nMarkets: Indian markets reopen after the holiday still carrying Monday's selloff, with the Sensex at 82,435.99.\n\n#AI #Markets #India",
+  "x": "Markets now price a Fed hike, not a cut.\n\nFutures see about 90% odds of a December hike and just 2% for any cut.\n\nhttps://the-hour-brief.vercel.app/e/2026-11-25",
+  "xpack": {
+    "thread": [
+      "Nvidia fell 5.86% on Tuesday, giving back much of Monday's 31% jump. Anthropic slipped below its IPO price. Here's what mattered 👇",
+      "Nvidia closed at $155.38. The wider chip index dropped about 7.9%. Jensen Huang testifies to Congress on export controls on December 1-3. The market doubts the CEO story is settled.",
+      "Anthropic's shares fell about 6.6% to roughly $77, below the $83 IPO price. That's six trading days after the biggest IPO ever. A fast test of hype versus fundamentals.",
+      "Fed funds futures now put about 90% odds on a quarter-point hike on December 9. A cut is at 2%. When a cut stops being the base case, money gets tighter before the Fed acts.",
+      "Tata Sons' board meets Thursday. On the table: the RBI-linked listing plan and a ₹25,000 crore funding request from Shapoorji Pallonji. Noel Tata is betting the board can't keep putting both off.",
+      "Meta fell 7% after saying it may raise up to $95 billion in new stock for AI spending. Big Tech is on track to spend over $720 billion this year. Selling stock to fund a plan means cash can't keep up.",
+      "One day it's a rally, the next it's a comedown, and rate fears sit underneath both. Full brief, free: https://the-hour-brief.vercel.app/e/2026-11-25"
+    ],
+    "posts": [
+      {
+        "time": "15:00",
+        "text": "Big Tech will spend over $720 billion on AI this year.\n\nMeta fell 7% after saying it may sell up to $95 billion of new stock to pay for it, and Alphabet's free cash flow was negative for a second quarter.\n\nhttps://the-hour-brief.vercel.app/s/2026-11-25/biz-5"
+      },
+      {
+        "time": "18:00",
+        "text": "Tata Sons has two big asks on Thursday's board agenda.\n\nOne is the RBI-linked listing plan. The other is Shapoorji Pallonji's ₹25,000 crore funding request. Tata Trusts opposes a listing.\n\nhttps://the-hour-brief.vercel.app/s/2026-11-25/biz-1"
+      }
+    ],
+    "poll": {
+      "question": "By what percentage did Nvidia's stock fall on Tuesday, giving back much of Monday's rally?",
+      "options": [
+        "5.86%",
+        "2.4%",
+        "9.2%",
+        "12.1%"
+      ],
+      "answer": "The answer: 5.86%. Nvidia closed at $155.38, giving back much of Monday's 31% rally after Jensen Huang's reinstatement.\n\nhttps://the-hour-brief.vercel.app/s/2026-11-25/ai-1"
+    },
+    "replies": {
+      "facts": [
+        "Nvidia closed at $155.38 on Tuesday, down 5.86% after Monday's 31% jump.",
+        "The broader semiconductor index fell about 7.9% on Tuesday.",
+        "Anthropic's shares fell below their $83 IPO price just six trading days after listing.",
+        "Fed funds futures price about a 90% chance of a quarter-point hike on December 9.",
+        "Nifty closed Monday at 25,349.65, down 1.75%, while Nifty IT rose about 2%.",
+        "Bank Nifty fell about 3.2% on Monday, leading the selloff.",
+        "Swiggy's Instamart loss widened to ₹895 crore while revenue grew 33% to ₹1,306 crore.",
+        "Mahanadi Coalfields' ₹9,500 crore IPO lists on November 27, with Coal India selling a 10% stake."
+      ],
+      "searches": [
+        "Nifty",
+        "Nvidia Huang",
+        "Anthropic IPO",
+        "Fed rate hike"
+      ]
+    }
+  },
+  "leaders": {
+    "id": "business-2026-11-23",
+    "category": "business",
+    "title": "Netflix Bets That Human Taste Beats the Algorithm, Even as It Buys AI",
+    "post": "Netflix says its own data should never write the story.\n\nCo-CEO Ted Sarandos told Bloomberg's Emily Chang that viewers quit House of Cards at minute one, when Underwood kills a dog and breaks the fourth wall, and that moment defined the show.\n\nHis case: data finds an audience, but judgment creates demand, even as Netflix pays a reported near-$600 million for Ben Affleck's AI firm.\n\nThe stock is down roughly 40% from its peak, so the bet is being tested.\n\nRead the full breakdown 👉 https://the-hour-brief.vercel.app/leaders.html#a=business-2026-11-23\n\n#Netflix #Business #AI"
+  },
+  "generatedAt": "2026-11-25T03:38:30.000Z"
+}
