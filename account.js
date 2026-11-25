@@ -109,7 +109,7 @@
   // ---- the sign-in flow (also the last step of onboarding) ----
   // Google on Android needs the app's signing fingerprints in Firebase (google-services.json with Android OAuth clients);
   // until they are in, Android shows phone sign-in only. Flip to true once they are (no app build needed).
-  var ANDROID_GOOGLE = false;
+  var ANDROID_GOOGLE = true;
   function nativeAuth() { return P.FirebaseAuthentication && (IOS || ANDROID_GOOGLE) ? P.FirebaseAuthentication : null; }
   function oauth(provider, status, done) {
     var F = nativeAuth();
