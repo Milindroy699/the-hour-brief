@@ -6,6 +6,9 @@ name: Instagram carousel
 # it the slides are still made, for the post kit. Every evening the style test reads each post's numbers (--stats).
 # Each day on Instagram (owner, 2026-11-25): this carousel at 09:45, the 3-highlights Reel at ~11:30 (short.yml), and at 18:30
 # a single illustrated "Can you answer?" quiz image (the evening job below).
+# Timing: GitHub ran these schedules up to 10 hours late (2026-11-25), so the Vercel cron (api/post-digest.js, jobs
+# ig-morning / ig-evening) starts this workflow on time with auto=true. The schedules below stay as a backup; a late one
+# only posts within its window (carousel before 14:00 IST, evening image before 22:00 IST), and a date is never posted twice.
 on:
   schedule:
     - cron: '15 4 * * *'     # 09:45 IST
@@ -34,6 +37,10 @@ on:
         default: false
       evening:
         description: The evening quiz image instead of the morning carousel
+        type: boolean
+        default: false
+      auto:
+        description: The timed daily run (sent by the Vercel cron); posts if IG_CAROUSEL is on, like the schedules
         type: boolean
         default: false
 
@@ -98,14 +105,16 @@ jobs:
         env:
           DATE: ${{ inputs.date }}
           FORCE: ${{ inputs.force }}
+          TIMED: ${{ github.event_name == 'schedule' || inputs.auto }}
         run: |
           d="${DATE:-latest}"
           ed=$(node -e "import('./tools/social/insta.mjs').then(m=>console.log(m.readEdition(require('fs').readFileSync('index.html','utf8')).date))")
           if [ "$d" = "latest" ]; then
             d="$ed"
             today=$(TZ=Asia/Kolkata date +%F)
-            if [ "${{ github.event_name }}" = "schedule" ] && [ "$d" != "$today" ]; then echo "today's edition ($today) isn't out yet (latest is $d)"; echo "skip=1" >> "$GITHUB_OUTPUT"; exit 0; fi
+            if [ "$TIMED" = "true" ] && [ "$d" != "$today" ]; then echo "today's edition ($today) isn't out yet (latest is $d)"; echo "skip=1" >> "$GITHUB_OUTPUT"; exit 0; fi
           fi
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "$(TZ=Asia/Kolkata date +%H)" -ge 14 ]; then echo "GitHub started this schedule late ($(TZ=Asia/Kolkata date +%H:%M) IST): not posting a morning carousel now"; echo "skip=1" >> "$GITHUB_OUTPUT"; exit 0; fi
           echo "date=$d" >> "$GITHUB_OUTPUT"
           if [ "$FORCE" != "true" ] && curl -fsS "$R2_PUBLIC_URL/social/ig/$d/meta.json" -o /dev/null; then echo "slides for $d already made"; echo "made=1" >> "$GITHUB_OUTPUT"; fi
       - name: Make the slides
@@ -119,7 +128,7 @@ jobs:
           aws s3 cp "out/ig/$d/meta.json" "s3://$R2_BUCKET/social/ig/$d/meta.json" --endpoint-url "$R2_ENDPOINT" --content-type application/json --cache-control "public, max-age=120"
           curl -fsS -o /dev/null -w "slide 1: %{http_code} %{content_type} %{size_download} bytes\n" "$R2_PUBLIC_URL/social/ig/$d/1.jpg"
       - name: Post to Instagram (once per date)
-        if: steps.which.outputs.skip != '1' && ((github.event_name == 'schedule' && vars.IG_CAROUSEL == 'on') || (github.event_name == 'workflow_dispatch' && inputs.post))
+        if: steps.which.outputs.skip != '1' && (((github.event_name == 'schedule' || inputs.auto) && vars.IG_CAROUSEL == 'on') || (github.event_name == 'workflow_dispatch' && inputs.post))
         run: node tools/social/insta.mjs --post --date "${{ steps.which.outputs.date }}" ${{ inputs.force && '--force' || '' }}
       - uses: actions/upload-artifact@v4
         if: always() && steps.which.outputs.skip != '1'
@@ -168,17 +177,18 @@ jobs:
         run: |
           d="${DATE:-latest}"
           if [ "$d" = "latest" ]; then d=$(node -e "import('./tools/social/insta.mjs').then(m=>console.log(m.readEdition(require('fs').readFileSync('index.html','utf8')).date))"); fi
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "$(TZ=Asia/Kolkata date +%H)" -ge 22 ]; then echo "GitHub started this schedule late ($(TZ=Asia/Kolkata date +%H:%M) IST): not posting the evening image now"; echo "skip=1" >> "$GITHUB_OUTPUT"; exit 0; fi
           echo "date=$d" >> "$GITHUB_OUTPUT"
           if [ "$FORCE" != "true" ] && curl -fsS "$R2_PUBLIC_URL/social/ig/$d/evening.json" -o /dev/null; then echo "evening post for $d already made"; echo "made=1" >> "$GITHUB_OUTPUT"; fi
       - name: Make the evening image
-        if: steps.which.outputs.made != '1'
+        if: steps.which.outputs.skip != '1' && steps.which.outputs.made != '1'
         run: node tools/social/insta.mjs --make-evening --date "${{ steps.which.outputs.date }}" --out out/ig ${{ inputs.style && format('--style {0}', inputs.style) || '' }}
       - name: Put it on R2
-        if: steps.which.outputs.made != '1'
+        if: steps.which.outputs.skip != '1' && steps.which.outputs.made != '1'
         run: |
           d="${{ steps.which.outputs.date }}"
           aws s3 cp "out/ig/$d/evening.jpg" "s3://$R2_BUCKET/social/ig/$d/evening.jpg" --endpoint-url "$R2_ENDPOINT" --content-type image/jpeg --cache-control "public, max-age=86400"
           aws s3 cp "out/ig/$d/evening.json" "s3://$R2_BUCKET/social/ig/$d/evening.json" --endpoint-url "$R2_ENDPOINT" --content-type application/json --cache-control "public, max-age=120"
       - name: Post to Instagram (once per date)
-        if: (github.event_name == 'schedule' && vars.IG_CAROUSEL == 'on') || (github.event_name == 'workflow_dispatch' && inputs.post)
+        if: steps.which.outputs.skip != '1' && (((github.event_name == 'schedule' || inputs.auto) && vars.IG_CAROUSEL == 'on') || (github.event_name == 'workflow_dispatch' && inputs.post))
         run: node tools/social/insta.mjs --post-evening --date "${{ steps.which.outputs.date }}" ${{ inputs.force && '--force' || '' }}
