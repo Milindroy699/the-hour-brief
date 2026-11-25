@@ -21,7 +21,7 @@ const PUBLIC = (process.env.R2_PUBLIC_URL || 'https://pub-1dafea4a948540db8413a0
 const env = (k) => (process.env[k] || '').trim();
 
 // ---- KV (Upstash REST) ----
-async function kv(cmd) {
+export async function kv(cmd) {
   if (!env('KV_REST_API_URL') || !env('KV_REST_API_TOKEN')) throw new Error('KV_REST_API_URL / KV_REST_API_TOKEN not set');
   const r = await fetch(`${env('KV_REST_API_URL')}/${cmd.map(encodeURIComponent).join('/')}`, { headers: { Authorization: `Bearer ${env('KV_REST_API_TOKEN')}` } });
   const j = await r.json();
@@ -69,7 +69,7 @@ async function toYouTube(meta, video, { dry }) {
 // Two kinds of token work: an Instagram-login token (graph.instagram.com) or a Facebook-login one, where the account is reached
 // through its linked Facebook Page (graph.facebook.com, with the Page's token, which does not expire). Same publishing calls.
 const IG = (host = 'graph.instagram.com') => `https://${host}${env('IG_GRAPH_VERSION') ? '/' + env('IG_GRAPH_VERSION') : ''}`;
-async function igCall(method, p, params, host) {
+export async function igCall(method, p, params, host) {
   const url = `${IG(host)}${p}${method === 'GET' ? '?' + new URLSearchParams(params) : ''}`;
   const r = await fetch(url, method === 'GET' ? {} : { method, headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(params) });
   const j = await r.json().catch(() => ({}));
@@ -77,7 +77,7 @@ async function igCall(method, p, params, host) {
   if (!r.ok || j.error) throw new Error(`instagram ${p}: ${String((j.error && j.error.message) || r.status).replace(/\b(EAA|IG)[A-Za-z0-9_-]{20,}/g, '<token hidden>')}`);
   return j;
 }
-async function igAuth() {
+export async function igAuth() {
   const raw = await kv(['GET', 'ig:auth']);
   if (!raw) return null;
   let a = JSON.parse(raw);
