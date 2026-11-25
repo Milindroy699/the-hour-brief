@@ -695,9 +695,9 @@ https://the-hour-brief.vercel.app/app?src=x-pinned</pre>
     var styleBody = posts.length ? h('div', {}, [
       table(['Style', 'Posts', 'Engagement per 100 reached', 'Reach'], ['riso', 'watercolor', 'clay'].map(function (s) { var p = per[s]; return [SN[s], p.n, p.n ? (p.sum / p.n * 100).toFixed(1) : '–', fmt(p.reach)]; }), 1),
       h('div', { style: 'height:12px' }),
-      table(['Post', 'Style', 'Reach', 'Saves', 'Shares', 'Likes', 'Comments'], posts.slice(0, 20).map(function (x) { var m = x.stats || {}, lab = short(x.date) + (x.kind === 'evening' ? ' · quiz image' : ' · carousel'); return [x.post.url ? h('a', { href: x.post.url, target: '_blank', rel: 'noopener', text: lab }) : lab, SN[x.post.style] || x.post.style, m.reach != null ? m.reach : '–', m.saved != null ? m.saved : '–', m.shares != null ? m.shares : '–', m.likes != null ? m.likes : '–', m.comments != null ? m.comments : '–']; }), 1),
+      table(['Post', 'Style', 'Reach', 'Saves', 'Shares', 'Likes', 'Comments'], posts.slice(0, 20).map(function (x) { var m = x.stats || {}, lab = short(x.date) + (x.kind === 'evening' ? (x.post.style === 'reel' ? ' · quiz Reel' : ' · quiz image') : ' · carousel'); return [x.post.url ? h('a', { href: x.post.url, target: '_blank', rel: 'noopener', text: lab }) : lab, x.post.style === 'reel' ? 'not in the test' : SN[x.post.style] || x.post.style, m.reach != null ? m.reach : '–', m.saved != null ? m.saved : '–', m.shares != null ? m.shares : '–', m.likes != null ? m.likes : '–', m.comments != null ? m.comments : '–']; }), 1),
       h('p', { class: 'note', style: 'margin-top:10px', text: planText + ' Engagement counts saves and shares 3x, comments 2x, likes 1x, divided by reach; a post counts once it is 2 days old. Numbers are read every evening at 20:00.' }),
-    ]) : h('p', { class: 'muted', text: 'Two image posts a day: the carousel at 09:45 and a quiz image at 18:30 (the Reel at ~11:30 is separate). Numbers arrive each evening. ' + planText });
+    ]) : h('p', { class: 'muted', text: 'The carousel at 09:45 is the style test; the quiz Reel at 18:30 and the Reel at ~11:30 are separate. Numbers arrive each evening. ' + planText });
     chBox.appendChild(card('Instagram style test (daily carousel)', 'Which illustration style people engage with most.', styleBody));
     // podcast
     var apps = {}, eps = {};

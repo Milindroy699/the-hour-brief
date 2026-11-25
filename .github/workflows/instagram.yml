@@ -5,7 +5,7 @@ name: Instagram carousel
 # try at 11:45 in case the edition was late). Posting needs the repo variable IG_CAROUSEL = on (Settings > Variables); without
 # it the slides are still made, for the post kit. Every evening the style test reads each post's numbers (--stats).
 # Each day on Instagram (owner, 2026-11-25): this carousel at 09:45, the 3-highlights Reel at ~11:30 (short.yml), and at 18:30
-# a single illustrated "Can you answer?" quiz image (the evening job below).
+# a "Can you answer?" quiz Reel over the owner's Veo loop (the evening job below; an illustrated image without the loop file).
 # Timing: GitHub ran these schedules up to 10 hours late (2026-11-25), so the Vercel cron (api/post-digest.js, jobs
 # ig-morning / ig-evening) starts this workflow on time with auto=true. The schedules below stay as a backup; a late one
 # only posts within its window (carousel before 14:00 IST, evening image before 22:00 IST), and a date is never posted twice.
@@ -187,6 +187,8 @@ jobs:
         if: steps.which.outputs.skip != '1' && steps.which.outputs.made != '1'
         run: |
           d="${{ steps.which.outputs.date }}"
+          # since 2026-11-25 a 12 s Reel over the owner's Veo quiz loop (evening.mp4, with evening.jpg as its cover)
+          if [ -f "out/ig/$d/evening.mp4" ]; then aws s3 cp "out/ig/$d/evening.mp4" "s3://$R2_BUCKET/social/ig/$d/evening.mp4" --endpoint-url "$R2_ENDPOINT" --content-type video/mp4 --cache-control "public, max-age=86400"; fi
           aws s3 cp "out/ig/$d/evening.jpg" "s3://$R2_BUCKET/social/ig/$d/evening.jpg" --endpoint-url "$R2_ENDPOINT" --content-type image/jpeg --cache-control "public, max-age=86400"
           aws s3 cp "out/ig/$d/evening.json" "s3://$R2_BUCKET/social/ig/$d/evening.json" --endpoint-url "$R2_ENDPOINT" --content-type application/json --cache-control "public, max-age=120"
       - name: Post to Instagram (once per date)

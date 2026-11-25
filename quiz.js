@@ -798,8 +798,26 @@
   // Share right under it, above the fold; then how others did; the answers folded away (open on a tap, calm colours); retake
   // and badges as quiet links. The same layout in the player and on Challenge later, where it used to feel crowded.
   var SHARE_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>';
+  // 5 out of 5 (owner, 2026-11-25): a short burst of light over the score, the first time today, from the owner's Veo clip
+  // (/brand/motion/perfect.mp4, on black: mix-blend-mode screen drops the black, so only the light shows). Muted, never
+  // with reduced motion, gone after it ends (or 5 s), and nothing at all if the clip isn't there.
+  function playPerfect() {
+    if (reduceMotion || document.querySelector('.qz-perfect')) return;
+    var v = el('video', 'qz-perfect');
+    v.muted = true; v.playsInline = true; v.autoplay = true; v.preload = 'auto';
+    v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('aria-hidden', 'true');
+    var gone = function () { v.classList.add('out'); setTimeout(function () { v.remove(); }, 400); };
+    v.addEventListener('ended', gone);
+    v.addEventListener('error', function () { v.remove(); });
+    setTimeout(gone, 5000);
+    v.src = '/brand/motion/perfect.mp4';
+    document.body.appendChild(v);
+    var p = v.play();
+    if (p && p.catch) p.catch(function () { v.remove(); });
+  }
   function showResult(res, official, fresh, focus) {
     root.textContent = '';
+    if (fresh && official && res.s === res.t && res.t > 0) playPerfect();
     var card = el('div', 'quiz-card quiz-result qz-res');
     picks = res.a ? res.a.slice() : [];
 

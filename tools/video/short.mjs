@@ -30,7 +30,17 @@ const APPLE = 'https://podcasts.apple.com/us/podcast/the-hour-brief/id6837406304
 const AMAZON = 'https://music.amazon.com/podcasts/191ea61e-41ab-4d99-aa47-012a56027de9/the-hour-brief';
 const W = 1080, H = 1920;
 const LANES = [['ai', 'AI & Tech'], ['biz', 'Business'], ['mkt', 'Markets']];
-const C = { bg: '#0c0d15', ink: '#ffffff', soft: '#c9c5ea', faint: '#8e8ab0', violet: '#8b6cf6', violetDeep: '#5e43f3', line: 'rgba(255,255,255,0.14)' };
+const NIGHT = { bg: '#0c0d15', ink: '#ffffff', soft: '#c9c5ea', faint: '#8e8ab0', violet: '#8b6cf6', violetDeep: '#5e43f3', line: 'rgba(255,255,255,0.14)', card: 'rgba(255,255,255,0.09)', chip: 'rgba(255,255,255,0.08)' };
+// Over the morning sky (owner's Veo loop, 2026-11-25): dark ink on light, the caption on a frosted white card.
+const DAY = { bg: '#f6efe8', ink: '#1d1a33', soft: '#4a4560', faint: '#6f6a8a', violet: '#5e43f3', violetDeep: '#5e43f3', line: 'rgba(29,26,51,0.14)', card: 'rgba(255,255,255,0.74)', chip: 'rgba(255,255,255,0.7)' };
+let C = NIGHT;
+// The moving backgrounds (owner's Veo clips, 2026-11-25; seamless loops made with an xfade of each clip's end into its start):
+// the hourglass opener (sped up to OPENER_SECONDS), the morning sky behind the three takeaways, the night sky behind the
+// outro. Frames are then drawn with no background of their own and laid over them. Without the files, the flat look as before.
+const MOTION = path.join(import.meta.dirname, 'motion');
+const hasMotion = () => ['opener.mp4', 'morning.mp4', 'night.mp4'].every((f) => fs.existsSync(path.join(MOTION, f)));
+const OPENER_SECONDS = 3;
+let CLEAR = false;
 const END_SECONDS = 3.5;                    // the silent end card, only if the spoken outro is not available
 // The spoken outro, in the day's voice: one clip per end card, so each card lasts exactly as long as its sentence. The words
 // never change, so each clip is recorded once (Sarvam, about ₹1 in all) and kept on R2 as shorts/outro-<hash>.mp3; a new voice,
@@ -102,8 +112,8 @@ const SANS = 'Inter, InterExt', SERIF = 'Newsreader, NewsreaderExt', LABEL = 'Sp
 function frameShell(children, { glow = '50% 0%' } = {}) {
   // Instagram and YouTube cover the bottom ~380px (caption, buttons) and a strip on the right: nothing important goes there.
   return el('div', {
-    width: W, height: H, flexDirection: 'column', padding: '120px 96px 400px 80px', backgroundColor: C.bg,
-    backgroundImage: `radial-gradient(circle at ${glow}, rgba(94,67,243,0.55), rgba(12,13,21,0) 62%)`, color: C.ink, fontFamily: SANS,
+    width: W, height: H, flexDirection: 'column', padding: '120px 96px 400px 80px', ...(CLEAR ? {} : { backgroundColor: C.bg,
+    backgroundImage: `radial-gradient(circle at ${glow}, rgba(94,67,243,0.55), rgba(12,13,21,0) 62%)` }), color: C.ink, fontFamily: SANS,
   }, children);
 }
 function masthead(when) {
@@ -119,7 +129,7 @@ function progress(active) {
   return el('div', { gap: 14, marginTop: 56 }, [0, 1, 2].map((i) => el('div', { flexGrow: 1, height: 10, borderRadius: 5, backgroundColor: i <= active ? C.violet : C.line })));
 }
 function caption(line) {
-  return el('div', { backgroundColor: 'rgba(255,255,255,0.09)', borderRadius: 30, padding: '34px 40px', border: `2px solid ${C.line}` },
+  return el('div', { backgroundColor: C.card, borderRadius: 30, padding: '34px 40px', border: `2px solid ${C.line}` },
     [el('div', { fontSize: 62, fontWeight: 700, lineHeight: 1.22 }, line)]);
 }
 
@@ -153,7 +163,7 @@ const icon = (d, size = 46) => ({ type: 'svg', props: { width: size, height: siz
 const storeBadge = (d, small, big) => el('div', { alignItems: 'center', gap: 18, backgroundColor: '#000', border: '2px solid rgba(255,255,255,0.35)', borderRadius: 22, padding: '18px 30px' },
   [icon(d), el('div', { flexDirection: 'column' }, [el('div', { fontSize: 24, color: C.soft }, small), el('div', { fontSize: 40, fontWeight: 700 }, big)])]);
 const DOT = { Spotify: '#1ed760', WhatsApp: '#25d366', Telegram: '#2aabee', 'Apple Podcasts': '#b150e2', 'YouTube Music': '#ff0033', 'Amazon Music': '#25d1da', JioSaavn: '#2bc5b4' };
-const chip = (name) => el('div', { alignItems: 'center', gap: 18, backgroundColor: 'rgba(255,255,255,0.08)', border: `2px solid ${C.line}`, borderRadius: 999, padding: '20px 34px' },
+const chip = (name) => el('div', { alignItems: 'center', gap: 18, backgroundColor: C.chip, border: `2px solid ${C.line}`, borderRadius: 999, padding: '20px 34px' },
   [el('div', { width: 22, height: 22, borderRadius: 11, backgroundColor: DOT[name] || C.violet }), el('div', { fontSize: 44, fontWeight: 700 }, name)]);
 
 // The outro's three cards (kind: app, also, bye), shown while each sentence is spoken.
@@ -301,6 +311,9 @@ async function main() {
 
   // frames: one per caption line, then the end card
   const f = fonts();
+  const motion = hasMotion();
+  CLEAR = motion;
+  C = motion ? DAY : NIGHT;
   const list = [];
   let n = 0;
   for (const s of p.segs) {
@@ -310,6 +323,8 @@ async function main() {
       list.push({ file, dur: ln.dur });
     }
   }
+  const mainSeconds = list.reduce((a, x) => a + x.dur, 0);   // the takeaways: morning sky; everything after: night sky
+  C = NIGHT;
   // the ending: the spoken outro over its three cards, or (no outro clips) the silent end card
   const outro = await outroAudio({ work, outDir: out, base, voice: manifest.voice || 'neha', pace: manifest.pace || 1.4 });
   let total = p.duration - END_SECONDS;
@@ -339,15 +354,37 @@ async function main() {
     labels.push('[gap]');
     outro.forEach((o, k) => { trims.push(`[${k + 2}:a]${norm},volume=4dB,alimiter=limit=0.97[o${k}]`); labels.push(`[o${k}]`); });   // the outro clips come out ~4 dB quieter than the day's narration
   }
-  const join = labels.join('') + `concat=n=${labels.length}:v=0:a=1,apad=whole_dur=${total.toFixed(3)}[aout]`;
   fs.mkdirSync(out, { recursive: true });
   const mp4 = path.join(out, `${date}.mp4`);
-  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', path.join(work, 'frames.txt'), '-i', mp3,
-    ...(outro ? outro.flatMap((o) => ['-i', o.file]) : []),
-    '-filter_complex', `${trims.join(';')};${join}`, '-map', '0:v', '-map', '[aout]',
-    '-vf', 'fps=30,format=yuv420p', '-c:v', 'libx264', '-preset', 'medium', '-crf', '22', '-tune', 'stillimage',
-    '-c:a', 'aac', '-b:a', '128k', '-ar', '44100', '-t', total.toFixed(3), '-movflags', '+faststart', mp4]);
-  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', list[Math.min(1, list.length - 1)].file, '-q:v', '3', path.join(out, `${date}.jpg`)]);
+  const audioIn = ['-f', 'concat', '-safe', '0', '-i', path.join(work, 'frames.txt'), '-i', mp3, ...(outro ? outro.flatMap((o) => ['-i', o.file]) : [])];
+  if (motion) {
+    // the opener (sped up), then the frames over the morning sky (the takeaways) and the night sky (the outro); the voice
+    // starts as the opener fades into the first frame
+    const X = 0.4, shift = OPENER_SECONDS - X, nIn = 2 + (outro ? outro.length : 0), iO = nIn, iM = nIn + 1, iN = nIn + 2;
+    const prep = 'scale=1080:1920:flags=lanczos,setsar=1,fps=30';
+    const video = [
+      `[${iO}:v]setpts=PTS/${(8 / OPENER_SECONDS).toFixed(4)},${prep},trim=0:${OPENER_SECONDS},setpts=PTS-STARTPTS,format=yuv420p,settb=1/30[op]`,
+      `[${iM}:v]${prep},trim=0:${mainSeconds.toFixed(3)},setpts=PTS-STARTPTS[bm]`,
+      `[${iN}:v]${prep},trim=0:${(total - mainSeconds).toFixed(3)},setpts=PTS-STARTPTS[bn]`,
+      '[bm][bn]concat=n=2:v=1:a=0[bg]', '[0:v]fps=30,format=rgba[fr]', '[bg][fr]overlay=0:0:shortest=1,format=yuv420p,fps=30,settb=1/30[main]',
+      `[op][main]xfade=transition=fade:duration=${X}:offset=${shift.toFixed(3)}[vout]`,
+    ];
+    const ms = Math.round(shift * 1000);
+    const join = labels.join('') + `concat=n=${labels.length}:v=0:a=1,adelay=${ms}:all=1,apad=whole_dur=${(total + shift).toFixed(3)}[aout]`;
+    execFileSync('ffmpeg', ['-y', '-loglevel', 'error', ...audioIn, '-i', path.join(MOTION, 'opener.mp4'), '-stream_loop', '-1', '-i', path.join(MOTION, 'morning.mp4'), '-stream_loop', '-1', '-i', path.join(MOTION, 'night.mp4'),
+      '-filter_complex', `${trims.join(';')};${join};${video.join(';')}`, '-map', '[vout]', '-map', '[aout]',
+      '-c:v', 'libx264', '-preset', 'medium', '-crf', '21', '-c:a', 'aac', '-b:a', '128k', '-ar', '44100', '-t', (total + shift).toFixed(3), '-movflags', '+faststart', mp4]);
+    // the cover: the first takeaway's frame, over the sky
+    execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-ss', (shift + X + list[0].dur + 0.2).toFixed(3), '-i', mp4, '-frames:v', '1', '-q:v', '3', path.join(out, `${date}.jpg`)]);
+    total += shift;
+  } else {
+    const join = labels.join('') + `concat=n=${labels.length}:v=0:a=1,apad=whole_dur=${total.toFixed(3)}[aout]`;
+    execFileSync('ffmpeg', ['-y', '-loglevel', 'error', ...audioIn,
+      '-filter_complex', `${trims.join(';')};${join}`, '-map', '0:v', '-map', '[aout]',
+      '-vf', 'fps=30,format=yuv420p', '-c:v', 'libx264', '-preset', 'medium', '-crf', '22', '-tune', 'stillimage',
+      '-c:a', 'aac', '-b:a', '128k', '-ar', '44100', '-t', total.toFixed(3), '-movflags', '+faststart', mp4]);
+    execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', list[Math.min(1, list.length - 1)].file, '-q:v', '3', path.join(out, `${date}.jpg`)]);
+  }
   const probe = Number(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', mp4]).toString().trim());
   const meta = { v: 1, date, edition, audio: p.file, duration: Math.round(probe * 10) / 10, bytes: fs.statSync(mp4).size,
     video: `shorts/${date}.mp4`, cover: `shorts/${date}.jpg`, generated: new Date().toISOString(), ...postText({ date, edition, heads: p.heads, when }) };
