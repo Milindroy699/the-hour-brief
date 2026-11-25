@@ -1863,13 +1863,12 @@
   // (owner, 2026-11-22). Any scroller counts: the list (the window), Audio and Challenge (.hub-scroll), a card's own
   // scroll; sideways swipes through the deck don't (only vertical movement is read).
   var tabsMoving = false;
-  // Android (owner, 2026-11-25: "the app is hanging a bit"): the shrinking bar animates its size and padding on every scroll,
-  // under a strong backdrop blur, which Android's WebView redraws frame by frame. There the bar stays put (and app.css drops
-  // the live blurs for near-solid glass: html.hb-android).
+  // Android (owner, 2026-11-25: "the app is hanging a bit"): the live backdrop blurs are off there (app.css html.hb-android,
+  // near-solid glass instead), which was the cost of the shrinking bar too; it shrinks again as on iPhone (owner, 2026-11-26).
   var ANDROID = /Android/i.test(navigator.userAgent) || !!(window.Capacitor && Capacitor.getPlatform && Capacitor.getPlatform() === 'android');
   if (ANDROID) document.documentElement.classList.add('hb-android');
   function tabsMini(remeasure) {
-    if (ANDROID || tabsMini.on || !window.matchMedia || !window.matchMedia('(max-width: 640px)').matches) return;
+    if (tabsMini.on || !window.matchMedia || !window.matchMedia('(max-width: 640px)').matches) return;
     tabsMini.on = true;
     var root = document.documentElement, last = new WeakMap(), idle = 0, settle = 0;
     function mini(on) {

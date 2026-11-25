@@ -102,17 +102,30 @@
   // The app's theme (html[data-theme], set by the day/night themes: index.html's head, mobile.js applySkin) wins over the
   // phone's own setting; mobile.js calls window.HBStatusBar again when the theme changes (dusk, dawn, a theme picked in You).
   (window.HBStatusBar = function statusBar() {
-    if (!P.StatusBar) return;
+    if (!P.StatusBar && !(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.hbTheme)) return;
     var th = document.documentElement.getAttribute('data-theme');
     var prefersDark = th ? th === 'dark' : !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
     try {
       // The app bar is white in light mode and near-black in dark mode: match it (DARK = light icons, LIGHT = dark icons).
-      P.StatusBar.setStyle({ style: prefersDark ? 'DARK' : 'LIGHT' });
-      if (P.StatusBar.setBackgroundColor) {
-        P.StatusBar.setBackgroundColor({ color: prefersDark ? '#1a1b20' : '#ffffff' });
-      }
+      if (P.StatusBar) P.StatusBar.setStyle({ style: prefersDark ? 'DARK' : 'LIGHT' });
+      // The strip above the header is the header's own colour (it was a fixed near-black, a dark band over the navy Midnight
+      // header; owner, 2026-11-26), and the app's own background behind the page is the page's (1.1.5 build 5+: hbTheme).
+      var top = themeColor('--paper', prefersDark ? '#17152d' : '#ffffff'), back = themeColor('--bg', prefersDark ? '#0e0c20' : '#faf7f4');
+      if (P.StatusBar && P.StatusBar.setBackgroundColor) P.StatusBar.setBackgroundColor({ color: top });
+      var mh = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.hbTheme;
+      if (mh) mh.postMessage({ top: top, back: back });
     } catch (e) {}
-  })();
+  });
+  function themeColor(name, fallback) {
+    var v = (getComputedStyle(document.documentElement).getPropertyValue(name) || '').trim();
+    if (/^#[0-9a-f]{6}$/i.test(v)) return v;
+    if (/^#[0-9a-f]{3}$/i.test(v)) return '#' + v.slice(1).split('').map(function (c) { return c + c; }).join('');
+    var m = /rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/.exec(v);
+    return m ? '#' + [m[1], m[2], m[3]].map(function (n) { return ('0' + (+n).toString(16)).slice(-2); }).join('') : fallback;
+  }
+  // once the page's own styles are in (the theme's colours come from app.css), and again when anything sets the theme
+  if (document.readyState === 'complete') window.HBStatusBar(); else window.addEventListener('load', window.HBStatusBar);
+  window.HBStatusBar();
 
   // ---- Link handling ----
   // Same-host pages navigate in place (Android hardware back then works);

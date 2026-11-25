@@ -1126,6 +1126,9 @@ a.rd-item { text-decoration: none; color: inherit; }
 /* With the footer gone in the apps the quiz is the end of the page: too little below the question for "Play the quiz" (from
    the cards) to bring it up under the header, so it stopped halfway down. The quiz area keeps a screen's height. */
 html.hb-native #quiz-root { min-height: calc(100vh - 80px); }
+/* The full-screen quiz (player mode) leaves only the start card or the score here: no screen-tall gap under it before the
+   past quizzes (owner, 2026-11-26) */
+html.hb-native #quiz-root:has(> .qz-intro), html.hb-native #quiz-root:has(> .qz-res) { min-height: 0; }
 
 /* ======================================================================================================================
    Home, You and the themes (owner, 2026-11-25; preview/home). home.js draws Home, mobile.js draws You and sets the theme:

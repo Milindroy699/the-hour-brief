@@ -19,7 +19,7 @@ const ROOT = path.resolve(import.meta.dirname, '../..');
 // they are seen instead (sw.js), so the first download stays small.
 const PAGES = ['index.html', 'leaders.html', 'week.html', 'archive/index.html', 'about.html', 'privacy.html', 'contact.html', 'corrections.html', 'podcasts.html'];
 const CODE = ['mobile.js', 'cards.js', 'listen.js', 'quiz.js', 'home.js', 'capacitor-bridge.js', 'mobile.css', 'reader.css', 'app.css', 'quiz.css'];
-const DIRS = [['webfonts', /\.woff2$/], ['brand/backgrounds', /\.(jpg|png|svg|webp)$/], ['brand/stories', /\.svg$/]];
+const DIRS = [['webfonts', /\.woff2$/], ['brand/backgrounds', /\.(jpg|png|svg|webp)$/], ['brand/stories', /\.svg$/], ['brand/leaders', /\.(jpg|webp)$/]];
 const BRAND = ['brand/logo-128.png', 'brand/logo-256.png', 'brand/icon-192.png', 'brand/favicon-32.png', 'brand/apple-touch-icon.png'];
 const DATA = ['editions.json', 'leaders-data.json'];
 
