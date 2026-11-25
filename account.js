@@ -526,6 +526,12 @@
 
   // ---- start: the first run in the app, or a quiet sync ----
   function begin() {
+    // ?welcome=1 shows the welcome again, on demand (to review it; owner, 2026-11-26), in the app or a phone browser
+    if (/[?&]welcome=1(&|$)/.test(location.search)) {
+      try { history.replaceState(history.state, '', location.pathname + location.search.replace(/([?&])welcome=1(&|$)/, '$1').replace(/[?&]$/, '') + location.hash); } catch (e) { /* ignore */ }
+      onboard();
+      return;
+    }
     if (signedIn()) { setTimeout(sync, 1500); return; }
     if (!NATIVE || get(ONB) || (window.HB_COUNT_TEST && !window.HB_ONB_TEST)) return;
     if (!isNew()) { set(ONB, 'existing:' + today()); return; }    // people who used the app before this: no welcome, a sign-in later
