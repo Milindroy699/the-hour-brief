@@ -30,7 +30,7 @@ const PUBLIC = (process.env.R2_PUBLIC_URL || 'https://pub-1dafea4a948540db8413a0
 const W = 1080, H = 1350;
 const STYLE_IDS = ['riso', 'watercolor', 'clay'];
 const STYLE_NAMES = { riso: 'Risograph', watercolor: 'Watercolour and gold', clay: 'Clay 3D' };
-const GUARD = 'No text, no letters, no numbers, no logos, no watermarks, no flags, no recognisable real people.';
+const GUARD = 'Absolutely no text, letters, numbers or symbols anywhere; plain unmarked surfaces; no screens, signs, paper or charts; no logos, no watermarks, no flags, no people.';
 const arg = (n, d) => { const i = process.argv.indexOf(n); return i > 0 ? process.argv[i + 1] : d; };
 const istToday = () => new Date(Date.now() + 5.5 * 3600e3).toISOString().slice(0, 10);
 
@@ -86,22 +86,38 @@ export function styleFor(date, plan) {
 const FALLBACK = {
   ai: 'a glowing microchip on a desk, light rays and circuit lines growing like vines around it',
   biz: 'a chessboard on a boardroom table with a few pieces mid-move, a city skyline through the window',
-  mkt: 'a stock chart drawn as a mountain path with a small traveller and a coin-shaped sun',
+  mkt: 'a winding mountain path climbing towards a coin-shaped sun, a small brass compass resting on a rock in the foreground',
 };
-async function subjectFor(story) {
+// Open image models write garbage on anything that carries writing, so the idea must have none: no screens, signs, banners,
+// paper, charts or tickers. A larger model first (it reads the story's tone better), the small one as a fallback; an idea that
+// still names a writing-carrier is rejected and asked for again.
+const CARRIERS = /\b(text|words?|letters?|numbers?|digits?|figures|sign(s|age)?|banners?|screens?|monitors?|displays?|tickers?|tape|newspapers?|headlines?|posters?|labels?|charts?|graphs?|scoreboards?|billboards?|papers?|documents?|books?|logos?|flags?|price tags?|calendar)\b/i;
+const SYSTEM = 'You write the scene for one editorial illustration about a news story. Choose ONE simple symbolic scene built from ' +
+  'physical objects and nature (for example: chess pieces, seedlings, bridges, scales, keys, ropes, boats, mountains, weather, ' +
+  'light, coins, gears, doors). Match the mood of the story: rising and hopeful for good news, falling or stormy for bad news, ' +
+  'tense for a standoff. Never include anything that carries writing or markings: no screens, signs, banners, paper, books, ' +
+  'charts, tickers, scoreboards, labels or flags. No people at all. One sentence, at most 30 words, objects and setting only. ' +
+  'Do not start with the word "A lone". Output only the sentence.';
+async function askModel(model, story) {
   const token = process.env.CLOUDFLARE_API_TOKEN, account = process.env.CLOUDFLARE_ACCOUNT_ID || process.env.R2_ACCOUNT_ID;
-  try {
-    const r = await fetch(`https://api.cloudflare.com/client/v4/accounts/${account}/ai/run/@cf/meta/llama-3.1-8b-instruct`, {
-      method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ max_tokens: 90, messages: [
-        { role: 'system', content: 'You write one-sentence scene descriptions for editorial illustrations. Describe a single visual metaphor scene for the news headline: objects, setting, mood. Maximum 35 words. Never include text, words, letters, numbers, logos, brand names, flags, or real people (no names, no faces of real people). Output only the scene.' },
-        { role: 'user', content: `Headline: ${story.head}\nContext: ${story.take || ''}` },
-      ] }),
-    });
-    const j = await r.json();
-    let s = String((j.result && j.result.response) || '').replace(/^["'\s]+|["'\s]+$/g, '').split('\n')[0];
-    if (s.length > 20 && s.length < 400 && !/\b(text|logo|words?|letters?)\b.*\b(reads|says|showing)\b/i.test(s)) return s;
-  } catch (e) { /* fall back */ }
+  const r = await fetch(`https://api.cloudflare.com/client/v4/accounts/${account}/ai/run/${model}`, {
+    method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ max_tokens: 90, temperature: 0.8, messages: [
+      { role: 'system', content: SYSTEM },
+      { role: 'user', content: `Section: ${story.lane}\nHeadline: ${story.head}\nWhy it matters: ${story.take || ''}` },
+    ] }),
+  });
+  const j = await r.json();
+  return String((j.result && j.result.response) || '').replace(/^["'\s]+|["'\s]+$/g, '').split('\n')[0];
+}
+async function subjectFor(story) {
+  for (const model of ['@cf/meta/llama-3.3-70b-instruct-fp8-fast', '@cf/meta/llama-3.3-70b-instruct-fp8-fast', '@cf/meta/llama-3.1-8b-instruct']) {
+    try {
+      const s = await askModel(model, story);
+      if (s.length > 20 && s.length < 400 && !CARRIERS.test(s) && !/\b(man|woman|person|people|figure|cricketer|trader|crowd)\b/i.test(s)) return s;
+      if (s) console.warn(`idea rejected (${model}): ${s}`);
+    } catch (e) { console.warn(`idea failed (${model}): ${e.message}`); }
+  }
   return FALLBACK[story.key] || FALLBACK.ai;
 }
 
