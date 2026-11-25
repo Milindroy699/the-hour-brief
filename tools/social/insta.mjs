@@ -98,22 +98,23 @@ const SYSTEM = 'You write the scene for one editorial illustration about a news 
   'tense for a standoff. Never include anything that carries writing or markings: no screens, signs, banners, paper, books, ' +
   'charts, tickers, scoreboards, labels or flags. No people at all. One sentence, at most 30 words, objects and setting only. ' +
   'Do not start with the word "A lone". Output only the sentence.';
-async function askModel(model, story) {
+async function askModel(model, story, used) {
   const token = process.env.CLOUDFLARE_API_TOKEN, account = process.env.CLOUDFLARE_ACCOUNT_ID || process.env.R2_ACCOUNT_ID;
   const r = await fetch(`https://api.cloudflare.com/client/v4/accounts/${account}/ai/run/${model}`, {
     method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ max_tokens: 90, temperature: 0.8, messages: [
       { role: 'system', content: SYSTEM },
-      { role: 'user', content: `Section: ${story.lane}\nHeadline: ${story.head}\nWhy it matters: ${story.take || ''}` },
+      { role: 'user', content: `Section: ${story.lane}\nHeadline: ${story.head}\nWhy it matters: ${story.take || ''}` +
+        (used && used.length ? `\nAlready used today, so pick different main objects and setting: ${used.join(' | ')}` : '') },
     ] }),
   });
   const j = await r.json();
   return String((j.result && j.result.response) || '').replace(/^["'\s]+|["'\s]+$/g, '').split('\n')[0];
 }
-async function subjectFor(story) {
+async function subjectFor(story, used) {
   for (const model of ['@cf/meta/llama-3.3-70b-instruct-fp8-fast', '@cf/meta/llama-3.3-70b-instruct-fp8-fast', '@cf/meta/llama-3.1-8b-instruct']) {
     try {
-      const s = await askModel(model, story);
+      const s = await askModel(model, story, used);
       if (s.length > 20 && s.length < 400 && !CARRIERS.test(s) && !/\b(man|woman|person|people|figure|cricketer|trader|crowd)\b/i.test(s)) return s;
       if (s) console.warn(`idea rejected (${model}): ${s}`);
     } catch (e) { console.warn(`idea failed (${model}): ${e.message}`); }
@@ -222,7 +223,7 @@ async function make(date, outDir) {
   const arts = [];
   const local = arg('--art-dir');                // testing: ready-made pictures art-1..5.jpg instead of the model
   for (const [k, s] of five.entries()) {
-    s.subject = local ? '(local test art)' : await subjectFor(s);
+    s.subject = local ? '(local test art)' : await subjectFor(s, five.slice(0, k).map((x) => x.subject));
     let buf = local ? fs.readFileSync(path.join(local, `art-${k + 1}.jpg`)) : null;
     for (let tries = 0; !buf && tries < 3; tries++) { try { buf = await generate(`${s.subject}. ${STYLES[style]} ${GUARD}`, 'klein'); } catch (e) { console.warn(`art ${k + 1}: ${e.message}`); } }
     if (!buf) throw new Error(`no art for story ${k + 1}`);
