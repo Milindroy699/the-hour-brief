@@ -463,3 +463,10 @@ html .qz-play .quiz-card { flex: 1 0 auto; display: flex; flex-direction: column
 .qz-intro-t { margin: 8px 0 6px; font-family: var(--hb-serif, Georgia, serif); font-size: 1.6rem; font-weight: 600; line-height: 1.2; }
 .qz-intro-s { margin: 0 0 18px; color: var(--ink-soft); line-height: 1.5; }
 .qz-intro-go { width: 100%; min-height: 52px; }
+
+/* "Back to the quiz" (quiz.js showBack): after "Read the story" from the full-screen quiz, over the card or the list */
+.qz-back { position: fixed; z-index: 9987; top: calc(env(safe-area-inset-top, 0px) + 54px); left: 50%; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 6px;
+  height: 36px; padding: 0 16px 0 10px; border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 999px; background: #14122b; color: #fff; font: inherit; font-size: 0.9rem; font-weight: 600;
+  box-shadow: 0 12px 28px rgba(20, 18, 43, 0.35); cursor: pointer; white-space: nowrap; animation: qz-in 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.qz-back:focus-visible { outline: 2px solid #b1a5ff; outline-offset: 2px; }
+.qz-back::after { content: ""; position: absolute; inset: -4px 0; }   /* a 44px tap target */

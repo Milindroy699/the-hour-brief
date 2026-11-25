@@ -215,18 +215,30 @@ await open({ store: { 'hb-quiz-v1': played2 } });
 await waitFor(`window.HBListen && HBListen.openHub`, 4000);
 await c.ev(`document.querySelector('.hm-listen').click()`); await c.sleep(700);
 t = await J(`(() => { const h = document.querySelector('.hb-hub-sheet'); const r = h && h.getBoundingClientRect(); return { sheet: !!h && !h.hidden, top: r && Math.round(r.top), scrim: !!document.querySelector('.hub-scrim:not([hidden])'), min: !!document.querySelector('.hub-min'), state: HBListen.state(), lit: (document.querySelector('.tab-bar:not([data-early]) .tab[aria-current=page]') || {}).dataset?.tab, home: HBHome.isOpen() }; })()`);
-check('Listen on Home starts today\'s episode and expands the player from the bottom', t.sheet && t.top > 20 && t.top < 140 && t.scrim && t.min && t.state !== 'idle', JSON.stringify(t));
+check('Listen on Home starts today\'s episode and opens the player partway (what\'s playing, controls)', t.sheet && t.top > 250 && t.top < 420 && t.scrim && t.min && t.state !== 'idle', JSON.stringify(t));
 check('the player is not a screen: Home stays open and lit beneath', t.home && t.lit === 'home', JSON.stringify(t));
-await c.shot(`${OUT}/06-player-sheet.png`);
+t = await J(`(() => { const h = document.querySelector('.hb-hub-sheet'), hr = h.getBoundingClientRect(), b = h.querySelector('.hub-play').getBoundingClientRect(), m = h.querySelector('.hub-morebar').getBoundingClientRect(); return { half: h.classList.contains('half'), play: b.bottom <= hr.bottom, more: m.bottom <= hr.bottom + 1 }; })()`);
+check('at that size the controls and "Chapters and past episodes" are on screen', t.half && t.play && t.more, JSON.stringify(t));
+await c.shot(`${OUT}/06-player-half.png`);
+await c.ev(`document.querySelector('.hub-morebar').click()`); await c.sleep(500);
+t = await J(`(() => { const h = document.querySelector('.hb-hub-sheet'); return { full: h.classList.contains('full'), top: Math.round(h.getBoundingClientRect().top), exp: h.querySelector('.hub-exp').getAttribute('aria-expanded') }; })()`);
+check('"Chapters and past episodes" expands the drawer to the top', t.full && t.top < 140 && t.exp === 'true', JSON.stringify(t));
+await c.shot(`${OUT}/06-player-full.png`);
+check('at full size only one ⌄ (Minimise) shows', await c.ev(`getComputedStyle(document.querySelector('.hub-exp')).display === 'none'`));
+await c.ev(`document.querySelector('.hub-grab').click()`); await c.sleep(450);
+check('tapping the handle brings it back to the player size', await c.ev(`document.querySelector('.hb-hub-sheet').classList.contains('half')`));
+await c.ev(`document.querySelector('.hub-exp').click()`); await c.sleep(450);
+check('and ⌃ expands it again', await c.ev(`document.querySelector('.hb-hub-sheet').classList.contains('full')`));
 await c.ev(`document.querySelector('.hub-min').click()`); await c.sleep(300);
-check('Minimise closes it back to the bar', !(await c.ev(`HBListen.hubOpen()`)) && (await c.ev(`!!document.querySelector('.hub-scrim[hidden]')`)));
-await c.ev(`HBListen.openHub()`); await c.sleep(300);
+check('Minimise from the full drawer goes straight to the mini bar', !(await c.ev(`HBListen.hubOpen()`)) && (await c.ev(`!!document.querySelector('.hub-scrim[hidden]')`)) && (await c.ev(`!document.querySelector('.hb-player').hidden && getComputedStyle(document.querySelector('.hb-player')).display !== 'none'`)));
+await c.ev(`document.querySelector('.hb-player .hb-pl-now').click()`); await c.sleep(400);
+check('tapping the mini bar opens the player size again', await c.ev(`HBListen.hubOpen() && document.querySelector('.hb-hub-sheet').classList.contains('half')`));
 await c.ev(`document.querySelector('.hub-scrim').dispatchEvent(new Event('touchmove'))`); await c.sleep(300);
 check('scrolling outside the player minimises it', !(await c.ev(`HBListen.hubOpen()`)));
 await c.ev(`HBListen.stop()`); await c.sleep(200);
 await c.ev(`[...document.querySelectorAll('.hm-tile')].find((b) => /Listen/.test(b.textContent)).click()`); await c.sleep(500);
 t = await J(`({ open: HBListen.hubOpen(), state: HBListen.state(), eph: document.querySelector('.hub-eph h3').textContent })`);
-check('Explore › Listen opens the player at its past episodes without starting playback', t.open && t.state === 'idle' && t.eph === 'Past episodes', JSON.stringify(t));
+check('Explore › Listen opens the full drawer at past episodes without starting playback', t.open && t.state === 'idle' && t.eph === 'Past episodes' && (await c.ev(`document.querySelector('.hb-hub-sheet').classList.contains('full')`)), JSON.stringify(t));
 await c.ev(`HBListen.closeHub()`);
 await c.ev(`document.querySelector('.hm-top .ab-you').click()`); await c.sleep(300);
 check('You › Library lists Audio episodes', await c.ev(`!!document.querySelector('.hb-you [data-act=episodes]')`));
@@ -237,7 +249,6 @@ await c.ev(`HBListen.closeHub()`);
 // ---------- 7c. the full-screen quiz ----------
 const QZ = JSON.parse((HTML.match(/<script type="application\/json" id="quiz-data">([\s\S]*?)<\/script>/) || [])[1]).questions;
 await open({ store: { 'hb-quiz-v1': played2 } });
-const y0 = await c.ev(`scrollY`);
 await c.ev(`document.querySelector('.hm-qz').click()`); await c.sleep(500);
 t = await J(`(() => { const p = document.querySelector('.qz-play'); return { open: !!p && !p.hidden, q: (p.querySelector('.quiz-q') || {}).textContent, opts: p.querySelectorAll('.quiz-opt').length, tabs: getComputedStyle(document.querySelector('.tab-bar:not([data-early])')).visibility, home: HBHome.isOpen() }; })()`);
 check('Play on Home opens the quiz full screen, question 1, the tabs out of the way', t.open && t.q === QZ[0].q && t.opts === QZ[0].options.length && t.tabs === 'hidden' && t.home, JSON.stringify(t));
@@ -249,25 +260,54 @@ check('a wrong pick: its own answer card (Not quite, the answer, your pick, why,
 await c.shot(`${OUT}/08-quiz-answer.png`);
 await c.ev(`document.querySelector('.qz-ans-next').click()`); await c.sleep(400);
 check('Next shows question 2 on its own screen', (await c.ev(`(document.querySelector('.qz-play .quiz-q') || {}).textContent`)) === QZ[1].q);
+await c.ev(`document.querySelectorAll('.qz-play .quiz-opt')[${QZ[1].answer}].click()`); await c.sleep(900);
+await c.ev(`document.querySelector('.qz-ans-story').click()`); await waitFor(`window.HBCards && HBCards.isOpen()`, 4000); await c.sleep(500);
+t = await J(`({ deck: HBCards.isOpen(), id: (document.querySelector('.dk-card:not([inert])') || {}).dataset?.id, back: (document.querySelector('.qz-back') || {}).textContent || '', player: !!document.querySelector('.qz-play:not([hidden])') })`);
+check('Read the story (mid-quiz): the card opens, with "Back to the quiz"', t.deck && t.id === QZ[1].story && t.back === 'Back to the quiz' && !t.player, JSON.stringify(t));
+await c.ev(`document.querySelector('.qz-back').click()`); await c.sleep(500);
+t = await J(`({ ans: !!document.querySelector('.qz-play:not([hidden]) .qz-ans'), q: (document.querySelector('.qz-play .qz-ans-q') || {}).textContent, back: !!document.querySelector('.qz-back'), deck: HBCards.isOpen() })`);
+check('Back to the quiz returns to that same answer card (the card stays behind it)', t.ans && t.q === QZ[1].q && !t.back && t.deck, JSON.stringify(t));
+await c.ev(`document.querySelector('.qz-ans-next').click()`); await c.sleep(400);
 await c.ev(`document.querySelector('.qz-play-x').click()`); await c.sleep(300);
 await tab('quiz'); await c.sleep(400);
 t = await J(`({ player: !!document.querySelector('.qz-play:not([hidden])'), intro: (document.querySelector('#quiz .qz-intro') || {}).textContent || '' })`);
-check('closing mid-quiz: Challenge shows Continue (1 of N answered)', !t.player && /answered 1 of/.test(t.intro) && /Continue/.test(t.intro), JSON.stringify(t));
+check('closing mid-quiz: Challenge shows Continue (2 of N answered)', !t.player && /answered 2 of/.test(t.intro) && /Continue/.test(t.intro), JSON.stringify(t));
+await c.ev(`location.reload()`); await c.sleep(2800);
+await tab('quiz'); await c.sleep(400);
+check('after a page change the unfinished quiz still offers Continue', /answered 2 of/.test(await c.ev(`(document.querySelector('#quiz .qz-intro') || {}).textContent || ''`)));
 await c.ev(`document.querySelector('#quiz .qz-intro-go').click()`); await c.sleep(400);
-check('Continue picks up at question 2', (await c.ev(`(document.querySelector('.qz-play .quiz-q') || {}).textContent`)) === QZ[1].q);
-for (let k = 1; k < QZ.length; k++) {
+check('Continue picks up at question 3', (await c.ev(`(document.querySelector('.qz-play .quiz-q') || {}).textContent`)) === QZ[2].q);
+for (let k = 2; k < QZ.length; k++) {
   await c.ev(`document.querySelectorAll('.qz-play .quiz-opt')[${QZ[k].answer}].click()`); await c.sleep(800);
-  if (k === 1) check('a right pick: Correct', /Correct/.test(await c.ev(`document.querySelector('.qz-ans-v').textContent`)));
+  if (k === 2) check('a right pick: Correct', /Correct/.test(await c.ev(`document.querySelector('.qz-ans-v').textContent`)));
   await c.ev(`document.querySelector('.qz-ans-next').click()`); await c.sleep(450);
 }
 await c.sleep(1200);
 t = await J(`(() => { const p = document.querySelector('.qz-play'); return { result: !!p.querySelector('.quiz-result'), score: (p.querySelector('.quiz-score') || {}).textContent, done: !!p.querySelector('.qz-play-done'), saved: (JSON.parse(localStorage.getItem('hb-quiz-v1')).r['${DATE}'] || {}).s }; })()`);
 check('the score comes up in the player, saved, with Done', t.result && t.saved === QZ.length - 1 && t.done, JSON.stringify(t));
+await c.ev(`for (const x of document.querySelectorAll('.qz-cele')) x.remove(); 'ok'`);
+const missGo = await c.ev(`!!document.querySelector('.qz-play .qz-miss-go')`);
+if (missGo) {
+  await c.ev(`document.querySelector('.qz-play .qz-miss-go').click()`); await waitFor(`window.HBCards && HBCards.isOpen()`, 4000); await c.sleep(400);
+  check('Read the story from the score: "Back to your score"', (await c.ev(`(document.querySelector('.qz-back') || {}).textContent`)) === 'Back to your score');
+  await c.ev(`document.querySelector('.qz-back').click()`); await c.sleep(500);
+  check('and it returns to the score', await c.ev(`!!document.querySelector('.qz-play:not([hidden]) .quiz-result')`));
+}
 await c.shot(`${OUT}/09-quiz-score.png`);
 await c.ev(`for (const x of document.querySelectorAll('.qz-cele')) x.remove(); 'ok'`);
+const y1 = await c.ev(`scrollY`);
 await c.ev(`document.querySelector('.qz-play-done').click()`); await c.sleep(500);
 t = await J(`({ player: !!document.querySelector('.qz-play:not([hidden])'), y: scrollY, inline: !!document.querySelector('#quiz .quiz-result'), quiz: document.documentElement.classList.contains('hb-quiz-page') })`);
-check('Done closes the player; the page never scrolled under it', !t.player && t.y === y0 && t.inline, JSON.stringify(t));
+check('Done closes the player; the page didn\'t move under it', !t.player && t.y === y1 && t.inline, JSON.stringify(t));
+if (await c.ev(`!!document.querySelector('#quiz .qz-miss-go')`)) {
+  await c.ev(`document.querySelector('#quiz .qz-miss-go').click()`); await c.sleep(900);
+  t = await J(`({ back: (document.querySelector('.qz-back') || {}).textContent || '', quiz: document.documentElement.classList.contains('hb-quiz-page') })`);
+  check('from the score on Challenge, Read the story also offers "Back to your score"', t.back === 'Back to your score' && !t.quiz, JSON.stringify(t));
+  await c.shot(`${OUT}/10-back-to-score.png`);
+  await c.ev(`document.querySelector('.qz-back').click()`); await c.sleep(500);
+  t = await J(`({ quiz: document.documentElement.classList.contains('hb-quiz-page'), result: !!document.querySelector('#quiz .quiz-result'), back: !!document.querySelector('.qz-back') })`);
+  check('and it goes back to Challenge, at the score', t.quiz && t.result && !t.back, JSON.stringify(t));
+}
 await tab('home'); await c.sleep(400);
 check('Home now shows today\'s score on the quiz card', /You scored \d of \d/.test(await c.ev(`document.querySelector('.hm-qzbig').textContent`)));
 

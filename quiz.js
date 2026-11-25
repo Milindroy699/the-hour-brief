@@ -80,9 +80,33 @@
     var h = it && it.querySelector('h3');
     return h ? h.textContent.trim() : '';
   }
-  function jumpToStory(id) {
+  // ret: where "Back to the quiz" returns to, when a story is opened from the quiz in player mode (owner, 2026-11-25:
+  // "if I go to a card to revise from the quiz results, there should be an option to go back to the quiz").
+  // { kind: 'answer', i } = that answer card, mid-quiz; { kind: 'result' } = the score.
+  var backBtn = null;
+  function hideBack() { if (backBtn) { backBtn.remove(); backBtn = null; } document.removeEventListener('hb:hub', backWatch); }
+  function backWatch() {                               // gone once the reader is back on Challenge or Home by themselves
+    var cl = document.documentElement.classList;
+    if (cl.contains('hb-quiz-page') || cl.contains('hb-home-open')) hideBack();   // (the audio player is only a sheet over the story: it stays)
+  }
+  function showBack(ret) {
+    hideBack();
+    backBtn = el('button', 'qz-back');
+    backBtn.type = 'button';
+    backBtn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>';
+    backBtn.appendChild(document.createTextNode(ret.kind === 'answer' ? 'Back to the quiz' : 'Back to your score'));
+    backBtn.addEventListener('click', function () {
+      hideBack();
+      if (ret.kind === 'challenge') { if (window.HBChrome && window.HBChrome.tab) window.HBChrome.tab('quiz'); return; }   // the score on Challenge
+      openPlayer(ret.kind === 'answer' ? { answer: ret.i } : 'result');
+    });
+    document.body.appendChild(backBtn);
+    setTimeout(function () { document.addEventListener('hb:hub', backWatch); }, 0);
+  }
+  function jumpToStory(id, ret) {
     var it = document.querySelector('.item[data-story-id="' + id + '"]');
     if (!it) return;
+    if (ret && playerMode()) showBack(playOn ? ret : { kind: 'challenge' });   // from the score on Challenge (player closed): back to Challenge
     if (playOn) closePlayer();
     if (window.HBQuizPage && window.HBQuizPage.isOpen && window.HBQuizPage.isOpen()) window.HBQuizPage.close();   // the story lives in the normal page, which the dedicated quiz page (mobile.js) replaces while it's open
     if (window.HBOpenStory && window.HBOpenStory(id)) return;      // reading in Cards: the deck opens on this story's card
@@ -338,6 +362,7 @@
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && playOn && !document.querySelector('.qz-cele, .qz-sheet-bg')) closePlayer(); });
   }
   function openPlayer(at) {
+    hideBack();
     buildPlayer();
     if (!playOn) {
       playPrev = document.activeElement;
@@ -347,7 +372,8 @@
       document.documentElement.classList.add('qz-playing');
     }
     if (at === 'result') showResult(saved, true, false, true);
-    else showQuestion(at || 0, true);
+    else if (at && typeof at === 'object' && at.answer >= 0 && picks.length > at.answer) showAnswer(at.answer, picks[at.answer], picks[at.answer] === questions[at.answer].answer);
+    else showQuestion(typeof at === 'number' ? at : 0, true);
   }
   function closePlayer() {
     if (!playOn) return;
@@ -372,6 +398,16 @@
     go.addEventListener('click', function () { openPlayer(mid ? picks.length : 0); });
     card.appendChild(go);
     root.appendChild(card);
+  }
+  // An unfinished quiz survives a page change (reading a story, then Voices, then back): today's picks in sessionStorage,
+  // restored on the next load in player mode, so Challenge offers Continue instead of starting over.
+  var PICKS_KEY = 'hb-qz-picks-' + DATE;
+  function keepPicks() { try { if (practice || saved) sessionStorage.removeItem(PICKS_KEY); else sessionStorage.setItem(PICKS_KEY, JSON.stringify(picks)); } catch (e) { /* this visit only */ } }
+  function restorePicks() {
+    try {
+      var a = JSON.parse(sessionStorage.getItem(PICKS_KEY) || 'null');
+      if (Array.isArray(a) && a.length < N && a.every(function (x, k) { return typeof x === 'number' && x >= 0 && x < questions[k].options.length; })) picks = a;
+    } catch (e) { /* start fresh */ }
   }
   // Home's Play: straight into the player (or the score, if today's is done).
   window.HBQuizPlay = function () {
@@ -494,6 +530,7 @@
     var q = questions[i];
     var ok = idx === q.answer;
     picks.push(idx);
+    keepPicks();
     haptic(ok);
     btns.forEach(function (b, k) {
       b.setAttribute('aria-disabled', 'true');
@@ -560,7 +597,7 @@
       from.type = 'button';
       from.appendChild(el('small', '', 'Read the story'));
       from.appendChild(el('span', '', head));
-      from.addEventListener('click', function () { jumpToStory(q.story); });
+      from.addEventListener('click', function () { jumpToStory(q.story, { kind: 'answer', i: i }); });
       card.appendChild(from);
     }
     var next = el('button', 'quiz-btn primary qz-ans-next', last ? 'See my score' : 'Next question');
@@ -583,6 +620,7 @@
       all.r[DATE] = res;
       save(all);
       saved = res;
+      keepPicks();                                 // finished: nothing to resume
     }
     showResult(practice ? res : saved, !practice, !practice, true);
     if (!practice) syncScores();
@@ -758,7 +796,7 @@
         if (q.story && document.getElementById(q.story)) {
           var go = el('button', 'qz-miss-go', 'Read the story');
           go.type = 'button';
-          go.addEventListener('click', function () { jumpToStory(q.story); });
+          go.addEventListener('click', function () { jumpToStory(q.story, { kind: 'result' }); });
           ans.appendChild(go);
         }
         row.appendChild(ans);
@@ -1805,7 +1843,7 @@
   root.insertAdjacentElement('afterend', pastBox);            // between the quiz and the leagues
   buildTabs();
   if (saved && Array.isArray(saved.a)) showResult(saved, true);
-  else if (playerMode()) showIntro();
+  else if (playerMode()) { restorePicks(); showIntro(); }
   else showQuestion(0, false);
   refreshStreak([]);
   updateChip([]);
