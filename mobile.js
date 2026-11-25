@@ -1435,6 +1435,7 @@
     var b = youEl.querySelector('.you-back');
     if (b) { b.focus({ preventScroll: true }); if (!usedKeyboard) b.classList.add('no-ring'); }
     use('you');
+    document.dispatchEvent(new CustomEvent('hb:you'));   // account.js: the dot on the avatar has done its job
   }
   function openBadges() {
     closeYou();

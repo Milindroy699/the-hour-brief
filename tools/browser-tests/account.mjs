@@ -187,9 +187,35 @@ await waitFor(`!document.querySelector('.hb-onb')`, 3000);
 check('"Stay anonymous" closes it for good', await J(`/^done:/.test(localStorage.getItem('hb-onb-v1')) && !localStorage.getItem('hb-acct-v1')`));
 await c.ev(`localStorage.setItem('hb-quiz-v1', JSON.stringify({ r: { '2026-11-20': { s: 3, t: 5 }, '2026-11-21': { s: 4, t: 5 } }, b: {}, bs: 2 })); 1`);
 await c.goto(B + '/', 3500);
-check('anonymous with two quizzes played: a small sign-in card on Home', await waitFor(`!!document.querySelector('.hm-scroll .acc-nudge')`, 4000));
+check('no reminder on someone\'s first day', await J(`!document.querySelector('.hm-scroll .acc-nudge')`));
+const NS = (o) => c.ev(`localStorage.setItem('hb-nudge-v2', JSON.stringify(Object.assign({ first: Date.now() - 3 * 864e5, last: 0, home: { n: 0, at: 0, no: 0, stop: false }, score: 0, save: 0, dot: 0 }, ${JSON.stringify(o)}))); 1`);
+await NS({});
 await c.goto(B + '/', 3500);
-check('not again the next time (a week apart)', await J(`!document.querySelector('.hm-scroll .acc-nudge')`));
+t = await J(`(() => { const n = document.querySelector('.hm-scroll .acc-nudge b'); return { text: n && n.textContent, dot: document.documentElement.classList.contains('hb-you-dot') }; })()`);
+check('from day two: the Home card, in the reader\'s own terms ("Your quiz history lives on this phone only")', /on this phone only/.test(t.text || ''), JSON.stringify(t));
+check('and a dot on the avatar', t.dot);
+await c.goto(B + '/', 3500);
+check('at most one reminder a day: not again on the next open', await J(`!document.querySelector('.hm-scroll .acc-nudge')`));
+await NS({ home: { n: 1, at: Date.now() - 2 * 864e5, no: 0, stop: false } });
+await c.goto(B + '/', 3500);
+check('the next Home card waits its turn (3 days after the first)', await J(`!document.querySelector('.hm-scroll .acc-nudge')`));
+await NS({ home: { n: 3, at: Date.now() - 40 * 864e5, no: 2, stop: false } });   // 14 days x 1.5 x 1.5 = 31.5 days after two "Not now"s
+await c.goto(B + '/', 3500);
+await waitFor(`!!document.querySelector('.hm-scroll .acc-nudge')`, 3000);
+await tap('.hm-scroll .acc-nudge-x'); await c.sleep(200);
+check('the third "Not now" offers "Don\'t remind me"', await J(`!!document.querySelector('.acc-nudge-off')`));
+await tap('.acc-nudge-off'); await c.sleep(200);
+check('which stops the Home card for good', await J(`JSON.parse(localStorage.getItem('hb-nudge-v2')).home.stop === true`));
+await NS({ home: { n: 0, at: 0, no: 0, stop: true }, score: Date.now() - 864e5 });   // a score line yesterday
+await c.goto(B + '/', 3500);
+t = await J(`(() => { const d = document.createElement('div'); document.body.appendChild(d); const a = !!HBAccount.scoreNudge(d, 4); localStorage.setItem('hb-nudge-v2', JSON.stringify(Object.assign(JSON.parse(localStorage.getItem('hb-nudge-v2')), { last: 0 }))); const b = !!HBAccount.scoreNudge(d, 7); return { day4: a, day7: b }; })()`);
+check('the score line: on streak days that matter (7), not on any day (4)', !t.day4 && t.day7, JSON.stringify(t));
+await NS({ home: { n: 0, at: 0, no: 0, stop: true } });
+await c.goto(B + '/?brief=1', 3500);
+await c.ev(`localStorage.setItem('hb-saved-v1', JSON.stringify([{ k: 'x:1' }])); document.dispatchEvent(new CustomEvent('hb:saved')); 1`);
+check('saving a story: a small "Sign in to keep it" bar', await waitFor(`!!document.querySelector('.acc-bar .acc-bar-go')`, 4000));
+await c.ev(`HBChrome.you(); 1`); await c.sleep(300);
+check('opening You clears the avatar dot', await J(`!document.documentElement.classList.contains('hb-you-dot')`));
 
 // ---------- 7. the website ----------
 await c.unpreload(appId);
