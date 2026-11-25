@@ -1225,22 +1225,22 @@
         }
         brand.classList.add('ab-brand');
       }
-      // Sub-pages (Past editions, a past edition, About…) show a back arrow where the logo sits; the rest of the header
-      // is the same on every screen.
-      var bk = backTarget(), logo;
-      if (bk) {
-        logo = mk('button', 'ab-btn ab-back');
-        logo.type = 'button';
-        logo.setAttribute('aria-label', bk.label);
-        logo.innerHTML = ICON.back;
-        logo.addEventListener('click', bk.go);
-      } else {
-        logo = mk('img', 'ab-logo');
-        logo.src = LOGO_SRC;
-        logo.alt = '';
-        logo.width = logo.height = 34;
-      }
+      // Sub-pages (Past editions, a past edition, About…) put a back arrow before the logo; the logo itself is on every
+      // screen's header (owner, 2026-11-26: "the logo should update on all the menu page header sections").
+      var bk = backTarget();
+      var logo = mk('img', 'ab-logo');
+      logo.src = LOGO_SRC;
+      logo.alt = '';
+      logo.width = logo.height = 34;
       inner.insertBefore(logo, inner.firstChild);
+      if (bk) {
+        var back = mk('button', 'ab-btn ab-back');
+        back.type = 'button';
+        back.setAttribute('aria-label', bk.label);
+        back.innerHTML = ICON.back;
+        back.addEventListener('click', bk.go);
+        inner.insertBefore(back, logo);
+      }
 
       bar = mk('div', 'ab-actions');
       var sv = mk('button', 'ab-btn reader-saved');
@@ -1452,6 +1452,9 @@
     back.innerHTML = ICON.back;
     back.addEventListener('click', closeYou);
     top.appendChild(back);
+    var ylogo = mk('img', 'ab-logo');                  // the logo on every header, You's too
+    ylogo.src = LOGO_SRC; ylogo.alt = ''; ylogo.width = ylogo.height = 34;
+    top.appendChild(ylogo);
     top.appendChild(mk('h1', 'you-title', 'You'));
     youEl.appendChild(top);
     sc = mk('div', 'you-scroll');

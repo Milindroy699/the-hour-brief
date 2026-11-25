@@ -22,6 +22,15 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.77888242550-a8n9dsjg73r189s1vomnbrpsla2ufnjq</string>
+			</array>
+		</dict>
+	</array>
 	<key>WKAppBoundDomains</key>
 	<array>
 		<string>the-hour-brief.vercel.app</string>

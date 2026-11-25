@@ -1566,3 +1566,8 @@ html.hb-onb-open .tab-bar, html.hb-onb-open .tab-switch, html.hb-onb-open .hm-li
 .acc-cc-wrap:focus-within { border-color: #8f7bff; box-shadow: 0 0 0 3px rgba(143, 123, 255, 0.25); }
 .acc-cc { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; font-size: 16px; cursor: pointer; }
 .acc-cc-shown { white-space: nowrap; }
+/* the status line takes no room until it has something to say (owner, 2026-11-26: a gap between Continue and Not now) */
+.acc-msg:empty { display: none; }
+/* No double-tap zoom anywhere (owner, 2026-11-26: double-tapping the header zoomed the page); pinch zoom stays on the
+   website for readability. In the apps the page doesn't zoom at all, like any native app (capacitor-bridge.js viewport). */
+html { touch-action: manipulation; }
