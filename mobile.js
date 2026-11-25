@@ -904,7 +904,10 @@
     };
     document.head.appendChild(sc);
   }
-  function openCards(opts) { withCards(function (c) { if (!c.open(opts)) toast('Nothing to show as cards yet.'); }); }
+  // after: runs once the deck is up (or couldn't open), in the same task, so whatever it closes never shows a frame on its own
+  function openCards(opts, after) {
+    withCards(function (c) { if (!c.open(opts)) toast('Nothing to show as cards yet.'); if (after) after(); }, after);
+  }
 
   // What the page address asks for when Cards is the view: {} = just open, {id} = a shared story's card, null = stay on the list
   // (#quiz and other sections, a league invite ?join=, a friend's score ?beat=: all of those land on something in the list).
@@ -912,7 +915,13 @@
     if (/[?&](join|beat)=/.test(location.search)) return null;
     var h = '';
     try { h = decodeURIComponent((location.hash || '').slice(1)); } catch (e) { /* ignore */ }
-    if (!h) return {};
+    if (!h) {                                          // the card the reader was on before a reload (cards.js keeps it)
+      try {
+        var at = JSON.parse(sessionStorage.getItem('hb-deck-at') || 'null');
+        if (at && at.d === location.pathname && at.id && document.getElementById(at.id)) return at.lane && document.getElementById(at.lane) ? { id: at.id, lane: at.lane } : { id: at.id };
+      } catch (e) { /* from the start */ }
+      return {};
+    }
     var el = document.getElementById(h);
     return el && el.classList.contains('item') ? { id: h } : null;
   }
@@ -1450,11 +1459,13 @@
     var av = mk('span', 'you-av');
     av.innerHTML = YOU_SVG;
     var pt = mk('div');
-    pt.appendChild(mk('b', '', 'Your reading'));
-    pt.appendChild(mk('span', '', 'Kept on this phone. Sign-in is coming, to carry it to your other devices.'));
+    pt.appendChild(mk('b', '', 'Your progress'));
+    pt.appendChild(mk('span', '', 'Saved on this phone. Sign-in to keep it everywhere is coming.'));
     pro.appendChild(av);
     pro.appendChild(pt);
-    sc.appendChild(pro);
+    var hero = mk('div', 'you-hero');
+    hero.appendChild(pro);
+    sc.appendChild(hero);
 
     var st = mk('div', 'you-stats');
     function stat(cls, num, label, icon, go) {
@@ -1469,7 +1480,7 @@
     stat('you-stat-flame', q.streak || 0, 'day streak', FLAME_SVG, openBadges);
     stat('', q.best || 0, 'best streak', null, openBadges);
     stat('', (q.badgeCount || 0) + '/' + (q.badgeTotal || 10), 'badges', null, openBadges);
-    sc.appendChild(st);
+    hero.appendChild(st);
 
     sc.appendChild(mk('h2', 'you-h', 'Theme'));
     var th = mk('div', 'you-themes');
@@ -1648,7 +1659,8 @@
       setTimeout(syncTabs, 60);
       return;
     }
-    if (name !== 'audio') closeHome();
+    // Home closes only once the next screen is up (in the same frame), so the list underneath never flashes between them
+    if (name !== 'audio' && name !== 'today' && name !== 'quiz') closeHome();
     if (name === 'today' || name === 'quiz') lastTab = name;
     // Tapping the tab you are already on reopens/stays on it — it does not toggle closed (tried that after removing
     // the X close button; tapping Challenge twice closing back to the list read as a bug, not a feature). Today
@@ -1656,14 +1668,14 @@
     if (name === 'audio') { closeQuizPage(); if (L && L.openHub) L.openHub(); else toast('Audio is loading…'); return; }
     if (L && L.closeHub) L.closeHub();
     if (name === 'today') {
-      closeQuizPage();
-      if (deckOpen()) window.HBCards.goTo(0, true);
-      else if (cardsOk() && getView() === 'cards') openCards();                    // back to the cards after a trip to the quiz
-      else window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (deckOpen()) { window.HBCards.open({}); window.HBCards.goTo(0, true); closeQuizPage(); closeHome(); }   // the whole brief, also after one section
+      else if (cardsOk() && getView() === 'cards') openCards({}, function () { closeQuizPage(); closeHome(); });   // back to the cards after a trip to the quiz
+      else { closeQuizPage(); closeHome(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
     }
     else if (name === 'quiz') {
-      if (deckOpen()) window.HBCards.close({ keep: true });
       openQuizPage();
+      closeHome();
+      if (deckOpen()) window.HBCards.close({ keep: true });
     }
     setTimeout(syncTabs, 60);
   }
@@ -1746,16 +1758,22 @@
   window.HBQuizPage = { close: closeQuizPage, isOpen: function () { return quizOvShown; } };
   // A story asked for from elsewhere on the page (the quiz's "Read the story"): in Cards, the deck opens on that story's
   // card (it used to land on the first card: closing Challenge put the deck back at the start); in List, the caller scrolls.
+  // The deck opens first and whatever was on top (Home, Challenge) closes in the same task, once it is up: closing first
+  // showed the list for a moment (owner, 2026-11-25, on Android).
   window.HBOpenStory = function (id) {
-    closeQuizPage();
-    closeHome();
-    if (!(cardsOk() && (deckOpen() || getView() === 'cards'))) return false;
-    openCards({ id: id });
+    if (!(cardsOk() && (deckOpen() || getView() === 'cards'))) { closeQuizPage(); closeHome(); return false; }
+    openCards({ id: id }, function () { closeQuizPage(); closeHome(); syncTabs(); });
     return true;
   };
+  // An Explore tile on Home: that section alone in Cards (cards.js laneOnly), over Home until it is up.
+  function openLane(id) {
+    if (!cardsOk()) return false;
+    openCards({ lane: id }, function () { closeQuizPage(); closeHome(); syncTabs(); });
+    return true;
+  }
   // listen.js builds the same header row (see buildHub() there) — it is a separate file/closure, so the actions it
   // needs are handed across here rather than duplicated.
-  window.HBChrome = { homeMode: function () { return homeMode(); }, textSize: openTextSize, saved: openSaved, menu: menuOrYou, refreshSaved: refreshSaved, back: backTarget, you: openYou, closeYou: closeYou, tab: function (n) { tabGo(n); }, leave: function (u) { leaveTo(u); }, openCards: function (o) { openCards(o); }, use: function (f) { use(f); }, cardsOk: function () { return cardsOk(); }, view: function () { return getView(); }, laneName: function (el) { return laneName(el); }, icons: { aa: ICON.aa, star: STAR_SVG, sliders: SLIDERS_SVG, back: ICON.back, you: YOU_SVG, flame: FLAME_SVG } };
+  window.HBChrome = { homeMode: function () { return homeMode(); }, openLane: openLane, warmCards: function () { if (cardsOk()) withCards(function () { /* ready for the first tap */ }, function () { /* tried */ }); }, textSize: openTextSize, saved: openSaved, menu: menuOrYou, refreshSaved: refreshSaved, back: backTarget, you: openYou, closeYou: closeYou, tab: function (n) { tabGo(n); }, leave: function (u) { leaveTo(u); }, openCards: function (o) { openCards(o); }, use: function (f) { use(f); }, cardsOk: function () { return cardsOk(); }, view: function () { return getView(); }, laneName: function (el) { return laneName(el); }, icons: { aa: ICON.aa, star: STAR_SVG, sliders: SLIDERS_SVG, back: ICON.back, you: YOU_SVG, flame: FLAME_SVG } };
   // The List | Cards switch: a floating pill, appended straight to body (see below) — centred just above the tab
   // bar in List, top-right of the deck in Cards. An earlier version nested it inside .tab-bar itself instead,
   // specifically to remove a recurring real-device bug (list content bleeding through a seam between two
@@ -1845,8 +1863,13 @@
   // (owner, 2026-11-22). Any scroller counts: the list (the window), Audio and Challenge (.hub-scroll), a card's own
   // scroll; sideways swipes through the deck don't (only vertical movement is read).
   var tabsMoving = false;
+  // Android (owner, 2026-11-25: "the app is hanging a bit"): the shrinking bar animates its size and padding on every scroll,
+  // under a strong backdrop blur, which Android's WebView redraws frame by frame. There the bar stays put (and app.css drops
+  // the live blurs for near-solid glass: html.hb-android).
+  var ANDROID = /Android/i.test(navigator.userAgent) || !!(window.Capacitor && Capacitor.getPlatform && Capacitor.getPlatform() === 'android');
+  if (ANDROID) document.documentElement.classList.add('hb-android');
   function tabsMini(remeasure) {
-    if (tabsMini.on || !window.matchMedia || !window.matchMedia('(max-width: 640px)').matches) return;
+    if (ANDROID || tabsMini.on || !window.matchMedia || !window.matchMedia('(max-width: 640px)').matches) return;
     tabsMini.on = true;
     var root = document.documentElement, last = new WeakMap(), idle = 0, settle = 0;
     function mini(on) {

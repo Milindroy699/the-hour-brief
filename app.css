@@ -1170,7 +1170,51 @@ html.hb-native #quiz-root { min-height: calc(100vh - 80px); }
     radial-gradient(1.3px 1.3px at 70px 140px, #cfc8ff 60%, transparent 64%), radial-gradient(1px 1px at 344px 150px, #fff 60%, transparent 64%),
     radial-gradient(1.2px 1.2px at 168px 168px, #fff 60%, transparent 64%);
   background-size: 390px 190px; -webkit-mask-image: linear-gradient(#000 35%, transparent); mask-image: linear-gradient(#000 35%, transparent); }
-:root[data-skin="midnight"] .hm-deco::after { content: ""; position: absolute; top: 78px; right: 26px; width: 40px; height: 40px; border-radius: 50%; box-shadow: inset -11px 6px 0 0 #f3e7c9; opacity: 0.9; }
+:root[data-skin="midnight"] .hm-deco::after { content: ""; position: absolute; top: 78px; right: 26px; width: 40px; height: 40px; border-radius: 50%; opacity: 0.92;
+  box-shadow: inset 11px -7px 0 0 #f3e7c9, 0 0 26px 2px rgba(243, 231, 201, 0.14);   /* lit towards the top right (owner, 2026-11-25) */
+  animation: hm-moon 8s ease-in-out infinite; }
+/* Night on Home, gently alive: the moon drifts and tilts, the stars breathe, and now and then a shooting star crosses.
+   Transform and opacity only (no layout, no blur), so it costs next to nothing; none of it with reduced motion. */
+:root[data-skin="midnight"] .hm-deco::before { animation: hm-twinkle 4.5s ease-in-out infinite alternate; }
+@keyframes hm-moon { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-6px) rotate(-6deg); } }
+@keyframes hm-twinkle { from { opacity: 0.5; } to { opacity: 0.95; } }
+.hm-shoot, .hm-star { display: none; }
+:root[data-skin="midnight"] .hm-star { display: block; position: absolute; width: 9px; height: 9px; opacity: 0;
+  background: radial-gradient(circle, #fff 0 1.3px, transparent 1.8px), linear-gradient(transparent, #fff8e0 45% 55%, transparent) center / 1px 9px no-repeat, linear-gradient(90deg, transparent, #fff8e0 45% 55%, transparent) center / 9px 1px no-repeat;
+  animation: hm-star 6s ease-in-out infinite; }
+.hm-star-1 { top: 22px; left: 58%; animation-delay: 0s; }
+.hm-star-2 { top: 50px; left: 84%; animation-delay: 1.1s !important; }
+.hm-star-3 { top: 12px; left: 30%; animation-delay: 2.3s !important; }
+.hm-star-4 { top: 132px; left: 90%; animation-delay: 3.2s !important; }
+.hm-star-5 { top: 40px; left: 8%; animation-delay: 4.1s !important; }
+.hm-star-6 { top: 150px; left: 70%; animation-delay: 5s !important; }
+@keyframes hm-star { 0%, 100% { opacity: 0; transform: scale(0.3) rotate(-45deg); } 18% { opacity: 0.95; transform: scale(1) rotate(0deg); } 36% { opacity: 0; transform: scale(0.4) rotate(45deg); } }
+:root[data-skin="midnight"] .hm-shoot { display: block; position: absolute; top: 6px; left: 64%; width: 90px; height: 1.5px; border-radius: 2px; opacity: 0;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 245, 220, 0.95)); transform-origin: right center;
+  animation: hm-shoot 11s ease-in 3s infinite; }
+@keyframes hm-shoot { 0%, 86% { opacity: 0; transform: translate(0, 0) rotate(-24deg) scaleX(0.3); } 89% { opacity: 1; } 96% { opacity: 0; transform: translate(-120px, 46px) rotate(-24deg) scaleX(1); } 100% { opacity: 0; } }
+/* Morning on Home (owner, 2026-11-25: "the morning version can have an animated smiling sun"): a sun that bobs, its rays
+   turning slowly, and now and then a blink. Dawn only (6 AM to 8 PM); the same rules as the night sky. */
+.hm-sun { display: none; }
+:root[data-skin="dawn"] .hm-sun { display: block; position: absolute; top: 62px; right: 24px; width: 54px; height: 54px; animation: hm-sun-bob 7s ease-in-out infinite; }
+.hm-sun-rays { position: absolute; inset: -16px; border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, rgba(255, 176, 59, 0.7) 0deg 9deg, rgba(255, 176, 59, 0) 9deg 30deg);
+  -webkit-mask-image: radial-gradient(circle, transparent 54%, #000 56%, #000 70%, transparent 74%); mask-image: radial-gradient(circle, transparent 54%, #000 56%, #000 70%, transparent 74%);
+  animation: hm-spin 26s linear infinite; }
+.hm-sun-face { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 36% 30%, #fff1b8 0%, #ffcf5c 48%, #f7a531 100%);
+  box-shadow: 0 0 0 5px rgba(255, 207, 92, 0.18), 0 6px 22px rgba(247, 165, 49, 0.45); }
+.hm-sun-face b { position: absolute; left: 16px; top: 19px; width: 22px; height: 6px; transform-origin: center;
+  background: radial-gradient(circle, #6b3d0d 2.6px, transparent 3px) 0 0 / 6px 6px no-repeat, radial-gradient(circle, #6b3d0d 2.6px, transparent 3px) 16px 0 / 6px 6px no-repeat;
+  animation: hm-blink 5.5s ease-in-out infinite; }
+.hm-sun-face::before { content: ""; position: absolute; left: 10px; top: 27px; width: 34px; height: 6px;
+  background: radial-gradient(circle, rgba(255, 122, 92, 0.45) 3px, transparent 3.5px) 0 0 / 7px 6px no-repeat, radial-gradient(circle, rgba(255, 122, 92, 0.45) 3px, transparent 3.5px) 27px 0 / 7px 6px no-repeat; }
+.hm-sun-face::after { content: ""; position: absolute; left: 18px; top: 27px; width: 18px; height: 9px; box-sizing: border-box; border: 2.5px solid #6b3d0d; border-top: 0; border-radius: 0 0 18px 18px; }
+@keyframes hm-sun-bob { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-5px) rotate(5deg); } }
+@keyframes hm-spin { to { transform: rotate(360deg); } }
+@keyframes hm-blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.12); } }
+@media (prefers-reduced-motion: reduce) { :root[data-skin="midnight"] .hm-deco::after, :root[data-skin="midnight"] .hm-deco::before, :root[data-skin="midnight"] .hm-shoot,
+  .hm-sun, .hm-sun-rays, .hm-sun-face b { animation: none !important; }
+  :root[data-skin="midnight"] .hm-star { animation: none !important; opacity: 0.7; } }
 :root[data-skin="markets"] .hm-deco { background: linear-gradient(180deg, rgba(18, 53, 40, 0.9), rgba(11, 28, 23, 0)); }
 :root[data-skin="markets"] .hm-deco::after { content: ""; position: absolute; left: 0; right: 0; top: 70px; height: 150px; opacity: 0.8;
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 390 150' preserveAspectRatio='none'%3E%3Cpath d='M0 120 L30 112 L58 118 L86 96 L118 104 L150 78 L180 86 L212 60 L244 70 L276 44 L306 52 L338 30 L390 22' fill='none' stroke='%233ddc97' stroke-opacity='.45' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat center / 100% 100%; }
@@ -1295,23 +1339,47 @@ html.hb-native #quiz-root { min-height: calc(100vh - 80px); }
 :root[data-theme="dark"] .hm-t-week .hm-tile-ic { color: #aab4ff; }
 
 .hm-end { margin: 10px 24px 0; text-align: center; font-size: 0.8rem; color: var(--ink-faint); }
-.hm-listen { position: absolute; z-index: 3; left: 14px; right: 14px; bottom: calc(var(--hb-tab-h) + 8px); display: flex; align-items: center; gap: 10px; min-height: 52px;
-  padding: 6px 16px 6px 6px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.14); background: rgba(20, 18, 43, 0.92); color: #f7f2e8; font: inherit; text-align: left; cursor: pointer;
+/* Listen (owner, 2026-11-25: "just a circular play button, or slightly lengthened to fit the word Listen"): a compact pill on the
+   right above the tabs, the play circle and the word; it opens the player, which shows what is playing. */
+.hm-listen { position: absolute; z-index: 3; right: 16px; bottom: calc(var(--hb-tab-h) + 10px); display: inline-flex; align-items: center; gap: 8px; min-height: 52px;
+  padding: 6px 18px 6px 6px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.14); background: rgba(20, 18, 43, 0.92); color: #f7f2e8; font: inherit; text-align: left; cursor: pointer;
   -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); box-shadow: 0 12px 28px rgba(20, 18, 43, 0.3); }
 .hm-listen-p { flex: none; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #5e43f3; color: #fff; }
 .hm-listen-p svg { width: 16px; height: 16px; }
-.hm-listen-t { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: 0.9rem; font-weight: 600; }
-.hm-listen-t small { font-size: 0.75rem; font-weight: 400; color: #c9c4e4; }
-.hm-listen-k { font-family: var(--hb-label); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #c9c4e4; }
+.hm-listen-k { font-family: var(--hb-label); font-size: 0.9rem; font-weight: 700; letter-spacing: 0.02em; color: #fff; }
 body.hb-listening .hm-listen, body:has(> .hb-getapp) .hm-listen { display: none; }
+
+/* ---- One section in Cards (an Explore tile): the closing card offers the other sections ---- */
+.dk-more-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 18px 0 6px; }
+.dk-more-tile { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-height: 84px; padding: 14px; border-radius: 18px; border: 1px solid var(--line);
+  background: var(--paper); color: var(--ink); font: inherit; text-align: left; cursor: pointer; box-sizing: border-box; }
+.dk-more-tile strong { font-size: 1rem; font-weight: 600; line-height: 1.25; }
+.dk-more-tile small { font-size: 0.8rem; color: var(--ink-faint); }
+.dk-more-tile::before { content: ""; width: 26px; height: 4px; border-radius: 4px; margin-bottom: 6px; background: var(--hb-primary); }
+.dk-more-biz::before { background: #e8b04b; }
+.dk-more-mkt::before { background: #1f9d6b; }
+.dk-more-all { grid-column: 1 / -1; min-height: 64px; }
+.dk-more-all::before { display: none; }
+.dk-more .dk-cta { margin-top: 14px; }
+.dk-home-back[hidden], .dk-head .ab-logo[hidden] { display: none; }
 
 /* ---- You ---- */
 .hb-you { position: fixed; inset: 0; z-index: 9988; display: flex; flex-direction: column; background: var(--bg); color: var(--ink); font-family: var(--hb-sans); }
 .hb-you[hidden] { display: none; }
 html.hb-you-open, html.hb-you-open body { overflow: hidden; }
-.you-top { gap: 8px; }
-.you-title { margin: 0; font-family: var(--hb-serif); font-size: 1.35rem; font-weight: 600; }
+/* The same bar as every other screen (owner, 2026-11-25: "the header is not fitting right"): 44px buttons, the wordmark's
+   type for the name, and the same height whatever is in it. */
+.you-top { gap: 8px; min-height: 44px; }
+.you-top .ab-back { width: 44px; height: 44px; margin-left: -6px; }
+.you-title { flex: 1; margin: 0; font-family: var(--hb-label); font-size: 19.5px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
 .you-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding: 18px 16px calc(36px + env(safe-area-inset-bottom, 0px)); }
+/* one card at the top: who (this phone), then the three numbers */
+.you-hero { padding: 16px; border-radius: 22px; color: #f7f2e8; background: radial-gradient(120% 90% at 100% 0%, rgba(143, 123, 255, 0.45), transparent 60%), linear-gradient(160deg, #2a1f78, #14122b 70%); }
+.you-hero .you-stats { margin-top: 16px; }
+.you-hero .you-stat { min-height: 84px; border: 0; background: rgba(255, 255, 255, 0.08); color: #fff; }
+.you-hero .you-stat > span:last-child { color: #c9c4e4; }
+.you-hero .you-pro { margin: 0; }
+.you-hero .you-pro div span { color: #c9c4e4; }
 .you-pro { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
 .you-av { flex: none; width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #5e43f3, #8f7bff); color: #fff; }
 .you-av svg { width: 26px; height: 26px; fill: none; }
@@ -1323,6 +1391,7 @@ html.hb-you-open, html.hb-you-open body { overflow: hidden; }
 .you-stat b { margin-top: auto; font-family: var(--hb-serif); font-size: 1.6rem; font-weight: 500; line-height: 1.1; }
 .you-stat > span:last-child { font-size: 0.78rem; color: var(--ink-soft); }
 .you-stat-flame { background: #14122b; border-color: transparent; color: #f7f2e8; }
+.you-hero .you-stat-flame { background: rgba(255, 198, 92, 0.16); }
 .you-stat-flame > span:last-child { color: #c9c4e4; }
 .you-stat-ic svg { width: 20px; height: 20px; fill: none; color: #ffc65c; }
 .you-h { margin: 24px 4px 10px; font-family: var(--hb-label); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
@@ -1371,3 +1440,14 @@ html.hb-you-open, html.hb-you-open body { overflow: hidden; }
 .hm-tile-wide { grid-column: 1 / -1; }
 .hm-t-listen .hm-tile-ic { background: rgba(94, 67, 243, 0.14); color: #5e43f3; }
 :root[data-theme="dark"] .hm-t-listen .hm-tile-ic { color: #b9acff; }
+
+/* Android: no live blur behind the floating pieces (each one is re-blurred every frame while the content under it moves,
+   which made the app feel like it was hanging; owner, 2026-11-25). Near-solid glass instead, same colours and edges. */
+html.hb-android .tab-bar, html.hb-android .tab-switch, html.hb-android .hm-listen, html.hb-android .hb-player, html.hb-android .qz-play .quiz-opt, html.hb-android .nav {
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+@media (max-width: 640px) {
+  html.hb-android .tab-bar { background: linear-gradient(180deg, rgba(var(--hb-paper-rgb), 0.97), rgba(var(--hb-paper-rgb), 0.93)); transition: none; }
+  html.hb-android .tab-switch { background: rgba(var(--hb-paper-rgb), 0.96); }
+}
+html.hb-android .hm-listen { background: #1d1a3d; }
+html.hb-android .qz-play .quiz-opt { background: rgba(255, 255, 255, 0.07); }

@@ -44,7 +44,7 @@ const FEATURES = new Set(['open', 'today', 'cards_view', 'story_save', 'story_sh
   'past_editions', 'past_edition_read', 'weekly', 'audio_open', 'audio_play', 'audio_done', 'voices', 'voices_article',
   'challenge_open', 'quiz_start', 'quiz_done', 'quiz_retake_start', 'quiz_retake', 'quiz_share', 'league_create', 'league_join', 'league_invite',
   'badges_view', 'weekly_card', 'weekly_menu', 'menu', 'sections', 'text_size', 'reminder', 'channel_out', 'podcast_out',
-  'home', 'home_tap', 'you', 'theme_set']);
+  'home', 'home_tap', 'you', 'theme_set', 'quiz_review']);
 
 const SLUG = /^[a-z0-9][a-z0-9._-]{0,39}$/;
 const slug = (v, d) => { const x = String(v || '').toLowerCase().slice(0, 40); return SLUG.test(x) ? x : d; };

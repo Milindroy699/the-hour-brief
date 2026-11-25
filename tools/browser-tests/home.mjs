@@ -112,10 +112,12 @@ await c.ev(`document.querySelector('.hm-lead').click()`); await waitFor(`window.
 t = await J(`({ id: (document.querySelector('.dk-card:not([inert])') || {}).dataset?.id, home: HBHome.isOpen() })`);
 check('tapping the lead story opens Cards on that story', t.id === leadId && !t.home, JSON.stringify(t));
 await tab('home'); await c.sleep(400);
-const lane2 = await J(`(() => { const l = [...document.querySelectorAll('section.lane')].filter((x) => x.querySelector('.item[data-story-id]'))[1]; return { first: l.querySelector('.item[data-story-id]').dataset.storyId }; })()`);
+const lane2 = await J(`(() => { const l = [...document.querySelectorAll('section.lane')].filter((x) => x.querySelector('.item[data-story-id]'))[1]; return { n: l.querySelectorAll('.item[data-story-id]').length }; })()`);
+const tile2 = await J(`document.querySelectorAll('.hm-tile b')[1].textContent`);
 await c.ev(`document.querySelectorAll('.hm-tile')[1].click()`); await waitFor(`window.HBCards && HBCards.isOpen()`, 4000); await c.sleep(500);
-t = await c.ev(`(document.querySelector('.dk-card:not([inert])') || {}).dataset?.id`);
-check('an Explore section tile opens Cards at that section\'s first story', t === lane2.first, t + ' vs ' + lane2.first);
+t = await J(`({ first: document.querySelector('.dk-track > .dk-card').getAttribute('aria-label'), n: HBCards.count() })`);
+// owner, 2026-11-25: a section tile shows that section alone (its intro, its stories, a closing card), not the whole deck
+check('an Explore section tile opens Cards on that section alone', t.first === tile2 && t.n === lane2.n + 2, JSON.stringify(t) + ' vs ' + tile2);
 await tab('home'); await c.sleep(400);
 await c.ev(`document.querySelector('.hm-listen').click()`); await waitFor(`window.HBListen && HBListen.hubOpen()`, 4000); await c.sleep(300);
 t = await state();
@@ -333,9 +335,9 @@ await tab('today'); await c.sleep(500);
 t = await state();
 check('a reader on List this visit: Brief shows the list, not Cards', !t.home && !t.deck && t.lit === 'today', JSON.stringify(t));
 await tab('home'); await c.sleep(300);
-await c.ev(`document.querySelectorAll('.hm-tile')[1].click()`); await c.sleep(1800);   // a smooth scroll (html { scroll-behavior: smooth })
-t = await J(`(() => { const l = [...document.querySelectorAll('section.lane')].filter((x) => x.querySelector('.item[data-story-id]'))[1]; const r = l.getBoundingClientRect(); return { home: HBHome.isOpen(), deck: !!(window.HBCards && HBCards.isOpen()), top: Math.round(r.top), y: Math.round(scrollY) }; })()`);
-check('and an Explore tile scrolls the list to that section', !t.home && !t.deck && t.top >= 0 && t.top < 220, JSON.stringify(t));
+await c.ev(`document.querySelectorAll('.hm-tile')[1].click()`); await c.sleep(1200);
+t = await J(`({ home: HBHome.isOpen(), deck: !!(window.HBCards && HBCards.isOpen()), first: (document.querySelector('.dk-track > .dk-card') || {}).getAttribute?.('aria-label') })`);
+check('and on List too, an Explore tile shows that section alone (in Cards)', !t.home && t.deck && t.first === tile2, JSON.stringify(t));
 const past = fs.readdirSync(path.resolve(import.meta.dirname, '../../archive')).filter((f) => /^\d{4}-\d{2}-\d{2}\.html$/.test(f)).sort().slice(-2)[0];
 await open({ path: '/archive/' + past, wait: 3000 });
 t = await J(`({ home: !!(window.HBHome && HBHome.isOpen()), lit: (document.querySelector('.tab-bar:not([data-early]) .tab[aria-current=page]') || {}).dataset?.tab || '', tabs: [...document.querySelectorAll('.tab-bar:not([data-early]) .tab')].map((x) => x.dataset.tab + '=' + x.getAttribute('href')).join('|'), hidden: getComputedStyle(document.body).visibility })`);

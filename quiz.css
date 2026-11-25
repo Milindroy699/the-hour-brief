@@ -452,7 +452,11 @@ html .qz-play .quiz-card { flex: 1 0 auto; display: flex; flex-direction: column
 .qz-ans-story span { font-size: 0.95rem; font-weight: 600; line-height: 1.4; }
 .qz-ans-story span::after { content: " \2192"; color: var(--brand); }
 .qz-play .qz-ans-next, .qz-play .qz-play-done { flex: none; width: 100%; height: 54px; min-height: 54px; margin-top: auto; border-radius: 999px; font-size: 1rem; }
-.qz-ans .qz-ans-next { margin-top: 22px; }
+.qz-ans .qz-ans-next { margin-top: 0; }
+/* pinned to the bottom of the screen; the stage's own bottom padding moves inside it so nothing scrolls out under it */
+.qz-ans-foot { position: sticky; bottom: 0; z-index: 2; margin: auto -18px calc(-22px - env(safe-area-inset-bottom, 0px)); padding: 26px 18px calc(14px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(to bottom, rgba(10, 9, 24, 0), rgba(10, 9, 24, 0.96) 26%, #0c0a1f 44%); }
+.qz-ans-story { margin-bottom: 4px; }
 .qz-play .quiz-btn.primary { background: #fff; color: #2a1f78; border-color: #fff; }
 .qz-ans-hint { display: block; margin-top: 8px; text-align: center; font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); }
 .qz-play .qz-play-done { margin-top: 16px; }
@@ -470,3 +474,61 @@ html .qz-play .quiz-card { flex: 1 0 auto; display: flex; flex-direction: column
   box-shadow: 0 12px 28px rgba(20, 18, 43, 0.35); cursor: pointer; white-space: nowrap; animation: qz-in 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
 .qz-back:focus-visible { outline: 2px solid #b1a5ff; outline-offset: 2px; }
 .qz-back::after { content: ""; position: absolute; inset: -4px 0; }   /* a 44px tap target */
+
+/* ---- The score (2026-11-25, after a Stitch review): the score card, drawn like the shared picture, then Share above the fold ---- */
+.qz-res .qz-hero { position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: stretch; gap: 0; padding: 18px 18px 16px; border-radius: 26px; text-align: left; color: #fff;
+  background: radial-gradient(120% 70% at 100% 0%, rgba(232, 176, 75, 0.28), transparent 55%), radial-gradient(110% 80% at 0% 100%, rgba(108, 83, 245, 0.55), transparent 60%), linear-gradient(160deg, #2a1f78 0%, #14122b 72%);
+  background-size: cover; background-position: center; box-shadow: 0 18px 40px rgba(20, 18, 43, 0.28); border: 1px solid rgba(255, 255, 255, 0.1); }
+.qz-res .qz-hero.has-art { background-image: linear-gradient(180deg, rgba(14, 12, 32, 0.25), rgba(14, 12, 32, 0.78)), var(--qz-art); }
+.qz-sc-top { display: flex; align-items: center; gap: 8px; font-family: var(--hb-label, inherit); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255, 255, 255, 0.78); }
+.qz-sc-logo { width: 22px; height: 22px; border-radius: 6px; }
+.qz-sc-brand { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.qz-sc-date { color: #ffd88a; white-space: nowrap; }
+.qz-sc-mid { display: flex; align-items: center; gap: 14px; margin: 14px 0 4px; }
+.qz-res .qz-medal { flex: none; width: 76px; height: 76px; margin: 0; filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.35)); }
+.qz-sc-score { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.qz-res .qz-tier { padding: 4px 10px; font-size: 0.64rem; background: rgba(255, 216, 138, 0.18); color: #ffd88a; }
+.qz-res .qz-hero .quiz-score { margin: 0; justify-content: flex-start; gap: 6px; }
+.qz-res .qz-hero .quiz-score b { font-family: var(--hb-serif, Georgia, serif); font-size: 3.4rem; font-weight: 500; line-height: 1; color: #fff; }
+.qz-res .qz-hero .quiz-score span { font-family: var(--hb-serif, Georgia, serif); font-size: 1.6rem; color: rgba(255, 255, 255, 0.7); }
+.qz-sc-sq { display: flex; gap: 6px; margin: 10px 0 0; }
+.qz-sc-sq i { flex: 1; height: 8px; border-radius: 8px; background: #3fbf95; }
+.qz-sc-sq i.no { background: rgba(255, 255, 255, 0.22); }
+.qz-res .qz-hero .quiz-msg { max-width: none; margin: 12px 0 0; font-family: var(--hb-serif, Georgia, serif); font-size: 1.12rem; font-weight: 500; line-height: 1.35; color: #fff; text-align: left; }
+.qz-res .qz-res-streak { margin: 12px 0 0; padding: 0; background: none; color: #ffd88a; font-size: 0.9rem; }
+.qz-res .qz-res-streak b { color: #ffd88a; }
+.qz-res .qz-res-streak img { width: 22px; height: 22px; }
+
+.qz-res-acts { flex-direction: column; align-items: stretch; gap: 8px; margin-top: 14px; }
+.qz-res-acts .quiz-btn { width: 100%; min-height: 52px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; gap: 10px; font-size: 1rem; }
+.qz-res-acts .qz-challenge { background: transparent; border: 1px solid var(--line); color: var(--ink); }
+.qz-res .quiz-compare { margin: 12px 2px 0; }
+.qz-res .quiz-compare p { margin: 0; font-size: 0.88rem; color: var(--ink-soft); text-align: center; }
+
+/* the answers, folded: one calm card, no red */
+.qz-res .qz-missed { margin: 14px 0 0; border: 1px solid var(--line); border-radius: 18px; background: var(--paper); overflow: hidden; }
+.qz-res .qz-missed-head { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 54px; margin: 0; padding: 0 16px; border: 0; background: none; color: var(--ink);
+  font: inherit; font-size: 0.98rem; font-weight: 600; letter-spacing: 0; text-transform: none; text-align: left; cursor: pointer; }
+.qz-res .qz-missed-head span { flex: 1; }
+.qz-res .qz-missed-head small { font-size: 0.82rem; font-weight: 500; color: var(--ink-faint); }
+.qz-res .qz-missed-head::after { content: ""; width: 9px; height: 9px; margin-left: 4px; border-right: 2px solid var(--ink-faint); border-bottom: 2px solid var(--ink-faint); transform: rotate(45deg) translateY(-3px); transition: transform .2s ease; }
+.qz-res .qz-missed-head[aria-expanded="true"]::after { transform: rotate(-135deg) translateY(-2px); }
+.qz-rv-list { padding: 0 16px 6px; }
+.qz-rv { display: flex; gap: 12px; padding: 14px 0; border-top: 1px solid var(--line); background: none; margin: 0; border-radius: 0; }
+.qz-rv-ic { flex: none; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700;
+  background: rgba(127, 127, 127, 0.14); color: var(--ink-soft); }
+.qz-rv.ok .qz-rv-ic { background: rgba(63, 191, 149, 0.16); color: #2f9e7a; }
+.qz-rv-tx { flex: 1; min-width: 0; }
+.qz-res .qz-miss-q { margin: 1px 0 6px; font-size: 0.95rem; font-weight: 600; line-height: 1.4; color: var(--ink); }
+.qz-res .qz-miss-a { display: block; margin: 0; padding: 0; background: none; font-size: 0.9rem; font-weight: 600; color: var(--ink); }
+.qz-rv-mine { margin: 3px 0 0; font-size: 0.85rem; color: var(--ink-faint); }
+.qz-rv-why { margin: 6px 0 0; font-size: 0.88rem; line-height: 1.5; color: var(--ink-soft); }
+.qz-res .qz-miss-go { margin-top: 6px; padding: 4px 0; font-family: inherit; font-size: 0.86rem; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--ink-soft); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line); }
+.qz-res .qz-miss-go::after { content: " \2192"; }
+
+.qz-res-links { display: flex; justify-content: center; align-items: center; gap: 10px; margin: 16px 0 4px; }
+.qz-link { min-height: 44px; padding: 0 6px; border: 0; background: none; color: var(--ink-soft); font: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+.qz-dot { color: var(--ink-faint); }
+.qz-play .qz-res .qz-play-done { margin-top: 8px; }
+/* on Challenge the score card is the card: no second box around it */
+.quiz-card.qz-res { padding: 0; border: 0; background: none; box-shadow: none; }

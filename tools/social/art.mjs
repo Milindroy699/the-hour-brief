@@ -55,6 +55,36 @@ const SAMPLE_STORIES = [
   ['markets-fall', 'a stock ticker line drawn as a ribbon tumbling down a staircase, a small umbrella sheltering a coin at the bottom'],
 ];
 
+// Backgrounds for the app and the posts (owner, 2026-11-25: "cool image backgrounds for day mode and story cards as well as
+// post images and specific backgrounds, like the day's quiz"). Quiet, textural, no subject in the middle, so text sits on top.
+//   node tools/social/art.mjs --backgrounds [outDir]     three takes of each, portrait 9:16
+const BG_GUARD = 'Abstract background only, no objects in focus, no people, no text, no letters, no numbers, no logos. Soft, calm, low contrast in the centre so text can sit on top.';
+const BACKGROUNDS = {
+  dawn: 'Early morning sky seen through soft watercolour washes, warm cream and peach at the bottom fading to pale lilac at the top, a faint golden sunrise glow, delicate paper grain, airy and fresh, editorial magazine feel.',
+  midnight: 'Deep indigo night sky with very subtle violet nebula haze, a sparse scattering of tiny gold stars, faint gold constellation lines, fine film grain, quiet and premium, dark edges.',
+  quiz: 'Vivid electric violet to deep indigo gradient with soft glowing geometric shapes, floating translucent circles and rounded squares like game pieces, subtle light rays, energetic but uncluttered, glossy, playful.',
+  card: 'Dark midnight blue textured paper with very faint gold leaf flecks and a soft violet glow in one corner, minimal, elegant, like the inside cover of a luxury notebook.',
+  post: 'Rich risograph print texture, deep violet and warm gold halftone gradient, soft grain, abstract waves of colour, bold but quiet, generous empty space, poster background.',
+};
+if (process.argv.includes('--backgrounds')) {
+  const out = process.argv[process.argv.indexOf('--backgrounds') + 1] || 'backgrounds';
+  fs.mkdirSync(out, { recursive: true });
+  const report = [];
+  for (const [name, look] of Object.entries(BACKGROUNDS)) {
+    for (let k = 1; k <= 3; k++) {
+      const file = path.join(out, `${name}-${k}.jpg`);
+      try {
+        const img = await generate(`${look} ${BG_GUARD}`, 'klein', { width: 864, height: 1536 });
+        fs.writeFileSync(file, img);
+        report.push({ file: path.basename(file), ok: true, bytes: img.length });
+      } catch (e) { report.push({ file: path.basename(file), ok: false, error: String(e.message || e) }); }
+      console.log(JSON.stringify(report[report.length - 1]));
+    }
+  }
+  fs.writeFileSync(path.join(out, 'report.json'), JSON.stringify(report, null, 1));
+  if (!report.some((r) => r.ok)) process.exit(1);
+}
+
 if (process.argv.includes('--samples')) {
   const out = process.argv[process.argv.indexOf('--samples') + 1] || 'art-samples';
   fs.mkdirSync(out, { recursive: true });
