@@ -149,14 +149,22 @@ const brandRow = (right) => el({ alignItems: 'center', justifyContent: 'space-be
 const headSize = (t) => (t.length > 150 ? 40 : t.length > 110 ? 46 : t.length > 70 ? 52 : 58);
 function clip(t, n) { return t.length <= n ? t : t.slice(0, t.lastIndexOf(' ', n - 1)) + '…'; }
 
+// The picture fades into the colour behind the text (owner, 2026-11-25: "make the background blend into the text"): the
+// image itself is masked to transparent towards its bottom, so it melts into whatever is behind it (a flat colour or a
+// gradient) with no seam, and a soft glow of the night colour behind the text keeps the words readable over the fade.
+const FADE = (from, to) => `linear-gradient(180deg, rgba(0,0,0,1) ${from}%, rgba(0,0,0,0) ${to}%)`;
+const fadedArt = (art, h, from, to) => img(art, { position: 'absolute', left: 0, top: 0, width: W, height: h, objectFit: 'cover', maskImage: FADE(from, to) });
+const shade = (top, rgb) => el({ position: 'absolute', left: 0, top, width: W, height: H - top, backgroundImage: `linear-gradient(180deg, rgba(${rgb},0) 0%, rgba(${rgb},0.18) 14%, rgba(${rgb},0.45) 28%, rgba(${rgb},0.72) 42%, rgba(${rgb},0.88) 56%)` }, []);
+
 function storySlide(s, art, i) {
-  return el({ width: W, height: H, flexDirection: 'column', background: NIGHT }, [
-    img(art, { width: W, height: 790, objectFit: 'cover' }),
-    el({ flexDirection: 'column', flexGrow: 1, padding: '44px 64px 40px', gap: 18 }, [
+  return el({ width: W, height: H, position: 'relative', background: NIGHT }, [
+    fadedArt(art, 1080, 55, 100),
+    shade(470, '20,18,43'),
+    el({ position: 'absolute', left: 0, bottom: 0, width: W, flexDirection: 'column', padding: '0 64px 40px', gap: 18 }, [
       kicker(`${s.lane} · ${i} of 5`),
       el({ fontFamily: 'Newsreader, NewsreaderExt', fontWeight: 500, fontSize: headSize(s.head), lineHeight: 1.16, color: '#fff' }, clip(s.head, 190)),
       s.take ? el({ fontFamily: 'Inter, InterExt', fontSize: 27, lineHeight: 1.4, color: LILAC }, clip(s.take, 130)) : null,
-      el({ marginTop: 'auto', width: '100%' }, [brandRow(i < 5 ? 'Swipe' : 'One more')]),
+      el({ marginTop: 34, width: '100%' }, [brandRow(i < 5 ? 'Swipe' : 'One more')]),
     ].filter(Boolean)),
   ]);
 }
@@ -280,16 +288,17 @@ async function post(date, { dry, force }) {
 // 18:30 IST, a single illustrated "Can you answer?" card: another of the day's quiz questions (not the morning slide's), with
 // the art of its story (the morning's picture if that story was in the five, else a new one in the day's style).
 function eveningCard(q, art, when) {
-  return el({ width: W, height: H, flexDirection: 'column', backgroundImage: 'linear-gradient(165deg, #4a35d8 0%, #2a1f78 55%, #14122b 100%)' }, [
-    img(art, { width: W, height: 560, objectFit: 'cover' }),
-    el({ flexDirection: 'column', flexGrow: 1, padding: '40px 64px 44px', gap: 20 }, [
+  return el({ width: W, height: H, position: 'relative', backgroundImage: 'linear-gradient(180deg, #3b2bb0 0%, #2a1f78 50%, #14122b 100%)' }, [
+    fadedArt(art, 860, 45, 95),
+    shade(380, '36,27,104'),
+    el({ position: 'absolute', left: 0, bottom: 0, width: W, flexDirection: 'column', padding: '0 64px 44px', gap: 20 }, [
       kicker(`Tonight’s question · ${when}`, '#ffd88a'),
       el({ fontFamily: 'Newsreader, NewsreaderExt', fontWeight: 500, fontSize: Math.min(50, headSize(q.q)), lineHeight: 1.16, color: '#fff' }, clip(q.q, 170)),
       el({ flexDirection: 'column', gap: 12 }, q.options.slice(0, 4).map((o, k) => el({ alignItems: 'center', gap: 18, padding: '14px 22px', borderRadius: 20, background: 'rgba(255,255,255,0.12)', border: '2px solid rgba(255,255,255,0.2)' }, [
         el({ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.22)', fontFamily: 'Space Grotesk, SpaceExt', fontWeight: 700, fontSize: 22, color: '#fff' }, String.fromCharCode(65 + k)),
         el({ fontFamily: 'Inter, InterExt', fontSize: 27, color: '#fff', flexShrink: 1 }, clip(o, 64)),
       ]))),
-      el({ marginTop: 'auto', width: '100%' }, [brandRow('Comment A, B, C or D')]),
+      el({ marginTop: 24, width: '100%' }, [brandRow('Comment A, B, C or D')]),
     ]),
   ]);
 }
