@@ -43,7 +43,8 @@ function normPhone(raw) {
   if (d.startsWith('00')) d = '+' + d.slice(2);
   if (!d.startsWith('+')) { d = d.replace(/^0+/, ''); d = (d.length === 10 ? '+91' : '+') + d; }
   const digits = d.slice(1);
-  return /^\d{10,15}$/.test(digits) ? '+' + digits : null;
+  if (digits.startsWith('91')) return /^91[6-9]\d{9}$/.test(digits) ? '+' + digits : null;   // India: a 10-digit mobile number
+  return /^\d{8,15}$/.test(digits) ? '+' + digits : null;                                  // elsewhere: E.164 lengths
 }
 const goodPin = (p) => /^\d{4}$/.test(String(p || '')) && !/^(\d)\1{3}$/.test(p) && !['1234', '4321', '0123', '9876'].includes(p);
 function pinHash(pin, salt) { return crypto.scryptSync(String(pin), salt, 32).toString('hex'); }

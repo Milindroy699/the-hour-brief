@@ -114,6 +114,8 @@ await c.shot(`${OUT}/04-signin.png`);
 // ---------- 2. create an account ----------
 await c.ev(`localStorage.setItem('hb-saved-v1', JSON.stringify([{ k: 'd1:s1', h: 'Saved on phone one' }])); 1`);
 await tap('.acc-panel .acc-primary'); await c.sleep(300);
+t = await J(`({ shown: document.querySelector('.acc-cc-shown').textContent, options: document.querySelectorAll('.acc-cc option').length })`);
+check('a country picker beside the number, India (+91) first and the default', t.shown === '🇮🇳 +91' && t.options >= 20, JSON.stringify(t));
 await type('.acc-field input', '12345'); await tap('.acc-panel .acc-primary'); await c.sleep(300);
 check('a short number is refused with a reason', /10-digit/.test(await text()));
 await type('.acc-field input', PHONE); await tap('.acc-panel .acc-primary');
@@ -165,6 +167,15 @@ await tap('.acc-danger');
 await waitFor(`!localStorage.getItem('hb-acct-v1')`, 5000);
 check('deleted: gone from the server (account, PIN, number link, both phones\' sessions)', ![...store.keys()].some((k) => alive(k) && (k.startsWith('acct:') || k.startsWith('sess:'))), [...store.keys()].join(','));
 check('and this phone keeps its own copy', await J(`JSON.parse(localStorage.getItem('hb-saved-v1')).length === 2`));
+
+// ---------- 5b. another country ----------
+await c.ev(`HBAccount.openSignIn('you')`); await c.sleep(400);
+await tap('.acc-panel .acc-primary'); await c.sleep(300);
+await c.ev(`(() => { const s = document.querySelector('.acc-cc'); s.value = 'GB'; s.dispatchEvent(new Event('change')); })()`);
+await type('.acc-field input', '07700 900123'); await tap('.acc-panel .acc-primary');
+check('another country: +44 and a number with its leading 0 is a new UK number', await waitFor(`document.querySelectorAll('.acc-pin').length === 2`, 4000) && (await J(`document.querySelector('.acc-cc-shown') ? '' : 'ok'`)) === 'ok', await text());
+check('the picked country is remembered for next time', await J(`localStorage.getItem('hb-cc') === 'GB'`));
+await c.ev(`document.querySelector('.onb-x') && document.querySelector('.onb-x').click(); 1`); await c.sleep(400);
 
 // ---------- 6. skip, and the quiet reminder later ----------
 await fresh();
