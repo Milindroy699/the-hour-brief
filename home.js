@@ -11,7 +11,7 @@
   'use strict';
   if (window.HBHome) return;
   var HC = window.HBChrome || {};
-  var shown = false, el = null, scroller = null, listenBtn = null;
+  var shown = false, el = null, scroller = null, listenBtn = null, accTried = false, accCard = null;
 
   function mk(tag, cls, text) {
     var e = document.createElement(tag);
@@ -275,6 +275,9 @@
 
     var strip = streakStrip(info, hour);
     if (strip) scroller.appendChild(strip);
+    // a quiet sign-in reminder for someone anonymous with something worth keeping (account.js decides; once per visit)
+    if (!accTried && window.HBAccount) { accTried = true; accCard = window.HBAccount.homeNudge(null); }
+    if (accCard && !(window.HBAccount && window.HBAccount.signedIn())) scroller.appendChild(accCard);
 
     // Today's mix: lead story, newest Voices piece, the quiz (the recap first on Sundays)
     var mixS = section('Today’s mix');
@@ -380,7 +383,7 @@
     el.setAttribute('aria-label', 'Home');
     var top = mk('header', 'hub-top hm-top');
     var logo = mk('img', 'ab-logo');
-    logo.src = '/brand/logo-128.png';
+    logo.src = '/brand/logo-128.png?v=hourglass';
     logo.alt = '';
     logo.width = logo.height = 34;
     var brand = mk('div', 'ab-brand');

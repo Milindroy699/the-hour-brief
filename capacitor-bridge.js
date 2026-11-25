@@ -101,16 +101,26 @@
   // ---- Status bar: track the (theme-aware) app bar ----
   // The app's theme (html[data-theme], set by the day/night themes: index.html's head, mobile.js applySkin) wins over the
   // phone's own setting; mobile.js calls window.HBStatusBar again when the theme changes (dusk, dawn, a theme picked in You).
+  // A full-screen layer with its own colours (the quiz, the welcome) sets them while it is open: HBScreenColor(name, {top,
+  // back, dark}) and HBScreenColor(name, null) on close; the last one opened wins (owner, 2026-11-26: the header's navy
+  // above the black quiz, and a violet band under it).
+  var screenColors = [];
+  window.HBScreenColor = function (name, c) {
+    screenColors = screenColors.filter(function (x) { return x.name !== name; });
+    if (c) screenColors.push({ name: name, c: c });
+    window.HBStatusBar();
+  };
   (window.HBStatusBar = function statusBar() {
     if (!P.StatusBar && !(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.hbTheme)) return;
+    var over = screenColors.length ? screenColors[screenColors.length - 1].c : null;
     var th = document.documentElement.getAttribute('data-theme');
-    var prefersDark = th ? th === 'dark' : !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    var prefersDark = over ? over.dark !== false : th ? th === 'dark' : !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
     try {
       // The app bar is white in light mode and near-black in dark mode: match it (DARK = light icons, LIGHT = dark icons).
       if (P.StatusBar) P.StatusBar.setStyle({ style: prefersDark ? 'DARK' : 'LIGHT' });
       // The strip above the header is the header's own colour (it was a fixed near-black, a dark band over the navy Midnight
       // header; owner, 2026-11-26), and the app's own background behind the page is the page's (1.1.5 build 5+: hbTheme).
-      var top = themeColor('--paper', prefersDark ? '#17152d' : '#ffffff'), back = themeColor('--bg', prefersDark ? '#0e0c20' : '#faf7f4');
+      var top = over ? over.top : themeColor('--paper', prefersDark ? '#17152d' : '#ffffff'), back = over ? over.back : themeColor('--bg', prefersDark ? '#0e0c20' : '#faf7f4');
       if (P.StatusBar && P.StatusBar.setBackgroundColor) P.StatusBar.setBackgroundColor({ color: top });
       var mh = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.hbTheme;
       if (mh) mh.postMessage({ top: top, back: back });

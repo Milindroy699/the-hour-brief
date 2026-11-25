@@ -11,8 +11,10 @@ const sharp = createRequire(path.join(root, 'mobile/package.json'))('sharp');
 
 // Icon: a full-bleed opaque square (the stores add their own corner mask). The Stitch logo is a rounded tile, so crop just
 // inside its corner radius (about 22% of the width) instead of filling the corners: 6.6% off each side leaves no transparency.
-const SRC = 2048, CUT = Math.round(SRC * 0.066);
-const icon = sharp(path.join(here, 'logo-source.png')).extract({ left: CUT, top: CUT, width: SRC - 2 * CUT, height: SRC - 2 * CUT }).flatten({ background: '#0c0d15' });
+// 2026-11-26: the owner's new hourglass (Imagen, from the Veo opener's look) is already a full-bleed square on its own
+// indigo (#110b31), so nothing is cut off any more.
+const SRC = 2048, CUT = 0;
+const icon = sharp(path.join(here, 'logo-source.png')).extract({ left: CUT, top: CUT, width: SRC - 2 * CUT, height: SRC - 2 * CUT }).flatten({ background: '#110b31' });
 await icon.clone().resize(1024, 1024).png().toFile(path.join(root, 'mobile/resources/icon.png'));
 await icon.clone().resize(512, 512).png().toFile(path.join(root, 'mobile/play-store/icon-512.png'));
 for (const [file, size] of [['logo-128.png', 128], ['logo-256.png', 256], ['favicon-32.png', 32], ['icon-192.png', 192], ['apple-touch-icon.png', 180]]) {

@@ -218,7 +218,7 @@
         var img = new Image();
         img.onload = function () { resolve(img); };
         img.onerror = function () { resolve(null); };
-        img.src = '/brand/logo-256.png';
+        img.src = '/brand/logo-256.png?v=hourglass';
       });
       var cap = new Promise(function (resolve) { setTimeout(function () { resolve(null); }, 1500); });
       cardP = Promise.race([Promise.all([fonts, logo]).then(function (a) { return a[1]; }), cap]);
@@ -409,6 +409,7 @@
       playOn = true;
       root = playStage;
       document.documentElement.classList.add('qz-playing');
+      if (window.HBScreenColor) window.HBScreenColor('quiz', { top: '#0a0918', back: '#0a0918', dark: true });   // the strips above and below match it
     }
     if (at === 'result') showResult(saved, true, false, true);
     else if (at && typeof at === 'object' && at.answer >= 0 && picks.length > at.answer) showAnswer(at.answer, picks[at.answer], picks[at.answer] === questions[at.answer].answer);
@@ -420,6 +421,7 @@
     playOn = false;
     root = homeRoot;
     document.documentElement.classList.remove('qz-playing');
+    if (window.HBScreenColor) window.HBScreenColor('quiz', null);
     if (saved) { practice = false; showResult(saved, true); } else showIntro();   // a practice retake left midway goes back to the score
     if (playPrev && playPrev.focus && document.contains(playPrev)) { try { playPrev.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }
   }
@@ -834,7 +836,7 @@
     var hero = el('div', 'qz-hero qz-tier-' + tier);
     var top = el('div', 'qz-sc-top');
     var lg = el('img', 'qz-sc-logo');
-    lg.src = '/brand/logo-128.png';
+    lg.src = '/brand/logo-128.png?v=hourglass';
     lg.alt = '';
     top.appendChild(lg);
     top.appendChild(el('span', 'qz-sc-brand', 'The Hour Brief · Daily quiz'));
@@ -885,6 +887,8 @@
     if (official) actions.appendChild(challengeButton(mine));
     card.appendChild(actions);
 
+    var accNudge = el('div', 'qz-acc');                 // account.js: "keep your streak safe" once there is one
+    card.appendChild(accNudge);
     var compare = el('div', 'quiz-compare');
     card.appendChild(compare);
     var freshBox = el('div', 'quiz-fresh');
@@ -973,6 +977,7 @@
         streakEl.appendChild(stx);
         streakEl.hidden = false;
       }
+      if (official && fresh && window.HBAccount) window.HBAccount.scoreNudge(accNudge, streakN);
       var awarded = official ? awardBadges(dates) : { fresh: [], stats: computeStats(dates) };
       if (awarded.fresh.length) {
         freshBox.textContent = '';

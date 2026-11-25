@@ -190,6 +190,10 @@
   var PFN = { ios: 'iPhone', android: 'Android', web: 'Web' };
   // Keep in step with FEATURES in api/track.js (and mobile.js / quiz.js / listen.js, which count them).
   var F = [
+    ['onb_start', 'Welcome shown (new in the app)', 'Welcome', 1], ['onb_skip', 'Skipped the tour', 'Welcome'], ['onb_done', 'Finished the welcome', 'Welcome', 1],
+    ['signup_phone', 'New account (phone)', 'Account', 1], ['signin_phone', 'Signed in (phone)', 'Account', 1], ['signin_google', 'Signed in (Google)', 'Account'], ['signin_apple', 'Signed in (Apple)', 'Account'],
+    ['signin_skip', 'Stayed anonymous', 'Account'], ['signin_open', 'Opened sign-in', 'Account'], ['nudge_home', 'Sign-in card on Home shown', 'Account'], ['nudge_home_tap', 'Tapped the Home sign-in card', 'Account'],
+    ['nudge_score_tap', 'Tapped "keep your streak safe"', 'Account'], ['signout', 'Signed out', 'Account'], ['account_delete', 'Deleted the account', 'Account'],
     ['home', 'Home screen', 'Home', 1], ['home_tap', 'Tap something on Home', 'Home', 1],
     ['today', 'Read today’s edition', 'Reading', 1], ['cards_view', 'Cards view', 'Reading', 1], ['story_save', 'Save a story', 'Reading', 1],
     ['saved_list', 'Open saved stories', 'Reading'], ['story_share', 'Share a story', 'Reading', 1], ['story_vote', 'Vote on a story', 'Reading'],

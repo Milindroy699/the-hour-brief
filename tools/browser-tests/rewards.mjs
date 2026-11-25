@@ -109,7 +109,8 @@ for (const [n, stage] of [[1, 'spark'], [3, 'flame'], [7, 'blaze'], [30, 'infern
 // ---- Milestone screen + badge card ----
 await open({ store: streakStore(6, { b: { first: day(6), streak3: day(4), perfect: day(6) } }) });
 await play(N);
-await waitFor(`!!document.querySelector('.qz-milestone.in')`, 3000);
+await waitFor(`!!document.querySelector('.qz-milestone.in')`, 4000);
+await c.sleep(250);                                   // it takes focus a moment after it appears (after a 5/5 the burst plays first)
 t = await J(`(() => { const m = document.querySelector('.qz-milestone'); return m && { num: m.querySelector('.qz-ms-num').textContent, flame: m.querySelector('.qz-ms-flame').getAttribute('src'), badge: (m.querySelector('.qz-ms-badge b') || {}).textContent, role: m.getAttribute('role'), modal: m.getAttribute('aria-modal'), focus: document.activeElement && document.activeElement.textContent, dots: m.querySelectorAll('.qz-ms-day.on').length }; })()`);
 await c.shot(OUT + '/milestone.png');
 check('finishing day 7 opens the milestone screen: 7, the blaze flame, the Week warrior badge on it', t && t.num === '7' && t.flame === '/brand/rewards/flames/blaze.webp' && t.badge === 'Week warrior', JSON.stringify(t));

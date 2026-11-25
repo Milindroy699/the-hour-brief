@@ -192,6 +192,7 @@ module.exports = async (req, res) => {
   let body = req.body;
   if (typeof body === 'string') { try { body = JSON.parse(body); } catch (e) { body = {}; } }
   body = body || {};
+  if (body.op === 'account') return require('./_account').handle(req, res, body, limited);   // accounts (api/_account.js)
   const mid = String(body.mid || '');
   if (!MID_RE.test(mid)) return bad('invalid request');
 

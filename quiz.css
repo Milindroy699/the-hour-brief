@@ -403,10 +403,12 @@ html.qz-cele-open, html.qz-cele-open body { overflow: hidden; }
    Dark and immersive whatever the theme: the app's own colour names are redefined inside it, so the quiz's cards, options,
    dots and the score screen restyle themselves. One screen at a time: question, answer, then the score. */
 .qz-play {
-  --bg: #07060f; --paper: #15132b; --paper-2: #1f1c3a; --ink: #f4f2ff; --ink-soft: #c9c4e4; --ink-faint: #a29cc4; --line: rgba(255, 255, 255, 0.14);
+  --bg: #0a0918; --paper: #15132b; --paper-2: #1f1c3a; --ink: #f4f2ff; --ink-soft: #c9c4e4; --ink-faint: #a29cc4; --line: rgba(255, 255, 255, 0.14);
   --brand: #b1a5ff; --up: #4fd18b; --down: #ff6b6b; --hb-primary: #6c53f5; --hb-primary-2: #b9acff; --hb-primary-rgb: 108, 83, 245; --shadow: none;
   position: fixed; inset: 0; z-index: 9989; display: flex; flex-direction: column; color: var(--ink); font-family: var(--hb-sans, Inter, system-ui, sans-serif);
-  background: radial-gradient(130% 55% at 50% 112%, rgba(94, 67, 243, 0.62), rgba(94, 67, 243, 0) 62%), radial-gradient(90% 40% at 100% 0%, rgba(232, 176, 75, 0.12), transparent 60%), #07060f;
+  /* one even colour at the top and bottom edges (the status bar and the strip under it take the same: quiz.js HBScreenColor);
+     the glow sits in the middle, away from both (owner, 2026-11-26) */
+  background: radial-gradient(70% 38% at 50% 58%, rgba(94, 67, 243, 0.2), rgba(94, 67, 243, 0) 70%), #0a0918;
 }
 .qz-play[hidden] { display: none; }
 html.qz-playing, html.qz-playing body { overflow: hidden; }
@@ -455,7 +457,7 @@ html .qz-play .quiz-card { flex: 1 0 auto; display: flex; flex-direction: column
 .qz-ans .qz-ans-next { margin-top: 0; }
 /* pinned to the bottom of the screen; the stage's own bottom padding moves inside it so nothing scrolls out under it */
 .qz-ans-foot { position: sticky; bottom: 0; z-index: 2; margin: auto -18px calc(-22px - env(safe-area-inset-bottom, 0px)); padding: 26px 18px calc(14px + env(safe-area-inset-bottom, 0px));
-  background: linear-gradient(to bottom, rgba(10, 9, 24, 0), rgba(10, 9, 24, 0.96) 26%, #0c0a1f 44%); }
+  background: linear-gradient(to bottom, rgba(10, 9, 24, 0), rgba(10, 9, 24, 0.96) 26%, #0a0918 44%); }
 .qz-ans-story { margin-bottom: 4px; }
 .qz-play .quiz-btn.primary { background: #fff; color: #2a1f78; border-color: #fff; }
 .qz-ans-hint { display: block; margin-top: 8px; text-align: center; font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); }
