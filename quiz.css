@@ -532,3 +532,7 @@ html .qz-play .quiz-card { flex: 1 0 auto; display: flex; flex-direction: column
 .qz-play .qz-res .qz-play-done { margin-top: 8px; }
 /* on Challenge the score card is the card: no second box around it */
 .quiz-card.qz-res { padding: 0; border: 0; background: none; box-shadow: none; }
+
+/* 5 out of 5: the owner's Veo burst over the score (quiz.js playPerfect); black drops out with screen blending */
+.qz-perfect { position: fixed; inset: 0; z-index: 9996; width: 100%; height: 100%; object-fit: cover; pointer-events: none; mix-blend-mode: screen; opacity: 1; transition: opacity .35s ease; background: transparent; }
+.qz-perfect.out { opacity: 0; }

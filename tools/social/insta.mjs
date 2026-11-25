@@ -302,6 +302,43 @@ function eveningCard(q, art, when) {
     ]),
   ]);
 }
+// The evening post as a Reel (owner, 2026-11-25: the Veo "evening quiz" loop): the question and its four answers over the
+// moving violet background, 12 s, silent. Reels reach more people than single images, and it needs no picture from the art
+// model. tools/video/motion/quiz.mp4 (a seamless loop); without it, the illustrated image as before.
+const QUIZ_LOOP = path.join(ROOT, 'tools/video/motion/quiz.mp4');
+const RW = 1080, RH = 1920, REEL_SECONDS = 12;
+function eveningReelCard(q, when) {
+  // Instagram covers the bottom ~380px and a strip on the right with its own buttons: nothing important there. The words sit
+  // on a dark glass panel in the middle, so the floating shapes of the loop pass around and behind it, never through the text.
+  return el({ width: RW, height: RH, flexDirection: 'column', padding: '150px 100px 400px 70px' }, [
+    el({ alignItems: 'center', gap: 16 }, [img(LOGO, { width: 64, height: 64, borderRadius: 16 }), el({ fontFamily: 'Space Grotesk, SpaceExt', fontWeight: 700, fontSize: 34, letterSpacing: 1, color: '#fff' }, 'THE HOUR BRIEF')]),
+    el({ flexGrow: 1 }),
+    el({ flexDirection: 'column', gap: 26, padding: '48px 44px 44px', borderRadius: 44, background: 'rgba(14, 9, 44, 0.78)', border: '2px solid rgba(255,255,255,0.18)', boxShadow: '0 30px 80px rgba(8, 4, 30, 0.55)' }, [
+      kicker(`Tonight’s question · ${when}`, '#ffd88a'),
+      el({ fontFamily: 'Newsreader, NewsreaderExt', fontWeight: 500, fontSize: q.q.length > 110 ? 56 : 64, lineHeight: 1.14, color: '#fff' }, clip(q.q, 170)),
+      el({ flexDirection: 'column', gap: 16, marginTop: 8 }, q.options.slice(0, 4).map((o, k) => el({ alignItems: 'center', gap: 20, padding: '20px 24px', borderRadius: 24, background: 'rgba(255,255,255,0.08)', border: '2px solid rgba(255,255,255,0.2)' }, [
+        el({ width: 54, height: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.2)', fontFamily: 'Space Grotesk, SpaceExt', fontWeight: 700, fontSize: 26, color: '#fff' }, String.fromCharCode(65 + k)),
+        el({ fontFamily: 'Inter, InterExt', fontSize: 34, color: '#fff', flexShrink: 1 }, clip(o, 60)),
+      ]))),
+      el({ marginTop: 8, fontFamily: 'Inter, InterExt', fontWeight: 700, fontSize: 36, color: '#ffd88a' }, 'Comment A, B, C or D'),
+    ]),
+    el({ flexGrow: 1 }),
+  ]);
+}
+async function makeEveningReel(q, when, dir) {
+  const png = path.join(dir, 'evening-card.png');
+  const svg = await satori(eveningReelCard(q, when), { width: RW, height: RH, fonts: FONTS });
+  fs.writeFileSync(png, new Resvg(svg, { fitTo: { mode: 'width', value: RW } }).render().asPng());
+  const ff = process.env.FFMPEG || 'ffmpeg', mp4 = path.join(dir, 'evening.mp4');
+  // the loop (darkened a touch so the words read), the card fading in after half a second
+  execFileSync(ff, ['-loglevel', 'error', '-y', '-stream_loop', '-1', '-i', QUIZ_LOOP, '-loop', '1', '-i', png, '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=stereo', '-filter_complex',
+    `[0:v]scale=${RW}:${RH}:flags=lanczos,setsar=1,fps=30,eq=brightness=-0.06,trim=0:${REEL_SECONDS},setpts=PTS-STARTPTS[bg];[1:v]format=rgba,fade=t=in:st=0.5:d=0.6:alpha=1,trim=0:${REEL_SECONDS},setpts=PTS-STARTPTS[fg];[bg][fg]overlay=0:0,format=yuv420p[v]`,
+    '-map', '[v]', '-map', '2:a', '-t', String(REEL_SECONDS),
+    '-c:v', 'libx264', '-preset', 'medium', '-crf', '21', '-c:a', 'aac', '-b:a', '64k', '-movflags', '+faststart', mp4]);
+  execFileSync(ff, ['-loglevel', 'error', '-y', '-ss', '3', '-i', mp4, '-frames:v', '1', '-q:v', '2', path.join(dir, 'evening.jpg')]);   // the cover
+  fs.unlinkSync(png);
+}
+
 async function makeEvening(date, outDir) {
   const html = fs.readFileSync(date === 'latest' ? path.join(ROOT, 'index.html') : (fs.existsSync(path.join(ROOT, `archive/${date}.html`)) ? path.join(ROOT, `archive/${date}.html`) : path.join(ROOT, 'index.html')), 'utf8');
   const ed = readEdition(html);
@@ -317,6 +354,19 @@ async function makeEvening(date, outDir) {
   const shown = (morning ? morning.stories.map((x) => x.head).join(' ') : topFive(ed).map((x) => `${x.head} ${x.take}`).join(' ')).toLowerCase();
   const fresh = (x) => !shown.includes(String(x.options[x.answer] || '').toLowerCase());
   const q = qs.find((x) => fresh(x) && inFive(x) >= 0) || qs.find(fresh) || qs[0];
+  const when0 = new Date(ed.date + 'T00:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+  if (fs.existsSync(QUIZ_LOOP) && !arg('--style')) {
+    const dir0 = path.join(outDir, ed.date);
+    fs.mkdirSync(dir0, { recursive: true });
+    await makeEveningReel(q, when0, dir0);
+    const cap0 = ['Can you answer? 🤔', '', q.q, '', ...q.options.slice(0, 4).map((o, i) => `${String.fromCharCode(65 + i)}) ${o}`), '',
+      'Comment your answer 👇 The answer, the story behind it and today’s full quiz: link in bio.', '',
+      '#quiz #newsquiz #news #AI #business #india #stockmarket #dailybrief'].join('\n').slice(0, 2150);
+    const meta0 = { v: 2, kind: 'evening', date: ed.date, style: 'reel', styleName: 'Reel (quiz loop)', video: 'evening.mp4', image: 'evening.jpg', question: q.q, caption: cap0, madeAt: new Date().toISOString() };
+    fs.writeFileSync(path.join(dir0, 'evening.json'), JSON.stringify(meta0, null, 1));
+    console.log(`made the evening Reel for ${ed.date}: ${q.q}`);
+    return meta0;
+  }
   const k = inFive(q);
   let buf = arg('--art-dir') ? fs.readFileSync(path.join(arg('--art-dir'), 'art-1.jpg')) : null;   // testing
   if (!buf && k >= 0) buf = await fetch(`${PUBLIC}/social/ig/${ed.date}/art-${k + 1}.jpg`).then((r) => (r.ok ? r.arrayBuffer() : null)).then((b) => (b ? Buffer.from(b) : null)).catch(() => null);
@@ -347,14 +397,18 @@ async function postEvening(date, { dry, force }) {
   if (!force && !dry) { const done = await kv(['GET', key]); if (done) { console.log(`instagram evening post: already posted for ${date} (${done})`); return; } }
   const a = await igAuth();
   if (!a) { console.log('instagram: not connected'); return; }
-  const url = `${PUBLIC}/social/ig/${date}/${meta.image}`;
+  const url = `${PUBLIC}/social/ig/${date}/${meta.video || meta.image}`;
   if (dry) { console.log(JSON.stringify({ dry: true, account: a.username, style: meta.style, url, caption: meta.caption.slice(0, 200) + '…' }, null, 1)); return; }
-  const c = await igCall('POST', `/${a.userId}/media`, { image_url: url, caption: meta.caption, access_token: a.token }, a.host);
-  for (let i = 0; i < 20; i++) {
+  const media = meta.video
+    ? { media_type: 'REELS', video_url: url, cover_url: `${PUBLIC}/social/ig/${date}/${meta.image}`, share_to_feed: 'true', caption: meta.caption, access_token: a.token }
+    : { image_url: url, caption: meta.caption, access_token: a.token };
+  const c = await igCall('POST', `/${a.userId}/media`, media, a.host);
+  for (let i = 0; i < (meta.video ? 45 : 20); i++) {                     // a video takes Instagram a few minutes to process
+    if (meta.video) await new Promise((r) => setTimeout(r, 8000));
     const st = await igCall('GET', `/${c.id}`, { fields: 'status_code', access_token: a.token }, a.host).catch(() => ({}));
-    if (st.status_code === 'FINISHED' || !st.status_code) break;
-    if (st.status_code === 'ERROR' || st.status_code === 'EXPIRED') throw new Error(`instagram image processing: ${st.status_code}`);
-    await new Promise((r) => setTimeout(r, 4000));
+    if (st.status_code === 'FINISHED' || (!st.status_code && !meta.video)) break;
+    if (st.status_code === 'ERROR' || st.status_code === 'EXPIRED') throw new Error(`instagram processing: ${st.status_code}`);
+    if (!meta.video) await new Promise((r) => setTimeout(r, 4000));
   }
   const p = await igCall('POST', `/${a.userId}/media_publish`, { creation_id: c.id, access_token: a.token }, a.host);
   const link = await igCall('GET', `/${p.id}`, { fields: 'permalink', access_token: a.token }, a.host).catch(() => ({}));
@@ -400,7 +454,7 @@ async function stats() {
     const rec = JSON.parse((await kv(['GET', recKey + d])) || 'null');
     if (!rec) continue;
     try {
-      const j = await igCall('GET', `/${rec.id}/insights`, { metric: METRICS, access_token: a.token }, a.host);
+      const j = await igCall('GET', `/${rec.id}/insights`, { metric: rec.style === 'reel' ? 'reach,likes,comments,saved,shares' : METRICS, access_token: a.token }, a.host);
       const m = {};
       for (const x of j.data || []) m[x.name] = (x.values && x.values[0] && x.values[0].value) || x.total_value?.value || 0;
       await kv(['SET', statKey + d, JSON.stringify({ ...m, style: rec.style, at: Date.now() }), 'EX', String(400 * 86400)]);
