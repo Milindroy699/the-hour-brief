@@ -129,17 +129,22 @@ const FONTS = [
   { name: 'Inter', data: font('inter-latin-700-normal.woff'), weight: 700, style: 'normal' },
   { name: 'Newsreader', data: font('newsreader-latin-500-normal.woff'), weight: 500, style: 'normal' },
   { name: 'Space Grotesk', data: font('space-grotesk-latin-700-normal.woff'), weight: 700, style: 'normal' },
+  // the -ext files carry ₹ and the other currency signs (Indian-market headlines and quiz options need them)
+  { name: 'InterExt', data: font('inter-latin-ext-400-normal.woff'), weight: 400, style: 'normal' },
+  { name: 'InterExt', data: font('inter-latin-ext-700-normal.woff'), weight: 700, style: 'normal' },
+  { name: 'NewsreaderExt', data: font('newsreader-latin-ext-500-normal.woff'), weight: 500, style: 'normal' },
+  { name: 'SpaceExt', data: font('space-grotesk-latin-ext-700-normal.woff'), weight: 700, style: 'normal' },
 ];
 const LOGO = `data:image/png;base64,${fs.readFileSync(path.join(ROOT, 'brand/logo-256.png')).toString('base64')}`;
 const el = (style, children, type = 'div', extra = {}) => ({ type, props: { style: { display: 'flex', ...style }, children, ...extra } });
 const img = (src, style) => ({ type: 'img', props: { src, style } });
 const NIGHT = '#14122b', GOLD = '#e8b04b', LILAC = '#c9c4e4';
-const kicker = (t, color = GOLD) => el({ fontFamily: 'Space Grotesk', fontSize: 26, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', color }, t);
+const kicker = (t, color = GOLD) => el({ fontFamily: 'Space Grotesk, SpaceExt', fontSize: 26, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', color }, t);
 // the arrow is drawn (the font files have no U+2192)
 const ARROW = 'data:image/svg+xml;base64,' + Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#c9c4e4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>').toString('base64');
 const brandRow = (right) => el({ alignItems: 'center', justifyContent: 'space-between', width: '100%' }, [
-  el({ alignItems: 'center', gap: 14 }, [img(LOGO, { width: 48, height: 48, borderRadius: 12 }), el({ fontFamily: 'Inter', fontWeight: 700, fontSize: 26, color: '#fff' }, 'The Hour Brief')]),
-  right ? el({ alignItems: 'center', gap: 10, fontFamily: 'Inter', fontSize: 24, color: LILAC }, [el({}, right), img(ARROW, { width: 26, height: 26 })]) : el({}, ''),
+  el({ alignItems: 'center', gap: 14 }, [img(LOGO, { width: 48, height: 48, borderRadius: 12 }), el({ fontFamily: 'Inter, InterExt', fontWeight: 700, fontSize: 26, color: '#fff' }, 'The Hour Brief')]),
+  right ? el({ alignItems: 'center', gap: 10, fontFamily: 'Inter, InterExt', fontSize: 24, color: LILAC }, [el({}, right), img(ARROW, { width: 26, height: 26 })]) : el({}, ''),
 ]);
 const headSize = (t) => (t.length > 150 ? 40 : t.length > 110 ? 46 : t.length > 70 ? 52 : 58);
 function clip(t, n) { return t.length <= n ? t : t.slice(0, t.lastIndexOf(' ', n - 1)) + '…'; }
@@ -149,8 +154,8 @@ function storySlide(s, art, i) {
     img(art, { width: W, height: 790, objectFit: 'cover' }),
     el({ flexDirection: 'column', flexGrow: 1, padding: '44px 64px 40px', gap: 18 }, [
       kicker(`${s.lane} · ${i} of 5`),
-      el({ fontFamily: 'Newsreader', fontWeight: 500, fontSize: headSize(s.head), lineHeight: 1.16, color: '#fff' }, clip(s.head, 190)),
-      s.take ? el({ fontFamily: 'Inter', fontSize: 27, lineHeight: 1.4, color: LILAC }, clip(s.take, 130)) : null,
+      el({ fontFamily: 'Newsreader, NewsreaderExt', fontWeight: 500, fontSize: headSize(s.head), lineHeight: 1.16, color: '#fff' }, clip(s.head, 190)),
+      s.take ? el({ fontFamily: 'Inter, InterExt', fontSize: 27, lineHeight: 1.4, color: LILAC }, clip(s.take, 130)) : null,
       el({ marginTop: 'auto', width: '100%' }, [brandRow(i < 5 ? 'Swipe' : 'One more')]),
     ].filter(Boolean)),
   ]);
@@ -161,8 +166,8 @@ function coverSlide(ed, art, when) {
     el({ position: 'absolute', left: 0, top: 0, width: W, height: H, backgroundImage: 'linear-gradient(180deg, rgba(20,18,43,0) 30%, rgba(20,18,43,0.88) 68%, rgba(20,18,43,0.98) 100%)' }, []),
     el({ position: 'absolute', left: 64, right: 64, bottom: 56, flexDirection: 'column', gap: 22 }, [
       kicker(`The day in 5 · ${when}`),
-      el({ fontFamily: 'Newsreader', fontWeight: 500, fontSize: 84, lineHeight: 1.05, color: '#fff' }, 'Five stories that actually mattered today'),
-      el({ fontFamily: 'Inter', fontSize: 30, color: LILAC }, `AI, business and Indian markets${ed.number ? ' · Edition ' + ed.number : ''}`),
+      el({ fontFamily: 'Newsreader, NewsreaderExt', fontWeight: 500, fontSize: 84, lineHeight: 1.05, color: '#fff' }, 'Five stories that actually mattered today'),
+      el({ fontFamily: 'Inter, InterExt', fontSize: 30, color: LILAC }, `AI, business and Indian markets${ed.number ? ' · Edition ' + ed.number : ''}`),
       el({ marginTop: 18, width: '100%' }, [brandRow('Swipe')]),
     ]),
   ]);
@@ -170,13 +175,13 @@ function coverSlide(ed, art, when) {
 function quizSlide(q) {
   return el({ width: W, height: H, flexDirection: 'column', padding: '84px 64px 56px', gap: 30, backgroundImage: 'linear-gradient(160deg, #5e43f3 0%, #3f27c4 55%, #2a1f78 100%)' }, [
     kicker('Can you answer?', '#ffd88a'),
-    el({ fontFamily: 'Newsreader', fontWeight: 500, fontSize: headSize(q.q) + 2, lineHeight: 1.18, color: '#fff' }, clip(q.q, 200)),
+    el({ fontFamily: 'Newsreader, NewsreaderExt', fontWeight: 500, fontSize: headSize(q.q) + 2, lineHeight: 1.18, color: '#fff' }, clip(q.q, 200)),
     el({ flexDirection: 'column', gap: 18, marginTop: 10 }, q.options.slice(0, 4).map((o, k) => el({ alignItems: 'center', gap: 22, padding: '22px 26px', borderRadius: 24, background: 'rgba(255,255,255,0.12)', border: '2px solid rgba(255,255,255,0.22)' }, [
-      el({ width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.2)', fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 26, color: '#fff' }, String.fromCharCode(65 + k)),
-      el({ fontFamily: 'Inter', fontSize: 30, color: '#fff', flexShrink: 1 }, clip(o, 70)),
+      el({ width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.2)', fontFamily: 'Space Grotesk, SpaceExt', fontWeight: 700, fontSize: 26, color: '#fff' }, String.fromCharCode(65 + k)),
+      el({ fontFamily: 'Inter, InterExt', fontSize: 30, color: '#fff', flexShrink: 1 }, clip(o, 70)),
     ]))),
     el({ marginTop: 'auto', flexDirection: 'column', gap: 26, width: '100%' }, [
-      el({ fontFamily: 'Inter', fontSize: 28, color: '#e4deff' }, 'Comment your answer. The full quiz is in the app: link in bio.'),
+      el({ fontFamily: 'Inter, InterExt', fontSize: 28, color: '#e4deff' }, 'Comment your answer. The full quiz is in the app: link in bio.'),
       brandRow(''),
     ]),
   ]);
@@ -184,10 +189,10 @@ function quizSlide(q) {
 function ctaSlide() {
   return el({ width: W, height: H, flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 34, padding: 80, backgroundImage: 'radial-gradient(circle at 80% 10%, rgba(232,176,75,0.25), rgba(20,18,43,0) 45%), linear-gradient(165deg, #2a1f78 0%, #14122b 65%)' }, [
     img(LOGO, { width: 170, height: 170, borderRadius: 40 }),
-    el({ fontFamily: 'Newsreader', fontWeight: 500, fontSize: 76, lineHeight: 1.08, color: '#fff', textAlign: 'center', justifyContent: 'center' }, 'The news that actually mattered, in 7 minutes'),
-    el({ fontFamily: 'Inter', fontSize: 32, color: LILAC, textAlign: 'center', justifyContent: 'center' }, 'Every morning: AI, business and Indian markets, with audio and a daily quiz.'),
-    el({ marginTop: 20, padding: '22px 44px', borderRadius: 999, background: '#fff', fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 30, letterSpacing: 2, textTransform: 'uppercase', color: '#2a1f78' }, 'Free app · link in bio'),
-    el({ fontFamily: 'Inter', fontSize: 26, color: LILAC }, 'iPhone and Android'),
+    el({ fontFamily: 'Newsreader, NewsreaderExt', fontWeight: 500, fontSize: 76, lineHeight: 1.08, color: '#fff', textAlign: 'center', justifyContent: 'center' }, 'The news that actually mattered, in 7 minutes'),
+    el({ fontFamily: 'Inter, InterExt', fontSize: 32, color: LILAC, textAlign: 'center', justifyContent: 'center' }, 'Every morning: AI, business and Indian markets, with audio and a daily quiz.'),
+    el({ marginTop: 20, padding: '22px 44px', borderRadius: 999, background: '#fff', fontFamily: 'Space Grotesk, SpaceExt', fontWeight: 700, fontSize: 30, letterSpacing: 2, textTransform: 'uppercase', color: '#2a1f78' }, 'Free app · link in bio'),
+    el({ fontFamily: 'Inter, InterExt', fontSize: 26, color: LILAC }, 'iPhone and Android'),
   ]);
 }
 async function render(node, file) {
@@ -279,10 +284,10 @@ function eveningCard(q, art, when) {
     img(art, { width: W, height: 560, objectFit: 'cover' }),
     el({ flexDirection: 'column', flexGrow: 1, padding: '40px 64px 44px', gap: 20 }, [
       kicker(`Tonight’s question · ${when}`, '#ffd88a'),
-      el({ fontFamily: 'Newsreader', fontWeight: 500, fontSize: Math.min(50, headSize(q.q)), lineHeight: 1.16, color: '#fff' }, clip(q.q, 170)),
+      el({ fontFamily: 'Newsreader, NewsreaderExt', fontWeight: 500, fontSize: Math.min(50, headSize(q.q)), lineHeight: 1.16, color: '#fff' }, clip(q.q, 170)),
       el({ flexDirection: 'column', gap: 12 }, q.options.slice(0, 4).map((o, k) => el({ alignItems: 'center', gap: 18, padding: '14px 22px', borderRadius: 20, background: 'rgba(255,255,255,0.12)', border: '2px solid rgba(255,255,255,0.2)' }, [
-        el({ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.22)', fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 22, color: '#fff' }, String.fromCharCode(65 + k)),
-        el({ fontFamily: 'Inter', fontSize: 27, color: '#fff', flexShrink: 1 }, clip(o, 64)),
+        el({ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.22)', fontFamily: 'Space Grotesk, SpaceExt', fontWeight: 700, fontSize: 22, color: '#fff' }, String.fromCharCode(65 + k)),
+        el({ fontFamily: 'Inter, InterExt', fontSize: 27, color: '#fff', flexShrink: 1 }, clip(o, 64)),
       ]))),
       el({ marginTop: 'auto', width: '100%' }, [brandRow('Comment A, B, C or D')]),
     ]),
