@@ -25,6 +25,9 @@
 //   linkedin-member    the owner's personal LinkedIn: today's post (kit runs it first, every morning)
 //   linkedin-member-auth  returns a connect link for the owner's personal LinkedIn (valid a day)
 //   linkedin-callback  LinkedIn's OAuth redirect (no cron secret; protected by the one-time state instead)
+//   ig                 starts the Instagram workflow on GitHub (&kind=morning|evening|check). GitHub's own schedules for it
+//                      ran up to 10 hours late (2026-11-25), so these Vercel slots start it on time instead. Needs
+//                      GH_COMMIT_TOKEN with Actions: read and write on the repo.
 const crypto = require('crypto');
 const { buildDigest } = require('./_digest');
 const { sendEditionPush, sendReengagementPush, checkPushHealth } = require('./_push');
@@ -42,6 +45,9 @@ const JOB_BY_SCHEDULE = {
   '30 15 * * *': 'streak',
   '30 9 * * *': 'linkedin-leaders',
   '30 10 * * *': 'linkedin-leaders',
+  '15 4 * * *': 'ig-morning',     // 09:45 IST: the Instagram carousel
+  '15 6 * * *': 'ig-morning',     // 11:45 IST: again, in case the edition was late (the workflow skips a date already posted)
+  '0 13 * * *': 'ig-evening',     // 18:30 IST: the evening quiz image
 };
 // The X growth plan's Telegram parts ride on these same slots (see deliverXSlot in _kit.js); each sends at most once a day.
 const X_SLOT_BY_SCHEDULE = { '30 4 * * *': 'thread', '30 5 * * *': 'replies', '30 9 * * *': 'afternoon', '30 12 * * *': 'evening', '30 13 * * *': 'score' };
@@ -57,6 +63,30 @@ async function kv(command) {
 
 function istToday() {
   return new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
+}
+
+// Start .github/workflows/instagram.yml (auto = the timed run: posts only when the repo variable IG_CAROUSEL is on, and the
+// morning carousel only for today's edition). Dry runs say what they would send.
+async function startInstagram(kind, { dry = false } = {}) {
+  const inputs = kind === 'check' ? { check: 'true' } : { auto: 'true', evening: kind === 'evening' ? 'true' : 'false' };
+  if (dry) return { ok: true, dry: true, kind, inputs };
+  const token = process.env.GH_COMMIT_TOKEN;
+  if (!token) return { ok: false, error: 'GH_COMMIT_TOKEN not configured' };
+  const r = await fetch('https://api.github.com/repos/Milindroy699/the-hour-brief/actions/workflows/instagram.yml/dispatches', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json', 'User-Agent': 'the-hour-brief' },
+    body: JSON.stringify({ ref: 'main', inputs }),
+    signal: AbortSignal.timeout(15000),
+  });
+  if (r.status === 204) return { ok: true, kind, started: new Date().toISOString() };
+  const out = { ok: false, kind, status: r.status, error: (await r.text()).slice(0, 300) };
+  // Tell the owner once a day: without this the post just doesn't appear (GitHub's late schedule is the only backup).
+  try {
+    out.alert = await notifyOwner(`Instagram: the ${kind} post couldn't be started on GitHub (HTTP ${r.status}). ` +
+      (r.status === 403 || r.status === 404 ? 'The GitHub token in Vercel (GH_COMMIT_TOKEN) needs the permission "Actions: Read and write" on the-hour-brief. ' : '') +
+      'You can post it by hand: GitHub > Actions > Instagram carousel > Run workflow (tick "Post it").', `ig:start-fail:${istToday()}`);
+  } catch (e) { out.alert = { ok: false, error: e.message }; }
+  return out;
 }
 
 function authorized(req) {
@@ -121,6 +151,9 @@ module.exports = async (req, res) => {
     switch (job) {
       case 'x': return send(await deliverXSlot({ slot: String(q.slot || ''), dry, force }));
       case 'channels': return send(await snapshotChannels());
+      case 'ig': return send(await startInstagram(['morning', 'evening', 'check'].includes(q.kind) ? q.kind : 'check', { dry }));
+      case 'ig-morning': return send(await startInstagram('morning', { dry }));
+      case 'ig-evening': return send(await startInstagram('evening', { dry }));
       case 'streak': return send({ ok: true, streak: await sendStreakReminder({ dry, force }) });
       case 'digest': break;
       case 'kit': {
