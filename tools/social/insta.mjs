@@ -57,7 +57,7 @@ export function readEdition(html) {
   });
   let quiz = null;
   try { quiz = JSON.parse($('#quiz-data').first().html() || 'null'); } catch (e) { quiz = null; }
-  return { date, number: n ? Number(n[1]) : 0, lanes, quiz: quiz && quiz.questions && quiz.questions[0] };
+  return { date, number: n ? Number(n[1]) : 0, lanes, quiz: quiz && quiz.questions, quizAll: quiz && quiz.questions };
 }
 // the day's five: each section's lead, then each section's second, in section order
 export function topFive(ed) {
@@ -209,6 +209,10 @@ async function make(date, outDir) {
   if (date !== 'latest' && ed.date !== date) throw new Error(`no edition for ${date} (index.html is ${ed.date})`);
   const five = topFive(ed);
   if (five.length < 5) throw new Error(`only ${five.length} stories`);
+  // the quiz slide: a question whose answer isn't sitting in the headlines or takeaways just before it (else the first)
+  const shown = five.map((x) => `${x.head} ${x.take}`).join(' ').toLowerCase();
+  const qs = Array.isArray(ed.quiz) ? ed.quiz.filter((q) => q && q.q && Array.isArray(q.options) && q.options.length >= 2) : [];
+  ed.quiz = qs.find((q) => !shown.includes(String(q.options[q.answer] || '').toLowerCase())) || qs[0] || null;
   let plan = null;
   try { plan = JSON.parse((await kv(['GET', 'ig:style:plan'])) || 'null'); } catch (e) { plan = null; }
   const style = arg('--style') || styleFor(ed.date, plan);
