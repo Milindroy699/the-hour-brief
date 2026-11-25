@@ -1,0 +1,123 @@
+name: Instagram carousel
+
+# "The day in 5" (tools/social/insta.mjs): makes the day's carousel (art from FLUX on Cloudflare Workers AI, our template), puts it
+# on R2 (social/ig/<date>/, which the post kit shows) and posts it to Instagram, once a day, at a fixed time (09:45 IST; a second
+# try at 11:45 in case the edition was late). Posting needs the repo variable IG_CAROUSEL = on (Settings > Variables); without
+# it the slides are still made, for the post kit. Every evening the style test reads each post's numbers (--stats).
+on:
+  schedule:
+    - cron: '15 4 * * *'     # 09:45 IST
+    - cron: '15 6 * * *'     # 11:45 IST, only does anything if 09:45 found no edition
+    - cron: '30 14 * * *'    # 20:00 IST: the numbers
+  workflow_dispatch:
+    inputs:
+      date:
+        description: Edition date (YYYY-MM-DD) or "latest"
+        default: latest
+      post:
+        description: Post it to Instagram (otherwise only make the slides)
+        type: boolean
+        default: false
+      style:
+        description: Force a style (riso, watercolor or clay); empty = the day's rotation
+        default: ''
+      force:
+        description: Make (and post) again even if this date is done
+        type: boolean
+        default: false
+      check:
+        description: Only check the Instagram connection and that post insights can be read
+        type: boolean
+        default: false
+
+concurrency:
+  group: instagram-carousel
+  cancel-in-progress: false
+
+jobs:
+  stats:
+    if: (github.event_name == 'schedule' && github.event.schedule == '30 14 * * *') || (github.event_name == 'workflow_dispatch' && inputs.check)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      KV_REST_API_URL: ${{ secrets.KV_REST_API_URL }}
+      KV_REST_API_TOKEN: ${{ secrets.KV_REST_API_TOKEN }}
+      IG_GRAPH_VERSION: ${{ vars.IG_GRAPH_VERSION }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: (cd tools/video && npm ci --silent) && (cd tools/audio && npm ci --silent)
+      - name: Check the connection and insights
+        run: node tools/social/insta.mjs --check
+      - name: Read the numbers and update the style plan
+        if: github.event_name == 'schedule'
+        run: node tools/social/insta.mjs --stats
+
+  carousel:
+    if: (github.event_name == 'schedule' && github.event.schedule != '30 14 * * *') || (github.event_name == 'workflow_dispatch' && !inputs.check)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      R2_ENDPOINT: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      KV_REST_API_URL: ${{ secrets.KV_REST_API_URL }}
+      KV_REST_API_TOKEN: ${{ secrets.KV_REST_API_TOKEN }}
+      IG_GRAPH_VERSION: ${{ vars.IG_GRAPH_VERSION }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main                     # the latest edition pages
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Make sure ffmpeg is available
+        timeout-minutes: 6
+        run: |
+          command -v ffmpeg >/dev/null && exit 0
+          sudo timeout 240 apt-get update -qq && sudo timeout 240 apt-get install -y -qq ffmpeg
+      - run: (cd tools/video && npm ci --silent) && (cd tools/audio && npm ci --silent)
+      - name: Which edition, and is it done already
+        id: which
+        env:
+          DATE: ${{ inputs.date }}
+          FORCE: ${{ inputs.force }}
+        run: |
+          d="${DATE:-latest}"
+          ed=$(node -e "import('./tools/social/insta.mjs').then(m=>console.log(m.readEdition(require('fs').readFileSync('index.html','utf8')).date))")
+          if [ "$d" = "latest" ]; then
+            d="$ed"
+            today=$(TZ=Asia/Kolkata date +%F)
+            if [ "${{ github.event_name }}" = "schedule" ] && [ "$d" != "$today" ]; then echo "today's edition ($today) isn't out yet (latest is $d)"; echo "skip=1" >> "$GITHUB_OUTPUT"; exit 0; fi
+          fi
+          echo "date=$d" >> "$GITHUB_OUTPUT"
+          if [ "$FORCE" != "true" ] && curl -fsS "$R2_PUBLIC_URL/social/ig/$d/meta.json" -o /dev/null; then echo "slides for $d already made"; echo "made=1" >> "$GITHUB_OUTPUT"; fi
+      - name: Make the slides
+        if: steps.which.outputs.skip != '1' && steps.which.outputs.made != '1'
+        run: node tools/social/insta.mjs --make --date "${{ steps.which.outputs.date }}" --out out/ig ${{ inputs.style && format('--style {0}', inputs.style) || '' }}
+      - name: Put them on R2 (pictures first, meta.json last)
+        if: steps.which.outputs.skip != '1' && steps.which.outputs.made != '1'
+        run: |
+          d="${{ steps.which.outputs.date }}"
+          for f in out/ig/$d/*.jpg; do aws s3 cp "$f" "s3://$R2_BUCKET/social/ig/$d/$(basename "$f")" --endpoint-url "$R2_ENDPOINT" --content-type image/jpeg --cache-control "public, max-age=86400"; done
+          aws s3 cp "out/ig/$d/meta.json" "s3://$R2_BUCKET/social/ig/$d/meta.json" --endpoint-url "$R2_ENDPOINT" --content-type application/json --cache-control "public, max-age=120"
+          curl -fsS -o /dev/null -w "slide 1: %{http_code} %{content_type} %{size_download} bytes\n" "$R2_PUBLIC_URL/social/ig/$d/1.jpg"
+      - name: Post to Instagram (once per date)
+        if: steps.which.outputs.skip != '1' && ((github.event_name == 'schedule' && vars.IG_CAROUSEL == 'on') || (github.event_name == 'workflow_dispatch' && inputs.post))
+        run: node tools/social/insta.mjs --post --date "${{ steps.which.outputs.date }}" ${{ inputs.force && '--force' || '' }}
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.which.outputs.skip != '1'
+        with:
+          name: carousel
+          path: out/ig
+          retention-days: 7
+          if-no-files-found: ignore
