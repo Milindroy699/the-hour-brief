@@ -222,7 +222,16 @@ async function channels(days) {
   const fromSubstack = (g) => { let v = 0, c = 0; for (const [k, n] of Object.entries(g)) { const p = k.split('|'); if (p[0] === 'v' && p[2] === 'substack') v += +n; else if (p[0] === 'c' && p[2] === 'substack') c += +n; } return { visits: v, taps: c }; };
   const rows = dates.map((d, i) => ({ date: d, chan: obj(out[i * 5]), dl: obj(out[i * 5 + 1]), apps: obj(out[i * 5 + 2]), plan: obj(out[i * 5 + 3]), ss: fromSubstack(obj(out[i * 5 + 4])) }));
   let yt = null; try { yt = JSON.parse(out[dates.length * 5] || 'null'); } catch (e) { yt = null; }
-  return { generated: new Date().toISOString(), live, youtube: yt, days: rows };
+  return { generated: new Date().toISOString(), live, youtube: yt, days: rows, igStyle: await igStyle().catch(() => null) };
+}
+
+// The Instagram style test (tools/social/insta.mjs): the plan and each carousel's style and numbers.
+async function igStyle() {
+  const [planRaw, dates] = await pipeline([['GET', 'ig:style:plan'], ['SMEMBERS', 'ig:carousels']]);
+  const ds = (dates || []).sort().slice(-60);
+  const r = ds.length ? await pipeline(ds.flatMap((d) => [['GET', `ig:carousel:${d}`], ['GET', `ig:cstats:${d}`]])) : [];
+  const parse = (x) => { try { return JSON.parse(x || 'null'); } catch (e) { return null; } };
+  return { plan: parse(planRaw), posts: ds.map((d, i) => ({ date: d, post: parse(r[i * 2]), stats: parse(r[i * 2 + 1]) })).filter((x) => x.post) };
 }
 
 async function appStats(n) {

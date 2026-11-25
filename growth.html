@@ -323,7 +323,7 @@ https://the-hour-brief.vercel.app/app?src=x-pinned</pre>
     if (!rows.length) tb.appendChild(h('tr', {}, [h('td', { class: 'muted', text: 'Nothing yet', colspan: head.length })]));
     rows.forEach(function (r) {
       tb.appendChild(h('tr', {}, r.map(function (c, k) {
-        var td = h('td', { text: typeof c === 'number' ? fmt(c) : c });
+        var td = c && c.nodeType ? h('td', {}, [c]) : h('td', { text: typeof c === 'number' ? fmt(c) : c });   // a cell can be a link
         if (k === barCol) td.appendChild(h('span', { class: 'bar', style: 'width:' + Math.round(60 * (+c || 0) / max) + 'px' }));
         return td;
       })));
@@ -685,6 +685,20 @@ https://the-hour-brief.vercel.app/app?src=x-pinned</pre>
     // Instagram
     var igBody = ig.error ? h('p', { class: 'err', text: ig.error }) : table(['Reel', 'Likes', 'Comments', 'Views', 'Reach'], (ig.reels || []).map(function (r) { return [short(r.date), r.likes, r.comments, r.views != null ? r.views : '–', r.reach != null ? r.reach : '–']; }), 1);
     chBox.appendChild(h('div', { class: 'grid2' }, [card('YouTube Shorts', 'Per Short, newest first.', ytBody), card('Instagram Reels', ig.insights === 'ok' ? 'Per Reel, newest first.' : 'Views and reach need the insights permission (see below).', igBody)]));
+    // Instagram style test: the daily carousel's art rotates between three styles; the one people engage with most takes over
+    var IS = C.igStyle || {}, SN = { riso: 'Risograph', watercolor: 'Watercolour and gold', clay: 'Clay 3D' }, P = IS.plan || {};
+    var sc = function (m) { var r = Math.max(1, +m.reach || 0); return ((+m.saved || 0) * 3 + (+m.shares || 0) * 3 + (+m.comments || 0) * 2 + (+m.likes || 0)) / r; };
+    var posts = (IS.posts || []).slice().reverse();
+    var per = {}; ['riso', 'watercolor', 'clay'].forEach(function (s) { per[s] = { n: 0, sum: 0, reach: 0 }; });
+    posts.forEach(function (x) { var s = x.post.style; if (!per[s]) return; per[s].n++; if (x.stats) { per[s].sum += sc(x.stats); per[s].reach += +x.stats.reach || 0; } });
+    var planText = P.mode === 'winner' ? SN[P.winner] + ' won: every day is now in that style.' : P.mode === 'weighted' ? SN[P.leader] + ' leads: it gets about 7 days in 10, the other two the rest, until the gap is clear.' : 'Rotating evenly (a different style each day, shifting weekly) until each style has 7 posts, about 3 weeks.';
+    var styleBody = posts.length ? h('div', {}, [
+      table(['Style', 'Posts', 'Engagement per 100 reached', 'Reach'], ['riso', 'watercolor', 'clay'].map(function (s) { var p = per[s]; return [SN[s], p.n, p.n ? (p.sum / p.n * 100).toFixed(1) : '–', fmt(p.reach)]; }), 1),
+      h('div', { style: 'height:12px' }),
+      table(['Day', 'Style', 'Reach', 'Saves', 'Shares', 'Likes', 'Comments'], posts.slice(0, 14).map(function (x) { var m = x.stats || {}; return [x.post.url ? h('a', { href: x.post.url, target: '_blank', rel: 'noopener', text: short(x.date) }) : short(x.date), SN[x.post.style] || x.post.style, m.reach != null ? m.reach : '–', m.saved != null ? m.saved : '–', m.shares != null ? m.shares : '–', m.likes != null ? m.likes : '–', m.comments != null ? m.comments : '–']; }), 1),
+      h('p', { class: 'note', style: 'margin-top:10px', text: planText + ' Engagement counts saves and shares 3x, comments 2x, likes 1x, divided by reach; a post counts once it is 2 days old. Numbers are read every evening at 20:00.' }),
+    ]) : h('p', { class: 'muted', text: 'The first carousel posts this morning at 09:45; its numbers arrive in the evening. ' + planText });
+    chBox.appendChild(card('Instagram style test (daily carousel)', 'Which illustration style people engage with most.', styleBody));
     // podcast
     var apps = {}, eps = {};
     D.forEach(function (d) { for (var a in d.apps) apps[a] = (apps[a] || 0) + +d.apps[a]; for (var e in d.dl) eps[e] = (eps[e] || 0) + +d.dl[e]; });

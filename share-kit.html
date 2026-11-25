@@ -48,6 +48,7 @@
     <button type="button" role="tab" data-tab="whatsapp">WhatsApp</button>
     <button type="button" role="tab" data-tab="linkedin">LinkedIn</button>
     <button type="button" role="tab" data-tab="x">X</button>
+    <button type="button" role="tab" data-tab="instagram">Instagram</button>
     <button type="button" role="tab" data-tab="shorts">Shorts / Reels</button>
     <button type="button" role="tab" data-tab="reddit">Reddit</button>
     <button type="button" role="tab" data-tab="substack">Substack</button>
@@ -167,6 +168,10 @@
     <div id="substack-kit"><p class="meta">Loading…</p></div>
   </section>
 
+  <section class="kpane" id="p-instagram" role="tabpanel" hidden>
+    <div id="insta-kit"><p class="meta">Loading…</p></div>
+  </section>
+
   <section class="kpane" id="p-promo" role="tabpanel" hidden>
     <div id="promo-kit"><p class="meta">Loading…</p></div>
   </section>
@@ -190,12 +195,13 @@
 </main>
 <script src="/kit-substack.js"></script>
 <script src="/kit-promo.js"></script>
+<script src="/kit-insta.js"></script>
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
   var status = $('status'), timer;
   // ---- Channel tabs ----
-  var TABS = ['whatsapp', 'linkedin', 'x', 'shorts', 'reddit', 'substack', 'telegram', 'promo'];
+  var TABS = ['whatsapp', 'linkedin', 'x', 'instagram', 'shorts', 'reddit', 'substack', 'telegram', 'promo'];
   var kitSocial = null;
   function showTab(name, focus) {
     if (TABS.indexOf(name) < 0) name = 'whatsapp';
@@ -207,6 +213,7 @@
     });
     if (name === 'substack' && window.HBSubstack) window.HBSubstack.mount($('substack-kit'));
     if (name === 'promo' && window.HBPromo) window.HBPromo.mount($('promo-kit'), kitSocial, copy);
+    if (name === 'instagram' && window.HBInsta) window.HBInsta.mount($('insta-kit'), kitSocial && kitSocial.date, copy);
     try { localStorage.setItem('hb-kit-tab', name); } catch (e) {}
     if (location.hash !== '#' + name) history.replaceState(null, '', location.pathname + location.search + '#' + name);
   }
@@ -296,6 +303,7 @@
   loadSocial(0).catch(function () { return loadSocial(1); }).then(function (s) {
     kitSocial = { date: s.date, insight: s.insight };
     if (!$('p-promo').hidden && window.HBPromo) window.HBPromo.mount($('promo-kit'), kitSocial, copy);
+    if (!$('p-instagram').hidden && window.HBInsta) window.HBInsta.mount($('insta-kit'), kitSocial.date, copy);
     s.linkedin = withApp(deepLinks(s.linkedin, s, 'linkedin'), 'linkedin');
     s.status = withWhatsApp(deepLinks(s.status, s, 'whatsapp-status'), 'whatsapp-status');
     loadShort(s.date);
