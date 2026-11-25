@@ -228,11 +228,13 @@ async function channels(days) {
 
 // The Instagram style test (tools/social/insta.mjs): the plan and each carousel's style and numbers.
 async function igStyle() {
-  const [planRaw, dates] = await pipeline([['GET', 'ig:style:plan'], ['SMEMBERS', 'ig:carousels']]);
-  const ds = (dates || []).sort().slice(-60);
-  const r = ds.length ? await pipeline(ds.flatMap((d) => [['GET', `ig:carousel:${d}`], ['GET', `ig:cstats:${d}`]])) : [];
+  // two image posts a day: the morning carousel and the evening quiz image (tools/social/insta.mjs)
+  const [planRaw, cd, ed] = await pipeline([['GET', 'ig:style:plan'], ['SMEMBERS', 'ig:carousels'], ['SMEMBERS', 'ig:evenings']]);
+  const items = (cd || []).map((d) => ['carousel', d, 'ig:carousel:', 'ig:cstats:']).concat((ed || []).map((d) => ['evening', d, 'ig:evening:', 'ig:estats:']))
+    .sort((a, b) => (a[1] + a[0]).localeCompare(b[1] + b[0])).slice(-90);
+  const r = items.length ? await pipeline(items.flatMap((x) => [['GET', x[2] + x[1]], ['GET', x[3] + x[1]]])) : [];
   const parse = (x) => { try { return JSON.parse(x || 'null'); } catch (e) { return null; } };
-  return { plan: parse(planRaw), posts: ds.map((d, i) => ({ date: d, post: parse(r[i * 2]), stats: parse(r[i * 2 + 1]) })).filter((x) => x.post) };
+  return { plan: parse(planRaw), posts: items.map((x, i) => ({ date: x[1], kind: x[0], post: parse(r[i * 2]), stats: parse(r[i * 2 + 1]) })).filter((x) => x.post) };
 }
 
 async function appStats(n) {

@@ -691,13 +691,13 @@ https://the-hour-brief.vercel.app/app?src=x-pinned</pre>
     var posts = (IS.posts || []).slice().reverse();
     var per = {}; ['riso', 'watercolor', 'clay'].forEach(function (s) { per[s] = { n: 0, sum: 0, reach: 0 }; });
     posts.forEach(function (x) { var s = x.post.style; if (!per[s]) return; per[s].n++; if (x.stats) { per[s].sum += sc(x.stats); per[s].reach += +x.stats.reach || 0; } });
-    var planText = P.mode === 'winner' ? SN[P.winner] + ' won: every day is now in that style.' : P.mode === 'weighted' ? SN[P.leader] + ' leads: it gets about 7 days in 10, the other two the rest, until the gap is clear.' : 'Rotating evenly (a different style each day, shifting weekly) until each style has 7 posts, about 3 weeks.';
+    var planText = P.mode === 'winner' ? SN[P.winner] + ' won: every day is now in that style.' : P.mode === 'weighted' ? SN[P.leader] + ' leads: it gets about 7 days in 10, the other two the rest, until the gap is clear.' : 'Rotating evenly (a different style each day, shifting weekly) until each style has 10 image posts, about two weeks.';
     var styleBody = posts.length ? h('div', {}, [
       table(['Style', 'Posts', 'Engagement per 100 reached', 'Reach'], ['riso', 'watercolor', 'clay'].map(function (s) { var p = per[s]; return [SN[s], p.n, p.n ? (p.sum / p.n * 100).toFixed(1) : '–', fmt(p.reach)]; }), 1),
       h('div', { style: 'height:12px' }),
-      table(['Day', 'Style', 'Reach', 'Saves', 'Shares', 'Likes', 'Comments'], posts.slice(0, 14).map(function (x) { var m = x.stats || {}; return [x.post.url ? h('a', { href: x.post.url, target: '_blank', rel: 'noopener', text: short(x.date) }) : short(x.date), SN[x.post.style] || x.post.style, m.reach != null ? m.reach : '–', m.saved != null ? m.saved : '–', m.shares != null ? m.shares : '–', m.likes != null ? m.likes : '–', m.comments != null ? m.comments : '–']; }), 1),
+      table(['Post', 'Style', 'Reach', 'Saves', 'Shares', 'Likes', 'Comments'], posts.slice(0, 20).map(function (x) { var m = x.stats || {}, lab = short(x.date) + (x.kind === 'evening' ? ' · quiz image' : ' · carousel'); return [x.post.url ? h('a', { href: x.post.url, target: '_blank', rel: 'noopener', text: lab }) : lab, SN[x.post.style] || x.post.style, m.reach != null ? m.reach : '–', m.saved != null ? m.saved : '–', m.shares != null ? m.shares : '–', m.likes != null ? m.likes : '–', m.comments != null ? m.comments : '–']; }), 1),
       h('p', { class: 'note', style: 'margin-top:10px', text: planText + ' Engagement counts saves and shares 3x, comments 2x, likes 1x, divided by reach; a post counts once it is 2 days old. Numbers are read every evening at 20:00.' }),
-    ]) : h('p', { class: 'muted', text: 'The first carousel posts this morning at 09:45; its numbers arrive in the evening. ' + planText });
+    ]) : h('p', { class: 'muted', text: 'Two image posts a day: the carousel at 09:45 and a quiz image at 18:30 (the Reel at ~11:30 is separate). Numbers arrive each evening. ' + planText });
     chBox.appendChild(card('Instagram style test (daily carousel)', 'Which illustration style people engage with most.', styleBody));
     // podcast
     var apps = {}, eps = {};
