@@ -28,6 +28,7 @@ export async function launch(port = 9333, opts = {}) {
   if (!opts.home) await send('Page.addScriptToEvaluateOnNewDocument', { source: 'window.HB_NO_HOME = true;' });
   const api = {
     errors, send,
+    on(f) { listeners.push(f); },                 // raw CDP events (screencast frames, tracing)
     async viewport(w, h, mobile = true, dark = false) {
       await send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 2, mobile });
       await send('Emulation.setTouchEmulationEnabled', { enabled: mobile });
