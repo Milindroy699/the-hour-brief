@@ -6,6 +6,10 @@
   },
   "rewrites": [
     {
+      "source": "/api/account",
+      "destination": "/api/league"
+    },
+    {
       "source": "/ep/:date/:file",
       "destination": "/api/track?ep=:date&f=:file"
     },

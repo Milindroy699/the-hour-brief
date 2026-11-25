@@ -482,7 +482,7 @@
     var HC = window.HBChrome;
     var head = ui.head = mk('header', 'hub-top dk-head');
     var logo = mk('img', 'ab-logo');
-    logo.src = '/brand/logo-128.png';
+    logo.src = '/brand/logo-128.png?v=hourglass';
     logo.alt = '';
     logo.width = logo.height = 34;
     var brand = mk('div', 'ab-brand');

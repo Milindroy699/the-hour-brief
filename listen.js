@@ -747,7 +747,7 @@
     hub.setAttribute('aria-label', 'Audio');
     var top = mk('header', 'hub-top');
     var logo = mk('img', 'ab-logo');
-    logo.src = '/brand/logo-128.png';
+    logo.src = '/brand/logo-128.png?v=hourglass';
     logo.alt = '';
     logo.width = logo.height = 34;
     var brand = mk('div', 'ab-brand');

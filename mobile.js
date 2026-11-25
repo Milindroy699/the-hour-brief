@@ -693,6 +693,7 @@
     else { list.unshift({ k: k, d: editionDate(), id: it.dataset.storyId, h: h3 ? h3.textContent.trim() : '', t: Date.now() }); toast('Saved for later'); }
     storeSaved(list);
     refreshSaved();
+    document.dispatchEvent(new CustomEvent('hb:saved'));   // account.js keeps the account in step
   }
   function openSaved(returnTo) {
     openSheet('Saved stories', function (body) {
@@ -1184,7 +1185,7 @@
     archive: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.8c2.4-1 5.6-.8 9 .9 3.4-1.7 6.6-1.9 9-.9V19c-2.4-1-5.6-.8-9 .9-3.4-1.7-6.6-1.9-9-.9V5.8z"/><path d="M12 6.7v13.2"/></svg>',
     leaders: '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 4.5h10a2 2 0 0 1 2 2v5.5a2 2 0 0 1-2 2H9l-3.5 3v-3h-1a2 2 0 0 1-2-2V6.5a2 2 0 0 1 2-2z"/><path d="M16.5 8.5h3a2 2 0 0 1 2 2V16a2 2 0 0 1-2 2h-1v2.5L15 18h-3.5a2 2 0 0 1-1.9-1.4"/></svg>',
   };
-  var LOGO_SRC = '/brand/logo-128.png';
+  var LOGO_SRC = '/brand/logo-128.png?v=hourglass';
 
   // "Edition 039 · Thu, 24 Sep" from the masthead, for the Before-the-news card
   function editionText() {
@@ -1385,6 +1386,7 @@
   // ---- You (2026-11-25): on phones and in the apps the avatar in every header opens it, in place of the Menu. Your streak
   // and badges, the theme, and what the Menu held (reading, reminder, library, podcasts, share, channels). ----
   var YOU_SVG = '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5c1.4-3.6 4.2-5.5 7.5-5.5s6.1 1.9 7.5 5.5"/></svg>';
+  var TRASH_SVG = '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>';
   var LOCK_SVG = '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
   var FLAME_SVG = '<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2c1 4 5 6 5 11a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-6 1-9.5z"/></svg>';
   function menuOrYou(btn) { if (homeMode()) openYou(btn); else openMenu(btn); }
@@ -1481,6 +1483,7 @@
     stat('', q.best || 0, 'best streak', null, openBadges);
     stat('', (q.badgeCount || 0) + '/' + (q.badgeTotal || 10), 'badges', null, openBadges);
     hero.appendChild(st);
+    if (window.HBAccount) window.HBAccount.youHero(hero);
 
     sc.appendChild(mk('h2', 'you-h', 'Theme'));
     var th = mk('div', 'you-themes');
@@ -1562,6 +1565,8 @@
       }]);
     });
     group('Share and follow', share);
+    var acc = window.HBAccount ? window.HBAccount.youItems() : [];
+    if (acc.length) group('Account', acc.map(function (a) { return [a[0], a[0] === 'delete' ? TRASH_SVG : YOU_SVG, a[1], a[2], function () { closeYou(); a[3](); }]; }));
     var foot = mk('div', 'rd-menu-foot you-foot');
     [['Contact us', '/contact.html'], ['About', '/about.html'], ['Corrections', '/corrections.html'], ['Privacy', '/privacy.html']].forEach(function (l, i) {
       if (i) foot.appendChild(document.createTextNode(' · '));
@@ -1573,6 +1578,7 @@
     sc.scrollTop = keep;
   }
   document.addEventListener('hb:skin', function () { if (youEl && !youEl.hidden) drawYou(); });
+  document.addEventListener('hb:account', function () { if (youEl && !youEl.hidden) drawYou(); });
 
   // Bottom tabs: Today (the feed), Audio (the Listen hub), Voices (leaders.html: weekly roundups + Principles essays),
   // Challenge (the quiz). The tab key stays 'leaders' (page URL and tests); only the label is Voices.
@@ -1699,7 +1705,7 @@
     quizOv.setAttribute('aria-label', 'Challenge');
     var top = mk('header', 'hub-top');
     var logo = mk('img', 'ab-logo');
-    logo.src = '/brand/logo-128.png';
+    logo.src = '/brand/logo-128.png?v=hourglass';
     logo.alt = '';
     logo.width = logo.height = 34;
     var brand = mk('div', 'ab-brand');
@@ -2235,7 +2241,17 @@
     var qs = params.toString();
     try { history.replaceState(history.state, '', location.pathname + (qs ? '?' + qs : '') + location.hash); } catch (e) { /* ignore */ }
   }
+  // Accounts and the first-run welcome (account.js): in the apps and on phones
+  function loadAccount() {
+    if (window.HBAccount || window.HB_NO_ACCOUNT || !(NATIVE || mq.matches)) return;
+    var sc = document.createElement('script');
+    sc.src = '/account.js';
+    sc.async = true;
+    sc.onload = function () { if (youEl && !youEl.hidden) drawYou(); if (window.HBHome) window.HBHome.redraw(); };
+    document.head.appendChild(sc);
+  }
   function start() {
+    loadAccount();
     applySkin();
     setInterval(applySkin, 60000);                    // dusk and dawn arrive while the app is open
     document.addEventListener('visibilitychange', function () { if (!document.hidden) applySkin(); });
