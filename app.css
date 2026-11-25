@@ -1558,3 +1558,11 @@ html.hb-onb-open .tab-bar, html.hb-onb-open .tab-switch, html.hb-onb-open .hm-li
 .acc-you { margin-top: 14px; }
 .acc-you-t { display: block; font-size: 0.88rem; color: #c9c4e4; }
 .acc-you-in.acc-btn { min-height: 46px; font-size: 0.95rem; }
+/* the country picker beside the number: a native list (the phone's own wheel or sheet), shown closed as flag and code */
+.acc-phone { display: flex; gap: 8px; }
+.acc-phone input { flex: 1; min-width: 0; }
+.acc-cc-wrap { position: relative; flex: none; display: flex; align-items: center; min-height: 56px; padding: 0 30px 0 14px; border-radius: 16px; border: 1.5px solid var(--o-line); background: rgba(255, 255, 255, 0.07); color: #fff; font-size: 1.05rem; font-weight: 600; }
+.acc-cc-wrap::after { content: ""; position: absolute; right: 12px; top: 50%; width: 7px; height: 7px; margin-top: -6px; border-right: 2px solid var(--o-soft); border-bottom: 2px solid var(--o-soft); transform: rotate(45deg); }
+.acc-cc-wrap:focus-within { border-color: #8f7bff; box-shadow: 0 0 0 3px rgba(143, 123, 255, 0.25); }
+.acc-cc { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; font-size: 16px; cursor: pointer; }
+.acc-cc-shown { white-space: nowrap; }

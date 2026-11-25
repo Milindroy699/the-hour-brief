@@ -169,6 +169,30 @@
       wrap.appendChild(fine);
     }
     var phoneVal = '';
+    // Country codes (owner, 2026-11-26): India first and the default; then where readers are likely to be. The phone's own
+    // region picks the default when it is on the list; the last choice is remembered.
+    var CC = [['IN', 'India', '91'], ['US', 'United States', '1'], ['GB', 'United Kingdom', '44'], ['AE', 'UAE', '971'], ['SG', 'Singapore', '65'],
+      ['CA', 'Canada', '1'], ['AU', 'Australia', '61'], ['SA', 'Saudi Arabia', '966'], ['QA', 'Qatar', '974'], ['KW', 'Kuwait', '965'], ['OM', 'Oman', '968'],
+      ['BH', 'Bahrain', '973'], ['DE', 'Germany', '49'], ['FR', 'France', '33'], ['NL', 'Netherlands', '31'], ['IE', 'Ireland', '353'], ['NZ', 'New Zealand', '64'],
+      ['MY', 'Malaysia', '60'], ['HK', 'Hong Kong', '852'], ['JP', 'Japan', '81'], ['NP', 'Nepal', '977'], ['BD', 'Bangladesh', '880'], ['LK', 'Sri Lanka', '94'],
+      ['KE', 'Kenya', '254'], ['NG', 'Nigeria', '234'], ['ZA', 'South Africa', '27']];
+    function flag(iso) { return String.fromCodePoint.apply(null, iso.split('').map(function (c) { return 0x1f1e6 + c.charCodeAt(0) - 65; })); }
+    function defaultCountry() {
+      var saved = get('hb-cc');
+      if (saved && CC.some(function (c) { return c[0] === saved; })) return saved;
+      // the time zone, not the language: phones in India are often set to English (UK or US)
+      var tz = '';
+      try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) { /* India */ }
+      var TZ = { 'Europe/London': 'GB', 'Asia/Dubai': 'AE', 'Asia/Singapore': 'SG', 'Asia/Riyadh': 'SA', 'Asia/Qatar': 'QA', 'Asia/Kuwait': 'KW', 'Asia/Muscat': 'OM',
+        'Asia/Bahrain': 'BH', 'Europe/Berlin': 'DE', 'Europe/Paris': 'FR', 'Europe/Amsterdam': 'NL', 'Europe/Dublin': 'IE', 'Pacific/Auckland': 'NZ', 'Asia/Kuala_Lumpur': 'MY',
+        'Asia/Hong_Kong': 'HK', 'Asia/Tokyo': 'JP', 'Asia/Kathmandu': 'NP', 'Asia/Dhaka': 'BD', 'Asia/Colombo': 'LK', 'Africa/Nairobi': 'KE', 'Africa/Lagos': 'NG', 'Africa/Johannesburg': 'ZA' };
+      if (TZ[tz]) return TZ[tz];
+      if (/^America\/(Toronto|Vancouver|Edmonton|Winnipeg|Halifax)/.test(tz)) return 'CA';
+      if (/^America\//.test(tz)) return 'US';
+      if (/^Australia\//.test(tz)) return 'AU';
+      return 'IN';
+    }
+    var country = defaultCountry();
     function field(label, attrs) {
       var l = mk('label', 'acc-field');
       l.appendChild(mk('span', '', label));
@@ -181,18 +205,41 @@
     function askPhone() {
       wrap.textContent = '';
       wrap.appendChild(mk('h2', 'acc-h', 'Your mobile number'));
-      wrap.appendChild(mk('p', 'acc-p', 'Indian numbers need just the 10 digits; others, with their country code (+44…).'));
-      var f = field('Mobile number', { type: 'tel', inputmode: 'tel', autocomplete: 'tel', placeholder: '98765 43210', maxlength: '18' });
-      f.input.value = phoneVal;
+      wrap.appendChild(mk('p', 'acc-p', 'Choose your country, then type your number.'));
+      var f = field('Mobile number', { type: 'tel', inputmode: 'tel', autocomplete: 'tel-national', placeholder: '98765 43210', maxlength: '18' });
+      var sel = mk('select', 'acc-cc');
+      sel.setAttribute('aria-label', 'Country code');
+      CC.forEach(function (c) { var o = mk('option', '', flag(c[0]) + ' +' + c[2] + '  ' + c[1]); o.value = c[0]; sel.appendChild(o); });
+      sel.value = country;
+      var shown = mk('span', 'acc-cc-shown');                       // the closed picker shows just the flag and the code
+      function syncCc() { var c = CC.filter(function (x) { return x[0] === sel.value; })[0]; shown.textContent = flag(c[0]) + ' +' + c[2]; f.input.placeholder = c[0] === 'IN' ? '98765 43210' : 'Your number'; }
+      sel.addEventListener('change', function () { country = sel.value; set('hb-cc', country); syncCc(); f.input.focus(); });
+      var row = mk('div', 'acc-phone');
+      var pick = mk('label', 'acc-cc-wrap');
+      pick.appendChild(shown); pick.appendChild(sel);
+      row.appendChild(pick); row.appendChild(f.input);
+      f.el.appendChild(row);
+      syncCc();
+      // back from the PIN step: the number without the picked country's code
+      var c0 = CC.filter(function (x) { return x[0] === sel.value; })[0];
+      f.input.value = phoneVal.indexOf('+' + c0[2]) === 0 ? phoneVal.slice(c0[2].length + 1) : phoneVal;
       wrap.appendChild(f.el);
       var go = btn('acc-btn acc-primary', 'Continue');
       wrap.appendChild(go);
       wrap.appendChild(msg);
       wrap.appendChild(back(start));
       status('');
+      function full() {                                             // a number typed with its own +code wins over the picker
+        var raw = f.input.value.trim();
+        if (/^\s*(\+|00)/.test(raw)) return '+' + raw.replace(/^\s*(\+|00)/, '').replace(/\D/g, '');
+        var c = CC.filter(function (x) { return x[0] === sel.value; })[0];
+        return '+' + c[2] + raw.replace(/\D/g, '').replace(/^0+/, '');
+      }
       function next() {
         phoneVal = f.input.value.trim();
-        if (phoneVal.replace(/\D/g, '').length < 10) { status('Please enter your 10-digit mobile number.', true); return; }
+        var digits = phoneVal.replace(/\D/g, '').replace(/^0+/, '');
+        if (sel.value === 'IN' && !/^\s*(\+|00)/.test(phoneVal) ? digits.length !== 10 : digits.length < 6) { status(sel.value === 'IN' ? 'Please enter your 10-digit mobile number.' : 'Please enter your full mobile number.', true); return; }
+        phoneVal = full();
         go.disabled = true; status('Checking…');
         api('check', { phone: phoneVal }).then(function (r) {
           go.disabled = false;
