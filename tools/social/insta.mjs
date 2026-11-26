@@ -18,6 +18,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { generate, STYLES } from './art.mjs';
+import { entityFor, freePhoto } from './photo.mjs';
 import { kv, igCall, igAuth } from '../video/publish.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
@@ -153,20 +154,23 @@ function clip(t, n) { return t.length <= n ? t : t.slice(0, t.lastIndexOf(' ', n
 // image itself is masked to transparent towards its bottom, so it melts into whatever is behind it (a flat colour or a
 // gradient) with no seam, and a soft glow of the night colour behind the text keeps the words readable over the fade.
 const FADE = (from, to) => `linear-gradient(180deg, rgba(0,0,0,1) ${from}%, rgba(0,0,0,0) ${to}%)`;
-const fadedArt = (art, h, from, to) => img(art, { position: 'absolute', left: 0, top: 0, width: W, height: h, objectFit: 'cover', maskImage: FADE(from, to) });
+const fadedArt = (art, h, from, to, pos) => img(art, { position: 'absolute', left: 0, top: 0, width: W, height: h, objectFit: 'cover', objectPosition: pos || 'center', maskImage: FADE(from, to) });
+// a real photo's credit, required by its licence (photo.mjs): small, top right, over the picture
+const credit = (t) => el({ position: 'absolute', right: 24, top: 22, maxWidth: 760, padding: '6px 12px', borderRadius: 10, background: 'rgba(10,9,24,0.55)', fontFamily: 'Inter, InterExt', fontSize: 17, color: 'rgba(255,255,255,0.85)' }, clip(t, 90));
 const shade = (top, rgb) => el({ position: 'absolute', left: 0, top, width: W, height: H - top, backgroundImage: `linear-gradient(180deg, rgba(${rgb},0) 0%, rgba(${rgb},0.18) 14%, rgba(${rgb},0.45) 28%, rgba(${rgb},0.72) 42%, rgba(${rgb},0.88) 56%)` }, []);
 
 function storySlide(s, art, i) {
   return el({ width: W, height: H, position: 'relative', background: NIGHT }, [
-    fadedArt(art, 1080, 55, 100),
+    fadedArt(art, 1080, 55, 100, s.photo ? 'center 22%' : 'center'),            // a face sits high in its photo
     shade(470, '20,18,43'),
+    s.photo ? credit(s.photo.credit) : null,
     el({ position: 'absolute', left: 0, bottom: 0, width: W, flexDirection: 'column', padding: '0 64px 40px', gap: 18 }, [
       kicker(`${s.lane} · ${i} of 5`),
       el({ fontFamily: 'Newsreader, NewsreaderExt', fontWeight: 500, fontSize: headSize(s.head), lineHeight: 1.16, color: '#fff' }, clip(s.head, 190)),
       s.take ? el({ fontFamily: 'Inter, InterExt', fontSize: 27, lineHeight: 1.4, color: LILAC }, clip(s.take, 130)) : null,
       el({ marginTop: 34, width: '100%' }, [brandRow(i < 5 ? 'Swipe' : 'One more')]),
     ].filter(Boolean)),
-  ]);
+  ].filter(Boolean));
 }
 function coverSlide(ed, art, when) {
   return el({ width: W, height: H, position: 'relative', background: NIGHT }, [
@@ -214,7 +218,7 @@ async function render(node, file) {
 export function caption(ed, five, when) {
   const lines = five.map((s, k) => `${k + 1}. ${s.head}`);
   return [`The day in 5 · ${when}`, '', ...lines, '', 'Which one surprised you? Tell us below 👇', 'The full brief, the audio and a 1-minute quiz: link in bio.', '',
-    'Illustrations are AI-generated.', '', '#news #technews #AI #business #stockmarket #india #startups #markets #dailybrief'].join('\n').slice(0, 2150);
+    five.some((s) => s.photo) ? 'Illustrations are AI-generated. Photos via Wikimedia Commons: ' + five.filter((s) => s.photo).map((s) => s.photo.credit.replace(/^Photo: /, '').replace(' / Wikimedia Commons', '')).join('; ') + '.' : 'Illustrations are AI-generated.', '', '#news #technews #AI #business #stockmarket #india #startups #markets #dailybrief'].join('\n').slice(0, 2150);
 }
 
 async function make(date, outDir) {
@@ -234,25 +238,46 @@ async function make(date, outDir) {
   const dir = path.join(outDir, ed.date);
   fs.mkdirSync(dir, { recursive: true });
   const arts = [];
+  let coverArt = null;
   const local = arg('--art-dir');                // testing: ready-made pictures art-1..5.jpg instead of the model
   for (const [k, s] of five.entries()) {
+    // a real photo of the person the story is about, when Wikimedia Commons has a freely licensed one (photo.mjs)
+    const forced = (arg('--photo-test') || '').split(':');            // testing: --photo-test 2:"Sundar Pichai"
+    if ((!local || forced[0] === String(k + 1)) && !arg('--no-photos')) {
+      try {
+        const who = forced[0] === String(k + 1) ? forced.slice(1).join(':') : local ? null : await entityFor(s);
+        const p = who ? await freePhoto(who) : null;
+        if (p) {
+          const raw = path.join(dir, `photo-${k + 1}-raw`), f = path.join(dir, `photo-${k + 1}.jpg`);
+          fs.writeFileSync(raw, p.buf);
+          execFileSync(process.env.FFMPEG || 'ffmpeg', ['-loglevel', 'error', '-y', '-i', raw, '-vf', 'scale=1080:-2', '-q:v', '3', f]);   // a plain sRGB JPEG
+          fs.unlinkSync(raw);
+          s.photo = { who, credit: p.credit, license: p.license, page: p.page };
+          console.log(`photo ${k + 1}: ${who} (${p.credit})`);
+          arts.push(`data:image/jpeg;base64,${fs.readFileSync(f).toString('base64')}`);
+          if (k > 0) continue;                    // the cover keeps the day's illustration (the style test), so story 1 gets art too
+        }
+      } catch (e) { console.warn(`photo ${k + 1}: ${e.message}`); }
+    }
     s.subject = local ? '(local test art)' : await subjectFor(s, five.slice(0, k).map((x) => x.subject));
     let buf = local ? fs.readFileSync(path.join(local, `art-${k + 1}.jpg`)) : null;
     for (let tries = 0; !buf && tries < 3; tries++) { try { buf = await generate(`${s.subject}. ${STYLES[style]} ${GUARD}`, 'klein'); } catch (e) { console.warn(`art ${k + 1}: ${e.message}`); } }
     if (!buf) throw new Error(`no art for story ${k + 1}`);
     const f = path.join(dir, `art-${k + 1}.jpg`);
     fs.writeFileSync(f, buf);
-    arts.push(`data:image/jpeg;base64,${buf.toString('base64')}`);
+    const uri = `data:image/jpeg;base64,${buf.toString('base64')}`;
+    if (k === 0) coverArt = uri;
+    if (!s.photo) arts.push(uri);
     console.log(`art ${k + 1}: ${s.subject}`);
   }
   const slides = [];
   const add = async (node) => { const f = path.join(dir, `${slides.length + 1}.jpg`); await render(node, f); slides.push(path.basename(f)); };
-  await add(coverSlide(ed, arts[0], when));
+  await add(coverSlide(ed, coverArt || arts[0], when));
   for (const [k, s] of five.entries()) await add(storySlide(s, arts[k], k + 1));
   if (ed.quiz) await add(quizSlide(ed.quiz));
   await add(ctaSlide());
   const meta = { v: 1, date: ed.date, edition: ed.number, style, styleName: STYLE_NAMES[style], plan: plan ? plan.mode : 'rotate', slides, caption: caption(ed, five, when),
-    quizQ: ed.quiz ? ed.quiz.q : null, stories: five.map((s) => ({ id: s.id, lane: s.lane, head: s.head, subject: s.subject })), madeAt: new Date().toISOString() };
+    quizQ: ed.quiz ? ed.quiz.q : null, stories: five.map((s) => ({ id: s.id, lane: s.lane, head: s.head, subject: s.subject, photo: s.photo || null })), madeAt: new Date().toISOString() };
   fs.writeFileSync(path.join(dir, 'meta.json'), JSON.stringify(meta, null, 1));
   console.log(`made ${slides.length} slides for ${ed.date} in the ${STYLE_NAMES[style]} style -> ${dir}`);
   return meta;

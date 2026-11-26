@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<script>if ("scrollRestoration" in history) history.scrollRestoration = "manual";</script>
+<title>Delete your account — The Hour Brief</title>
+<meta name="description" content="How to delete your The Hour Brief account and the data it keeps: in the app, or by email.">
+<link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/brand/icon-192.png">
+<link rel="apple-touch-icon" href="/brand/apple-touch-icon.png">
+<style>
+  :root {
+    --bg: #f2f3ee; --paper: #ffffff; --paper-2: #e7e9e1;
+    --ink: #17191c; --ink-soft: #52585a; --ink-faint: #838a8a; --line: #d7dad2;
+    --brand: #5b3e96; --brand-soft: #efe9f7;
+    --shadow: 0 1px 2px rgba(23,25,28,0.06), 0 10px 28px rgba(23,25,28,0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #131417; --paper: #1b1d21; --paper-2: #24262b;
+      --ink: #edeeec; --ink-soft: #a9adaf; --ink-faint: #757a7c; --line: #2c2f34;
+      --brand: #a487d9; --brand-soft: #241f34;
+      --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #131417; --paper: #1b1d21; --paper-2: #24262b;
+    --ink: #edeeec; --ink-soft: #a9adaf; --ink-faint: #757a7c; --line: #2c2f34;
+    --brand: #a487d9; --brand-soft: #241f34;
+    --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.4);
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--bg); }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, "Inter", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .masthead-band { background: var(--ink); color: var(--bg); padding: 30px 24px 26px; }
+  .masthead-inner { max-width: 720px; margin: 0 auto; display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; }
+  .wordmark { font-weight: 800; font-size: 2.1rem; letter-spacing: -0.01em; margin: 0; text-transform: uppercase; }
+  .wordmark span { color: var(--brand); }
+  .back-link { font-size: 0.78rem; letter-spacing: 0.03em; text-transform: uppercase; color: color-mix(in srgb, var(--bg) 70%, transparent); text-decoration: none; white-space: nowrap; }
+  .back-link:hover { color: var(--bg); }
+
+  .page { max-width: 720px; margin: 0 auto; padding: 40px 24px 96px; }
+  h1 { font-family: Georgia, "Iowan Old Style", "Times New Roman", serif; font-size: 1.8rem; margin: 0 0 8px; }
+  .lede { color: var(--ink-soft); font-size: 1.02rem; line-height: 1.6; margin: 0 0 12px; }
+  .updated { color: var(--ink-faint); font-size: 0.82rem; margin: 0 0 36px; }
+
+  section { margin-bottom: 32px; }
+  h2 { font-family: Georgia, "Iowan Old Style", "Times New Roman", serif; font-size: 1.2rem; margin: 0 0 10px; }
+  p { line-height: 1.65; color: var(--ink-soft); margin: 0 0 12px; font-size: 0.96rem; }
+  strong { color: var(--ink); }
+  ul { margin: 0 0 12px; padding-left: 20px; color: var(--ink-soft); line-height: 1.65; font-size: 0.96rem; }
+  li { margin-bottom: 6px; }
+  a { color: var(--brand); }
+
+  .callout {
+    background: var(--paper); border: 1px solid var(--line); border-radius: 10px;
+    padding: 16px 18px; box-shadow: var(--shadow); font-size: 0.92rem; color: var(--ink-soft); line-height: 1.6;
+  }
+  .callout strong { color: var(--ink); }
+
+  footer.colophon { margin-top: 48px; padding-top: 22px; border-top: 1px solid var(--line); font-size: 0.8rem; color: var(--ink-faint); }
+  footer.colophon a { color: var(--ink-soft); }
+  .contact-card { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; box-shadow: var(--shadow); }
+  .contact-card .label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand); margin: 0 0 6px; }
+  .contact-card .email { display: inline-block; font-size: 1.25rem; font-weight: 700; word-break: break-all; margin: 0 0 6px; }
+  .contact-card p:last-child { margin-bottom: 0; }
+  .topics { list-style: none; padding: 0; }
+  .topics li { padding: 12px 0; border-top: 1px solid var(--line); margin: 0; }
+  .topics li:first-child { border-top: 0; }
+  .topics strong { display: block; margin-bottom: 2px; }
+</style>
+<link rel="stylesheet" href="/mobile.css" media="(max-width: 640px)">
+<script defer src="/_vercel/insights/script.js"></script>
+<script defer src="/capacitor-bridge.js"></script>
+<script defer src="/mobile.js"></script>
+<link rel="canonical" href="https://the-hour-brief.vercel.app/delete-account.html">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"ContactPage","name":"Contact The Hour Brief","url":"https://the-hour-brief.vercel.app/delete-account.html","about":{"@type":"NewsMediaOrganization","name":"The Hour Brief","url":"https://the-hour-brief.vercel.app/","email":"milindroy101292@gmail.com","contactPoint":{"@type":"ContactPoint","contactType":"customer support","email":"milindroy101292@gmail.com","availableLanguage":"English"}}}</script>
+</head>
+<body>
+
+<div class="masthead-band">
+  <div class="masthead-inner">
+    <h1 class="wordmark">The Hour <span>Brief</span></h1>
+    <a class="back-link" href="/">← Back to today's edition</a>
+  </div>
+</div>
+
+<div class="page">
+  <h1 id="delete">Delete your account</h1>
+  <p class="lede">You can delete your The Hour Brief account and everything it keeps at any time, in the app or by email. Using The Hour Brief never needs an account.</p>
+  <p class="updated">Last updated: 26 November 2026</p>
+
+  <section>
+    <h2>In the app (immediate)</h2>
+    <ol class="topics">
+      <li>Open The Hour Brief on your iPhone or Android phone.</li>
+      <li>Tap your picture at the top right to open <strong>You</strong>.</li>
+      <li>Under <strong>Account</strong>, tap <strong>Delete account</strong>, then confirm.</li>
+    </ol>
+    <p>Your account is removed from our servers at once.</p>
+  </section>
+
+  <section aria-labelledby="email-h">
+    <div class="contact-card">
+      <p class="label" id="email-h">Without the app: by email</p>
+      <a class="email" href="mailto:milindroy101292@gmail.com?subject=Delete%20my%20The%20Hour%20Brief%20account">milindroy101292@gmail.com</a>
+      <p>Write from any address with the subject “Delete my account” and the <strong>mobile number</strong> you signed in with (or say you used Google or Apple, and from which email). We delete the account within 7 days and confirm by reply. We may ask you to confirm the request from the same number or account first.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>What is deleted</h2>
+    <ul class="topics">
+      <li><strong>Deleted</strong>Your account and sign-in details (the keyed fingerprint of your number, your PIN’s hash, or your Google or Apple sign-in ID), and everything the account keeps: quiz results, streaks and badges, saved stories, your name, your section, text size and theme choices, and your league membership link.</li>
+      <li><strong>Kept</strong>Nothing tied to you. Anonymous counts (how many people opened a screen on a given day, quiz score totals) never had your identity attached. A league you played in keeps its daily scores under its generated player names until the league expires, about 120 days after its last activity.</li>
+      <li><strong>On your phone</strong>What the app stores on your phone stays there until you remove the app or clear its data.</li>
+    </ul>
+    <p>See the <a href="/privacy.html#account">privacy policy</a> for everything an account keeps.</p>
+  </section>
+
+  <footer class="colophon">
+    <a href="/">Back to today's edition</a> · <a href="/privacy.html">Privacy</a> · <a href="/contact.html">Contact us</a>
+  </footer>
+</div>
+</body>
+</html>

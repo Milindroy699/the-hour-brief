@@ -1647,7 +1647,7 @@
   function setSkin(id) { try { localStorage.setItem(SKIN_KEY, id); } catch (e) { /* this visit only */ } applySkin(); }
   window.HBSkin = { list: SKINS, unlocked: skinUnlocked, choice: skinChoice, set: setSkin, apply: applySkin };
   function isFeed() { return !!document.querySelector('section.lane'); }          // an edition page (today's or an archived one)
-  var INFO_TITLES = { '/about.html': 'About', '/privacy.html': 'Privacy', '/contact.html': 'Contact us', '/week.html': 'This week' };
+  var INFO_TITLES = { '/about.html': 'About', '/privacy.html': 'Privacy', '/contact.html': 'Contact us', '/week.html': 'This week', '/delete-account.html': 'Delete account' };
   function screenName() {
     var p = location.pathname;
     if (INFO_TITLES[p]) return INFO_TITLES[p];

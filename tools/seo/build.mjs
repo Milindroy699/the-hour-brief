@@ -35,7 +35,7 @@ export const SITE = {
 };
 const LANES = [['ai', 'AI & Tech'], ['biz', 'Product & Business'], ['mkt', 'Stock Market']];
 // Other public pages worth a canonical link and a sitemap entry (path from the site root).
-const PAGES = ['about.html', 'corrections.html', 'podcasts.html', 'leaders.html', 'contact.html', 'privacy.html', 'app.html', 'archive/index.html'];
+const PAGES = ['about.html', 'corrections.html', 'podcasts.html', 'leaders.html', 'contact.html', 'privacy.html', 'delete-account.html', 'app.html', 'archive/index.html'];
 const NOINDEX = ['share-kit.html', 'growth.html', 'app-analytics.html', 'substack.html'];
 // A correction note inside a story (see DEPLOY.md, "Corrections"): <p class="correction" data-corrected="YYYY-MM-DD">…</p>
 const CORRECTION = /<p class="correction" data-corrected="(\d{4}-\d{2}-\d{2})">([\s\S]*?)<\/p>/g;
