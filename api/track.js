@@ -47,7 +47,7 @@ const FEATURES = new Set(['open', 'today', 'cards_view', 'story_save', 'story_sh
   'home', 'home_tap', 'you', 'theme_set', 'quiz_review',
   'onb_start', 'onb_skip', 'onb_done', 'signin_open', 'signin_skip', 'signin_you', 'signup_phone', 'signin_phone', 'signin_google', 'signin_apple',
   'signout', 'account_delete', 'nudge_home', 'nudge_home_tap', 'nudge_score_tap',
-  'nudge_home_no', 'nudge_home_stop', 'nudge_score', 'nudge_save', 'nudge_save_tap']);
+  'nudge_home_no', 'nudge_home_stop', 'nudge_score', 'nudge_save', 'nudge_save_tap', 'onb_name', 'name_set']);
 
 const SLUG = /^[a-z0-9][a-z0-9._-]{0,39}$/;
 const slug = (v, d) => { const x = String(v || '').toLowerCase().slice(0, 40); return SLUG.test(x) ? x : d; };

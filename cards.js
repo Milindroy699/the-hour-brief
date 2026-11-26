@@ -100,7 +100,7 @@
 
   // One section only (owner, 2026-11-25: an Explore tile on Home "should not show the other sections"): its intro and
   // stories, then a closing card that offers the other sections as tiles, the whole brief, and the way back to Home.
-  var laneOnly = null;
+  var laneOnly = null, fromHome = false;
   function collect() {
     if (laneOnly && laneShown(laneOnly)) {
       var li = Array.prototype.slice.call(laneOnly.querySelectorAll('.item[data-story-id]'));
@@ -422,7 +422,7 @@
   // In one section the header gets a back arrow to Home (where the Explore tiles are), before the logo.
   function syncBack() {
     if (!ui.head) return;
-    var on = !!laneOnly;
+    var on = !!laneOnly || fromHome;                   // one section, or a story opened from Home (owner, 2026-11-26)
     if (ui.homeBack) ui.homeBack.hidden = !on;          // the logo stays: the arrow comes before it
   }
 
@@ -1041,9 +1041,11 @@
   function open(o) {
     o = o || {};
     build();
+    fromHome = !!o.fromHome;                           // a story card on Home: the header gets a way back to it
     var wantLane = o.lane ? document.getElementById(o.lane) : null;
     if (wantLane && !laneShown(wantLane)) wantLane = null;
     if (shown) {
+      syncBack();
       if (wantLane !== laneOnly) { showLane(wantLane); if (!o.id) return true; }
       if (o.id) { var j = indexOfStory(o.id); if (j >= 0) goTo(j, true); }
       return true;

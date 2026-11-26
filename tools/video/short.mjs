@@ -360,14 +360,16 @@ async function main() {
   if (motion) {
     // the opener (sped up), then the frames over the morning sky (the takeaways) and the night sky (the outro); the voice
     // starts as the opener fades into the first frame
-    const X = 0.4, shift = OPENER_SECONDS - X, nIn = 2 + (outro ? outro.length : 0), iO = nIn, iM = nIn + 1, iN = nIn + 2;
+    // a dip through black between the opener and the first frame (concat, not xfade: GitHub's older ffmpeg refused xfade's
+    // inputs as "not a constant frame rate" on 2026-11-26, though this Mac's ffmpeg accepted them)
+    const X = 0.35, shift = OPENER_SECONDS, nIn = 2 + (outro ? outro.length : 0), iO = nIn, iM = nIn + 1, iN = nIn + 2;
     const prep = 'scale=1080:1920:flags=lanczos,setsar=1,fps=30';
     const video = [
-      `[${iO}:v]setpts=PTS/${(8 / OPENER_SECONDS).toFixed(4)},${prep},trim=0:${OPENER_SECONDS},setpts=PTS-STARTPTS,format=yuv420p,settb=1/30[op]`,
+      `[${iO}:v]setpts=PTS/${(8 / OPENER_SECONDS).toFixed(4)},${prep},trim=0:${OPENER_SECONDS},setpts=PTS-STARTPTS,format=yuv420p,fade=t=out:st=${(OPENER_SECONDS - X).toFixed(2)}:d=${X}[op]`,
       `[${iM}:v]${prep},trim=0:${mainSeconds.toFixed(3)},setpts=PTS-STARTPTS[bm]`,
       `[${iN}:v]${prep},trim=0:${(total - mainSeconds).toFixed(3)},setpts=PTS-STARTPTS[bn]`,
-      '[bm][bn]concat=n=2:v=1:a=0[bg]', '[0:v]fps=30,format=rgba[fr]', '[bg][fr]overlay=0:0:shortest=1,format=yuv420p,fps=30,settb=1/30[main]',
-      `[op][main]xfade=transition=fade:duration=${X}:offset=${shift.toFixed(3)}[vout]`,
+      '[bm][bn]concat=n=2:v=1:a=0[bg]', '[0:v]fps=30,format=rgba[fr]', `[bg][fr]overlay=0:0:shortest=1,format=yuv420p,fade=t=in:st=0:d=${X}[main]`,
+      '[op][main]concat=n=2:v=1:a=0[vout]',
     ];
     const ms = Math.round(shift * 1000);
     const join = labels.join('') + `concat=n=${labels.length}:v=0:a=1,adelay=${ms}:all=1,apad=whole_dur=${(total + shift).toFixed(3)}[aout]`;

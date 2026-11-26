@@ -96,6 +96,7 @@ function merge(server, phone, mid) {
     lanes: phone.lanes !== undefined ? phone.lanes : server.lanes,
     textsize: phone.textsize !== undefined ? phone.textsize : server.textsize,
     skin: phone.skin !== undefined ? phone.skin : server.skin,
+    name: typeof phone.name === 'string' && phone.name ? phone.name.slice(0, 30) : server.name,
   };
 }
 const MAX_DATA = 200000;                    // characters of JSON; a year of quizzes and 200 saved stories is well under this

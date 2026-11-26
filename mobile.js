@@ -1465,7 +1465,8 @@
     var av = mk('span', 'you-av');
     av.innerHTML = YOU_SVG;
     var pt = mk('div');
-    pt.appendChild(mk('b', '', 'Your progress'));
+    var yn = window.HBAccount && window.HBAccount.name();
+    pt.appendChild(mk('b', '', yn ? 'Hi, ' + yn : 'Your progress'));
     pt.appendChild(mk('span', '', 'Saved on this phone. Sign-in to keep it everywhere is coming.'));
     pro.appendChild(av);
     pro.appendChild(pt);
@@ -1570,7 +1571,7 @@
     });
     group('Share and follow', share);
     var acc = window.HBAccount ? window.HBAccount.youItems() : [];
-    if (acc.length) group('Account', acc.map(function (a) { return [a[0], a[0] === 'delete' ? TRASH_SVG : YOU_SVG, a[1], a[2], function () { closeYou(); a[3](); }]; }));
+    if (acc.length) group('Account', acc.map(function (a) { return [a[0], a[0] === 'delete' ? TRASH_SVG : YOU_SVG, a[1], a[2], function () { if (a[0] !== 'name') closeYou(); a[3](); if (a[0] === 'name') drawYou(); }]; }));
     var foot = mk('div', 'rd-menu-foot you-foot');
     [['Contact us', '/contact.html'], ['About', '/about.html'], ['Corrections', '/corrections.html'], ['Privacy', '/privacy.html']].forEach(function (l, i) {
       if (i) foot.appendChild(document.createTextNode(' · '));
@@ -1770,9 +1771,9 @@
   // card (it used to land on the first card: closing Challenge put the deck back at the start); in List, the caller scrolls.
   // The deck opens first and whatever was on top (Home, Challenge) closes in the same task, once it is up: closing first
   // showed the list for a moment (owner, 2026-11-25, on Android).
-  window.HBOpenStory = function (id) {
+  window.HBOpenStory = function (id, opts) {
     if (!(cardsOk() && (deckOpen() || getView() === 'cards'))) { closeQuizPage(); closeHome(); return false; }
-    openCards({ id: id }, function () { closeQuizPage(); closeHome(); syncTabs(); });
+    openCards({ id: id, fromHome: !!(opts && opts.fromHome) }, function () { closeQuizPage(); closeHome(); syncTabs(); });
     return true;
   };
   // An Explore tile on Home: that section alone in Cards (cards.js laneOnly), over Home until it is up.

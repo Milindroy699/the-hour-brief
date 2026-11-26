@@ -16,7 +16,10 @@
 (function () {
   'use strict';
   if (window.HBAccount) return;
-  var ACCT = 'hb-acct-v1', ONB = 'hb-onb-v1', NUDGE = 'hb-nudge-v1';
+  var ACCT = 'hb-acct-v1', ONB = 'hb-onb-v1', NUDGE = 'hb-nudge-v1', NAME = 'hb-name-v1';
+  // the reader's first name (owner, 2026-11-26: asked in the welcome, shown on Home): letters, spaces, . ' -; 30 at most
+  function cleanName(v) { return String(v || '').replace(/[^\p{L}\p{M} .'-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 30); }
+  function setName(v) { var n = cleanName(v); set(NAME, n || null); if (window.HBHome) window.HBHome.redraw(); notify(); syncSoon(); return n; }
   var Cap = window.Capacitor, NATIVE = !!(Cap && Cap.isNativePlatform && Cap.isNativePlatform());
   var P = (Cap && Cap.Plugins) || {};
   var IOS = NATIVE && Cap.getPlatform && Cap.getPlatform() === 'ios';
@@ -44,7 +47,8 @@
   function gather() {
     var d = {};
     for (var k in KEYS) { var v = json(KEYS[k], undefined); if (v !== undefined) d[k] = v; }
-    var ts = get('hb-textsize'), sk = get('hb-skin-v1');
+    var ts = get('hb-textsize'), sk = get('hb-skin-v1'), nm = get(NAME);
+    if (nm) d.name = nm;
     if (ts != null) d.textsize = ts;
     if (sk != null) d.skin = sk;
     return d;
@@ -60,6 +64,7 @@
     }
     if (d.textsize != null && get('hb-textsize') !== String(d.textsize)) { set('hb-textsize', String(d.textsize)); changed.textsize = true; }
     if (d.skin != null && get('hb-skin-v1') !== String(d.skin)) { set('hb-skin-v1', String(d.skin)); changed.skin = true; }
+    if (d.name && get(NAME) !== cleanName(d.name)) { set(NAME, cleanName(d.name)); changed.name = true; }
     return changed;
   }
   function keep(r) { set(ACCT, JSON.stringify({ token: r.token, account: r.account, at: Date.now() })); }
@@ -394,6 +399,20 @@
     s1.appendChild(mk('h1', 'onb-title', 'The news that actually mattered, in one sitting.'));
     s1.appendChild(mk('p', 'onb-lead', 'Every morning: AI and technology, business, and the Indian markets, in under ten minutes. Every story links to its source.'));
     slides.push(s1);
+    // 1b. their name (optional)
+    var sN = mk('div', 'onb-slide onb-name');
+    sN.appendChild(mk('h2', 'onb-h', 'What should we call you?'));
+    sN.appendChild(mk('p', 'onb-lead', 'Your first name, for a proper good morning. You can skip this.'));
+    var nl = mk('label', 'acc-field');
+    nl.appendChild(mk('span', '', 'First name'));
+    var nameIn = mk('input');
+    nameIn.type = 'text'; nameIn.autocomplete = 'given-name'; nameIn.maxLength = 30; nameIn.placeholder = 'Your name';
+    nameIn.setAttribute('autocapitalize', 'words'); nameIn.setAttribute('enterkeyhint', 'next');
+    nameIn.value = get(NAME) || '';
+    nameIn.addEventListener('keydown', function (e) { if (e.key === 'Enter') next.click(); });
+    nl.appendChild(nameIn);
+    sN.appendChild(nl);
+    slides.push(sN);
     // 2. what's inside
     var s2 = mk('div', 'onb-slide');
     s2.appendChild(mk('h2', 'onb-h', 'What’s inside'));
@@ -454,25 +473,29 @@
       closeLayer();
       if (wantReminder && bell) setTimeout(function () { bell.click(); }, 450);
     }
+    var LAST = slides.length - 1;
     function show(i) {
+      if (step === 1 && i !== 1 && nameIn.value.trim()) { if (setName(nameIn.value)) use('onb_name'); }   // leaving the name step
       step = i;
       slides.forEach(function (s, k) { s.hidden = k !== i; if (k === i) { s.classList.remove('in'); void s.offsetWidth; s.classList.add('in'); } });
       dots.querySelectorAll('i').forEach(function (d, k) { d.classList.toggle('on', k === i); });
-      next.textContent = i === 0 ? 'Get started' : 'Next';
-      foot.hidden = i === 3;
-      skip.hidden = i === 3;
-      if (i === 3) signInPanel(host, {
+      next.textContent = i === 0 ? 'Get started' : i === 1 && !nameIn.value.trim() ? 'Skip' : 'Next';
+      foot.hidden = i === LAST;
+      skip.hidden = i === LAST;
+      if (i === 1) setTimeout(function () { try { nameIn.focus(); } catch (e) { /* ignore */ } }, 380);
+      if (i === LAST) signInPanel(host, {
         onDone: function (ch) { finish('onb_done'); afterSignIn(ch); },
         onSkip: function () { finish('onb_done'); }
       });
     }
-    next.addEventListener('click', function () { show(Math.min(3, step + 1)); });
-    skip.addEventListener('click', function () { use('onb_skip'); show(3); });
+    nameIn.addEventListener('input', function () { if (step === 1) next.textContent = nameIn.value.trim() ? 'Next' : 'Skip'; });
+    next.addEventListener('click', function () { show(Math.min(LAST, step + 1)); });
+    skip.addEventListener('click', function () { use('onb_skip'); show(LAST); });
     // swipe between the first three
     var x0 = null;
     stage.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; }, { passive: true });
     stage.addEventListener('touchend', function (e) {
-      if (x0 === null || step === 3) return;
+      if (x0 === null || step === LAST || step === 1) return;
       var dx = e.changedTouches[0].clientX - x0; x0 = null;
       if (dx < -60) show(step + 1); else if (dx > 60 && step > 0) show(step - 1);
     }, { passive: true });
@@ -647,12 +670,17 @@
   }
   // the account rows for You's list (mobile.js drawYou)
   function youItems() {
-    if (!signedIn()) return [];
-    return [['signout', 'Sign out', 'Everything stays on this phone', signOut], ['delete', 'Delete account', 'Removes it from our servers', deleteAccount]];
+    var nm = get(NAME), nameRow = ['name', nm ? 'Your name' : 'Add your name', nm || 'For a proper good morning on Home', function () {
+      var v = window.prompt('Your first name', nm || '');
+      if (v !== null) { setName(v); use('name_set'); }
+    }];
+    if (!signedIn()) return [nameRow];
+    return [nameRow, ['signout', 'Sign out', 'Everything stays on this phone', signOut], ['delete', 'Delete account', 'Removes it from our servers', deleteAccount]];
   }
 
   window.HBAccount = {
     signedIn: signedIn, account: function () { var a = acct(); return a && a.account; }, sync: sync,
+    name: function () { return get(NAME) || ''; }, setName: setName,
     openSignIn: openSignIn, onboard: onboard, homeNudge: homeNudge, scoreNudge: scoreNudge, youHero: youHero, youItems: youItems,
     signOut: signOut, deleteAccount: deleteAccount, onChange: function (f) { listeners.push(f); }
   };

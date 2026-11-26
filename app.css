@@ -1173,7 +1173,7 @@ html.hb-native #quiz-root:has(> .qz-intro), html.hb-native #quiz-root:has(> .qz-
     radial-gradient(1.3px 1.3px at 70px 140px, #cfc8ff 60%, transparent 64%), radial-gradient(1px 1px at 344px 150px, #fff 60%, transparent 64%),
     radial-gradient(1.2px 1.2px at 168px 168px, #fff 60%, transparent 64%);
   background-size: 390px 190px; -webkit-mask-image: linear-gradient(#000 35%, transparent); mask-image: linear-gradient(#000 35%, transparent); }
-:root[data-skin="midnight"] .hm-deco::after { content: ""; position: absolute; top: 78px; right: 26px; width: 40px; height: 40px; border-radius: 50%; opacity: 0.92;
+:root[data-skin="midnight"] .hm-deco::after { content: ""; position: absolute; top: 14px; right: 26px; width: 40px; height: 40px; border-radius: 50%; opacity: 0.92;
   box-shadow: inset 11px -7px 0 0 #f3e7c9, 0 0 26px 2px rgba(243, 231, 201, 0.14);   /* lit towards the top right (owner, 2026-11-25) */
   animation: hm-moon 8s ease-in-out infinite; }
 /* Night on Home, gently alive: the moon drifts and tilts, the stars breathe, and now and then a shooting star crosses.
@@ -1199,19 +1199,20 @@ html.hb-native #quiz-root:has(> .qz-intro), html.hb-native #quiz-root:has(> .qz-
 /* Morning on Home (owner, 2026-11-25: "the morning version can have an animated smiling sun"): a sun that bobs, its rays
    turning slowly, and now and then a blink. Dawn only (6 AM to 8 PM); the same rules as the night sky. */
 .hm-sun { display: none; }
-:root[data-skin="dawn"] .hm-sun { display: block; position: absolute; top: 62px; right: 24px; width: 54px; height: 54px; animation: hm-sun-bob 7s ease-in-out infinite; }
+/* up in the corner beside the short edition line, clear of the greeting under it (owner, 2026-11-26: "give it its space") */
+:root[data-skin="dawn"] .hm-sun { display: block; position: absolute; top: 12px; right: 22px; width: 48px; height: 48px; animation: hm-sun-bob 7s ease-in-out infinite; }
 .hm-sun-rays { position: absolute; inset: -16px; border-radius: 50%;
   background: repeating-conic-gradient(from 0deg, rgba(255, 176, 59, 0.7) 0deg 9deg, rgba(255, 176, 59, 0) 9deg 30deg);
   -webkit-mask-image: radial-gradient(circle, transparent 54%, #000 56%, #000 70%, transparent 74%); mask-image: radial-gradient(circle, transparent 54%, #000 56%, #000 70%, transparent 74%);
   animation: hm-spin 26s linear infinite; }
 .hm-sun-face { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 36% 30%, #fff1b8 0%, #ffcf5c 48%, #f7a531 100%);
   box-shadow: 0 0 0 5px rgba(255, 207, 92, 0.18), 0 6px 22px rgba(247, 165, 49, 0.45); }
-.hm-sun-face b { position: absolute; left: 16px; top: 19px; width: 22px; height: 6px; transform-origin: center;
+.hm-sun-face b { position: absolute; left: 13px; top: 17px; width: 22px; height: 6px; transform-origin: center;
   background: radial-gradient(circle, #6b3d0d 2.6px, transparent 3px) 0 0 / 6px 6px no-repeat, radial-gradient(circle, #6b3d0d 2.6px, transparent 3px) 16px 0 / 6px 6px no-repeat;
   animation: hm-blink 5.5s ease-in-out infinite; }
-.hm-sun-face::before { content: ""; position: absolute; left: 10px; top: 27px; width: 34px; height: 6px;
+.hm-sun-face::before { content: ""; position: absolute; left: 7px; top: 24px; width: 34px; height: 6px;
   background: radial-gradient(circle, rgba(255, 122, 92, 0.45) 3px, transparent 3.5px) 0 0 / 7px 6px no-repeat, radial-gradient(circle, rgba(255, 122, 92, 0.45) 3px, transparent 3.5px) 27px 0 / 7px 6px no-repeat; }
-.hm-sun-face::after { content: ""; position: absolute; left: 18px; top: 27px; width: 18px; height: 9px; box-sizing: border-box; border: 2.5px solid #6b3d0d; border-top: 0; border-radius: 0 0 18px 18px; }
+.hm-sun-face::after { content: ""; position: absolute; left: 15px; top: 24px; width: 18px; height: 9px; box-sizing: border-box; border: 2.5px solid #6b3d0d; border-top: 0; border-radius: 0 0 18px 18px; }
 @keyframes hm-sun-bob { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-5px) rotate(5deg); } }
 @keyframes hm-spin { to { transform: rotate(360deg); } }
 @keyframes hm-blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.12); } }

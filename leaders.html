@@ -159,6 +159,7 @@
     background: var(--tl-glass); -webkit-backdrop-filter: blur(20px) saturate(140%); backdrop-filter: blur(20px) saturate(140%);
     border: 1px solid var(--line); box-shadow: var(--tl-rim), var(--tl-shadow); border-radius: 20px;
   }
+  .tl-art-meta { margin: -6px 0 22px; font-size: 0.92rem; color: var(--ink-soft, #6b6880); }
   .tl-backbtn {
     display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px 7px 10px; border-radius: 999px;
     background: var(--tl-glass); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
@@ -722,10 +723,11 @@
 
     artView.innerHTML =
       '<a class="tl-backbtn" href="#c=' + encodeURIComponent(c.key) + '">' + ic('back') + esc(c.label) + '</a>' +
-      '<div class="tl-art-tags"><span class="tl-tag tl-tag--primary">' + esc(c.label) + (essay ? ' · Essay' : ' · Weekly roundup') + '</span></div>' +
+      // the section is already on the back pill above, so the tag says only what kind of piece it is; the date and reading
+      // time sit under the title, and "Synthesized from N sources" is the sources list at the end (owner, 2026-11-26)
+      '<div class="tl-art-tags"><span class="tl-tag tl-tag--primary">' + (essay ? 'Essay' : 'Weekly roundup') + '</span></div>' +
       '<h1 class="tl-art-title">' + esc(b.title) + '</h1>' +
-      '<div class="tl-byline tl-glass"><span class="tl-byline-av">' + ic(b.styleAuthor ? 'pen' : 'spark') + '</span>' +
-        '<div class="tl-byline-text"><b>' + esc(byTitle) + '</b><span>' + esc(byLine) + '</span></div></div>' +
+      '<p class="tl-art-meta">' + (b.styleAuthor ? esc(byTitle) + ' · ' : '') + esc(byLine.replace(' • ', ' · ')) + '</p>' +
       (BY_KEY[b.category] ? '<div class="tl-banner"><img src="/brand/leaders/' + c.key + '.jpg" alt="" decoding="async"></div>' : '') +
       '<div class="tl-body">' + p.map(function (x) {
         return isSub(x) ? '<h2 class="tl-sub">' + esc(x.replace(/^##\s+/, '')) + '</h2>' : '<p>' + esc(x) + '</p>';

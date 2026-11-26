@@ -99,6 +99,13 @@ let t = await J(`({ video: (document.querySelector('.onb-hero video') || {}).get
 check('welcome: the hourglass clip, the promise, the tabs out of the way', t.video === '/brand/motion/hourglass.mp4' && /mattered/.test(t.title) && t.tabsHidden === 'hidden', JSON.stringify(t));
 await c.shot(`${OUT}/01-welcome.png`);
 await tap('.onb-next'); await c.sleep(450);
+t = await J(`({ name: !!document.querySelector('.onb-name:not([hidden]) input'), btn: document.querySelector('.onb-next').textContent })`);
+check('then "What should we call you?", skippable ("Skip" until a name is typed)', t.name && t.btn === 'Skip', JSON.stringify(t));
+await c.ev(`(() => { const i = document.querySelector('.onb-name input'); i.value = 'Milind'; i.dispatchEvent(new Event('input')); })()`);
+check('typing a name turns the button into Next', (await J(`document.querySelector('.onb-next').textContent`)) === 'Next');
+await c.shot(`${OUT}/01b-name.png`);
+await tap('.onb-next'); await c.sleep(450);
+check('the name is kept', (await J(`localStorage.getItem('hb-name-v1')`)) === 'Milind');
 t = await J(`[...document.querySelectorAll('.onb-slide:not([hidden]) .onb-row b')].map((b) => b.textContent)`);
 const lanes = await J(`document.querySelector('.onb-slide:not([hidden]) .onb-row-t span').textContent`);
 check('what\'s inside: the brief (with today\'s sections), Listen, the quiz, Voices', t.join('|') === 'Today’s brief|Listen|The daily quiz|Voices' && /AI & Tech/.test(lanes), t.join('|') + ' / ' + lanes);
@@ -116,9 +123,9 @@ await c.ev(`localStorage.setItem('hb-saved-v1', JSON.stringify([{ k: 'd1:s1', h:
 await tap('.acc-panel .acc-primary'); await c.sleep(300);
 t = await J(`({ shown: document.querySelector('.acc-cc-shown').textContent, options: document.querySelectorAll('.acc-cc option').length })`);
 check('a country picker beside the number, India (+91) first and the default', t.shown === '🇮🇳 +91' && t.options >= 20, JSON.stringify(t));
-await type('.acc-field input', '12345'); await tap('.acc-panel .acc-primary'); await c.sleep(300);
+await type('.acc-phone input', '12345'); await tap('.acc-panel .acc-primary'); await c.sleep(300);
 check('a short number is refused with a reason', /10-digit/.test(await text()));
-await type('.acc-field input', PHONE); await tap('.acc-panel .acc-primary');
+await type('.acc-phone input', PHONE); await tap('.acc-panel .acc-primary');
 check('a new number asks for a new PIN, twice', await waitFor(`document.querySelectorAll('.acc-pin').length === 2`, 4000));
 await type('.acc-pin', '1111'); await c.ev(`document.querySelectorAll('.acc-pin')[1].value = '1111'; 1`); await tap('.acc-panel .acc-primary');
 check('an easy PIN (1111) is refused', await waitFor(`/not too easy|1234 or 1111/.test(document.querySelector('.acc-msg').textContent)`, 4000), await text());
@@ -128,6 +135,8 @@ await c.ev(`document.querySelectorAll('.acc-pin')[1].value = '4821'; 1`); await 
 check('"You\'re signed in"', await waitFor(`/signed in/.test((document.querySelector('.acc-done') || {}).textContent || '')`, 5000), await text());
 await c.shot(`${OUT}/05-done.png`);
 await waitFor(`!document.querySelector('.hb-onb')`, 6000);
+await c.sleep(700);
+check('Home greets them by name', /, Milind\./.test(await J(`(document.querySelector('.hm-greet') || {}).textContent || ''`)), await J(`(document.querySelector('.hm-greet') || {}).textContent`));
 t = await J(`({ acct: JSON.parse(localStorage.getItem('hb-acct-v1') || 'null'), onb: localStorage.getItem('hb-onb-v1') })`);
 check('signed in on this phone, the welcome done', !!(t.acct && t.acct.token && t.acct.account.phone === '•• 10') && /^done:/.test(t.onb), JSON.stringify(t));
 const keys = [...store.keys()];
@@ -146,7 +155,7 @@ await fresh('/', { 'hb-onb-v1': 'done:2026-11-01', 'hb-quiz-v1': { r: { '2026-11
 check('someone who used the app before gets no welcome', await J(`!document.querySelector('.hb-onb')`));
 await c.ev(`HBAccount.openSignIn('you')`); await c.sleep(400);
 await tap('.acc-panel .acc-primary'); await c.sleep(300);
-await type('.acc-field input', '+91 98765 43210'); await tap('.acc-panel .acc-primary');
+await type('.acc-phone input', '+91 98765 43210'); await tap('.acc-panel .acc-primary');
 check('a known number asks for its PIN', await waitFor(`document.querySelectorAll('.acc-pin').length === 1`, 4000));
 await c.ev(`document.querySelector('.acc-pin').value = '0000'; 1`); await tap('.acc-panel .acc-primary');
 check('a wrong PIN is refused, with the tries left', await waitFor(`/4 tries left/.test(document.querySelector('.acc-msg').textContent)`, 4000), await text());
@@ -172,7 +181,7 @@ check('and this phone keeps its own copy', await J(`JSON.parse(localStorage.getI
 await c.ev(`HBAccount.openSignIn('you')`); await c.sleep(400);
 await tap('.acc-panel .acc-primary'); await c.sleep(300);
 await c.ev(`(() => { const s = document.querySelector('.acc-cc'); s.value = 'GB'; s.dispatchEvent(new Event('change')); })()`);
-await type('.acc-field input', '07700 900123'); await tap('.acc-panel .acc-primary');
+await type('.acc-phone input', '07700 900123'); await tap('.acc-panel .acc-primary');
 check('another country: +44 and a number with its leading 0 is a new UK number', await waitFor(`document.querySelectorAll('.acc-pin').length === 2`, 4000) && (await J(`document.querySelector('.acc-cc-shown') ? '' : 'ok'`)) === 'ok', await text());
 check('the picked country is remembered for next time', await J(`localStorage.getItem('hb-cc') === 'GB'`));
 await c.ev(`document.querySelector('.onb-x') && document.querySelector('.onb-x').click(); 1`); await c.sleep(400);

@@ -72,7 +72,7 @@
   // them (owner, 2026-11-25: the list showed for a moment on Android).
   function openStory(id) {
     tap();
-    if (window.HBOpenStory && window.HBOpenStory(id)) return;
+    if (window.HBOpenStory && window.HBOpenStory(id, { fromHome: true })) return;   // its header gets a back arrow to Home
     close();
     // List: closing Home is enough to be on Brief (mobile.js relights the tab on hb:hub); its tab action would scroll to the top
     var it = document.querySelector('.item[data-story-id="' + id + '"]');
@@ -268,7 +268,8 @@
     var ed = editionLine();
     if (ed) hello.appendChild(mk('p', 'hm-kick', ed));
     var h1 = mk('h1', 'hm-greet');
-    h1.appendChild(document.createTextNode(greeting(hour) + ' '));
+    var nm = window.HBAccount && window.HBAccount.name();                 // "Good morning, Milind."
+    h1.appendChild(document.createTextNode((nm ? greeting(hour).replace('.', ', ' + nm + '.') : greeting(hour)) + ' '));
     h1.appendChild(mk('b', '', all.length + (all.length === 1 ? ' story, ' : ' stories, ') + minutes(all) + ' minutes.'));
     hello.appendChild(h1);
     scroller.appendChild(hello);
