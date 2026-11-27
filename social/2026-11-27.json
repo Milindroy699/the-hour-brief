@@ -1,0 +1,72 @@
+{
+  "date": "2026-11-27",
+  "edition": 101,
+  "lane": "ai",
+  "storyId": "ai-5",
+  "storyTitle": "AMD's record Q3 puts it on pace to out-earn Intel for the first time",
+  "insight": "Intel still reports the bigger number, but AMD's Q4 guide of about $17B sits above Intel's $15-16B, so growth is now setting the pace.",
+  "linkedin": "AMD is guiding to out-earn Intel for the first time.\n\nAMD posted record Q3 revenue of $13.4 billion, up 45%, and guided to about $17 billion for Q4.\n\nIntel grew 21% to $16.5 billion, but its Q4 guide of $15-16 billion sits below even AMD's low end.\n\nThe bigger number today matters less than the faster growth rate behind tomorrow's.\n\nToday's full brief 👉 https://the-hour-brief.vercel.app/e/2026-11-27\n\n#AMD #Semiconductors #AI",
+  "status": "AMD guided Q4 to ~$17B, above Intel's $15-16B. Intel still has the bigger number today, but AMD sets the pace. https://the-hour-brief.vercel.app/e/2026-11-27",
+  "push": {
+    "title": "AMD is on pace to out-earn Intel",
+    "body": "AMD guides Q4 to about $17B vs Intel's $15-16B. Growth, not today's size, is setting the pace."
+  },
+  "page": "Today's Hour Brief opens with a lesson in how fragile the AI stack still is, and who is pulling ahead of it.\n\nAI & Tech: CISA gave federal agencies until December 2 to patch an actively exploited flaw in the open-source LiteLLM AI gateway. Microsoft traced its November 12 outage to an earlier network-capacity upgrade, not an attack. AMD's record $13.4 billion quarter puts it on pace to out-earn Intel.\n\nBusiness: Mahanadi Coalfields lists today after a soft opening day for its IPO. ICRA sees India's Q2 growth easing to 7.5%, and Paytm won RBI's in-principle nod to restart its wallet.\n\nMarkets: The Sensex rose 0.46% and the Nifty 0.25% on Thursday, led by Nifty IT. GDP data lands Monday.\n\n#TheHourBrief #AI #IndiaMarkets",
+  "x": "AMD is on pace to out-earn Intel.\n\nAMD guided Q4 to about $17B; Intel guided $15-16B.\n\nhttps://the-hour-brief.vercel.app/e/2026-11-27",
+  "xpack": {
+    "thread": [
+      "AMD may out-earn Intel next quarter for the first time. That, plus a soft IPO and a cooling GDP, is today in India and tech. Here's what mattered 👇",
+      "AMD posted record Q3 revenue of $13.4 billion, up 45%. It guided Q4 to about $17 billion. Intel's guide is $15-16 billion, so growth is now setting the pace.",
+      "CISA says hackers are already using a flaw in LiteLLM, an open-source AI gateway. Federal agencies must patch by December 2. The AI stack inherits all the old security problems.",
+      "Microsoft's November 12 outage hit Outlook, Teams and Copilot. The cause was an earlier network-capacity upgrade, not an attack. Copilot now sits on the same plumbing as everything else.",
+      "Mahanadi Coalfields lists today. Coal India sold a 10% stake for ₹8,981 crore at ₹136. Day 1 demand was weak, at 0.38 times, but the issue was subscribed by close.",
+      "ICRA expects India's July-September growth to ease to 7.5%, a five-quarter low. Forecasts range from 7.2% to 7.8%. Official GDP data lands on Monday.",
+      "Good news today came in pieces: a slow IPO that cleared, slower growth that's still strong. Full brief, free: https://the-hour-brief.vercel.app/e/2026-11-27"
+    ],
+    "posts": [
+      {
+        "time": "15:00",
+        "text": "Intel still has the bigger number today. It may not next quarter.\n\nAMD guided Q4 to about $17B. Intel guided $15-16B.\n\nhttps://the-hour-brief.vercel.app/s/2026-11-27/ai-5"
+      },
+      {
+        "time": "18:00",
+        "text": "Paytm is allowed to restart its wallet business. Almost.\n\nRBI gave an in-principle nod, but audits and final approval are still left.\n\nhttps://the-hour-brief.vercel.app/s/2026-11-27/biz-3"
+      }
+    ],
+    "poll": {
+      "question": "To what five-quarter low does ICRA expect India's Q2 FY27 GDP growth to ease?",
+      "options": [
+        "6.8%",
+        "7.1%",
+        "7.5%",
+        "8.2%"
+      ],
+      "answer": "The answer: 7.5%. ICRA sees July-September growth easing to a five-quarter low ahead of the official November 30 release.\n\nhttps://the-hour-brief.vercel.app/s/2026-11-27/biz-2"
+    },
+    "replies": {
+      "facts": [
+        "AMD's Q3 revenue was a record $13.4 billion, up 45% from a year ago.",
+        "AMD's data-center revenue nearly doubled to $8.5 billion in Q3.",
+        "Intel's Q4 revenue guide of $15-16 billion sits below even the low end of AMD's.",
+        "Microsoft's Nov 12 outage drew over 130,000 Outlook problem reports on Downdetector.",
+        "CISA's deadline to patch the LiteLLM AI-gateway flaw is December 2.",
+        "Mahanadi Coalfields' IPO raised ₹8,981 crore, all of it a Coal India stake sale.",
+        "India's unemployment rate fell to 4.9% in October, an eight-month low.",
+        "The Sensex rose 390.31 points to 84,328.59 on Thursday; Nifty IT jumped 3.66%."
+      ],
+      "searches": [
+        "Nifty",
+        "AMD Intel",
+        "Mahanadi Coalfields",
+        "India GDP"
+      ]
+    }
+  },
+  "generatedAt": "2026-11-27T03:38:29Z",
+  "leaders": {
+    "id": "product-2026-11-23",
+    "category": "product",
+    "title": "Throughput Is Cheap Now. Direction Is the Scarce Thing.",
+    "post": "Atlassian tried a world with no PMs. It lasted a month.\n\nHead of AI and product craft Sherif Mansour put squads of AI builders with no PM or designer roles to the test.\n\nOne PM reported back that everyone had drifted to their old jobs, because throughput was never the problem; direction was.\n\nHis case, told on Lenny's Podcast: direct the ship, don't row it.\n\nRead the full breakdown 👉 https://the-hour-brief.vercel.app/leaders.html#a=product-2026-11-23\n\n#Product #AI #Leadership"
+  }
+}
