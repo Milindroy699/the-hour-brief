@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- First thing on the page: its background, so the moment between two pages in the app never shows the app's dark frame (a black flash on iPhone switching to and from Voices, owner 2026-11-21). -->
+<script>
+// The phone themes (app and phone website): Dawn by day, Midnight from 8 PM to 6 AM; Newsprint and Markets once a streak
+// badge unlocks them (chosen in You). Set before anything paints. mobile.js applySkin() keeps the same rules and re-checks.
+(function () {
+  try {
+    var app = !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform());
+    if (window.HB_NO_HOME || (!app && !(window.matchMedia && matchMedia('(max-width: 640px)').matches))) return;
+    var s = localStorage.getItem('hb-skin-v1') || 'auto', b = (JSON.parse(localStorage.getItem('hb-quiz-v1') || '{}') || {}).b || {};
+    if ((s === 'newsprint' && !b.streak7) || (s === 'markets' && !b.streak30) || (s !== 'newsprint' && s !== 'markets')) { var h = new Date().getHours(); s = h >= 6 && h < 20 ? 'dawn' : 'midnight'; }
+    document.documentElement.setAttribute('data-skin', s);
+    document.documentElement.setAttribute('data-theme', s === 'midnight' || s === 'markets' ? 'dark' : 'light');
+  } catch (e) { /* the phone's own light/dark setting applies */ }
+})();
+</script>
+<style>html{background:#faf9fd}@media (prefers-color-scheme:dark){html{background:#121316}}html[data-skin=dawn]{background:#faf7f4}html[data-skin=midnight]{background:#0e0c20}html[data-skin=newsprint]{background:#f3ede1}html[data-skin=markets]{background:#0b1c17}</style>
+<script>if ("scrollRestoration" in history) history.scrollRestoration = "manual";</script>
+<script>
+// Arriving on a particular screen (Audio or Challenge from another page's tab bar, or Cards, the saved reading view):
+// keep the page hidden, all but the tab bar, until mobile.js has that screen up. Otherwise the list painted first, then
+// the cards, then Audio or Challenge on top: a visible jitter coming back from Voices (owner, 2026-11-18). mobile.js
+// lifts it (bootDone); the timer is only a safety net.
+(function () {
+  try {
+    var app = !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform());
+    if (!app && !(window.matchMedia && matchMedia('(max-width: 640px)').matches)) return;
+    var q = location.search, cards = true;
+    try { cards = sessionStorage.getItem('hb-view-v1') !== 'list'; } catch (e) {}
+    // Home (2026-11-25): a plain open of today's edition lands on Home, whatever the reading view; ?brief=1 is the Brief tab.
+    var home = !location.hash && !/[?&]((quiz|brief)=1|join=|beat=)/.test(q);
+    var screen = /[?&](audio|quiz)=1(&|$)/.test(q) || home || (cards && !location.hash && !/[?&](join|beat)=/.test(q));
+    if (!screen) return;
+    var h = document.documentElement;
+    h.classList.add('hb-boot');
+    setTimeout(function () { h.classList.remove('hb-boot'); }, 4000);
+    // The hourglass loader (app.css) shows while hidden; straight away if the last page left with one (mobile.js
+    // showLeaving), turning in step with it.
+    h.style.setProperty('--hb-spin-delay', '0ms');
+    // After a tab trip the loader carries on from the same point of its turn (its clock starts at the tap), and mobile.js
+    // keeps it up for at least one turn from then (data-hb-loader-at).
+    try { var at = +sessionStorage.getItem('hb-loader-at'); sessionStorage.removeItem('hb-loader-at'); if (at && Date.now() - at < 10000) { h.classList.add('hb-from-loader'); h.setAttribute('data-hb-loader-at', String(at)); h.style.setProperty('--hb-spin-delay', -(Date.now() - at) + 'ms'); } } catch (e) {}
+    // Start fetching what that screen needs now, not after the page has loaded: the hidden moment is that much shorter.
+    var pre = function (src) { var l = document.createElement('link'); l.rel = 'preload'; l.as = 'script'; l.href = src; document.head.appendChild(l); };
+    pre('/cards.js');
+    if (home) pre('/home.js');
+    if (/[?&]audio=1(&|$)/.test(q)) pre('/listen.js');
+  } catch (e) {}
+})();
+</script>
+<script>
+// The tab bar from the very first frame (owner, 2026-11-19): mobile.js builds the real one a beat after the page first
+// paints, so arriving here from another tab the bar vanished and came back under the loader. This draws the same markup
+// as soon as <body> exists; mobile.js swaps in the real one (same look) in a single step. Phones and the apps only.
+(function () {
+  try {
+    if (!(window.matchMedia && matchMedia('(max-width: 640px)').matches) || !window.MutationObserver) return;
+    var q = location.search, lit = /[?&]quiz=1(&|$)/.test(q) ? 'quiz' : (/[?&](brief=1|join=|beat=)/.test(q) || location.hash) ? 'today' : 'home';
+    var tabs = [['home','Home','/','<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 10.5L12 4l8.5 6.5V19a1.5 1.5 0 0 1-1.5 1.5h-4.5v-6h-5v6H5A1.5 1.5 0 0 1 3.5 19z"/></svg>'], ['today','Brief','/?brief=1','<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5h12.5v13H6.5a2.5 2.5 0 0 1-2.5-2.5V5.5z"/><path d="M16.5 9H20v7a2.5 2.5 0 0 1-2.5 2.5"/><path d="M7.5 9h6M7.5 12h6M7.5 15h3.5"/></svg>'], ['leaders','Voices','/leaders.html','<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 4.5h10a2 2 0 0 1 2 2v5.5a2 2 0 0 1-2 2H9l-3.5 3v-3h-1a2 2 0 0 1-2-2V6.5a2 2 0 0 1 2-2z"/><path d="M16.5 8.5h3a2 2 0 0 1 2 2V16a2 2 0 0 1-2 2h-1v2.5L15 18h-3.5a2 2 0 0 1-1.9-1.4"/></svg>'], ['quiz','Challenge','/?quiz=1','<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/></svg>']];
+    var mo = new MutationObserver(function () {
+      if (!document.body) return;
+      mo.disconnect();
+      var nav = document.createElement('nav');
+      nav.className = 'tab-bar';
+      nav.setAttribute('data-early', '');
+      nav.setAttribute('aria-hidden', 'true');
+      nav.innerHTML = '<div class="tab-row">' + tabs.map(function (t) {
+        return '<a class="tab" data-tab="' + t[0] + '" href="' + t[2] + '"' + (t[0] === lit ? ' aria-current="page"' : '') +
+          '><span class="tab-ic">' + t[3] + '</span><span class="tab-lb">' + t[1] + '</span></a>';
+      }).join('') + '</div>';
+      document.body.appendChild(nav);
+    });
+    mo.observe(document.documentElement, { childList: true });
+  } catch (e) { /* mobile.js draws it */ }
+})();
+</script>
+<!-- The root paints the app's background while the body is hidden; without it the app's dark native background showed
+     through and switching screens flashed black (owner, 2026-11-18). -->
+<style>html.hb-boot { background-color: var(--bg, #faf9fd); } html.hb-boot:not(.hb-reveal) body { visibility: hidden; } html.hb-boot .tab-bar { visibility: visible; }</style>
+<!-- iPhone Safari's own "Open in the App Store" banner for website visitors (other browsers get mobile.js's bar) -->
+<script>/* Safari's app banner: "Open" takes an app user to this exact page in the app (app-argument), not just the app's home */document.write('<meta name="apple-itunes-app" content="app-id=6817195056, app-argument=' + location.href.replace(/["<>]/g, encodeURIComponent) + '">');</script>
+<noscript><meta name="apple-itunes-app" content="app-id=6817195056"></noscript>
+<title>The Hour Brief</title>
+<meta name="description" content="A free daily one-hour digest of AI/tech, product & business (India + global), and the Indian stock market — every item links to its original source.">
+<meta property="og:title" content="The Hour Brief">
+<meta property="og:description" content="A free daily one-hour digest of AI/tech, product & business (India + global), and the Indian stock market — every item links to its original source.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://the-hour-brief.vercel.app/og-image.png">
+<meta name="twitter:image" content="https://the-hour-brief.vercel.app/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" type="application/atom+xml" title="The Hour Brief" href="../feed.xml">
+<link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/brand/icon-192.png">
+<link rel="apple-touch-icon" href="/brand/apple-touch-icon.png">
+<style>
+  :root {
+    --bg: #f2f3ee;
+    --paper: #ffffff;
+    --paper-2: #e7e9e1;
+    --ink: #17191c;
+    --ink-soft: #52585a;
+    --ink-faint: #838a8a;
+    --line: #d7dad2;
+    --brand: #5b3e96;
+    --brand-soft: #efe9f7;
+    --tag-ai: #206b5a;
+    --tag-ai-soft: #e0ede9;
+    --tag-biz: #a3721f;
+    --tag-biz-soft: #f3e9d5;
+    --tag-mkt: #2c5490;
+    --tag-mkt-soft: #e2e9f2;
+    --up: #2f7a52;
+    --down: #b23b3b;
+    --shadow: 0 1px 2px rgba(23,25,28,0.06), 0 10px 28px rgba(23,25,28,0.06);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #131417;
+      --paper: #1b1d21;
+      --paper-2: #24262b;
+      --ink: #edeeec;
+      --ink-soft: #a9adaf;
+      --ink-faint: #757a7c;
+      --line: #2c2f34;
+      --brand: #a487d9;
+      --brand-soft: #241f34;
+      --tag-ai: #4fb59e;
+      --tag-ai-soft: #16241f;
+      --tag-biz: #d9a94e;
+      --tag-biz-soft: #2b2417;
+      --tag-mkt: #7ea2d6;
+      --tag-mkt-soft: #1b2532;
+      --up: #4fb579;
+      --down: #d9645f;
+      --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.4);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #131417;
+    --paper: #1b1d21;
+    --paper-2: #24262b;
+    --ink: #edeeec;
+    --ink-soft: #a9adaf;
+    --ink-faint: #757a7c;
+    --line: #2c2f34;
+    --brand: #a487d9;
+    --brand-soft: #241f34;
+    --tag-ai: #4fb59e;
+    --tag-ai-soft: #16241f;
+    --tag-biz: #d9a94e;
+    --tag-biz-soft: #2b2417;
+    --tag-mkt: #7ea2d6;
+    --tag-mkt-soft: #1b2532;
+    --up: #4fb579;
+    --down: #d9645f;
+    --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; }
+
+  html { background: var(--bg); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html { scroll-behavior: smooth; }
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, "Inter", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+
+  /* ---- Masthead band ---- */
+  .masthead-band {
+    background: var(--ink);
+    color: var(--bg);
+    padding: 30px 24px 26px;
+  }
+  .masthead-inner {
+    max-width: 1080px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .wordmark {
+    font-family: -apple-system, "Inter", ui-sans-serif, system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 2.1rem;
+    letter-spacing: -0.01em;
+    margin: 0;
+    text-transform: uppercase;
+  }
+  .wordmark span { color: var(--brand); }
+  .tagline {
+    margin: 6px 0 0;
+    font-size: 0.95rem;
+    color: color-mix(in srgb, var(--bg) 70%, transparent);
+    max-width: 42ch;
+  }
+  .edition {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--bg) 65%, transparent);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .page {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 24px 96px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 260px;
+    gap: 36px;
+    align-items: start;
+  }
+  .main-col { min-width: 0; }
+  .side-col { position: sticky; top: 72px; }
+  .page:not(:has(> .side-col)) { grid-template-columns: minmax(0, 1fr); max-width: 760px; }
+  @media (max-width: 900px) {
+    .page { grid-template-columns: 1fr; max-width: 720px; }
+    .side-col { position: static; }
+  }
+
+  /* ---- Pause band ---- */
+  .pause-band {
+    background: var(--brand-soft);
+    border-bottom: 1px solid var(--line);
+  }
+  .pause-inner {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 22px 24px;
+  }
+  .pause-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--brand);
+    margin-bottom: 8px;
+  }
+  .pause-text {
+    margin: 0;
+    font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    font-style: italic;
+    font-size: 1.08rem;
+    line-height: 1.55;
+    color: var(--ink);
+    max-width: 62ch;
+    text-wrap: balance;
+  }
+  .pause-word {
+    font-style: normal;
+    font-weight: 700;
+  }
+  .pause-attr {
+    display: block;
+    margin-top: 10px;
+    font-size: 0.82rem;
+    font-style: normal;
+    color: var(--ink-faint);
+  }
+  .pause-attr a { color: var(--ink-soft); }
+
+  /* ---- About strip ---- */
+  .about {
+    padding: 22px 0 24px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 8px;
+  }
+  .about p {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    max-width: 66ch;
+  }
+  .about strong { color: var(--ink); }
+  .about .free-line {
+    margin-top: 10px;
+    font-size: 0.86rem;
+    color: var(--ink-faint);
+  }
+
+  /* ---- Subscribe box ---- */
+  .subscribe-box {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin: 20px 0 0;
+    box-shadow: var(--shadow);
+  }
+  .subscribe-box .sub-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--tag-mkt);
+    display: block;
+    margin-bottom: 6px;
+  }
+  .subscribe-box p {
+    margin: 0 0 12px;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .subscribe-form {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .subscribe-form input[type="email"] {
+    flex: 1 1 220px;
+    min-width: 0;
+    padding: 9px 12px;
+    border-radius: 7px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 0.92rem;
+    font-family: inherit;
+  }
+  .subscribe-form input[type="email"]:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 1px;
+  }
+  .subscribe-form button {
+    padding: 9px 18px;
+    border-radius: 7px;
+    border: none;
+    background: var(--brand);
+    color: var(--bg);
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .subscribe-form button:hover { opacity: 0.9; }
+  .subscribe-note {
+    margin-top: 8px;
+    font-size: 0.76rem;
+    color: var(--ink-faint);
+  }
+  .subscribe-status {
+    margin-top: 8px;
+    font-size: 0.8rem;
+    min-height: 1.1em;
+  }
+  .subscribe-status.ok { color: var(--up); }
+  .subscribe-status.err { color: var(--down); }
+
+  .nav {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin: 0 0 40px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--bg);
+    padding: 14px 0;
+  }
+  .nav a {
+    text-decoration: none;
+    font-size: 0.78rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 7px 13px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    background: var(--paper);
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+  .nav a:hover, .nav a:focus-visible { color: var(--ink); border-color: var(--ink-soft); }
+  .nav a.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .nav a:focus-visible { outline: 2px solid var(--ink-soft); outline-offset: 2px; }
+
+  /* ---- Section ---- */
+  section.lane { margin-bottom: 48px; scroll-margin-top: 20px; }
+
+  .lane-head { margin-bottom: 20px; }
+  .lane-tag {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+  }
+  .ai .lane-tag { background: var(--tag-ai-soft); color: var(--tag-ai); }
+  .biz .lane-tag { background: var(--tag-biz-soft); color: var(--tag-biz); }
+  .mkt .lane-tag { background: var(--tag-mkt-soft); color: var(--tag-mkt); }
+
+  .lane-head h2 {
+    font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    font-size: 1.65rem;
+    font-weight: 700;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .ai .lane-head h2 { border-left: 4px solid var(--tag-ai); padding-left: 13px; }
+  .biz .lane-head h2 { border-left: 4px solid var(--tag-biz); padding-left: 13px; }
+  .mkt .lane-head h2 { border-left: 4px solid var(--tag-mkt); padding-left: 13px; }
+
+  /* ---- Items ---- */
+  .item {
+    display: grid;
+    grid-template-columns: 20px 1fr;
+    gap: 12px;
+    padding: 15px 0;
+    border-top: 1px solid var(--line);
+  }
+  .item:first-of-type { border-top: none; padding-top: 0; }
+  .item .dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 7px; justify-self: center; }
+  .ai .item .dot { background: var(--tag-ai); }
+  .biz .item .dot { background: var(--tag-biz); }
+  .mkt .item .dot { background: var(--tag-mkt); }
+
+  .item h3 { font-size: 1.03rem; font-weight: 650; margin: 0 0 4px; line-height: 1.35; }
+  .item p { margin: 0; font-size: 0.94rem; line-height: 1.6; color: var(--ink-soft); max-width: 66ch; }
+  .item .src { display: inline-block; margin-top: 8px; font-size: 0.76rem; color: var(--ink-faint); letter-spacing: 0.02em; }
+  .item .src a { color: inherit; text-decoration-color: var(--line); }
+
+  /* ---- Takeaway ---- */
+  .item .takeaway {
+    margin: 10px 0 0;
+    padding: 8px 12px;
+    border-left: 3px solid var(--brand);
+    background: var(--paper-2);
+    border-radius: 0 6px 6px 0;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: var(--ink);
+    max-width: 64ch;
+  }
+  .lane-head .lane-takeaway {
+    margin: 14px 0 0;
+    padding: 8px 12px;
+    border-left: 3px solid var(--brand);
+    background: var(--paper-2);
+    border-radius: 0 6px 6px 0;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: var(--ink);
+    max-width: 64ch;
+  }
+  .item .takeaway-label,
+  .lane-takeaway .takeaway-label {
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    color: var(--brand);
+    margin-right: 6px;
+  }
+
+  /* ---- Comments ---- */
+  .comments-section {
+    margin: 48px 0 0;
+    padding-top: 28px;
+    border-top: 1px solid var(--line);
+  }
+  .comments-section h2 {
+    font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    font-size: 1.3rem;
+    margin: 0 0 6px;
+  }
+  .comments-section .comments-sub {
+    font-size: 0.86rem;
+    color: var(--ink-faint);
+    margin: 0 0 18px;
+  }
+  .comment-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 24px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+  }
+  .comment-form input, .comment-form textarea {
+    padding: 9px 12px;
+    border-radius: 7px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 0.92rem;
+    font-family: inherit;
+    resize: vertical;
+  }
+  .comment-form textarea { min-height: 70px; }
+  .comment-form input:focus-visible, .comment-form textarea:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 1px;
+  }
+  .comment-form button {
+    align-self: flex-start;
+    padding: 9px 18px;
+    border-radius: 7px;
+    border: none;
+    background: var(--brand);
+    color: var(--bg);
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .comment-form button:hover { opacity: 0.9; }
+  .comment-form button:disabled { opacity: 0.6; cursor: default; }
+  .comment-status { font-size: 0.82rem; color: var(--ink-faint); min-height: 1.2em; }
+  .comments-list { display: flex; flex-direction: column; gap: 0; }
+  .comment-item { padding: 12px 0; border-top: 1px solid var(--line); }
+  .comment-item:first-child { border-top: none; padding-top: 0; }
+  .comment-alias { font-weight: 700; font-size: 0.88rem; color: var(--ink); }
+  .comment-time { font-size: 0.74rem; color: var(--ink-faint); margin-left: 8px; }
+  .comment-text { margin: 4px 0 0; font-size: 0.92rem; color: var(--ink-soft); line-height: 1.55; white-space: pre-wrap; }
+  .comments-empty { font-size: 0.88rem; color: var(--ink-faint); font-style: italic; }
+
+  /* ---- Vote row ---- */
+  .vote-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .vote-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--ink-faint);
+    font-size: 0.78rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  }
+  .vote-btn:hover { border-color: var(--ink-soft); color: var(--ink-soft); }
+  .vote-btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+  .vote-btn.voted-like { border-color: var(--up); color: var(--up); background: color-mix(in srgb, var(--up) 12%, var(--paper)); }
+  .vote-btn.voted-dislike { border-color: var(--down); color: var(--down); background: color-mix(in srgb, var(--down) 12%, var(--paper)); }
+  .vote-btn:disabled { cursor: default; opacity: 0.85; }
+  .vote-count { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+
+  /* ---- Locked / subscriber reader's note ---- */
+  .locked {
+    border: 1px dashed color-mix(in srgb, var(--brand) 55%, var(--line));
+    background: var(--brand-soft);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-top: 4px;
+  }
+  .locked .locked-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--brand);
+    margin-bottom: 10px;
+  }
+  .locked ul { margin: 0; padding-left: 18px; }
+  .locked li { font-size: 0.92rem; line-height: 1.6; color: var(--ink-soft); margin-bottom: 6px; }
+  .locked li:last-child { margin-bottom: 0; }
+  .locked a { color: var(--ink); font-weight: 600; }
+  .locked .paid-tag {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--brand);
+    background: var(--paper);
+    border: 1px solid color-mix(in srgb, var(--brand) 40%, var(--line));
+    border-radius: 4px;
+    padding: 1px 6px;
+    vertical-align: middle;
+  }
+  .locked .note { margin-top: 10px; font-size: 0.82rem; color: var(--ink-faint); }
+
+  /* ---- Ticker ---- */
+  .ticker {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 22px;
+    box-shadow: var(--shadow);
+  }
+  .ticker .cell { background: var(--paper); padding: 12px 14px; }
+  .ticker .idx { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); margin-bottom: 4px; }
+  .ticker .val { font-size: 1.15rem; font-weight: 700; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  .ticker .chg { font-size: 0.8rem; margin-left: 6px; }
+  .chg.up { color: var(--up); }
+  .chg.down { color: var(--down); }
+
+  .movers { display: flex; gap: 24px; flex-wrap: wrap; margin: 4px 0 26px; }
+  .movers .label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); margin-bottom: 6px; display: block; }
+  .movers .row { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; padding: 2px 0; font-size: 0.86rem; display: block; }
+
+  .callout {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 16px 18px;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    box-shadow: var(--shadow);
+  }
+  .callout strong { color: var(--ink); }
+
+  footer.colophon {
+    margin-top: 56px;
+    padding-top: 22px;
+    border-top: 1px solid var(--line);
+    font-size: 0.8rem;
+    color: var(--ink-faint);
+    line-height: 1.75;
+  }
+  footer.colophon a { color: var(--ink-soft); }
+  footer.colophon .disclaimer {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+  }
+
+  @media (max-width: 480px) {
+    .wordmark { font-size: 1.6rem; }
+    .masthead-inner { align-items: flex-start; }
+    .edition { text-align: left; }
+  }
+</style>
+<link rel="stylesheet" href="/mobile.css" media="(max-width: 640px)">
+<script defer src="/_vercel/insights/script.js"></script>
+<script defer src="/capacitor-bridge.js"></script>
+<script defer src="/mobile.js"></script>
+<link rel="stylesheet" href="/quiz.css">
+<script defer src="/quiz.js"></script>
+</head>
+<body>
+
+<div class="masthead-band">
+  <div class="masthead-inner">
+    <div>
+      <h1 class="wordmark">The Hour <span>Brief</span></h1>
+      <p class="tagline">Sixty minutes. Three lanes. Everything that actually mattered today.</p>
+    </div>
+    <div class="edition">Edition 102<br>Sat, 28 Nov 2026</div>
+  </div>
+</div>
+
+<div class="pause-band">
+  <div class="pause-inner">
+    <span class="pause-label">Before the news</span>
+    <p class="pause-text">There&rsquo;s a Danish and Norwegian word, <span class="pause-word">hygge</span> &mdash; a deliberate, unhurried coziness: dim light, something warm, people you don&rsquo;t have to perform for. It&rsquo;s a fitting lens for a quiet Saturday when Dalal Street isn&rsquo;t even open, Wall Street ran its Friday on a shortened holiday clock, and the single biggest number of the day came from people cozied up at home, buying gifts.</p>
+  </div>
+</div>
+
+<div class="page" data-edition-date="2026-11-28">
+
+  <div class="main-col">
+
+  <div class="archive-banner" style="background:var(--paper-2);border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin-bottom:18px;font-size:0.86rem;color:var(--ink-soft);">🗄️ You are viewing an archived edition from <strong>Nov 28, 2026</strong>. <a href="../" target="_blank" rel="noopener">See the latest edition</a></div>
+
+  <div class="about">
+    <p><strong>The Hour Brief</strong> is a daily read built for one sitting: what moved in AI and technology, what's shaping product and business across India and the rest of the world, and what the Indian stock market did and why. Every item links back to its original source — read the take here, click through for the full story.</p>
+    <p class="free-line">Free to read, no account or sign-up needed. A few items point to stories from paid publications — those are marked and link out; everything else on this page is open.</p>
+  </div>
+
+  <nav class="nav" aria-label="Sections">
+    <a href="#ai">AI &amp; Tech</a>
+    <a href="#biz">Product &amp; Business</a>
+    <a href="#mkt">Stock Market</a>
+    <a href="#quiz">Quiz</a>
+    <a href="./" target="_blank" rel="noopener">Past Editions</a>
+    <a href="../podcasts.html" target="_blank" rel="noopener">Podcasts</a>
+    <a href="../leaders.html" target="_blank" rel="noopener">Voices</a>
+    <a href="/contact.html">Contact</a>
+  </nav>
+  <!-- AI & TECH -->
+  <section class="lane ai" id="ai">
+    <div class="lane-head">
+      <span class="lane-tag">AI &amp; Tech</span>
+      <h2>Adobe says Black Friday online spending hit a fresh US record above $9.7 billion by Friday evening, as Meta and OpenAI each move to buy up AI coding-agent startups on the same day and TSMC approves a $1 billion investment split between Anthropic and OpenAI, even as New York&rsquo;s RAISE Act opens an AI registration portal pulling both labs into state oversight, CISA sets a patch deadline for four newly exploited flaws, and hearing-aid retailer Amplifon discloses a breach exposing Social Security numbers for a subset of 1.3 million affected customers</h2>
+      <p class="lane-takeaway"><span class="takeaway-label">Takeaway</span> Today&rsquo;s AI story pairs economic strength with new friction: record Black Friday spending and fresh chip-to-lab investment sit alongside tighter state AI oversight, more coding-agent dealmaking, and a reminder that ordinary data breaches keep happening regardless of the AI headlines.</p>
+    </div>
+
+    <div class="item" data-story-id="ai-1">
+      <span class="dot"></span>
+      <div>
+        <h3>Black Friday online spending sets a fresh US record, Adobe says</h3>
+        <p>Adobe Analytics reported Black Friday 2026 (November 27) US online spending reached $9.7 billion by 6:30pm ET, up 12.8% year-over-year, with the full day expected to land between $13 billion and $13.4 billion — beating Adobe's own pre-season forecast of $12.9 billion. Thanksgiving Day spending alone hit $7.1 billion, up 10.4% and above forecast; Adobe expects Cyber Monday, November 30, to remain the season's single biggest shopping day at $15.1 billion.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Consumer spending is proving resilient even as AI-driven stock-market jitters have rattled tech investors elsewhere this fall.</p>
+        <span class="src"><a href="https://money.usnews.com/investing/news/articles/2026-11-27/us-black-friday-online-sales-to-cross-13-billion-adobe-says" target="_blank" rel="noopener">Reuters, via US News &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-1">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="ai-2">
+      <span class="dot"></span>
+      <div>
+        <h3>TSMC approves up to $1 billion split between Anthropic and OpenAI</h3>
+        <p>At a November 10 board meeting, TSMC approved up to $1 billion in total investment — $500 million to buy Anthropic shares via a private placement tied to Anthropic's IPO price, and $500 million into OpenAI preferred stock. The same board session authorized $40.93 billion in capital appropriations and a separate $500 million vehicle for strategic semiconductor investments.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> The world's dominant chipmaker is now taking direct equity stakes in the two AI labs most dependent on its chips, tying chip supply and AI-model economics more tightly together.</p>
+        <span class="src"><a href="https://stockanalysis.com/news/tsmc-invest-1-billion-anthropic-openai/" target="_blank" rel="noopener">StockAnalysis &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-2">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="ai-3">
+      <span class="dot"></span>
+      <div>
+        <h3>Meta and OpenAI both move to buy AI coding-agent startups, same day</h3>
+        <p>Meta acquired Conductor, whose app lets engineers run multiple AI coding agents at once, on November 4 (terms undisclosed); its hosted "Conductor Cloud" was wound down November 20, though the local Mac app keeps receiving updates. The same day, OpenAI announced it will acquire Pierre Computer Company, maker of the Trees and Diffs developer-tools libraries already used in Codex, plus a Git-based "Code Storage" layer it plans to fold into Codex; OpenAI says Pierre's open-source projects will stay open.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Meta and OpenAI moving on the same day to buy coding-agent infrastructure shows that owning the AI coding stack has become a genuine platform fight.</p>
+        <span class="src"><a href="https://www.axios.com/2026/11/04/meta-acquires-ai-coding-startup-conductor" target="_blank" rel="noopener">Axios &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-3">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="ai-4">
+      <span class="dot"></span>
+      <div>
+        <h3>CISA sets a November 12 deadline for four newly exploited flaws</h3>
+        <p>CISA added four actively exploited vulnerabilities to its Known Exploited Vulnerabilities catalog on November 9 — flaws in GPUStack, FreeSWITCH, OpenSSH and IBM's Aspera Faspex — giving federal civilian agencies until November 12 to patch them.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A fresh four-flaw batch every few days is the normal cadence now — the real story is which products keep showing up on it.</p>
+        <span class="src"><a href="https://www.esecurityplanet.com/vulnerabilities/news-cisa-kev-gpustack-freeswitch-openssh-ibm-november-2026/" target="_blank" rel="noopener">eSecurity Planet &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-4">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="ai-5">
+      <span class="dot"></span>
+      <div>
+        <h3>New York's RAISE Act opens its AI registration portal</h3>
+        <p>New York's DIGIT office, within the state's Department of Financial Services, opened the RAISE Act registration portal on November 10. Large frontier AI developers generating over $500 million in annual revenue — including OpenAI and Anthropic — must register by January 1, 2027, when the law takes effect.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> New York becomes the second state after California to impose binding frontier-AI safety obligations, adding another seam to AI labs' fragmenting US regulatory map.</p>
+        <span class="src"><a href="https://techcrunch.com/2026/11/10/openai-anthropic-face-new-oversight-as-new-yorks-ai-safety-law-takes-effect/" target="_blank" rel="noopener">TechCrunch &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-5">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="ai-6">
+      <span class="dot"></span>
+      <div>
+        <h3>Amplifon Americas breach, disclosed this month, affects 1.3 million people</h3>
+        <p>Amplifon Americas disclosed that hackers broke into its internal systems and copied files from certain systems between January 18 and February 8, 2026, filing notices with Vermont's and Texas's Attorneys General in early November. A Texas filing puts the total affected at roughly 1.3 million people nationwide; the company says exposed data includes names, contact details, dates of birth and government ID numbers, with Social Security numbers and financial information taken for a smaller subset of those affected.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Monthslong gaps between a breach and its public disclosure remain the norm, even for incidents eventually affecting over a million people.</p>
+        <span class="src"><a href="https://securityweek.com/amplifon-americas-data-breach-impacts-1-3-million" target="_blank" rel="noopener">SecurityWeek &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="ai-6">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+  </section>
+  <!-- PRODUCT & BUSINESS -->
+  <section class="lane biz" id="biz">
+    <div class="lane-head">
+      <span class="lane-tag">Product &amp; Business</span>
+      <h2>Tata Sons&rsquo; long-delayed board meeting finally takes up Noel Tata&rsquo;s RBI-linked restructuring plan and Shapoorji Pallonji&rsquo;s &#8377;25,000 crore funding request, as Indian startups raise $195 million this week led by Ripplr&rsquo;s $45 million Series C, even as PB Fintech co-founder Alok Bansal steps down from his executive role, Palo Alto Networks pays $4.5 billion for AI infrastructure startup Applied Compute, 2026&rsquo;s global tech-layoff toll keeps climbing past 206,000, and the NRF forecasts a record $1.013 trillion US holiday season</h2>
+      <p class="lane-takeaway"><span class="takeaway-label">Takeaway</span> Today&rsquo;s business story is overdue questions getting answered: a postponed Tata Sons meeting happens and startup funding ticks up again, even as a founder&rsquo;s exit, a big AI-infrastructure buyout and a record holiday forecast show consolidation and caution side by side.</p>
+    </div>
+
+    <div class="item" data-story-id="biz-1">
+      <span class="dot"></span>
+      <div>
+        <h3>Tata Sons' long-delayed board meeting takes up Noel Tata's restructuring plan</h3>
+        <p>Tata Sons' board met on November 26 to take up, at Noel Tata's request, an RBI-linked reorganisation plan addressing the regulator's mandatory-listing requirement for upper-layer NBFCs, alongside a &#8377;25,000 crore funding request from the Shapoorji Pallonji Group — an agenda reportedly postponed from an earlier scheduled date. Tata Trusts, which holds roughly 66% of Tata Sons, has opposed a listing, while Shapoorji Pallonji wants partial stake monetisation.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A boardroom standoff between a regulator's listing mandate and a major shareholder's cash need remains unresolved even after the meeting everyone was waiting for finally happened.</p>
+        <span class="src"><a href="https://www.moneylife.in/article/noel-tata-asks-tata-sons-board-to-take-up-rbilinked-reorganisation-plan-and-25000-crore-shapoorji-pallonji-funding-request-on-26-november/82068.html" target="_blank" rel="noopener">Moneylife &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-1">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="biz-2">
+      <span class="dot"></span>
+      <div>
+        <h3>Indian startups raise $195 million this week, led by Ripplr's $45 million Series C</h3>
+        <p>Per Inc42's weekly tracker, 24 Indian startups cumulatively raised about $195.2 million in the week of November 24-28, up 14% from $171.4 million the prior week. Ripplr's $45 million Series C was the week's largest round, followed by a $35 million investment in Square Yards from Smilegate VC and a $25 million follow-on round for Neo Group led by Crystal Investment Advisors.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A second straight week of rising deal flow is a tentative sign India's funding winter may be thawing, even if full-year totals still trail the 2024-25 peak.</p>
+        <span class="src"><a href="https://inc42.com/buzz/from-ripplr-to-neo-indian-startups-raised-195-mn-this-week" target="_blank" rel="noopener">Inc42 &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-2">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="biz-3">
+      <span class="dot"></span>
+      <div>
+        <h3>PB Fintech co-founder Alok Bansal to step down from his executive role</h3>
+        <p>PB Fintech, the parent of Policybazaar, saw its shares fall as much as 6.26% intraday to &#8377;970.40 on November 19 after co-founder Alok Bansal announced he will give up his executive role effective March 31, 2027, subject to shareholder approval. No successor has been named; CEO Yashish Dahiya credited Bansal's role in building the company and its 2021 listing, saying Bansal had first raised wanting to step back five years earlier.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A founding-team exit at one of India's marquee new-age listed companies is a reminder that even strong IPO stocks aren't immune to leadership-transition risk.</p>
+        <span class="src"><a href="https://www.kotakneo.com/news/stocks/pb-fintech-shares-fall-after-policybazaar-co-founder-alok-bansal-announces-exit-from-executive-role/" target="_blank" rel="noopener">Kotak Neo &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-3">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="biz-4">
+      <span class="dot"></span>
+      <div>
+        <h3>Palo Alto Networks pays $4.5 billion for AI startup Applied Compute</h3>
+        <p>Palo Alto Networks announced on November 18 an all-stock deal to acquire AI startup Applied Compute for $4.5 billion, expected to close in its fiscal Q3 (by April 30, 2027) pending regulatory approval. Applied Compute, founded in May 2025 with about 50 employees and a roughly $100 million annualized revenue run-rate, builds post-training and inference infrastructure for open-weight AI models; its CEO, Yash Patil, becomes Palo Alto's co-chief AI officer. The announcement came alongside Palo Alto's fiscal Q1 earnings — revenue of $3.44 billion, up 39% year-over-year — and raised full-year guidance.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A cybersecurity vendor buying AI infrastructure outright rather than partnering signals that securing the AI stack is becoming existential, not optional.</p>
+        <span class="src"><a href="https://www.csoonline.com/article/4250669/palo-alto-networks-bets-4-5b-on-enterprise-ai-with-applied-compute-acquisition.html" target="_blank" rel="noopener">CSO Online &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-4">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="biz-5">
+      <span class="dot"></span>
+      <div>
+        <h3>2026's tech layoffs keep piling up, running ahead of last year's pace</h3>
+        <p>Fast Company's running tracker shows Canva cutting 22% of its staff (1,271 people) via relocation or termination, announced November 3; a Washington state WARN filing covering 95 Amazon employees as part of previously disclosed retail cuts; fresh cuts to Block's Cash App and Square teams the day after its Q3 earnings; and roughly 300 roles cut at Squarespace. A separate tracker put 2026's year-to-date tech layoffs at about 206,877 people across 715 events as of November 16, running about 21% ahead of 2025's pace.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> The headline AI story is investment and acquisitions, but the quieter one — job cuts running ahead of last year — keeps compounding underneath it.</p>
+        <span class="src"><a href="https://www.fastcompany.com/section/tech-layoffs" target="_blank" rel="noopener">Fast Company &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-5">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="biz-6">
+      <span class="dot"></span>
+      <div>
+        <h3>Retailers brace for a record $1.013 trillion US holiday season</h3>
+        <p>The National Retail Federation forecasts 2026 US holiday sales will grow 4.2% to $1.013 trillion — the fastest pace since 2021's 12.6% jump — building on 2025's $972 billion season, which itself topped $1 trillion for the first time. NRF cites resilient consumer spending despite persistent inflation and uneven confidence in the economy.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A second straight trillion-dollar holiday season, growing faster than last year's, is the clearest sign yet that higher prices haven't dented American shopping habits.</p>
+        <span class="src"><a href="https://nrf.com/media-center/press-releases/nrf-forecasts-2026-holiday-sales-growth-as-consumers-remain-resilient" target="_blank" rel="noopener">NRF &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="biz-6">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+  </section>
+  <!-- STOCK MARKET -->
+  <section class="lane mkt" id="mkt">
+    <div class="lane-head">
+      <span class="lane-tag">Stock Market</span>
+      <h2>Sensex and Nifty tumble nearly 1% as Brent crude surges past $97 on escalating West Asia attacks, Mahanadi Coalfields makes a rare discount-listing debut, even as Wall Street's S&amp;P 500 and Nasdaq post their best week in 19 months in a Thanksgiving-shortened session, and India's Q2 FY27 GDP print looms Monday against a still-unsigned India-US trade deal</h2>
+      <p class="lane-takeaway"><span class="takeaway-label">Takeaway</span> Today&rsquo;s market story is India and the US pulling in opposite directions &mdash; a crude-driven selloff and a discount IPO debut on Dalal Street, against a sharp Wall Street rebound, with Monday&rsquo;s GDP release the next test of which momentum holds.</p>
+    </div>
+
+    <div class="ticker">
+      <div class="cell">
+        <div class="idx">Nifty 50 &mdash; last close, Fri 27 Nov</div>
+        <div class="val mono">25,607.20<span class="chg down">&minus;277.30 pts &middot; &minus;1.07%</span></div>
+      </div>
+      <div class="cell">
+        <div class="idx">S&amp;P 500 &mdash; last close, Fri 27 Nov</div>
+        <div class="val mono">7,297.49<span class="chg up">+114.71 pts &middot; +1.6%</span></div>
+      </div>
+      <div class="cell">
+        <div class="idx">Nasdaq Composite &mdash; last close, Fri 27 Nov</div>
+        <div class="val mono">24,129.50<span class="chg up">+543.70 pts &middot; +2.3%</span></div>
+      </div>
+    </div>
+
+    <div class="movers">
+      <div class="col">
+        <span class="label">Today's big trigger</span>
+        <span class="row mono">Brent crude tops $97 on Mideast strikes <span style="color:var(--down)">weighs on Dalal Street</span></span>
+        <span class="row mono">Sensex / Nifty, Fri close <span style="color:var(--down)">83,339.26 / 25,607.20</span></span>
+      </div>
+      <div class="col">
+        <span class="label">Overhangs to watch</span>
+        <span class="row mono">India Q2 FY27 GDP due Monday <span style="color:var(--down)">7.0&ndash;7.8% range</span></span>
+        <span class="row mono">India-US trade deal <span style="color:var(--down)">still unsigned</span></span>
+      </div>
+    </div>
+
+    <div class="item" data-story-id="mkt-1">
+      <span class="dot"></span>
+      <div>
+        <h3>Sensex, Nifty tumble nearly 1% as crude surge rattles Dalal Street</h3>
+        <p>Indian benchmarks fell sharply on Friday, November 27, with the Sensex down 989.33 points (1.17%) to 83,339.26 and the Nifty 50 down 277.30 points (1.07%) to 25,607.20, as Brent crude crossed $97 a barrel on escalating West Asia attacks. Nifty IT, Private Bank, Auto, Realty and Financial Services were the weakest sectors, while metal and chemical stocks bucked the trend. For the week, the Sensex fell 0.69% and the Nifty fell 0.75%.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A geopolitically-driven oil spike, not domestic fundamentals, snapped India's two-day recovery heading into the weekend.</p>
+        <span class="src"><a href="https://www.business-standard.com/markets/news/stock-market-live-november-27-nse-bse-sensex-today-nifty50-gift-nifty-crude-oil-prices-mahanadi-coalfields-share-price-ipo-today-126112700100_1.html" target="_blank" rel="noopener">Business Standard &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="mkt-1">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="mkt-2">
+      <span class="dot"></span>
+      <div>
+        <h3>Coal India unit Mahanadi Coalfields makes a muted stock market debut</h3>
+        <p>Mahanadi Coalfields listed on November 27 after its &#8377;8,981 crore IPO (price band &#8377;129-136), debuting at a discount rather than a premium — &#8377;133.15 on the BSE, down 2.10% versus the &#8377;136 issue price, and around &#8377;134 on the NSE. The IPO was entirely an offer-for-sale by parent Coal India, which has been trimming its stake through a series of subsidiary listings.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> A rare discount listing for a PSU coal IPO signals investor caution even as broader sentiment weakened on the same trading day.</p>
+        <span class="src"><a href="https://www.business-standard.com/markets/news/coal-india-unit-mahanadi-coalfields-share-price-lists-at-2-discount-to-ipo-price-126112700213_1.html" target="_blank" rel="noopener">Business Standard &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="mkt-2">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="mkt-3">
+      <span class="dot"></span>
+      <div>
+        <h3>Wall Street rallies in shortened Black Friday session; S&amp;P 500 posts best week in 19 months</h3>
+        <p>In Friday's Thanksgiving-shortened session, which ended at 1pm ET, the S&amp;P 500 rose 1.6% to 7,297.49 and the Nasdaq Composite jumped 2.3% to 24,129.50, led by a rebound in AI and chip stocks after a rough November for tech. For the week, the S&amp;P 500 gained 5.6% — its best week since April 2025 — and the Dow posted its biggest weekly gain since October 2022.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> US tech's sharp reversal gives global markets a firmer footing heading into next week — a sharp contrast to Friday's crude-driven selloff in India.</p>
+        <span class="src"><a href="https://www.fool.com/coverage/stock-market-today/2026/11/27/stock-market-today-nov-27-s-and-p-500-posts-best-week-in-19-months-as-ai-stocks-rebound/" target="_blank" rel="noopener">The Motley Fool &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="mkt-3">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="item" data-story-id="mkt-4">
+      <span class="dot"></span>
+      <div>
+        <h3>India's Q2 FY27 GDP print, due Monday, is the next test for markets</h3>
+        <p>India's Ministry of Statistics is scheduled to release July-September FY27 GDP data on Monday, November 30. The Finance Ministry's nowcast pegs growth near 7.3%, SBI Research is more bullish at around 7.8%, while Brickwork Ratings expects a slowdown to about 7% — against Q1 FY27's 7.8% and a tough year-ago base of 8.2% in Q2 FY26.</p>
+        <p class="takeaway"><span class="takeaway-label">Takeaway</span> Monday's GDP print, alongside crude's trajectory, will be the first real test of whether Friday's selloff was a blip or the start of a trend.</p>
+        <span class="src"><a href="https://www.deccanherald.com/business/gdp-growth-may-moderate-to-735-in-q2-of-fy27-finance-ministry-4200394" target="_blank" rel="noopener">Deccan Herald &rarr;</a></span>
+
+        <div class="vote-row" data-vote-key="mkt-4">
+          <button type="button" class="vote-btn vote-like" data-vote="like" aria-label="This was worth reading">&#128077; <span class="vote-count">0</span></button>
+          <button type="button" class="vote-btn vote-dislike" data-vote="dislike" aria-label="Not useful">&#128078; <span class="vote-count">0</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>On risk, via Zerodha Varsity:</strong> Varsity's chapter on warming up to risk distinguishes systematic risk (market-wide, non-diversifiable — like a crude-oil spike hitting every stock at once) from unsystematic risk (company or sector-specific, diversifiable by not putting all your money into one name). It notes research suggesting a portfolio of roughly 15-21 stocks captures most of the available diversification benefit — though no amount of diversification removes systematic risk itself.
+      <br><span class="src"><a href="https://zerodha.com/varsity/chapter/risk-part-1/" target="_blank" rel="noopener">Zerodha Varsity &rarr;</a></span>
+    </div>
+  </section>
+
+    <!-- DAILY QUIZ -->
+  <section class="lane quiz" id="quiz" aria-labelledby="quiz-title">
+    <div class="lane-head">
+      <span class="lane-tag">Daily quiz</span>
+      <h2 id="quiz-title">Five questions on today&rsquo;s edition</h2>
+    </div>
+    <div id="quiz-root"></div>
+    <script type="application/json" id="quiz-data">
+      {
+        "v": 1,
+        "date": "2026-11-28",
+        "questions": [
+          {
+            "q": "By how much did Adobe say Black Friday online spending had risen year-over-year by 6:30pm ET?",
+            "options": ["9.2%", "12.8%", "6.2%", "4%"],
+            "answer": 1,
+            "why": "Adobe Analytics said Black Friday online spending reached $9.7 billion by 6:30pm ET, up 12.8% year-over-year.",
+            "story": "ai-1"
+          },
+          {
+            "q": "Which company did OpenAI announce it will acquire for Codex-related developer tools, the same day Meta bought Conductor?",
+            "options": ["Applied Compute", "Conductor Cloud", "Pierre Computer Company", "LiteLLM"],
+            "answer": 2,
+            "why": "OpenAI announced on November 4 it will acquire Pierre Computer Company, maker of developer-tools libraries already used in Codex.",
+            "story": "ai-3"
+          },
+          {
+            "q": "How much funding did Indian startups raise this week, led by Ripplr's Series C?",
+            "options": ["$195 million", "$95 million", "$145 million", "$255 million"],
+            "answer": 0,
+            "why": "Per Inc42's weekly tracker, Indian startups raised about $195 million this week, led by Ripplr's $45 million Series C.",
+            "story": "biz-2"
+          },
+          {
+            "q": "What does AI startup Applied Compute, bought by Palo Alto Networks for $4.5 billion, actually build?",
+            "options": ["A cloud storage platform", "A firewall hardware line", "A consumer antivirus app", "AI post-training and inference infrastructure"],
+            "answer": 3,
+            "why": "Applied Compute builds post-training and inference infrastructure for open-weight AI models.",
+            "story": "biz-4"
+          },
+          {
+            "q": "By what date is India's Q2 FY27 GDP data due for release?",
+            "options": ["November 28", "November 30", "December 2", "December 10"],
+            "answer": 1,
+            "why": "India's Ministry of Statistics is scheduled to release Q2 FY27 GDP data on Monday, November 30, 2026.",
+            "story": "mkt-4"
+          }
+        ]
+      }
+
+      </script>
+    <noscript><p>The daily quiz needs JavaScript.</p></noscript>
+  </section>
+  <section class="comments-section" id="comments" data-edition-date="2026-11-28">
+    <h2>Discuss today's edition</h2>
+    <p class="comments-sub">Leave a name (or make one up) and join the conversation. Comments are public and lightly moderated.</p>
+
+    <form class="comment-form" id="comment-form">
+      <input type="text" id="comment-alias" placeholder="Name or alias" maxlength="40" required>
+      <textarea id="comment-text" placeholder="What stood out to you today?" maxlength="500" required></textarea>
+      <button type="submit">Post comment</button>
+      <div class="comment-status" id="comment-status"></div>
+    </form>
+
+    <div class="comments-list" id="comments-list">
+      <p class="comments-empty">Loading comments…</p>
+    </div>
+  </section>
+
+  <footer class="colophon">
+    The Hour Brief is compiled daily from public reporting, newsletters and market data, with every summary linked back to its original source. AI &amp; Tech and Product &amp; Business draw on general technology and business press; Stock Market data covers NSE/BSE and US indices via public market reports. <a href="../about.html" target="_blank" rel="noopener">How this is made →</a> · <a href="../privacy.html" target="_blank" rel="noopener">Privacy</a>
+    <div class="disclaimer contact-us">
+      <strong style="color:var(--ink)">Contact us:</strong> corrections, feedback or app support &mdash; <a href="mailto:milindroy101292@gmail.com">milindroy101292@gmail.com</a> &middot; <a href="/contact.html">Contact page</a>
+    </div>
+    <div class="disclaimer">
+      New edition every morning. <a href="../feed.xml" target="_blank" rel="noopener">Subscribe via RSS</a> to get each edition in your reader of choice (Feedly, NetNewsWire, Reeder, Inoreader, etc.) — no email or account needed.
+    </div>
+    <div class="disclaimer">
+      Nothing here is investment advice. Market figures are for information and discussion only — verify with a live data source before acting, and consult a licensed advisor for anything you're putting money behind.
+    </div>
+    <div class="disclaimer">
+      Written and published automatically each morning. Milind reads the Stock Market section after it publishes and fixes errors; fixes are noted on the story and listed in the <a href="/corrections.html">corrections log</a>.
+    </div>
+  </footer>
+
+  </div>
+
+</div>
+<script>
+(function () {
+  var page = document.querySelector('.page');
+  var editionDate = page ? page.getAttribute('data-edition-date') : '';
+
+  // ---- Archive banner accuracy check ----
+  // Only present on archive/<date>.html pages. If this date turns out to still
+  // be the latest edition (not yet superseded), the "archived" framing is
+  // misleading — swap it for a neutral permalink note instead.
+  var archiveBanner = document.querySelector('.archive-banner');
+  if (archiveBanner && editionDate) {
+    fetch('../editions.json')
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data || !data.editions || !data.editions.length) return;
+        var latest = data.editions[data.editions.length - 1];
+        if (latest && latest.date === editionDate) {
+          archiveBanner.innerHTML = '📌 This is also today’s latest edition — permanently linked here. <a href="./" target="_blank" rel="noopener">Browse all editions</a>';
+        }
+      })
+      .catch(function () {});
+  }
+
+  // ---- Scrollspy tabs ----
+  var navLinks = Array.prototype.slice.call(document.querySelectorAll('.nav a[href^="#"]'));
+  var spySections = ['ai', 'biz', 'mkt']
+    .map(function (id) { return document.getElementById(id); })
+    .filter(Boolean);
+  if (navLinks.length && spySections.length && 'IntersectionObserver' in window) {
+    var spy = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          navLinks.forEach(function (link) {
+            link.classList.toggle('active', link.getAttribute('href') === '#' + entry.target.id);
+          });
+        }
+      });
+    }, { rootMargin: '-88px 0px -70% 0px', threshold: 0 });
+    spySections.forEach(function (s) { spy.observe(s); });
+  }
+
+  function voteKey(storyId) { return editionDate + ':' + storyId; }
+  function votedFlagKey(storyId) { return 'hb-voted-' + voteKey(storyId); }
+
+  // ---- Votes ----
+  var voteRows = Array.prototype.slice.call(document.querySelectorAll('.vote-row[data-vote-key]'));
+  if (voteRows.length) {
+    var ids = voteRows.map(function (r) { return voteKey(r.getAttribute('data-vote-key')); });
+    fetch('/api/vote?ids=' + encodeURIComponent(ids.join(',')))
+      .then(function (r) { return r.ok ? r.json() : {}; })
+      .then(function (counts) {
+        voteRows.forEach(function (row) {
+          var storyId = row.getAttribute('data-vote-key');
+          var c = counts[voteKey(storyId)] || { like: 0, dislike: 0 };
+          setCounts(row, c.like, c.dislike);
+          applyVotedState(row, storyId);
+        });
+      })
+      .catch(function () {});
+
+    voteRows.forEach(function (row) {
+      var storyId = row.getAttribute('data-vote-key');
+      applyVotedState(row, storyId);
+      row.querySelectorAll('.vote-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          if (localStorage.getItem(votedFlagKey(storyId))) return;
+          var type = btn.getAttribute('data-vote');
+          btn.disabled = true;
+          fetch('/api/vote', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: voteKey(storyId), type: type })
+          })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+              setCounts(row, data.like, data.dislike);
+              localStorage.setItem(votedFlagKey(storyId), type);
+              applyVotedState(row, storyId);
+            })
+            .catch(function () { btn.disabled = false; });
+        });
+      });
+    });
+  }
+
+  function setCounts(row, like, dislike) {
+    var likeEl = row.querySelector('.vote-like .vote-count');
+    var dislikeEl = row.querySelector('.vote-dislike .vote-count');
+    if (likeEl) likeEl.textContent = like != null ? like : 0;
+    if (dislikeEl) dislikeEl.textContent = dislike != null ? dislike : 0;
+  }
+
+  function applyVotedState(row, storyId) {
+    var voted = localStorage.getItem(votedFlagKey(storyId));
+    row.querySelectorAll('.vote-btn').forEach(function (btn) {
+      var type = btn.getAttribute('data-vote');
+      btn.classList.toggle('voted-' + type, voted === type);
+      btn.disabled = !!voted;
+    });
+  }
+
+  // ---- Comments ----
+  var list = document.getElementById('comments-list');
+  var form = document.getElementById('comment-form');
+  var status = document.getElementById('comment-status');
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function renderComments(comments) {
+    if (!list) return;
+    if (!comments || !comments.length) {
+      list.innerHTML = '<p class="comments-empty">No comments yet — be the first.</p>';
+      return;
+    }
+    list.innerHTML = comments.map(function (c) {
+      var when = '';
+      try { when = new Date(c.ts).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch (e) {}
+      return '<div class="comment-item"><span class="comment-alias">' + escapeHtml(c.alias) +
+        '</span><span class="comment-time">' + when + '</span>' +
+        '<p class="comment-text">' + escapeHtml(c.text) + '</p></div>';
+    }).join('');
+  }
+
+  if (list && editionDate) {
+    fetch('/api/comments?date=' + encodeURIComponent(editionDate))
+      .then(function (r) { return r.ok ? r.json() : { comments: [] }; })
+      .then(function (data) { renderComments(data.comments); })
+      .catch(function () { list.innerHTML = '<p class="comments-empty">Couldn\'t load comments right now.</p>'; });
+  }
+
+  if (form) {
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var alias = document.getElementById('comment-alias').value.trim();
+      var text = document.getElementById('comment-text').value.trim();
+      if (!text) return;
+      var btn = form.querySelector('button');
+      btn.disabled = true;
+      status.textContent = 'Posting…';
+      fetch('/api/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: editionDate, alias: alias, text: text })
+      })
+        .then(function (r) {
+          if (r.status === 429) { status.textContent = "You're commenting a bit fast — try again in a bit."; throw new Error('rate limited'); }
+          if (!r.ok) { status.textContent = 'Something went wrong — try again.'; throw new Error('failed'); }
+          return r.json();
+        })
+        .then(function (data) {
+          status.textContent = '';
+          document.getElementById('comment-text').value = '';
+          var empty = list.querySelector('.comments-empty');
+          if (empty) list.innerHTML = '';
+          var when = '';
+          try { when = new Date(data.comment.ts).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch (e) {}
+          var el = document.createElement('div');
+          el.className = 'comment-item';
+          el.innerHTML = '<span class="comment-alias">' + escapeHtml(data.comment.alias) +
+            '</span><span class="comment-time">' + when + '</span>' +
+            '<p class="comment-text">' + escapeHtml(data.comment.text) + '</p>';
+          list.insertBefore(el, list.firstChild);
+        })
+        .catch(function () {})
+        .finally(function () { btn.disabled = false; });
+    });
+  }
+})();
+</script>
+</body>
+</html>
