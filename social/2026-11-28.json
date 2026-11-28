@@ -1,0 +1,72 @@
+{
+  "date": "2026-11-28",
+  "edition": 102,
+  "lane": "ai",
+  "storyId": "ai-2",
+  "storyTitle": "TSMC approves up to $1 billion split between Anthropic and OpenAI",
+  "insight": "TSMC is buying stakes in Anthropic and OpenAI, the two labs most dependent on its chips: the supplier is becoming a shareholder.",
+  "linkedin": "TSMC now owns a piece of the labs it supplies.\n\nIts board approved up to $1 billion: $500 million into Anthropic shares tied to its IPO price, $500 million into OpenAI preferred stock.\n\nThe chipmaker is no longer just selling to the two labs most dependent on its chips.\n\nThat ties chip supply and AI model economics closer together.\n\nToday's full brief 👉 https://the-hour-brief.vercel.app/e/2026-11-28\n\n#AI #Semiconductors #Anthropic",
+  "status": "TSMC is buying stakes in Anthropic and OpenAI, the labs most dependent on its chips. The supplier is becoming a shareholder. https://the-hour-brief.vercel.app/e/2026-11-28",
+  "push": {
+    "title": "TSMC now owns a piece of its customers",
+    "body": "Up to $1B goes into Anthropic and OpenAI, tying chip supply to AI model economics."
+  },
+  "page": "Today's edition: TSMC's board approved up to $1 billion in direct stakes in Anthropic and OpenAI, so the world's dominant chipmaker now holds equity in the two labs most dependent on its chips.\n\nAI & Tech: Meta and OpenAI both moved to buy AI coding-agent startups on the same day, and New York's RAISE Act opened its AI registration portal.\n\nBusiness: Palo Alto Networks is paying $4.5 billion for Applied Compute, and Tata Sons' long-delayed board meeting finally took up Noel Tata's restructuring plan.\n\nMarkets: The Sensex and Nifty fell about 1% as Brent crude passed $97, while the S&P 500 posted its best week in 19 months.\n\n#AI #Business #IndianMarkets",
+  "x": "TSMC now owns a piece of its best customers.\n\nIts board approved up to $1B for Anthropic and OpenAI shares.\n\nhttps://the-hour-brief.vercel.app/e/2026-11-28",
+  "xpack": {
+    "thread": [
+      "Black Friday online spending in the US passed $9.7B by Friday evening, a new record. Meanwhile chips, AI and oil all moved. Here's what mattered 👇",
+      "TSMC's board approved up to $1B in stakes: $500M in Anthropic, $500M in OpenAI. The chipmaker now owns a piece of the two labs that depend on its chips most.",
+      "Meta bought Conductor, an app for running many AI coding agents at once. The same day OpenAI said it will buy Pierre Computer Company. Owning the AI coding stack is now a real platform fight.",
+      "Palo Alto Networks is paying $4.5B in stock for Applied Compute, a startup of about 50 people with a $100M run-rate. A security firm buying AI infrastructure says securing AI is not optional.",
+      "Sensex fell 1.17% and Nifty fell 1.07% as Brent crude crossed $97 on West Asia attacks. Oil, not company results, ended India's two-day recovery.",
+      "Wall Street went the other way. The S&P 500 rose 1.6% in a short session and gained 5.6% for the week, its best in 19 months. AI and chip stocks led the rebound.",
+      "Oil hit India while AI money lifted the US. Monday's GDP print is the next test.\n\nFull brief, free: https://the-hour-brief.vercel.app/e/2026-11-28"
+    ],
+    "posts": [
+      {
+        "time": "15:00",
+        "text": "Tata Sons' board finally met on the plan to answer the RBI's listing rule. Tata Trusts, with about 66%, opposes a listing. Shapoorji Pallonji wants ₹25,000 crore.\n\nNo one has blinked yet.\nhttps://the-hour-brief.vercel.app/s/2026-11-28/biz-1"
+      },
+      {
+        "time": "18:00",
+        "text": "New York's RAISE Act portal is open. AI developers with over $500M in yearly revenue, like OpenAI and Anthropic, must register by January 1, 2027.\n\nThat's a second state with binding AI rules.\nhttps://the-hour-brief.vercel.app/s/2026-11-28/ai-5"
+      }
+    ],
+    "poll": {
+      "question": "How much did Indian startups raise this week, led by Ripplr's $45M Series C?",
+      "options": [
+        "$195 million",
+        "$95 million",
+        "$145 million",
+        "$255 million"
+      ],
+      "answer": "The answer: $195 million. Per Inc42, 24 startups raised about $195.2M, up 14% from the week before.\nhttps://the-hour-brief.vercel.app/s/2026-11-28/biz-2"
+    },
+    "replies": {
+      "facts": [
+        "TSMC's board approved up to $1 billion: $500 million for Anthropic shares and $500 million for OpenAI preferred stock.",
+        "Adobe says US Black Friday online spending hit $9.7 billion by 6:30pm ET, up 12.8% from last year.",
+        "The NRF expects US holiday sales to grow 4.2% to $1.013 trillion, the fastest pace since 2021.",
+        "Palo Alto Networks is paying $4.5 billion for Applied Compute, a startup founded in May 2025 with about 50 employees.",
+        "Tech layoffs hit about 206,877 people across 715 events by November 16, about 21% ahead of 2025's pace.",
+        "Mahanadi Coalfields listed at ₹133.15 on the BSE, 2.1% below its ₹136 issue price.",
+        "The S&P 500 gained 5.6% this week, its best week since April 2025.",
+        "Canva is cutting 22% of its staff, or 1,271 people, one of this year's big tech layoffs."
+      ],
+      "searches": [
+        "Nifty",
+        "Brent crude",
+        "Anthropic TSMC",
+        "Tata Sons"
+      ]
+    }
+  },
+  "leaders": {
+    "id": "principles-2026-11-23",
+    "category": "principles",
+    "title": "Misenchanted, Not Disenchanted: Is the Meaning Crisis a Story We Tell Ourselves?",
+    "post": "Telling people life is hollow can make it feel hollow.\n\nHumanist chaplain James Croft calls the \"meaning crisis\" story an illness caused by its own cure.\n\nThe symptoms are real: loneliness, anxiety, housing costs, job fear. But he says our world isn't disenchanted, it's misenchanted by bad stories and bad habits of attention.\n\nHe also notes we only hear from the literate few of the past, so a golden age is easy to imagine.\n\nRead the full breakdown 👉 https://the-hour-brief.vercel.app/leaders.html#a=principles-2026-11-23\n\n#Philosophy #Meaning #Principles"
+  },
+  "generatedAt": "2026-11-28T03:38:38Z"
+}
